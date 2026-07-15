@@ -31,6 +31,24 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
   -webkit-tap-highlight-color:transparent;
 }
 
+
+.quick-add{margin:0 0 10px;padding:16px;border-top:4px solid var(--green)}
+.quick-add-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+.quick-add-head h2{margin:0;color:var(--navy);font-size:21px}
+.quick-add-head p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.form-mode{display:inline-flex;align-items:center;min-height:34px;padding:6px 11px;border-radius:999px;background:#eaf6ef;color:#176344;border:1px solid #c8e3d3;font-weight:900;white-space:nowrap}
+.quick-add.editing{border-top-color:var(--orange);box-shadow:0 14px 36px rgba(228,122,35,.14)}
+.quick-add.editing .form-mode{background:#fff1df;color:#9c4f11;border-color:#f1c894}
+.quick-add-grid{display:grid;grid-template-columns:1.15fr .9fr .72fr .72fr 1.4fr .95fr;gap:9px;align-items:end}
+.quick-add-grid label{display:block;margin:0 0 5px;color:var(--muted);font-size:12px;font-weight:900}
+.quick-add-grid input,.quick-add-grid select{width:100%;min-height:44px}
+.quick-add-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px}
+.quick-add-actions button{min-height:42px}
+.quick-add.saved-flash{animation:savedFormFlash .8s ease}
+@keyframes savedFormFlash{0%,100%{box-shadow:var(--shadow)}50%{box-shadow:0 0 0 6px rgba(36,139,93,.13),0 16px 40px rgba(36,139,93,.20)}}
+@media(max-width:1150px){.quick-add-grid{grid-template-columns:repeat(3,1fr)}.procedure-field{grid-column:span 2}}
+@media(max-width:680px){.quick-add{padding:13px}.quick-add-head{align-items:center}.quick-add-grid{grid-template-columns:1fr 1fr}.procedure-field{grid-column:1/-1}.quick-add-actions{display:grid;grid-template-columns:1fr}.quick-add-actions button{width:100%}}
+
 </style>
 </head>
 <body>
@@ -68,6 +86,30 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
   <div id="currentCard" class="card current-card stage-idle"><span class="label">المريض الحالي</span><div id="currentName" class="patient-name">لا يوجد الآن</div><div id="currentMeta" class="patient-meta">—</div><div id="currentCountdown" class="countdown">--:--:--</div></div>
   <div class="card next-card stage-idle"><h3>الموعد التالي</h3><div id="nextName" class="patient-name">لا يوجد</div><div id="nextMeta" class="patient-meta">—</div><div id="nextCountdown" class="countdown">--:--:--</div></div>
 </section>
+
+<section id="patientFormCard" class="card quick-add hide-screen">
+  <div class="quick-add-head">
+    <div>
+      <h2 id="patientFormTitle">إضافة مريض جديد</h2>
+      <p>أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.</p>
+    </div>
+    <span id="patientFormMode" class="form-mode">إضافة</span>
+  </div>
+  <div class="quick-add-grid">
+    <div><label for="fName">الاسم الأول</label><input id="fName" autocomplete="off" placeholder="اسم المريض"></div>
+    <div><label for="fFile">رقم الملف</label><input id="fFile" inputmode="numeric" autocomplete="off" placeholder="رقم الملف"></div>
+    <div><label for="fStart">وقت البداية</label><input id="fStart" type="time"></div>
+    <div><label for="fEnd">وقت النهاية</label><input id="fEnd" type="time"></div>
+    <div class="procedure-field"><label for="fProcedure">الإجراء العلاجي</label><input id="fProcedure" autocomplete="off" placeholder="مثال: مراجعة، كشف جديد"></div>
+    <div><label for="fStatus">الحالة</label><select id="fStatus"><option value="waiting">بانتظار الموعد</option><option value="active">قيد العلاج</option><option value="done">مكتمل</option><option value="late">متأخر</option><option value="cancel">ملغي</option></select></div>
+  </div>
+  <div class="quick-add-actions">
+    <button id="resetPatientBtn" type="button">تفريغ الحقول</button>
+    <button id="cancelEditBtn" type="button" class="danger" hidden>إلغاء التعديل</button>
+    <button id="savePatientBtn" type="button" class="primary">حفظ وإضافة المريض</button>
+  </div>
+</section>
+
 <section class="main">
   <div class="card"><div class="section-head"><h2>قائمة المرضى اليومية</h2><div class="filters hide-screen"><input id="searchInput" placeholder="بحث بالاسم أو رقم الملف"><select id="filterStatus"><option value="">كل الحالات</option><option value="waiting">بانتظار الموعد</option><option value="active">قيد العلاج</option><option value="done">مكتمل</option><option value="late">متأخر</option><option value="cancel">ملغي</option></select></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>الحالة</th><th class="hide-screen">إجراء</th></tr></thead><tbody id="patientRows"></tbody></table></div></div>
   <aside class="side"><div class="card box"><h3>الخط الزمني</h3><div id="timeline"></div></div><div class="card box hide-screen"><h3>ملاحظات اليوم</h3><textarea id="notes" placeholder="اكتب ملاحظات اليوم..."></textarea></div></aside>
@@ -75,7 +117,6 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 </div>
 <button id="exitScreenBtn" class="exit-full">⤢ إلغاء ملء الشاشة</button>
 <input id="hiddenCsv" type="file" hidden>
-<div id="patientModal" class="modal"><div class="modal-card"><h3 id="patientModalTitle">إضافة مريض</h3><div class="grid"><div><label>الاسم الأول</label><input id="fName"></div><div><label>رقم الملف</label><input id="fFile"></div><div><label>وقت البداية</label><input id="fStart" type="time"></div><div><label>وقت النهاية</label><input id="fEnd" type="time"></div><div class="full"><label>الإجراء العلاجي</label><input id="fProcedure"></div><div><label>الحالة</label><select id="fStatus"><option value="waiting">بانتظار الموعد</option><option value="active">قيد العلاج</option><option value="done">مكتمل</option><option value="late">متأخر</option><option value="cancel">ملغي</option></select></div></div><div class="modal-actions"><button data-close="patientModal">إلغاء</button><button id="savePatientBtn" class="primary">حفظ</button></div></div></div>
 <div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary">حفظ القائمة</button></div></div></div>
 <div id="toastWrap" class="toast-wrap"></div>
 <script>
@@ -84,7 +125,7 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='4.2-auto-sync';
+const DASHBOARD_BUILD='4.3-inline-patient-auto-sync';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const STATUS={waiting:'بانتظار الموعد',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي'};
 const EN={waiting:'Waiting',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled'};
@@ -103,7 +144,8 @@ let sync={
   autoTimer:null,
   autoStarted:false,
   lastSync:0,
-  localVersion:0
+  localVersion:0,
+  localUpdatedAt:0
 };
 const localKey=d=>`bestcare_dashboard_v4_${d}`;
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
@@ -120,35 +162,126 @@ function setBadge(mode,text,detail=''){
   els.syncBadge.dataset.build=DASHBOARD_BUILD;
 }
 function serialize(){return {date:selectedDate,patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now()}}
-function loadLocal(date){try{const v=JSON.parse(localStorage.getItem(localKey(date))||'null');patients=Array.isArray(v?.patients)?v.patients:[];notes=String(v?.notes||'');updateAlert=v?.updateAlert&&typeof v.updateAlert==='object'?v.updateAlert:{active:false,message:'',updatedAt:0,kind:''};}catch{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''}}els.notes.value=notes;render();}
-function persistLocal(){localStorage.setItem(localKey(selectedDate),JSON.stringify(serialize()));}
+function loadLocal(date){
+  try{
+    const v=JSON.parse(localStorage.getItem(localKey(date))||'null');
+    patients=Array.isArray(v?.patients)?v.patients.map(p=>({...p})):[];
+    notes=String(v?.notes||'');
+    updateAlert=v?.updateAlert&&typeof v.updateAlert==='object'?{...v.updateAlert}:{active:false,message:'',updatedAt:0,kind:''};
+    sync.dirty=Boolean(v?.pending);
+    sync.localUpdatedAt=Number(v?.localUpdatedAt||0);
+  }catch{
+    patients=[];
+    notes='';
+    updateAlert={active:false,message:'',updatedAt:0,kind:''};
+    sync.dirty=false;
+    sync.localUpdatedAt=0;
+  }
+  els.notes.value=notes;
+  render();
+}
+function persistLocal(pending=sync.dirty){
+  localStorage.setItem(localKey(selectedDate),JSON.stringify({
+    ...serialize(),
+    pending:Boolean(pending),
+    localUpdatedAt:Number(sync.localUpdatedAt||Date.now())
+  }));
+}
 function markDirty(){
   sync.dirty=true;
   sync.localVersion+=1;
-  persistLocal();
+  sync.localUpdatedAt=Date.now();
+  persistLocal(true);
   render();
-
   clearTimeout(sync.pushTimer);
   sync.pushTimer=setTimeout(async()=>{
     await pushState();
     scheduleAutomaticSync(POLL_MS);
-  },120);
+  },100);
 }
 async function request(url,options={},timeout=12000){const c=new AbortController();const timer=setTimeout(()=>c.abort(),timeout);try{return await fetch(url,{...options,signal:c.signal,cache:'no-store',headers:{accept:'application/json',...(options.headers||{})}})}finally{clearTimeout(timer)}}
-async function pushState(){if(sync.pushing||!sync.dirty)return;sync.pushing=true;const sentVersion=sync.localVersion;setBadge('saving',lang==='en'?'Saving…':'جارٍ الحفظ…');const snapshot=serialize();try{const res=await request(`${API}?date=${encodeURIComponent(selectedDate)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});if(!res.ok)throw new Error(`HTTP ${res.status}`);const data=await res.json();sync.revision=Number(data.revision||sync.revision);sync.updatedAt=Number(data.updatedAt||Date.now());sync.dirty=sentVersion!==sync.localVersion;sync.ready=true;sync.error='';sync.lastSync=Date.now();setBadge(sync.dirty?'saving':'synced',sync.dirty?(lang==='en'?'Saving latest changes…':'جارٍ حفظ آخر التعديلات…'):(lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة'),`revision ${sync.revision}`);if(sync.dirty){clearTimeout(sync.pushTimer);sync.pushTimer=setTimeout(pushState,80);}}catch(e){
+async function pushState(){
+  if(sync.pushing||!sync.dirty)return false;
+  if(sync.pulling){scheduleAutomaticSync(250);return false}
+  sync.pushing=true;
+  const sentVersion=sync.localVersion;
+  const sentDate=selectedDate;
+  const snapshot=serialize();
+  setBadge('saving',lang==='en'?'Saving automatically…':'جارٍ الحفظ تلقائيًا…');
+  try{
+    const res=await request(`${API}?date=${encodeURIComponent(sentDate)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    if(selectedDate!==sentDate)return false;
+    sync.revision=Number(data.revision||sync.revision);
+    sync.updatedAt=Number(data.updatedAt||Date.now());
+    sync.dirty=sentVersion!==sync.localVersion;
+    sync.ready=true;
+    sync.error='';
+    sync.lastSync=Date.now();
+    persistLocal(sync.dirty);
+    setBadge(sync.dirty?'saving':'synced',sync.dirty?(lang==='en'?'Saving latest changes…':'جارٍ حفظ آخر التعديلات…'):(lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة'),`revision ${sync.revision}`);
+    if(sync.dirty){clearTimeout(sync.pushTimer);sync.pushTimer=setTimeout(pushState,80)}
+    return true;
+  }catch(e){
     sync.error=e.name==='AbortError'?'انتهت مهلة الحفظ':String(e.message||e);
     setBadge('error',lang==='en'?'Save failed — retrying':'فشل الحفظ — ستتم إعادة المحاولة',sync.error);
+    persistLocal(true);
+    return false;
   }finally{
     sync.pushing=false;
-    if(sync.dirty)scheduleAutomaticSync(3000);
+    if(sync.dirty)scheduleAutomaticSync(2500);
   }
 }
-function applyRemote(data){patients=Array.isArray(data.patients)?data.patients.map(p=>({...p,name:firstName(p.name)})):[];notes=String(data.notes||'');updateAlert=data.updateAlert&&typeof data.updateAlert==='object'?data.updateAlert:{active:false,message:'',updatedAt:0,kind:''};els.notes.value=notes;sync.revision=Number(data.revision||0);sync.updatedAt=Number(data.updatedAt||0);sync.ready=true;sync.error='';persistLocal();render();}
-async function pullState(force=false){if(sync.pulling||sync.pushing||sync.dirty)return;sync.pulling=true;if(!sync.ready)setBadge('connecting',lang==='en'?'Connecting…':'جارٍ الاتصال…');try{const res=await request(`${API}?date=${encodeURIComponent(selectedDate)}&_=${Date.now()}`);if(!res.ok)throw new Error(`HTTP ${res.status}`);const data=await res.json();if(data.exists){const rev=Number(data.revision||0),updated=Number(data.updatedAt||0);if(force||rev>sync.revision||updated>sync.updatedAt)applyRemote(data);}else if(patients.length||notes||updateAlert.active){sync.dirty=true;await pushState();}sync.ready=true;sync.error='';sync.lastSync=Date.now();if(!sync.dirty)setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);}catch(e){
+function applyRemote(data){
+  if(sync.dirty)return false;
+  patients=Array.isArray(data.patients)?data.patients.map(p=>({...p,name:firstName(p.name)})):[];
+  notes=String(data.notes||'');
+  updateAlert=data.updateAlert&&typeof data.updateAlert==='object'?{...data.updateAlert}:{active:false,message:'',updatedAt:0,kind:''};
+  els.notes.value=notes;
+  sync.revision=Number(data.revision||0);
+  sync.updatedAt=Number(data.updatedAt||0);
+  sync.ready=true;
+  sync.error='';
+  sync.localUpdatedAt=Date.now();
+  persistLocal(false);
+  render();
+  return true;
+}
+async function pullState(force=false){
+  if(sync.pulling||sync.pushing||sync.dirty)return false;
+  sync.pulling=true;
+  const versionAtStart=sync.localVersion;
+  const dateAtStart=selectedDate;
+  if(!sync.ready)setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ الاتصال تلقائيًا…');
+  try{
+    const res=await request(`${API}?date=${encodeURIComponent(dateAtStart)}&_=${Date.now()}`);
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    if(selectedDate!==dateAtStart)return false;
+    if(sync.dirty||sync.localVersion!==versionAtStart){scheduleAutomaticSync(150);return false}
+    if(data.exists){
+      const rev=Number(data.revision||0),updated=Number(data.updatedAt||0);
+      if(force||rev>sync.revision||updated>sync.updatedAt)applyRemote(data);
+    }else if(patients.length||notes||updateAlert.active){
+      sync.dirty=true;
+      sync.localUpdatedAt=Date.now();
+      persistLocal(true);
+      scheduleAutomaticSync(100);
+      return false;
+    }
+    sync.ready=true;
+    sync.error='';
+    sync.lastSync=Date.now();
+    if(!sync.dirty)setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+    return true;
+  }catch(e){
     sync.error=e.name==='AbortError'?'انتهت مهلة الاتصال':String(e.message||e);
     setBadge('error',lang==='en'?'Connection failed — retrying':'فشل الاتصال — ستتم إعادة المحاولة',sync.error);
+    return false;
   }finally{
     sync.pulling=false;
+    if(sync.dirty)scheduleAutomaticSync(100);
   }
 }
 function scheduleAutomaticSync(delay=POLL_MS){
@@ -295,8 +428,86 @@ function render(){
   renderTable();
   renderLive();
 }
-function openPatient(id=null){editingId=id;const p=id?patients.find(x=>String(x.id)===String(id)):null;$('patientModalTitle').textContent=p?'تعديل المريض':'إضافة مريض';$('fName').value=p?.name||'';$('fFile').value=p?.file||'';$('fStart').value=p?.start||'08:00';$('fEnd').value=p?.end||'08:30';$('fProcedure').value=p?.procedure||'';$('fStatus').value=p?.status||'waiting';openModal('patientModal')}
-function savePatient(){const item={id:editingId||Date.now(),name:firstName($('fName').value),file:$('fFile').value.trim(),start:$('fStart').value,end:$('fEnd').value,procedure:$('fProcedure').value.trim(),status:$('fStatus').value};if(!item.name||!item.start||!item.end||mins(item.end)<=mins(item.start)){toast('بيانات غير مكتملة','تحقق من الاسم وأوقات الموعد');return}mutate(()=>{const i=patients.findIndex(p=>String(p.id)===String(item.id));if(i>=0)patients[i]=item;else patients.push(item)});closeModal('patientModal')}
+function suggestedTimes(){
+  const sorted=patients.filter(p=>p.end).slice().sort((a,b)=>a.end.localeCompare(b.end));
+  if(sorted.length){
+    const start=sorted[sorted.length-1].end;
+    const total=Math.min(23*60+59,mins(start)+30);
+    return {start,end:`${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`};
+  }
+  const now=new Date();
+  const rounded=Math.ceil((now.getHours()*60+now.getMinutes())/15)*15;
+  const safe=Math.min(23*60,rounded);
+  const finish=Math.min(safe+30,23*60+59);
+  return {
+    start:`${String(Math.floor(safe/60)).padStart(2,'0')}:${String(safe%60).padStart(2,'0')}`,
+    end:`${String(Math.floor(finish/60)).padStart(2,'0')}:${String(finish%60).padStart(2,'0')}`
+  };
+}
+function resetPatientForm(focusName=false){
+  editingId=null;
+  const suggested=suggestedTimes();
+  $('patientFormTitle').textContent=lang==='en'?'Add new patient':'إضافة مريض جديد';
+  $('patientFormMode').textContent=lang==='en'?'Add':'إضافة';
+  $('patientFormCard').classList.remove('editing');
+  $('fName').value='';
+  $('fFile').value='';
+  $('fStart').value=suggested.start;
+  $('fEnd').value=suggested.end;
+  $('fProcedure').value='';
+  $('fStatus').value='waiting';
+  $('savePatientBtn').textContent=lang==='en'?'Save and add patient':'حفظ وإضافة المريض';
+  $('cancelEditBtn').hidden=true;
+  if(focusName){
+    $('patientFormCard').scrollIntoView({behavior:'smooth',block:'center'});
+    setTimeout(()=>$('fName').focus(),250);
+  }
+}
+function openPatient(id=null){
+  const p=id?patients.find(x=>String(x.id)===String(id)):null;
+  if(!p){resetPatientForm(true);return}
+  editingId=String(p.id);
+  $('patientFormTitle').textContent=lang==='en'?'Edit patient':'تعديل بيانات المريض';
+  $('patientFormMode').textContent=lang==='en'?'Editing':'تعديل';
+  $('patientFormCard').classList.add('editing');
+  $('fName').value=p.name||'';
+  $('fFile').value=p.file||'';
+  $('fStart').value=p.start||'08:00';
+  $('fEnd').value=p.end||'08:30';
+  $('fProcedure').value=p.procedure||'';
+  $('fStatus').value=p.status||'waiting';
+  $('savePatientBtn').textContent=lang==='en'?'Save changes':'حفظ التعديل';
+  $('cancelEditBtn').hidden=false;
+  $('patientFormCard').scrollIntoView({behavior:'smooth',block:'center'});
+  setTimeout(()=>$('fName').focus(),250);
+}
+function savePatient(){
+  const rawName=$('fName').value.trim();
+  const start=$('fStart').value,end=$('fEnd').value;
+  if(!rawName){toast('تعذر الحفظ','اكتب اسم المريض أولًا');$('fName').focus();return}
+  if(!start||!end||mins(end)<=mins(start)){toast('وقت غير صحيح','يجب أن يكون وقت النهاية بعد وقت البداية');$('fStart').focus();return}
+  const item={
+    id:editingId||(crypto.randomUUID?.()||`patient-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+    name:firstName(rawName),
+    file:$('fFile').value.trim(),
+    start,
+    end,
+    procedure:$('fProcedure').value.trim(),
+    status:$('fStatus').value
+  };
+  const wasEditing=Boolean(editingId);
+  mutate(()=>{
+    const i=patients.findIndex(p=>String(p.id)===String(item.id));
+    if(i>=0)patients[i]=item;else patients.push(item);
+    patients.sort((a,b)=>a.start.localeCompare(b.start));
+    if(item.status==='cancel')updateAlert={active:true,message:`تم إلغاء موعد للمريض ${firstName(item.name)} — يرجى مراجعة القائمة`,updatedAt:Date.now(),kind:'cancellation'};
+  });
+  $('patientFormCard').classList.remove('saved-flash');
+  void $('patientFormCard').offsetWidth;
+  $('patientFormCard').classList.add('saved-flash');
+  toast(wasEditing?'تم حفظ التعديل':'تمت إضافة المريض',`${firstName(item.name)} — ${item.start}`);
+  resetPatientForm(false);
+}
 function parseBulk(text){return String(text).split(/\r?\n/).map((line,i)=>{const p=line.split(/[,،	]/).map(x=>x.trim());if(p.length<4)return null;return{id:Date.now()+i,name:firstName(p[0]),file:p[1]||'',start:p[2],end:p[3],procedure:p.slice(4).join(' ')||'',status:'waiting'}}).filter(p=>p&&p.name&&/^\d{2}:\d{2}$/.test(p.start)&&/^\d{2}:\d{2}$/.test(p.end)&&mins(p.end)>mins(p.start))}
 function applyBulk(){const rows=parseBulk($('bulkText').value);if(!rows.length){toast('تعذر الحفظ','لم يتم العثور على صفوف صحيحة');return}mutate(()=>patients=rows);closeModal('bulkModal');toast('تم تحديث القائمة',`تم حفظ ${rows.length} مريض`)}
 function exportCsv(){const rows=[['الاسم','رقم الملف','البداية','النهاية','الإجراء','الحالة'],...patients.map(p=>[p.name,p.file,p.start,p.end,p.procedure,STATUS[p.status]])];const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`bestcare_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href)}
@@ -320,7 +531,22 @@ async function syncTest(){
 }
 function toggleAlert(){if(updateAlert.active){mutate(()=>updateAlert={active:false,message:'',updatedAt:Date.now(),kind:''});return;}const msg=prompt('اكتب ملاحظة مختصرة للطبيب:','يوجد تعديل جديد على قائمة المواعيد');if(msg===null)return;mutate(()=>updateAlert={active:true,message:msg||'يوجد تعديل جديد على قائمة المواعيد',updatedAt:Date.now(),kind:'manual'});}
 async function setDate(date){if(sync.dirty)await pushState();selectedDate=date||today();sync.revision=0;sync.updatedAt=0;sync.ready=false;sync.dirty=false;sync.localVersion=0;loadLocal(selectedDate);await pullState(true)}
-function applyLang(){document.documentElement.lang=lang;document.documentElement.dir=lang==='en'?'ltr':'rtl';document.body.classList.toggle('lang-en',lang==='en');$('langBtn').textContent=lang==='en'?'العربية':'English';render()}
+function applyLang(){
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==='en'?'ltr':'rtl';
+  document.body.classList.toggle('lang-en',lang==='en');
+  $('langBtn').textContent=lang==='en'?'العربية':'English';
+  if(editingId){
+    $('patientFormTitle').textContent=lang==='en'?'Edit patient':'تعديل بيانات المريض';
+    $('patientFormMode').textContent=lang==='en'?'Editing':'تعديل';
+    $('savePatientBtn').textContent=lang==='en'?'Save changes':'حفظ التعديل';
+  }else if($('patientFormTitle')){
+    $('patientFormTitle').textContent=lang==='en'?'Add new patient':'إضافة مريض جديد';
+    $('patientFormMode').textContent=lang==='en'?'Add':'إضافة';
+    $('savePatientBtn').textContent=lang==='en'?'Save and add patient':'حفظ وإضافة المريض';
+  }
+  render();
+}
 function toggleLang(){lang=lang==='ar'?'en':'ar';localStorage.setItem('bestcare_lang',lang);applyLang()}
 function updateClock(){
   const now=new Date();
@@ -331,11 +557,17 @@ function updateClock(){
   );
   renderLive();
 }
-$('addBtn').addEventListener('click',()=>openPatient());$('bulkBtn').addEventListener('click',()=>openModal('bulkModal'));$('savePatientBtn').addEventListener('click',savePatient);$('applyBulkBtn').addEventListener('click',applyBulk);$('settingsBtn').addEventListener('click',e=>{e.stopPropagation();els.settingsMenu.classList.toggle('open')});document.addEventListener('click',()=>els.settingsMenu.classList.remove('open'));$('importBtn').addEventListener('click',()=>els.csvInput.click());els.csvInput.addEventListener('change',e=>e.target.files[0]&&importCsv(e.target.files[0]));$('exportBtn').addEventListener('click',exportCsv);$('syncTestBtn').addEventListener('click',syncTest);$('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});$('alertBtn').addEventListener('click',toggleAlert);$('langBtn').addEventListener('click',toggleLang);$('screenBtn').addEventListener('click',()=>document.body.classList.add('screen-mode'));$('exitScreenBtn').addEventListener('click',()=>document.body.classList.remove('screen-mode'));els.search.addEventListener('input',render);els.filter.addEventListener('change',render);els.notes.addEventListener('input',()=>{notes=els.notes.value;markDirty()});els.datePicker.addEventListener('change',()=>setDate(els.datePicker.value));els.syncBadge.addEventListener('click',syncTest);els.patientRows.addEventListener('change',e=>{const id=e.target.dataset.statusId;if(!id)return;const status=e.target.value;mutate(()=>{const p=patients.find(x=>String(x.id)===String(id));if(p){p.status=status;if(status==='cancel')updateAlert={active:true,message:`تم إلغاء موعد للمريض ${firstName(p.name)} — يرجى مراجعة القائمة`,updatedAt:Date.now(),kind:'cancellation'}}})});els.patientRows.addEventListener('click',e=>{const edit=e.target.dataset.editId,del=e.target.dataset.deleteId;if(edit)openPatient(edit);if(del&&confirm('حذف هذا المريض؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)))});document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
+$('addBtn').addEventListener('click',()=>openPatient());
+$('bulkBtn').addEventListener('click',()=>openModal('bulkModal'));
+$('savePatientBtn').addEventListener('click',savePatient);
+$('resetPatientBtn').addEventListener('click',()=>resetPatientForm(true));
+$('cancelEditBtn').addEventListener('click',()=>resetPatientForm(false));
+$('patientFormCard').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.tagName!=='SELECT'){event.preventDefault();savePatient()}});$('applyBulkBtn').addEventListener('click',applyBulk);$('settingsBtn').addEventListener('click',e=>{e.stopPropagation();els.settingsMenu.classList.toggle('open')});document.addEventListener('click',()=>els.settingsMenu.classList.remove('open'));$('importBtn').addEventListener('click',()=>els.csvInput.click());els.csvInput.addEventListener('change',e=>e.target.files[0]&&importCsv(e.target.files[0]));$('exportBtn').addEventListener('click',exportCsv);$('syncTestBtn').addEventListener('click',syncTest);$('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});$('alertBtn').addEventListener('click',toggleAlert);$('langBtn').addEventListener('click',toggleLang);$('screenBtn').addEventListener('click',()=>document.body.classList.add('screen-mode'));$('exitScreenBtn').addEventListener('click',()=>document.body.classList.remove('screen-mode'));els.search.addEventListener('input',render);els.filter.addEventListener('change',render);els.notes.addEventListener('input',()=>{notes=els.notes.value;markDirty()});els.datePicker.addEventListener('change',()=>setDate(els.datePicker.value));els.syncBadge.addEventListener('click',syncTest);els.patientRows.addEventListener('change',e=>{const id=e.target.dataset.statusId;if(!id)return;const status=e.target.value;mutate(()=>{const p=patients.find(x=>String(x.id)===String(id));if(p){p.status=status;if(status==='cancel')updateAlert={active:true,message:`تم إلغاء موعد للمريض ${firstName(p.name)} — يرجى مراجعة القائمة`,updatedAt:Date.now(),kind:'cancellation'}}})});els.patientRows.addEventListener('click',e=>{const edit=e.target.dataset.editId,del=e.target.dataset.deleteId;if(edit)openPatient(edit);if(del&&confirm('حذف هذا المريض؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)))});document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
 selectedDate=new URLSearchParams(location.search).get('date')||today();
 els.datePicker.value=selectedDate;
 applyLang();
 loadLocal(selectedDate);
+resetPatientForm(false);
 updateClock();
 setInterval(updateClock,1000);
 
