@@ -13,6 +13,18 @@ function validDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value || "");
 }
 
+function normalizeUpdateAlert(value) {
+  if (!value || typeof value !== "object") {
+    return { active: false, message: "", updatedAt: 0, kind: "" };
+  }
+  return {
+    active: Boolean(value.active),
+    message: String(value.message || "").slice(0, 180),
+    updatedAt: Number(value.updatedAt || 0),
+    kind: String(value.kind || "").slice(0, 30),
+  };
+}
+
 export default async (request) => {
   const url = new URL(request.url);
   const date = url.searchParams.get("date");
@@ -23,15 +35,38 @@ export default async (request) => {
 
   if (request.method === "GET") {
     const state = await store.get(key, { type: "json", consistency: "strong" });
-    if (!state) return response({ exists: false, date, patients: [], notes: "", revision: 0, updatedAt: 0 });
-    return response({ exists: true, ...state });
+    if (!state) {
+      return response({
+        exists: false,
+        date,
+        patients: [],
+        notes: "",
+        updateAlert: { active: false, message: "", updatedAt: 0, kind: "" },
+        revision: 0,
+        updatedAt: 0,
+      });
+    }
+    return response({
+      exists: true,
+      ...state,
+      updateAlert: normalizeUpdateAlert(state.updateAlert),
+    });
   }
 
   if (request.method === "PUT" || request.method === "POST") {
     let body;
-    try { body = await request.json(); } catch { return response({ error: "Invalid JSON" }, 400); }
-    if (!Array.isArray(body.patients)) return response({ error: "patients must be an array" }, 400);
-    if (body.patients.length > 250) return response({ error: "Too many patients" }, 400);
+    try {
+      body = await request.json();
+    } catch {
+      return response({ error: "Invalid JSON" }, 400);
+    }
+
+    if (!Array.isArray(body.patients)) {
+      return response({ error: "patients must be an array" }, 400);
+    }
+    if (body.patients.length > 250) {
+      return response({ error: "Too many patients" }, 400);
+    }
 
     const existing = await store.get(key, { type: "json", consistency: "strong" });
     const state = {
@@ -43,16 +78,24 @@ export default async (request) => {
         start: String(p.start || "").slice(0, 8),
         end: String(p.end || "").slice(0, 8),
         procedure: String(p.procedure || "").slice(0, 160),
-        status: ["waiting", "active", "done", "late", "cancel"].includes(p.status) ? p.status : "waiting",
+        status: ["waiting", "active", "done", "late", "cancel"].includes(p.status)
+          ? p.status
+          : "waiting",
       })),
       notes: String(body.notes || "").slice(0, 5000),
+      updateAlert: normalizeUpdateAlert(body.updateAlert),
       clientId: String(body.clientId || "").slice(0, 100),
       revision: Number(existing?.revision || 0) + 1,
       updatedAt: Date.now(),
     };
 
     await store.setJSON(key, state);
-    return response({ ok: true, revision: state.revision, updatedAt: state.updatedAt });
+    return response({
+      ok: true,
+      revision: state.revision,
+      updatedAt: state.updatedAt,
+      updateAlert: state.updateAlert,
+    });
   }
 
   return response({ error: "Method not allowed" }, 405);
