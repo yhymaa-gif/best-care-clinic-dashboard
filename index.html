@@ -2325,7 +2325,7 @@ renderUpdateAlert();
 render();
 lastScheduleSignature=getScheduleState().signature;
 updateClock();
-setInterval(updateClock,1000);
+setLiveSyncState(   'syncing',   currentLanguage === 'en' ? '● Connecting...' : '● جارٍ الاتصال...' );  pullRemoteState(true)   .then(() => {     startRemoteLiveSync();      if (!remoteSyncReady) {       setLiveSyncState(         'offline',         currentLanguage === 'en'           ? '● Sync unavailable'           : '● تعذر المزامنة'       );     }   })   .catch((error) => {     console.error('Initial live sync failed', error);      startRemoteLiveSync();      setLiveSyncState(       'offline',       currentLanguage === 'en'         ? '● Sync unavailable'         : '● تعذر المزامنة'     );   });
 
 /* Start central Netlify synchronization after the page is ready. */
 setLiveSyncState('syncing',currentLanguage==='en'?'● Connecting...':'● جارٍ الاتصال...');
