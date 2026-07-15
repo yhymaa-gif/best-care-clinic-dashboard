@@ -47,6 +47,8 @@ body.lang-en .countdown,body.lang-en .hero .count,body.lang-en .mini-panel .coun
 
 .precision-note{margin-top:10px;padding:10px 12px;border:1px solid #cfe1e7;background:#f3fafb;border-radius:10px;color:#335d69;font-size:12px;line-height:1.7}
 .conf-high{background:#edf7f1!important}.conf-mid{background:#fff8e8!important}.conf-low{background:#fff0f1!important}
+
+.live-sync-badge{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:9px;border:1px solid #cfe2d5;background:#edf7f1;color:#2d7350;font-size:12px;font-weight:900}.live-sync-badge.syncing{background:#faf2df;color:#8a641c;border-color:#ead8b2}.live-sync-badge.offline{background:#faeeee;color:#99414c;border-color:#e8cfd3}.live-sync-badge.synced{background:#edf7f1;color:#2d7350;border-color:#cfe2d5}
 </style>
 </head>
 <body>
@@ -57,7 +59,7 @@ body.lang-en .countdown,body.lang-en .hero .count,body.lang-en .mini-panel .coun
       <p>عرض مباشر للمريض الحالي، الموعد القادم، والتقدم اليومي داخل العيادة</p>
 
       <div class="toolbar hide-screen">
-        <input id="dayPicker" type="date" onchange="switchDate()">
+        <input id="dayPicker" type="date" onchange="switchDate()"><span id="liveSyncBadge" class="live-sync-badge">● مزامنة مباشرة</span>
         <button class="primary" onclick="openDailyUpdate()">تحديث قائمة اليوم</button>
         <button onclick="document.getElementById('csvFile').click()">استيراد CSV</button>
         <input id="csvFile" type="file" accept=".csv" hidden onchange="importCSV(event)">
@@ -375,6 +377,21 @@ let alertFlags=JSON.parse(sessionStorage.getItem(ALERT_KEY)||'{}');
 let activeAnnouncedKey=null;
 let refreshTimer=null;
 
+const REMOTE_SYNC_ENDPOINT='/.netlify/functions/state';
+const REMOTE_POLL_MS=2000;
+const CLIENT_ID=sessionStorage.getItem('clinic_client_id') || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random());
+sessionStorage.setItem('clinic_client_id',CLIENT_ID);
+let remoteRevision=0;
+let remoteUpdatedAt=0;
+let remoteSyncReady=false;
+let applyingRemoteState=false;
+let remotePushTimer=null;
+let remotePollTimer=null;
+let remoteRequestInFlight=false;
+let sameDeviceChannel=null;
+try{sameDeviceChannel=new BroadcastChannel('clinic-dashboard-live-sync-v1')}catch(e){}
+
+
 function firstName(v){return String(v||'مريض').trim().split(/\s+/)[0]}
 function minutes(t){const [h,m]=String(t).split(':').map(Number);return h*60+m}
 function dayTime(t){const d=new Date();const [h,m]=String(t).split(':').map(Number);d.setHours(h,m,0,0);return d}
@@ -389,8 +406,16 @@ function statusText(s){
   return (labels[currentLanguage]||labels.ar)[s]||s;
 }
 function statusChipClass(s){return ({waiting:'waiting-chip',active:'active-chip',done:'done-chip',late:'late-chip',cancel:'cancel-chip'})[s]||'waiting-chip'}
-function saveData(){dataStore[selectedDate]=patients;localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore))}
-function saveNotes(){notesStore[selectedDate]=clinicNotes.value;localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore))}
+function saveData(){
+  dataStore[selectedDate]=patients;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore));
+  if(remoteSyncReady && !applyingRemoteState)scheduleRemotePush();
+}
+function saveNotes(){
+  notesStore[selectedDate]=clinicNotes.value;
+  localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore));
+  if(remoteSyncReady && !applyingRemoteState)scheduleRemotePush();
+}
 function loadNotes(){clinicNotes.value=notesStore[selectedDate]||''}
 function saveSettings(){
   settings.selectedDate=selectedDate;
@@ -403,7 +428,112 @@ function saveSettings(){
   buildScreenLink();
 }
 function loadPatients(){patients=(dataStore[selectedDate]||[]).map(p=>({...p,name:firstName(p.name)}))}
-function switchDate(){selectedDate=dayPicker.value||DEFAULT_DATE;loadPatients();loadNotes();saveSettings();render()}
+async function switchDate(){
+  selectedDate=dayPicker.value||DEFAULT_DATE;
+  remoteRevision=0;
+  remoteUpdatedAt=0;
+  remoteSyncReady=false;
+  loadPatients();
+  loadNotes();
+  saveSettings();
+  render();
+  await pullRemoteState(true);
+}
+
+function setLiveSyncState(mode,text){
+  const el=document.getElementById('liveSyncBadge');
+  if(!el)return;
+  el.classList.remove('syncing','offline','synced');
+  el.classList.add(mode);
+  el.textContent=text;
+}
+function scheduleRemotePush(){
+  clearTimeout(remotePushTimer);
+  setLiveSyncState('syncing',currentLanguage==='en'?'● Saving...':'● جارٍ الحفظ...');
+  remotePushTimer=setTimeout(pushRemoteState,350);
+}
+async function pushRemoteState(){
+  if(!remoteSyncReady || applyingRemoteState)return;
+  try{
+    const payload={
+      date:selectedDate,
+      patients:patients.map(p=>({...p})),
+      notes:notesStore[selectedDate]||'',
+      clientId:CLIENT_ID,
+      clientUpdatedAt:Date.now()
+    };
+    const res=await fetch(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate),{
+      method:'PUT',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify(payload),
+      cache:'no-store'
+    });
+    if(!res.ok)throw new Error('Sync write failed '+res.status);
+    const saved=await res.json();
+    remoteRevision=Number(saved.revision||remoteRevision);
+    remoteUpdatedAt=Number(saved.updatedAt||Date.now());
+    setLiveSyncState('synced',currentLanguage==='en'?'● Live synced':'● مزامنة مباشرة');
+    if(sameDeviceChannel)sameDeviceChannel.postMessage({date:selectedDate,revision:remoteRevision,updatedAt:remoteUpdatedAt});
+  }catch(err){
+    console.error(err);
+    setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
+  }
+}
+async function pullRemoteState(force=false){
+  if(remoteRequestInFlight)return;
+  remoteRequestInFlight=true;
+  try{
+    const res=await fetch(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate)+'&_='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('Sync read failed '+res.status);
+    const state=await res.json();
+    if(!state.exists){
+      remoteSyncReady=true;
+      setLiveSyncState('synced',currentLanguage==='en'?'● Live synced':'● مزامنة مباشرة');
+      if(patients.length || (notesStore[selectedDate]||''))scheduleRemotePush();
+      return;
+    }
+    const incomingRevision=Number(state.revision||0);
+    const incomingUpdatedAt=Number(state.updatedAt||0);
+    const shouldApply=force || incomingRevision>remoteRevision || incomingUpdatedAt>remoteUpdatedAt;
+    if(shouldApply && state.clientId!==CLIENT_ID){
+      applyingRemoteState=true;
+      patients=Array.isArray(state.patients)?state.patients.map(p=>({...p,name:firstName(p.name)})):[];
+      dataStore[selectedDate]=patients;
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore));
+      notesStore[selectedDate]=state.notes||'';
+      localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore));
+      clinicNotes.value=notesStore[selectedDate];
+      remoteRevision=incomingRevision;
+      remoteUpdatedAt=incomingUpdatedAt;
+      render();
+      applyingRemoteState=false;
+    }else{
+      remoteRevision=Math.max(remoteRevision,incomingRevision);
+      remoteUpdatedAt=Math.max(remoteUpdatedAt,incomingUpdatedAt);
+    }
+    remoteSyncReady=true;
+    setLiveSyncState('synced',currentLanguage==='en'?'● Live synced':'● مزامنة مباشرة');
+  }catch(err){
+    console.error(err);
+    remoteSyncReady=false;
+    setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
+  }finally{
+    remoteRequestInFlight=false;
+  }
+}
+function startRemoteLiveSync(){
+  clearInterval(remotePollTimer);
+  remotePollTimer=setInterval(()=>pullRemoteState(false),REMOTE_POLL_MS);
+  if(sameDeviceChannel){
+    sameDeviceChannel.onmessage=(event)=>{
+      const msg=event.data||{};
+      if(msg.date===selectedDate && Number(msg.revision||0)>remoteRevision)pullRemoteState(false);
+    };
+  }
+  window.addEventListener('focus',()=>pullRemoteState(false));
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullRemoteState(false)});
+}
+
 function autoStatus(p){
   if(['done','cancel'].includes(p.status)) return p.status;
   const now=new Date(), st=dayTime(p.start), en=dayTime(p.end);
@@ -1507,16 +1637,21 @@ patientModal.addEventListener('click',e=>{if(e.target===patientModal) closeModal
 ocrModal.addEventListener('click',e=>{if(e.target===ocrModal) closeOCRModal()});
 setupOCRDrop();
 
-initOCRDropZone();
-applyQueryParams();
-loadPatients();
-loadNotes();
-initInputs();
-translateStaticText();
-render();
-lastScheduleSignature=getScheduleState().signature;
-updateClock();
-setInterval(updateClock,1000);
+async function initializeDashboard(){
+  initOCRDropZone();
+  applyQueryParams();
+  loadPatients();
+  loadNotes();
+  initInputs();
+  translateStaticText();
+  render();
+  lastScheduleSignature=getScheduleState().signature;
+  updateClock();
+  setInterval(updateClock,1000);
+  await pullRemoteState(true);
+  startRemoteLiveSync();
+}
+initializeDashboard();
 </script>
 </body>
 </html>
