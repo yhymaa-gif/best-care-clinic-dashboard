@@ -486,6 +486,15 @@ body.lang-en .header,body.lang-en .hero,body.lang-en .mini-panel{border-left-wid
   50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(47,158,102,.16)}
 }
 
+
+.live-sync-badge{
+  cursor:pointer;
+  min-height:39px;
+}
+.live-sync-badge.syncing{background:#fff6dc;color:#806018;border-color:#ead79b}
+.live-sync-badge.synced{background:#e9f7ef;color:#246c49;border-color:#bddfc9}
+.live-sync-badge.offline{background:#fdebed;color:#a12c3b;border-color:#ebbdc3}
+
 </style>
 </head>
 <body>
@@ -508,7 +517,7 @@ body.lang-en .header,body.lang-en .hero,body.lang-en .mini-panel{border-left-wid
 
       <div class="header-actions hide-screen">
         <input id="dayPicker" type="date" onchange="switchDate()">
-        <span id="liveSyncBadge" class="live-sync-badge" title="تتحدث البيانات تلقائيًا بين الأجهزة والنوافذ">● المزامنة المباشرة مفعلة</span>
+        <button id="liveSyncBadge" class="live-sync-badge" type="button" onclick="pullRemoteState(true)" title="اضغط للتحقق من المزامنة الآن">● جارٍ الاتصال...</button>
         <button class="primary" onclick="openDailyUpdate()">تحديث قائمة اليوم</button>
         <button class="primary" id="ocrOpenButton" onclick="openOCRModal()">استخراج من صورة</button>
         <button class="dark" onclick="toggleScreenMode()">وضع الشاشة</button>
@@ -2270,6 +2279,7 @@ function applyOCRRowsToDashboard(){
   const valid=validOCRRows();
   if(!valid.length){showToast(ocrMsg('لا توجد قائمة صالحة','No valid list'),ocrMsg('راجع الأسماء والأوقات أولاً','Review names and times first'));return}
   patients=valid.map((r,i)=>({id:Date.now()+i,name:firstName(r.name),file:String(r.file||''),start:r.start,end:r.end,procedure:r.procedure||'',status:'waiting'}));
+  saveData();
   render();closeOCRModal();showToast(ocrMsg('تم اعتماد القائمة','List applied'),ocrMsg(`تم عرض ${patients.length} مريضًا`,` ${patients.length} patients are now displayed`));
 }
 function downloadOCRCSV(){
@@ -2316,6 +2326,21 @@ render();
 lastScheduleSignature=getScheduleState().signature;
 updateClock();
 setInterval(updateClock,1000);
+
+/* Start central Netlify synchronization after the page is ready. */
+setLiveSyncState('syncing',currentLanguage==='en'?'● Connecting...':'● جارٍ الاتصال...');
+pullRemoteState(true)
+  .then(()=>{
+    startRemoteLiveSync();
+    if(!remoteSyncReady){
+      setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
+    }
+  })
+  .catch((err)=>{
+    console.error('Initial live sync failed',err);
+    startRemoteLiveSync();
+    setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
+  });
 </script>
 </body>
 </html>
