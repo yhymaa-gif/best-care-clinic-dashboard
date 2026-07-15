@@ -1,6 +1,9 @@
 import { getStore } from "@netlify/blobs";
 
 const jsonHeaders = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET,PUT,POST,OPTIONS",
+  "access-control-allow-headers": "content-type",
   "content-type": "application/json; charset=utf-8",
   "cache-control": "no-store, no-cache, must-revalidate",
 };
@@ -26,6 +29,9 @@ function normalizeUpdateAlert(value) {
 }
 
 export default async (request) => {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: jsonHeaders });
+  }
   const url = new URL(request.url);
   const date = url.searchParams.get("date");
   if (!validDate(date)) return response({ error: "Invalid date" }, 400);
@@ -38,6 +44,7 @@ export default async (request) => {
     if (!state) {
       return response({
         exists: false,
+        server: "best-care-sync-v2",
         date,
         patients: [],
         notes: "",
