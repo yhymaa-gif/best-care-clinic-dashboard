@@ -517,7 +517,7 @@ body.lang-en .header,body.lang-en .hero,body.lang-en .mini-panel{border-left-wid
 
       <div class="header-actions hide-screen">
         <input id="dayPicker" type="date" onchange="switchDate()">
-        <button id="liveSyncBadge" class="live-sync-badge" type="button" onclick="pullRemoteState(true)" title="اضغط للتحقق من المزامنة الآن">● جارٍ الاتصال...</button>
+        <button id="liveSyncBadge" class="live-sync-badge" type="button" onclick="remoteRequestInFlight=false;setLiveSyncState('syncing',currentLanguage==='en'?'● Connecting...':'● جارٍ الاتصال...');pullRemoteState(true)" title="اضغط للتحقق من المزامنة الآن">● جارٍ الاتصال...</button>
         <button class="primary" onclick="openDailyUpdate()">تحديث قائمة اليوم</button>
         <button class="primary" id="ocrOpenButton" onclick="openOCRModal()">استخراج من صورة</button>
         <button class="dark" onclick="toggleScreenMode()">وضع الشاشة</button>
@@ -872,7 +872,7 @@ let lastSeenUpdateAlertAt=Number(sessionStorage.getItem('clinic_last_seen_update
 let activeAnnouncedKey=null;
 let refreshTimer=null;
 
-const REMOTE_SYNC_ENDPOINT='/.netlify/functions/state';
+const REMOTE_SYNC_ENDPOINT='/api/state';
 const REMOTE_POLL_MS=2000;
 const CLIENT_ID=sessionStorage.getItem('clinic_tab_client_id')||(()=>{
   const id=(crypto.randomUUID?crypto.randomUUID():'tab-'+Date.now()+'-'+Math.random().toString(36).slice(2));
@@ -1066,6 +1066,17 @@ function scheduleRemotePush(){
   setLiveSyncState('syncing',currentLanguage==='en'?'● Saving...':'● جارٍ الحفظ...');
   remotePushTimer=setTimeout(pushRemoteState,350);
 }
+
+async function fetchWithTimeout(url,options={},timeoutMs=10000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    return await fetch(url,{...options,signal:controller.signal});
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 async function pushRemoteState(){
   if(!remoteSyncReady || applyingRemoteState)return;
   try{
@@ -1077,12 +1088,12 @@ async function pushRemoteState(){
       clientId:CLIENT_ID,
       clientUpdatedAt:Date.now()
     };
-    const res=await fetch(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate),{
+    const res=await fetchWithTimeout(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate),{
       method:'PUT',
-      headers:{'content-type':'application/json'},
+      headers:{'content-type':'application/json','accept':'application/json'},
       body:JSON.stringify(payload),
       cache:'no-store'
-    });
+    },10000);
     if(!res.ok)throw new Error('Sync write failed '+res.status);
     const saved=await res.json();
     remoteRevision=Number(saved.revision||remoteRevision);
@@ -1098,7 +1109,7 @@ async function pullRemoteState(force=false){
   if(remoteRequestInFlight)return;
   remoteRequestInFlight=true;
   try{
-    const res=await fetch(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate)+'&_='+Date.now(),{cache:'no-store'});
+    const res=await fetchWithTimeout(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate)+'&_='+Date.now(),{cache:'no-store'},10000);
     if(!res.ok)throw new Error('Sync read failed '+res.status);
     const state=await res.json();
     if(!state.exists){
@@ -2325,22 +2336,27 @@ renderUpdateAlert();
 render();
 lastScheduleSignature=getScheduleState().signature;
 updateClock();
-setLiveSyncState(   'syncing',   currentLanguage === 'en' ? '● Connecting...' : '● جارٍ الاتصال...' );  pullRemoteState(true)   .then(() => {     startRemoteLiveSync();      if (!remoteSyncReady) {       setLiveSyncState(         'offline',         currentLanguage === 'en'           ? '● Sync unavailable'           : '● تعذر المزامنة'       );     }   })   .catch((error) => {     console.error('Initial live sync failed', error);      startRemoteLiveSync();      setLiveSyncState(       'offline',       currentLanguage === 'en'         ? '● Sync unavailable'         : '● تعذر المزامنة'     );   });
+setInterval(updateClock,1000);
 
-/* Start central Netlify synchronization after the page is ready. */
+/* Reliable live synchronization bootstrap */
 setLiveSyncState('syncing',currentLanguage==='en'?'● Connecting...':'● جارٍ الاتصال...');
-pullRemoteState(true)
-  .then(()=>{
-    startRemoteLiveSync();
-    if(!remoteSyncReady){
-      setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
+startRemoteLiveSync();
+
+(async()=>{
+  try{
+    await pullRemoteState(true);
+    if(remoteSyncReady){
+      setLiveSyncState('synced',currentLanguage==='en'?'● Live sync active':'● المزامنة المباشرة مفعلة');
+    }else{
+      throw new Error('Remote sync did not become ready');
     }
-  })
-  .catch((err)=>{
-    console.error('Initial live sync failed',err);
-    startRemoteLiveSync();
-    setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
-  });
+  }catch(error){
+    console.error('Initial live sync failed',error);
+    remoteRequestInFlight=false;
+    setLiveSyncState('offline',currentLanguage==='en'?'● Tap to retry':'● اضغط لإعادة المحاولة');
+  }
+})();
+
 </script>
 </body>
 </html>
