@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>لوحة شاشة استقبال العيادة</title>
 <style>
-:root{--bg:#f3f6f9;--surface:#fff;--surface-soft:#f8fafc;--line:#d7e0e8;--text:#203040;--muted:#68798a;--navy:#1f4b66;--navy-2:#2f607d;--teal:#2d8f91;--green:#3b8f63;--amber:#b8872d;--red:#b7525d;--blue:#537fb7;--shadow:0 8px 24px rgba(34,52,68,.08)}
+:root{--bg:#f4f8f6;--surface:#fff;--surface-soft:#f8fbfa;--line:#dbe6e1;--text:#20352d;--muted:#6b7d75;--navy:#245166;--navy-2:#386a7d;--teal:#2f918a;--green:#2f9e66;--amber:#d7ad32;--orange:#e57c25;--red:#d94b55;--blue:#5b86ba;--active-green:#238b57;--active-green-bg:#eaf8ef;--active-yellow:#9b7713;--active-yellow-bg:#fff8d9;--active-orange:#b85a13;--active-orange-bg:#fff0df;--active-red:#b52f3c;--active-red-bg:#ffe8ea;--shadow:0 8px 24px rgba(35,70,55,.07)}
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:"Tajawal","Segoe UI",Tahoma,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,#f7f9fb 0%,var(--bg) 100%)}
 .wrapper{max-width:1880px;margin:auto;padding:14px}.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
 .header{padding:18px 22px;display:grid;grid-template-columns:1.15fr auto auto;gap:18px;align-items:center;border-top:5px solid var(--navy)}
@@ -49,42 +49,498 @@ body.lang-en .countdown,body.lang-en .hero .count,body.lang-en .mini-panel .coun
 .conf-high{background:#edf7f1!important}.conf-mid{background:#fff8e8!important}.conf-low{background:#fff0f1!important}
 
 .live-sync-badge{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:9px;border:1px solid #cfe2d5;background:#edf7f1;color:#2d7350;font-size:12px;font-weight:900}.live-sync-badge.syncing{background:#faf2df;color:#8a641c;border-color:#ead8b2}.live-sync-badge.offline{background:#faeeee;color:#99414c;border-color:#e8cfd3}.live-sync-badge.synced{background:#edf7f1;color:#2d7350;border-color:#cfe2d5}
+
+/* Clean desktop presentation + four-stage appointment colors */
+body{background:linear-gradient(180deg,#fbfdfc 0%,#f1f6f3 100%)}
+.wrapper{max-width:1760px;padding:18px}
+.card{border-radius:18px;box-shadow:0 7px 22px rgba(34,75,57,.065)}
+.header{grid-template-columns:minmax(0,1fr) auto;border-top:0;border-right:6px solid var(--teal);padding:18px 22px}
+.pill{display:none}
+.brand h1{font-size:clamp(25px,2.45vw,36px)}
+.toolbar{gap:7px;margin-top:13px}
+.toolbar button,.toolbar input{min-height:40px}
+.stats{gap:12px;margin:14px 0}.stat{padding:13px 15px;border-radius:15px}.stat .value{font-size:28px}
+.screen-grid{grid-template-columns:minmax(0,1.55fr) minmax(315px,.72fr);gap:14px;margin-bottom:14px}
+.screen-grid>.mini-panel:nth-child(3){display:none}
+.hero{min-height:270px;border-top:0;border-right:7px solid var(--navy);padding:24px 28px;transition:background .45s ease,border-color .45s ease,box-shadow .45s ease}
+.hero .tag{border-radius:999px}.hero .name{font-size:clamp(42px,4.2vw,72px)}.hero .count{font-size:clamp(48px,4.5vw,78px)}
+.hero.active.green-stage{background:var(--active-green-bg);border-right-color:var(--active-green);box-shadow:0 10px 30px rgba(35,139,87,.13)}
+.hero.active.yellow-stage{background:var(--active-yellow-bg);border-right-color:var(--amber);box-shadow:0 10px 30px rgba(215,173,50,.14)}
+.hero.active.orange-stage{background:var(--active-orange-bg);border-right-color:var(--orange);box-shadow:0 10px 30px rgba(229,124,37,.14)}
+.hero.active.red-stage{background:var(--active-red-bg);border-right-color:var(--red);box-shadow:0 10px 30px rgba(217,75,85,.15)}
+.hero.active.green-stage .name,.hero.active.green-stage .count{color:var(--active-green)}
+.hero.active.yellow-stage .name,.hero.active.yellow-stage .count{color:var(--active-yellow)}
+.hero.active.orange-stage .name,.hero.active.orange-stage .count{color:var(--active-orange)}
+.hero.active.red-stage .name,.hero.active.red-stage .count{color:var(--active-red)}
+.mini-panel{min-height:270px;padding:24px;border-top:0;border-right:5px solid var(--teal);background:#fbfefd}
+.ticker{display:none}
+.main{grid-template-columns:minmax(0,1fr) 330px;gap:14px}.section-title{background:#fbfdfc}.box{border-radius:16px}
+th{background:#f1f6f4}td{padding:12px 10px}
+tr.current.current-green{background:var(--active-green-bg);box-shadow:inset -5px 0 0 var(--active-green)}
+tr.current.current-yellow{background:var(--active-yellow-bg);box-shadow:inset -5px 0 0 var(--amber)}
+tr.current.current-orange{background:var(--active-orange-bg);box-shadow:inset -5px 0 0 var(--orange)}
+tr.current.current-red{background:var(--active-red-bg);box-shadow:inset -5px 0 0 var(--red)}
+tr.current.current-green .patient{color:var(--active-green)}
+tr.current.current-yellow .patient{color:var(--active-yellow)}
+tr.current.current-orange .patient{color:var(--active-orange)}
+tr.current.current-red .patient{color:var(--active-red)}
+.active-green-chip{background:#e7f6ed;color:#25784f;border-color:#c9e6d5}
+.active-yellow-chip{background:#fff7d7;color:#896811;border-color:#eadb9e}
+.active-orange-chip{background:#ffeedc;color:#a65314;border-color:#efcfac}
+.active-red-chip{background:#ffe5e8;color:#a72f3a;border-color:#efc1c7}
+.timeline-item.current.green .dot{background:var(--active-green);box-shadow:0 0 0 5px #e7f6ed}
+.timeline-item.current.yellow .dot{background:var(--amber);box-shadow:0 0 0 5px #fff7d7}
+.timeline-item.current.orange .dot{background:var(--orange);box-shadow:0 0 0 5px #ffeedc}
+.timeline-item.current.red .dot{background:var(--red);box-shadow:0 0 0 5px #ffe5e8}
+.exit-fullscreen-btn{display:none;position:fixed;left:22px;bottom:22px;z-index:300;border:0;border-radius:14px;padding:13px 18px;background:#173f36;color:#fff;font-weight:900;box-shadow:0 10px 28px rgba(0,0,0,.22);cursor:pointer}
+.screen-mode .exit-fullscreen-btn{display:block}
+.screen-mode .wrapper{padding:10px}.screen-mode .header{border-right-width:7px}.screen-mode .hero{min-height:310px}.screen-mode .hero .name{font-size:82px}.screen-mode .hero .count{font-size:86px}.screen-mode .main{grid-template-columns:minmax(0,1fr) 310px}.screen-mode .screen-grid{grid-template-columns:minmax(0,1.65fr) minmax(310px,.7fr)}
+body.lang-en .header,body.lang-en .hero,body.lang-en .mini-panel{border-right-width:1px;border-left:6px solid var(--teal)}
+body.lang-en .hero.active.green-stage{border-left-color:var(--active-green)}body.lang-en .hero.active.yellow-stage{border-left-color:var(--amber)}body.lang-en .hero.active.orange-stage{border-left-color:var(--orange)}body.lang-en .hero.active.red-stage{border-left-color:var(--red)}
+@media(max-width:1280px){.screen-grid{grid-template-columns:1fr}.main{grid-template-columns:1fr}.screen-grid>.mini-panel:nth-child(3){display:none}}
+
+
+/* Header refinement, clinic logo, settings dropdown, and full-card color effects */
+.header{
+  position:relative;
+  grid-template-columns:minmax(0,1fr) auto;
+  padding:15px 18px;
+  border-right:0;
+  overflow:visible;
+}
+.header-main{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  min-width:0;
+}
+.clinic-logo{
+  width:76px;
+  height:76px;
+  flex:0 0 76px;
+  border-radius:20px;
+  background:linear-gradient(145deg,#1c9b72,#247c64);
+  box-shadow:0 12px 26px rgba(32,132,99,.22);
+  display:grid;
+  place-items:center;
+  position:relative;
+  overflow:hidden;
+}
+.clinic-logo:before{
+  content:"";
+  position:absolute;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  border:2px solid rgba(255,255,255,.22);
+}
+.clinic-logo svg{width:53px;height:53px;position:relative;z-index:1}
+.clinic-brand-copy{min-width:0}
+.clinic-name{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.clinic-name strong{font-size:22px;color:#176348;font-weight:900}
+.clinic-name span{font-size:12px;color:var(--muted);font-weight:800;letter-spacing:.3px}
+.brand h1{font-size:clamp(22px,2vw,31px);margin-top:2px}
+.brand p{font-size:13px;margin-top:4px}
+.header-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:11px;
+}
+.header-actions button,.header-actions input{min-height:39px}
+.settings-wrap{position:relative}
+.settings-button{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  background:#f3f8f5;
+  color:#245745;
+  border-color:#d6e6de;
+}
+.settings-menu{
+  position:absolute;
+  top:calc(100% + 9px);
+  left:0;
+  z-index:500;
+  width:245px;
+  padding:9px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:15px;
+  box-shadow:0 18px 45px rgba(32,64,50,.18);
+  display:none;
+}
+.settings-menu.open{display:block;animation:settingsIn .16s ease}
+.settings-menu button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:9px;
+  margin:3px 0;
+  border:0;
+  background:transparent;
+  text-align:right;
+  min-height:42px;
+}
+.settings-menu button:hover{background:#f2f8f5}
+.settings-menu .danger-setting{color:#a23d47}
+.settings-divider{height:1px;background:#e9efec;margin:6px 4px}
+@keyframes settingsIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+
+.live-clock{
+  min-width:235px;
+  padding:10px 14px;
+  border-radius:14px;
+  background:linear-gradient(180deg,#fbfefd,#f4faf7);
+  border:1px solid #dce9e3;
+}
+.live-clock .time{font-size:34px;color:#1f5f49}
+.live-clock .date{font-size:13px}
+
+/* Full-card appointment colors */
+.hero{
+  overflow:hidden;
+  isolation:isolate;
+  border-right:0;
+  border:1px solid transparent;
+}
+.hero:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transition:opacity .35s ease;
+  z-index:-2;
+}
+.hero:after{
+  content:"";
+  position:absolute;
+  width:260px;
+  height:260px;
+  border-radius:50%;
+  left:-90px;
+  bottom:-120px;
+  opacity:0;
+  filter:blur(2px);
+  z-index:-1;
+  transition:opacity .35s ease,transform .35s ease;
+}
+.hero.active.green-stage{
+  background:linear-gradient(135deg,#e4f8eb 0%,#f4fff8 56%,#d8f2e3 100%);
+  border-color:#abd9bd;
+  box-shadow:0 16px 40px rgba(35,139,87,.19),inset 0 0 0 1px rgba(255,255,255,.72);
+}
+.hero.active.green-stage:before{opacity:1;background:linear-gradient(110deg,rgba(35,139,87,.08),transparent 55%)}
+.hero.active.green-stage:after{opacity:1;background:rgba(35,139,87,.13);transform:scale(1.05)}
+.hero.active.yellow-stage{
+  background:linear-gradient(135deg,#fff5bf 0%,#fffdf0 55%,#f9e79c 100%);
+  border-color:#e5ca6b;
+  box-shadow:0 16px 40px rgba(201,155,25,.20),inset 0 0 0 1px rgba(255,255,255,.7);
+}
+.hero.active.yellow-stage:before{opacity:1;background:linear-gradient(110deg,rgba(215,173,50,.11),transparent 55%)}
+.hero.active.yellow-stage:after{opacity:1;background:rgba(215,173,50,.17);transform:scale(1.08)}
+.hero.active.orange-stage{
+  background:linear-gradient(135deg,#ffe2bd 0%,#fff8ef 55%,#ffc989 100%);
+  border-color:#eaa562;
+  box-shadow:0 17px 42px rgba(229,124,37,.23),inset 0 0 0 1px rgba(255,255,255,.68);
+}
+.hero.active.orange-stage:before{opacity:1;background:linear-gradient(110deg,rgba(229,124,37,.13),transparent 55%)}
+.hero.active.orange-stage:after{opacity:1;background:rgba(229,124,37,.19);transform:scale(1.12)}
+.hero.active.red-stage{
+  background:linear-gradient(135deg,#ffd6da 0%,#fff2f3 54%,#ffadb5 100%);
+  border-color:#e07882;
+  box-shadow:0 18px 44px rgba(217,75,85,.25),0 0 0 4px rgba(217,75,85,.07);
+  animation:redAttention 1.8s ease-in-out infinite;
+}
+.hero.active.red-stage:before{opacity:1;background:linear-gradient(110deg,rgba(217,75,85,.14),transparent 55%)}
+.hero.active.red-stage:after{opacity:1;background:rgba(217,75,85,.20);transform:scale(1.16)}
+@keyframes redAttention{
+  0%,100%{transform:translateY(0);box-shadow:0 18px 44px rgba(217,75,85,.23),0 0 0 4px rgba(217,75,85,.06)}
+  50%{transform:translateY(-2px);box-shadow:0 21px 48px rgba(217,75,85,.30),0 0 0 7px rgba(217,75,85,.08)}
+}
+.hero .tag{
+  background:rgba(255,255,255,.62);
+  backdrop-filter:blur(8px);
+  border-color:rgba(255,255,255,.8);
+}
+.hero .meta,.hero .hint{color:#3f5a4d}
+.hero.active .count{letter-spacing:2px}
+
+.mini-panel{
+  background:linear-gradient(145deg,#ffffff,#f5fbf8);
+  border:1px solid #dce9e3;
+  border-right:0;
+  box-shadow:0 10px 28px rgba(47,145,138,.08);
+}
+.stat{
+  border-right:0;
+  border-top:4px solid #d9e3ea;
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+.stat:hover{transform:translateY(-2px);box-shadow:0 11px 27px rgba(36,81,102,.10)}
+.stat:nth-child(1){border-top-color:var(--navy)}
+.stat:nth-child(2){border-top-color:var(--green)}
+.stat:nth-child(3){border-top-color:var(--amber)}
+.stat:nth-child(4){border-top-color:var(--blue)}
+.stat:nth-child(5){border-top-color:var(--red)}
+.stat:nth-child(6){border-top-color:var(--teal)}
+
+body.lang-en .settings-menu{left:auto;right:0}
+body.lang-en .settings-menu button{text-align:left}
+body.lang-en .header,body.lang-en .hero,body.lang-en .mini-panel{border-left-width:1px}
+
+@media(max-width:900px){
+  .header{grid-template-columns:1fr}
+  .header-main{align-items:flex-start}
+  .live-clock{width:100%}
+  .header-actions{justify-content:flex-start}
+}
+
+
+/* Shared reception-to-doctor update alert */
+.update-alert-button{
+  position:relative;
+  min-width:118px;
+  min-height:48px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border-radius:14px;
+  background:#f4f7f6;
+  color:#52645d;
+  border:1px solid #dce6e1;
+  font-weight:900;
+  transition:.22s ease;
+}
+.update-alert-button .alert-icon{font-size:20px;line-height:1}
+.update-alert-button .alert-dot{
+  position:absolute;
+  top:7px;
+  left:8px;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#aebbb5;
+}
+.update-alert-button.active{
+  color:#fff;
+  background:linear-gradient(135deg,#d92f43,#b9182e);
+  border-color:#a91025;
+  box-shadow:0 0 0 5px rgba(217,47,67,.11),0 12px 28px rgba(185,24,46,.28);
+  animation:updateAlertPulse 1.25s ease-in-out infinite;
+}
+.update-alert-button.active .alert-dot{
+  background:#fff;
+  box-shadow:0 0 0 5px rgba(255,255,255,.20);
+}
+@keyframes updateAlertPulse{
+  0%,100%{transform:scale(1);filter:brightness(1)}
+  50%{transform:scale(1.035);filter:brightness(1.13)}
+}
+.update-alert-banner{
+  display:none;
+  margin-top:10px;
+  min-height:58px;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 18px;
+  border-radius:14px;
+  color:#fff;
+  background:linear-gradient(110deg,#a90f25,#df3046,#a90f25);
+  background-size:220% 100%;
+  border:1px solid #9d0d20;
+  box-shadow:0 14px 32px rgba(185,24,46,.24);
+  font-size:17px;
+  font-weight:900;
+  text-align:center;
+  animation:updateAlertSweep 2.8s linear infinite;
+}
+.update-alert-banner.show{display:flex}
+.update-alert-banner .banner-icon{font-size:24px}
+.update-alert-banner small{
+  display:block;
+  margin-top:3px;
+  font-size:11px;
+  font-weight:700;
+  opacity:.88;
+}
+@keyframes updateAlertSweep{
+  from{background-position:0 0}
+  to{background-position:220% 0}
+}
+.screen-mode .update-alert-button{
+  min-width:145px;
+  min-height:57px;
+  font-size:16px;
+}
+.screen-mode .update-alert-banner{
+  display:none;
+}
+.screen-mode .update-alert-banner.show{
+  display:flex;
+  position:sticky;
+  top:8px;
+  z-index:90;
+  min-height:72px;
+  font-size:22px;
+  border-radius:16px;
+}
+@media(max-width:760px){
+  .update-alert-button{min-width:105px}
+  .update-alert-banner{font-size:14px}
+}
+
+
+.clinic-logo.uploaded-logo{
+  width:92px;
+  height:92px;
+  flex-basis:92px;
+  background:#fff;
+  border:1px solid #dbe6e1;
+  box-shadow:0 12px 30px rgba(29,94,68,.15);
+  padding:7px;
+}
+.clinic-logo.uploaded-logo:before{display:none}
+.clinic-logo.uploaded-logo img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+  border-radius:13px;
+}
+.update-alert-button.active{
+  background:linear-gradient(135deg,#ff273f,#b1001d);
+  border-color:#900017;
+  box-shadow:0 0 0 7px rgba(224,0,35,.13),0 16px 34px rgba(160,0,25,.38);
+  animation:updateAlertPulseStrong .9s ease-in-out infinite;
+}
+.update-alert-button.active .alert-icon{
+  animation:alertBellShake .65s ease-in-out infinite;
+  transform-origin:50% 15%;
+}
+.update-alert-button.active .alert-dot{
+  width:12px;
+  height:12px;
+  top:5px;
+  left:6px;
+  background:#fff;
+  box-shadow:0 0 0 6px rgba(255,255,255,.22),0 0 18px rgba(255,255,255,.9);
+}
+@keyframes updateAlertPulseStrong{
+  0%,100%{transform:scale(1);filter:brightness(1)}
+  50%{transform:scale(1.065);filter:brightness(1.2)}
+}
+@keyframes alertBellShake{
+  0%,100%{transform:rotate(0)}
+  25%{transform:rotate(-14deg)}
+  75%{transform:rotate(14deg)}
+}
+.cancel-alert-banner{
+  display:none;
+  margin-top:10px;
+  padding:14px 18px;
+  border-radius:15px;
+  color:#fff;
+  background:linear-gradient(110deg,#6e0716,#d81732,#6e0716);
+  background-size:220% 100%;
+  box-shadow:0 16px 34px rgba(172,12,35,.30);
+  border:1px solid #730918;
+  font-size:18px;
+  font-weight:900;
+  text-align:center;
+  animation:updateAlertSweep 2.2s linear infinite;
+}
+.cancel-alert-banner.show{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+.cancel-alert-banner .cancel-alert-icon{
+  font-size:28px;
+  animation:alertBellShake .75s ease-in-out infinite;
+}
+.screen-mode .cancel-alert-banner.show{
+  position:sticky;
+  top:84px;
+  z-index:89;
+  font-size:22px;
+}
+
 </style>
 </head>
 <body>
 <div class="wrapper">
   <header class="card header">
     <div class="brand">
-      <h1>شاشة استقبال ومتابعة المرضى</h1>
-      <p>عرض مباشر للمريض الحالي، الموعد القادم، والتقدم اليومي داخل العيادة</p>
+      <div class="header-main">
+        <div class="clinic-logo uploaded-logo" aria-label="شعار عيادة أفضل عناية">
+          <img src="assets/best-care-logo.png" alt="شعار عيادة أفضل عناية">
+        </div>
+        <div class="clinic-brand-copy">
+          <div class="clinic-name">
+            <strong>عيادات أفضل عناية للأسنان</strong>
+            <span>BEST CARE DENTAL CLINICS</span>
+          </div>
+          <h1>شاشة استقبال ومتابعة المرضى</h1>
+          <p>عرض مباشر للمريض الحالي، الموعد القادم، والتقدم اليومي داخل العيادة</p>
+        </div>
+      </div>
 
-      <div class="toolbar hide-screen">
-        <input id="dayPicker" type="date" onchange="switchDate()"><span id="liveSyncBadge" class="live-sync-badge">● مزامنة مباشرة</span>
+      <div class="header-actions hide-screen">
+        <input id="dayPicker" type="date" onchange="switchDate()">
+        <span id="liveSyncBadge" class="live-sync-badge">● مزامنة مباشرة</span>
         <button class="primary" onclick="openDailyUpdate()">تحديث قائمة اليوم</button>
-        <button onclick="document.getElementById('csvFile').click()">استيراد CSV</button>
-        <input id="csvFile" type="file" accept=".csv" hidden onchange="importCSV(event)">
         <button class="primary" id="ocrOpenButton" onclick="openOCRModal()">استخراج من صورة</button>
-        <button class="green" onclick="syncFromUrl()">سحب من رابط CSV</button>
         <button class="dark" onclick="toggleScreenMode()">وضع الشاشة</button>
         <button class="primary" id="languageToggle" onclick="toggleLanguage()">English</button>
-        <button class="gold" onclick="toggleSound()"><span id="soundLabel">🔔 التنبيه: مفعل</span></button>
-        <button onclick="exportCSV()">تصدير CSV</button>
-        <button class="red" onclick="clearDay()">مسح اليوم</button>
+
+        <div class="settings-wrap">
+          <button class="settings-button" id="settingsButton" onclick="toggleSettingsMenu(event)">⚙ الإعدادات ▾</button>
+          <div class="settings-menu" id="settingsMenu">
+            <button onclick="document.getElementById('csvFile').click();closeSettingsMenu()">📥 استيراد CSV</button>
+            <input id="csvFile" type="file" accept=".csv" hidden onchange="importCSV(event)">
+            <button onclick="syncFromUrl();closeSettingsMenu()">🔄 سحب من رابط CSV</button>
+            <button onclick="toggleSound();closeSettingsMenu()"><span id="soundLabel">🔔 التنبيه: مفعل</span></button>
+            <button onclick="exportCSV();closeSettingsMenu()">📤 تصدير CSV</button>
+            <div class="settings-divider"></div>
+            <button class="danger-setting" onclick="clearDay();closeSettingsMenu()">🗑 مسح قائمة اليوم</button>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="live-clock">
       <div class="time" id="liveTime">--:--:--</div>
       <div class="date" id="liveDate">--</div>
-    </div>
-
-    <div class="pill">
-      <div>
-        <strong>رابط الشاشة المباشر</strong>
-        <span id="screenShortLabel">جاهز</span>
-      </div>
+      <button class="update-alert-button" id="updateAlertButton" onclick="toggleUpdateAlert()" title="تنبيه الطبيب بوجود تعديل على القائمة">
+        <span class="alert-dot"></span>
+        <span class="alert-icon">🔔</span>
+        <span id="updateAlertButtonText">تنبيه تعديل</span>
+      </button>
     </div>
   </header>
+  <div class="update-alert-banner" id="updateAlertBanner" role="alert" aria-live="assertive">
+    <span class="banner-icon">⚠️</span>
+    <div>
+      <div id="updateAlertMessage">يوجد تعديل جديد على قائمة المواعيد</div>
+      <small id="updateAlertTime"></small>
+    </div>
+  </div>
+  <div class="cancel-alert-banner" id="cancelAlertBanner" role="alert" aria-live="assertive">
+    <span class="cancel-alert-icon">🔔</span>
+    <div id="cancelAlertText">تم إلغاء موعد — يرجى مراجعة قائمة المواعيد</div>
+  </div>
 
   <section class="stats">
     <div class="card stat"><div class="label">إجمالي المرضى</div><div class="value" id="totalCount">0</div><div class="sub">مواعيد اليوم</div></div>
@@ -214,6 +670,8 @@ body.lang-en .countdown,body.lang-en .hero .count,body.lang-en .mini-panel .coun
   </section>
 </div>
 
+<button id="exitFullscreenBtn" class="exit-fullscreen-btn" onclick="exitScreenMode()">⤢ إلغاء ملء الشاشة</button>
+
 <div class="modal" id="dailyModal">
   <div class="modal-card">
     <h3>تحديث قائمة اليوم</h3>
@@ -341,6 +799,23 @@ body.lang-en .countdown,body.lang-en .hero .count,body.lang-en .mini-panel .coun
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
+
+function toggleSettingsMenu(event){
+  if(event)event.stopPropagation();
+  const menu=document.getElementById('settingsMenu');
+  if(menu)menu.classList.toggle('open');
+}
+function closeSettingsMenu(){
+  document.getElementById('settingsMenu')?.classList.remove('open');
+}
+document.addEventListener('click',(event)=>{
+  const wrap=document.querySelector('.settings-wrap');
+  if(wrap && !wrap.contains(event.target))closeSettingsMenu();
+});
+document.addEventListener('keydown',(event)=>{
+  if(event.key==='Escape')closeSettingsMenu();
+});
+
 const STORAGE_KEY='clinic_dashboard_tv_days_v2_20260715';
 const NOTES_KEY='clinic_dashboard_tv_notes_v2_20260715';
 const SETTINGS_KEY='clinic_dashboard_tv_settings_v2_20260715';
@@ -374,6 +849,8 @@ let sourceUrlValue=settings.sourceUrl||'';
 let autoRefreshMinutes=Number(settings.autoRefresh||0);
 let editingId=null;
 let alertFlags=JSON.parse(sessionStorage.getItem(ALERT_KEY)||'{}');
+let updateAlert={active:false,message:'',updatedAt:0};
+let lastSeenUpdateAlertAt=Number(sessionStorage.getItem('clinic_last_seen_update_alert')||0);
 let activeAnnouncedKey=null;
 let refreshTimer=null;
 
@@ -391,6 +868,121 @@ let remoteRequestInFlight=false;
 let sameDeviceChannel=null;
 try{sameDeviceChannel=new BroadcastChannel('clinic-dashboard-live-sync-v1')}catch(e){}
 
+
+
+function formatAlertTime(timestamp){
+  if(!timestamp)return '';
+  try{
+    return new Intl.DateTimeFormat(currentLanguage==='en'?'en-GB':'ar-SA',{
+      hour:'2-digit',minute:'2-digit',hour12:true
+    }).format(new Date(timestamp));
+  }catch(e){return ''}
+}
+function renderUpdateAlert(){
+  const button=document.getElementById('updateAlertButton');
+  const buttonText=document.getElementById('updateAlertButtonText');
+  const banner=document.getElementById('updateAlertBanner');
+  const message=document.getElementById('updateAlertMessage');
+  const time=document.getElementById('updateAlertTime');
+  if(!button||!banner)return;
+  const active=Boolean(updateAlert&&updateAlert.active);
+  button.classList.toggle('active',active);
+  button.setAttribute('aria-pressed',active?'true':'false');
+  buttonText.textContent=active
+    ? (currentLanguage==='en'?'Update active':'يوجد تعديل')
+    : (currentLanguage==='en'?'Update alert':'تنبيه تعديل');
+  banner.classList.toggle('show',active);
+  message.textContent=(updateAlert&&updateAlert.message)||
+    (currentLanguage==='en'?'There is a new update to the appointment list':'يوجد تعديل جديد على قائمة المواعيد');
+  const label=currentLanguage==='en'?'Updated at':'وقت التحديث';
+  time.textContent=active&&updateAlert.updatedAt?`${label}: ${formatAlertTime(updateAlert.updatedAt)}`:'';
+  const cancelBanner=document.getElementById('cancelAlertBanner');
+  const cancelText=document.getElementById('cancelAlertText');
+  const isCancellation=active&&updateAlert.kind==='cancellation';
+  if(cancelBanner)cancelBanner.classList.toggle('show',isCancellation);
+  if(cancelText&&isCancellation)cancelText.textContent=updateAlert.message;
+}
+function notifyIncomingUpdateAlert(incoming){
+  const stamp=Number(incoming?.updatedAt||0);
+  if(!incoming?.active||!stamp||stamp<=lastSeenUpdateAlertAt)return;
+  lastSeenUpdateAlertAt=stamp;
+  sessionStorage.setItem('clinic_last_seen_update_alert',String(stamp));
+  showToast(
+    currentLanguage==='en'?'Appointment list updated':'تنبيه: تم تعديل القائمة',
+    incoming.message||(currentLanguage==='en'?'Please review the latest appointment-list changes.':'يرجى مراجعة آخر التعديلات على قائمة المواعيد.')
+  );
+  beep();
+  if(typeof speak==='function'){
+    speak(currentLanguage==='en'
+      ? 'Attention. The appointment list has been updated.'
+      : 'تنبيه. يوجد تعديل جديد على قائمة المواعيد.');
+  }
+}
+
+function activateCancellationAlert(patientName=''){
+  const name=String(patientName||'').trim();
+  const message=currentLanguage==='en'
+    ? `Appointment cancelled${name?': '+name:''}. Please review the appointment list.`
+    : `تم إلغاء موعد${name?' للمريض '+name:''} — يرجى مراجعة قائمة المواعيد`;
+  updateAlert={
+    active:true,
+    message,
+    updatedAt:Date.now(),
+    kind:'cancellation'
+  };
+  lastSeenUpdateAlertAt=updateAlert.updatedAt;
+  sessionStorage.setItem('clinic_last_seen_update_alert',String(lastSeenUpdateAlertAt));
+  renderUpdateAlert();
+  const cancelBanner=document.getElementById('cancelAlertBanner');
+  const cancelText=document.getElementById('cancelAlertText');
+  if(cancelText)cancelText.textContent=message;
+  if(cancelBanner)cancelBanner.classList.add('show');
+  showToast(
+    currentLanguage==='en'?'Cancellation alert':'تنبيه إلغاء موعد',
+    message
+  );
+  beep();
+  if(typeof speak==='function'){
+    speak(currentLanguage==='en'
+      ? 'Attention. An appointment has been cancelled.'
+      : 'تنبيه. تم إلغاء موعد.');
+  }
+  if(remoteSyncReady&&!applyingRemoteState)scheduleRemotePush();
+}
+
+function clearCancellationBanner(){
+  document.getElementById('cancelAlertBanner')?.classList.remove('show');
+}
+
+function toggleUpdateAlert(){
+  if(updateAlert.active){
+    if(!confirm(currentLanguage==='en'
+      ? 'Mark the appointment-list update as reviewed and turn off the alert?'
+      : 'هل تم الاطلاع على التعديل وتريد إلغاء التنبيه؟'))return;
+    updateAlert={active:false,message:'',updatedAt:Date.now(),kind:''};
+  }else{
+    const defaultMessage=currentLanguage==='en'
+      ? 'There is a new update to the appointment list'
+      : 'يوجد تعديل جديد على قائمة المواعيد';
+    const entered=prompt(
+      currentLanguage==='en'
+        ? 'Write a brief note for the doctor:'
+        : 'اكتب ملاحظة مختصرة للطبيب عن التعديل:',
+      defaultMessage
+    );
+    if(entered===null)return;
+    updateAlert={
+      active:true,
+      message:String(entered||defaultMessage).trim().slice(0,180),
+      updatedAt:Date.now(),
+      kind:'manual'
+    };
+    lastSeenUpdateAlertAt=updateAlert.updatedAt;
+    sessionStorage.setItem('clinic_last_seen_update_alert',String(lastSeenUpdateAlertAt));
+  }
+  renderUpdateAlert();
+  if(remoteSyncReady&&!applyingRemoteState)scheduleRemotePush();
+}
 
 function firstName(v){return String(v||'مريض').trim().split(/\s+/)[0]}
 function minutes(t){const [h,m]=String(t).split(':').map(Number);return h*60+m}
@@ -459,6 +1051,7 @@ async function pushRemoteState(){
       date:selectedDate,
       patients:patients.map(p=>({...p})),
       notes:notesStore[selectedDate]||'',
+      updateAlert:{...updateAlert},
       clientId:CLIENT_ID,
       clientUpdatedAt:Date.now()
     };
@@ -489,6 +1082,8 @@ async function pullRemoteState(force=false){
     if(!state.exists){
       remoteSyncReady=true;
       setLiveSyncState('synced',currentLanguage==='en'?'● Live synced':'● مزامنة مباشرة');
+      updateAlert={active:false,message:'',updatedAt:0};
+      renderUpdateAlert();
       if(patients.length || (notesStore[selectedDate]||''))scheduleRemotePush();
       return;
     }
@@ -503,6 +1098,21 @@ async function pullRemoteState(force=false){
       notesStore[selectedDate]=state.notes||'';
       localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore));
       clinicNotes.value=notesStore[selectedDate];
+      const incomingAlert=(state.updateAlert&&typeof state.updateAlert==='object')
+        ? {
+            active:Boolean(state.updateAlert.active),
+            message:String(state.updateAlert.message||'').slice(0,180),
+            updatedAt:Number(state.updateAlert.updatedAt||0),
+            kind:String(state.updateAlert.kind||'')
+          }
+        : {active:false,message:'',updatedAt:0,kind:''};
+      const alertChanged=incomingAlert.updatedAt!==Number(updateAlert.updatedAt||0)||
+        incomingAlert.active!==Boolean(updateAlert.active)||
+        incomingAlert.message!==String(updateAlert.message||'')||
+        incomingAlert.kind!==String(updateAlert.kind||'');
+      updateAlert=incomingAlert;
+      renderUpdateAlert();
+      if(alertChanged)notifyIncomingUpdateAlert(incomingAlert);
       remoteRevision=incomingRevision;
       remoteUpdatedAt=incomingUpdatedAt;
       render();
@@ -572,26 +1182,34 @@ function countdownFor(p){
 }
 function getTimingState(p){
   const now=new Date(), st=dayTime(p.start), en=dayTime(p.end);
-  const total=Math.max(1, en-st);
+  const total=Math.max(1000,en-st);
   if(now<st) return 'upcoming';
   if(now>en) return 'overdue';
   const remain=en-now;
-  if(remain<=5*60*1000 || (remain/total)<=0.2) return 'ending';
-  return 'active-ok';
+  // Proportional windows with sensible maximums for long appointments.
+  const yellowWindow=Math.min(total*.50,15*60*1000);
+  const orangeWindow=Math.min(total*.25,8*60*1000);
+  const redWindow=Math.min(total*.10,3*60*1000);
+  if(remain<=redWindow) return 'red';
+  if(remain<=orangeWindow) return 'orange';
+  if(remain<=yellowWindow) return 'yellow';
+  return 'green';
 }
 function getActiveChipClass(p){
   const state=getTimingState(p);
-  if(state==='active-ok') return 'active-ok-chip';
-  if(state==='ending') return 'active-warning-chip';
-  if(state==='overdue') return 'active-danger-chip';
-  return 'active-ok-chip';
+  if(state==='green') return 'active-green-chip';
+  if(state==='yellow') return 'active-yellow-chip';
+  if(state==='orange') return 'active-orange-chip';
+  if(state==='red' || state==='overdue') return 'active-red-chip';
+  return 'active-green-chip';
 }
 function getCurrentRowStateClass(p){
   const state=getTimingState(p);
-  if(state==='active-ok') return 'current-ok';
-  if(state==='ending') return 'current-warning';
-  if(state==='overdue') return 'current-danger';
-  return 'current-warning';
+  if(state==='green') return 'current-green';
+  if(state==='yellow') return 'current-yellow';
+  if(state==='orange') return 'current-orange';
+  if(state==='red' || state==='overdue') return 'current-red';
+  return 'current-green';
 }
 function getSorted(){return [...patients].sort((a,b)=>a.start.localeCompare(b.start))}
 function showToast(title,text){
@@ -655,6 +1273,7 @@ function renderTicker(activePatient,nextPatient){
   tickerTrack.textContent=base+base+base;
 }
 function render(){
+  renderUpdateAlert();
   patients.forEach(p=>p.status=autoStatus(p));
   const sorted=getSorted();
   const now=new Date();
@@ -723,26 +1342,27 @@ function renderStats(){
 function renderHero(activePatient,nextPatient,sorted){
   const nearest=activePatient||nextPatient||sorted.find(p=>!['done','cancel'].includes(p.status));
   if(activePatient){
-    currentHero.classList.remove('ok','warning','danger');
+    currentHero.classList.remove('ok','warning','danger','green-stage','yellow-stage','orange-stage','red-stage');
     currentHero.classList.add('active');
     const activeState=getTimingState(activePatient);
-    if(activeState==='active-ok') currentHero.classList.add('ok');
-    else if(activeState==='ending') currentHero.classList.add('warning');
-    else currentHero.classList.add('danger');
+    if(activeState==='green') currentHero.classList.add('green-stage');
+    else if(activeState==='yellow') currentHero.classList.add('yellow-stage');
+    else if(activeState==='orange') currentHero.classList.add('orange-stage');
+    else currentHero.classList.add('red-stage');
     const cd=countdownFor(activePatient);
     currentName.textContent=activePatient.name;
     currentMeta.innerHTML=`<strong>${t('file')}:</strong> ${activePatient.file||'—'} &nbsp;•&nbsp; <strong>${t('appointment')}:</strong> ${activePatient.start} - ${activePatient.end} &nbsp;•&nbsp; <strong>${t('procedure')}:</strong> ${activePatient.procedure||'—'}`;
     currentCountdown.textContent=cd.text;
     currentHint.textContent=cd.hint;
   }else if(nearest){
-    currentHero.classList.remove('active','ok','warning','danger');
+    currentHero.classList.remove('active','ok','warning','danger','green-stage','yellow-stage','orange-stage','red-stage');
     const cd=countdownFor(nearest);
     currentName.textContent=nearest.name;
     currentMeta.innerHTML=`<strong>${t('file')}:</strong> ${nearest.file||'—'} &nbsp;•&nbsp; <strong>${t('appointment')}:</strong> ${nearest.start} - ${nearest.end} &nbsp;•&nbsp; <strong>${t('procedure')}:</strong> ${nearest.procedure||'—'}`;
     currentCountdown.textContent=cd.text;
     currentHint.textContent=currentLanguage==='en'?'Waiting for appointment':'بانتظار الموعد';
   }else{
-    currentHero.classList.remove('active','ok','warning','danger');
+    currentHero.classList.remove('active','ok','warning','danger','green-stage','yellow-stage','orange-stage','red-stage');
     currentName.textContent=t('dayComplete');
     currentMeta.textContent=t('noRemaining');
     currentCountdown.textContent='00:00:00';
@@ -766,7 +1386,7 @@ function renderTimeline(activePatient,nextPatient,sorted){
     let cls='';
     if(activePatient && p.id===activePatient.id){
       const st=getTimingState(p);
-      cls='current ' + (st==='active-ok'?'ok':(st==='ending'?'warning':'danger'));
+      cls='current ' + (['green','yellow','orange','red'].includes(st)?st:'red');
     }
     else if(nextPatient && p.id===nextPatient.id) cls='next';
     else if(p.status==='done') cls='done';
@@ -887,7 +1507,13 @@ function editPatient(id){
 }
 function deletePatient(id){if(confirm('حذف هذا المريض؟')){patients=patients.filter(p=>p.id!==id);render()}}
 function clearDay(){if(confirm('سيتم حذف قائمة اليوم بالكامل.')){patients=[];notesStore[selectedDate]='';clinicNotes.value='';render();saveNotes()}}
-function changeStatus(id,status){const p=patients.find(x=>x.id===id);if(p){p.status=status;render()}}
+function changeStatus(id,status){const p=patients.find(x=>x.id===id);if(p){p.status=status;render()}
+  const changedPatient=patients.find(p=>String(p.id)===String(id));
+  if(status==='cancel'){
+    activateCancellationAlert(changedPatient?.name||'');
+  }
+
+}
 function exportCSV(){
   const rows=[['الاسم الأول','رقم الملف','وقت البداية','وقت النهاية','الإجراء','الحالة'],...getSorted().map(p=>[p.name,p.file,p.start,p.end,p.procedure,statusText(p.status)])];
   const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
@@ -939,11 +1565,32 @@ function buildScreenLink(){
   screenShortLabel.textContent='جاهز';
 }
 function copyScreenLink(){screenLink.select();document.execCommand('copy');showToast('تم النسخ','تم نسخ رابط الشاشة')}
-function toggleScreenMode(){
-  document.body.classList.toggle('screen-mode');
-  if(!document.fullscreenElement) document.documentElement.requestFullscreen?.();
-  else document.exitFullscreen?.();
+let screenModeRequestedFullscreen=false;
+function updateExitFullscreenLabel(){
+  const btn=document.getElementById('exitFullscreenBtn');
+  if(btn)btn.textContent=currentLanguage==='en'?'⤢ Exit Full Screen':'⤢ إلغاء ملء الشاشة';
 }
+async function enterScreenMode(){
+  document.body.classList.add('screen-mode');
+  screenModeRequestedFullscreen=true;
+  updateExitFullscreenLabel();
+  try{await document.documentElement.requestFullscreen?.()}catch(e){screenModeRequestedFullscreen=false}
+}
+async function exitScreenMode(){
+  document.body.classList.remove('screen-mode');
+  screenModeRequestedFullscreen=false;
+  try{if(document.fullscreenElement)await document.exitFullscreen?.()}catch(e){}
+}
+function toggleScreenMode(){
+  if(document.body.classList.contains('screen-mode'))exitScreenMode();
+  else enterScreenMode();
+}
+document.addEventListener('fullscreenchange',()=>{
+  if(!document.fullscreenElement && screenModeRequestedFullscreen){
+    document.body.classList.remove('screen-mode');
+    screenModeRequestedFullscreen=false;
+  }
+});
 const staticTranslations={
   'لوحة شاشة استقبال العيادة':'Clinic Reception Dashboard',
   'شاشة استقبال ومتابعة المرضى':'Patient Reception & Tracking Screen',
@@ -952,6 +1599,7 @@ const staticTranslations={
   'استيراد CSV':'Import CSV',
   'سحب من رابط CSV':'Load from CSV URL',
   'وضع الشاشة':'Display Mode',
+  'إلغاء ملء الشاشة':'Exit Full Screen',
   'تصدير CSV':'Export CSV',
   'مسح اليوم':'Clear Day',
   'إجمالي المرضى':'Total Patients',
@@ -1062,6 +1710,7 @@ function toggleLanguage(){
   currentLanguage=currentLanguage==='ar'?'en':'ar';
   saveSettings();
   translateStaticText();
+  updateExitFullscreenLabel();
   render();
   updateClock();
 }
@@ -1637,21 +2286,17 @@ patientModal.addEventListener('click',e=>{if(e.target===patientModal) closeModal
 ocrModal.addEventListener('click',e=>{if(e.target===ocrModal) closeOCRModal()});
 setupOCRDrop();
 
-async function initializeDashboard(){
-  initOCRDropZone();
-  applyQueryParams();
-  loadPatients();
-  loadNotes();
-  initInputs();
-  translateStaticText();
-  render();
-  lastScheduleSignature=getScheduleState().signature;
-  updateClock();
-  setInterval(updateClock,1000);
-  await pullRemoteState(true);
-  startRemoteLiveSync();
-}
-initializeDashboard();
+initOCRDropZone();
+applyQueryParams();
+loadPatients();
+loadNotes();
+initInputs();
+translateStaticText();
+renderUpdateAlert();
+render();
+lastScheduleSignature=getScheduleState().signature;
+updateClock();
+setInterval(updateClock,1000);
 </script>
 </body>
 </html>
