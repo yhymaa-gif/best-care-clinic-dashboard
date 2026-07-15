@@ -517,7 +517,7 @@ body.lang-en .header,body.lang-en .hero,body.lang-en .mini-panel{border-left-wid
 
       <div class="header-actions hide-screen">
         <input id="dayPicker" type="date" onchange="switchDate()">
-        <button id="liveSyncBadge" class="live-sync-badge" type="button" onclick="remoteRequestInFlight=false;setLiveSyncState('syncing',currentLanguage==='en'?'● Connecting...':'● جارٍ الاتصال...');pullRemoteState(true)" title="اضغط للتحقق من المزامنة الآن">● جارٍ الاتصال...</button>
+        <button id="liveSyncBadge" class="live-sync-badge" type="button" onclick="retryLiveSync()" title="اضغط للتحقق من المزامنة الآن">● جارٍ الاتصال...</button>
         <button class="primary" onclick="openDailyUpdate()">تحديث قائمة اليوم</button>
         <button class="primary" id="ocrOpenButton" onclick="openOCRModal()">استخراج من صورة</button>
         <button class="dark" onclick="toggleScreenMode()">وضع الشاشة</button>
@@ -838,7 +838,7 @@ const STORAGE_KEY='clinic_dashboard_tv_days_v2_20260715';
 const NOTES_KEY='clinic_dashboard_tv_notes_v2_20260715';
 const SETTINGS_KEY='clinic_dashboard_tv_settings_v2_20260715';
 const ALERT_KEY='clinic_dashboard_tv_alerts_v2_20260715';
-const DEFAULT_DATE='2026-07-15';
+const DEFAULT_DATE=new Date().toLocaleDateString('en-CA');
 
 const samplePatients=[
   {id:1,name:'مها',file:'727',start:'15:30',end:'16:00',procedure:'مراجعة مريض',status:'waiting'},
@@ -872,14 +872,12 @@ let lastSeenUpdateAlertAt=Number(sessionStorage.getItem('clinic_last_seen_update
 let activeAnnouncedKey=null;
 let refreshTimer=null;
 
-const REMOTE_SYNC_ENDPOINT='/api/state';
-const REMOTE_POLL_MS=2000;
-const CLIENT_ID=sessionStorage.getItem('clinic_tab_client_id')||(()=>{
-  const id=(crypto.randomUUID?crypto.randomUUID():'tab-'+Date.now()+'-'+Math.random().toString(36).slice(2));
-  sessionStorage.setItem('clinic_tab_client_id',id);
-  return id;
-})();
-sessionStorage.setItem('clinic_client_id',CLIENT_ID);
+const REMOTE_SYNC_ENDPOINT=location.origin+'/.netlify/functions/state';
+const REMOTE_POLL_MS=2500;
+const CLIENT_ID=sessionStorage.getItem('clinic_tab_client_id')||(
+  'client-'+Date.now()+'-'+Math.random().toString(36).slice(2)
+);
+sessionStorage.setItem('clinic_tab_client_id',CLIENT_ID);
 let remoteRevision=0;
 let remoteUpdatedAt=0;
 let remoteSyncReady=false;
@@ -887,10 +885,7 @@ let applyingRemoteState=false;
 let remotePushTimer=null;
 let remotePollTimer=null;
 let remoteRequestInFlight=false;
-let sameDeviceChannel=null;
-try{sameDeviceChannel=new BroadcastChannel('clinic-dashboard-live-sync-v1')}catch(e){}
-
-
+let lastSyncError='';
 
 function formatAlertTime(timestamp){
   if(!timestamp)return '';
@@ -969,7 +964,7 @@ function activateCancellationAlert(patientName=''){
       ? 'Attention. An appointment has been cancelled.'
       : 'تنبيه. تم إلغاء موعد.');
   }
-  if(remoteSyncReady&&!applyingRemoteState)scheduleRemotePush();
+  if(!applyingRemoteState)scheduleRemotePush();
 }
 
 function clearCancellationBanner(){
@@ -1003,7 +998,7 @@ function toggleUpdateAlert(){
     sessionStorage.setItem('clinic_last_seen_update_alert',String(lastSeenUpdateAlertAt));
   }
   renderUpdateAlert();
-  if(remoteSyncReady&&!applyingRemoteState)scheduleRemotePush();
+  if(!applyingRemoteState)scheduleRemotePush();
 }
 
 function firstName(v){return String(v||'مريض').trim().split(/\s+/)[0]}
@@ -1023,12 +1018,12 @@ function statusChipClass(s){return ({waiting:'waiting-chip',active:'active-chip'
 function saveData(){
   dataStore[selectedDate]=patients;
   localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore));
-  if(remoteSyncReady && !applyingRemoteState)scheduleRemotePush();
+  if(!applyingRemoteState)scheduleRemotePush();
 }
 function saveNotes(){
   notesStore[selectedDate]=clinicNotes.value;
   localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore));
-  if(remoteSyncReady && !applyingRemoteState)scheduleRemotePush();
+  if(!applyingRemoteState)scheduleRemotePush();
 }
 function loadNotes(){clinicNotes.value=notesStore[selectedDate]||''}
 function saveSettings(){
@@ -1060,127 +1055,190 @@ function setLiveSyncState(mode,text){
   el.classList.remove('syncing','offline','synced');
   el.classList.add(mode);
   el.textContent=text;
-}
-function scheduleRemotePush(){
-  clearTimeout(remotePushTimer);
-  setLiveSyncState('syncing',currentLanguage==='en'?'● Saving...':'● جارٍ الحفظ...');
-  remotePushTimer=setTimeout(pushRemoteState,350);
+  el.title=lastSyncError||(
+    mode==='synced'
+      ? (currentLanguage==='en'?'Connected to central clinic data':'متصل ببيانات العيادة المركزية')
+      : text
+  );
 }
 
-async function fetchWithTimeout(url,options={},timeoutMs=10000){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),timeoutMs);
-  try{
-    return await fetch(url,{...options,signal:controller.signal});
-  }finally{
-    clearTimeout(timer);
+function syncUrl(){
+  return REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate)+'&_='+Date.now();
+}
+
+async function readRemoteState(){
+  const res=await fetch(syncUrl(),{
+    method:'GET',
+    cache:'no-store',
+    headers:{'accept':'application/json'}
+  });
+  if(!res.ok){
+    const body=await res.text().catch(()=> '');
+    throw new Error('GET '+res.status+(body?' — '+body.slice(0,120):''));
   }
+  return await res.json();
+}
+
+async function writeRemoteState(){
+  const payload={
+    date:selectedDate,
+    patients:patients.map(p=>({...p})),
+    notes:notesStore[selectedDate]||'',
+    updateAlert:{...updateAlert},
+    clientId:CLIENT_ID,
+    clientUpdatedAt:Date.now()
+  };
+  const res=await fetch(syncUrl(),{
+    method:'PUT',
+    cache:'no-store',
+    headers:{
+      'content-type':'application/json',
+      'accept':'application/json'
+    },
+    body:JSON.stringify(payload)
+  });
+  if(!res.ok){
+    const body=await res.text().catch(()=> '');
+    throw new Error('PUT '+res.status+(body?' — '+body.slice(0,120):''));
+  }
+  return await res.json();
+}
+
+function scheduleRemotePush(){
+  clearTimeout(remotePushTimer);
+  setLiveSyncState('syncing',currentLanguage==='en'?'● Saving...':'● جارٍ حفظ التعديل...');
+  remotePushTimer=setTimeout(()=>pushRemoteState(),250);
 }
 
 async function pushRemoteState(){
-  if(!remoteSyncReady || applyingRemoteState)return;
+  if(applyingRemoteState)return;
   try{
-    const payload={
-      date:selectedDate,
-      patients:patients.map(p=>({...p})),
-      notes:notesStore[selectedDate]||'',
-      updateAlert:{...updateAlert},
-      clientId:CLIENT_ID,
-      clientUpdatedAt:Date.now()
-    };
-    const res=await fetchWithTimeout(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate),{
-      method:'PUT',
-      headers:{'content-type':'application/json','accept':'application/json'},
-      body:JSON.stringify(payload),
-      cache:'no-store'
-    },10000);
-    if(!res.ok)throw new Error('Sync write failed '+res.status);
-    const saved=await res.json();
+    const saved=await writeRemoteState();
     remoteRevision=Number(saved.revision||remoteRevision);
     remoteUpdatedAt=Number(saved.updatedAt||Date.now());
+    remoteSyncReady=true;
+    lastSyncError='';
     setLiveSyncState('synced',currentLanguage==='en'?'● Live sync active':'● المزامنة المباشرة مفعلة');
-    if(sameDeviceChannel)sameDeviceChannel.postMessage({date:selectedDate,revision:remoteRevision,updatedAt:remoteUpdatedAt});
   }catch(err){
-    console.error(err);
-    setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
+    console.error('Live sync write failed:',err);
+    remoteSyncReady=false;
+    lastSyncError=String(err?.message||err);
+    setLiveSyncState('offline',
+      currentLanguage==='en'
+        ? '● Save failed — tap to retry'
+        : '● فشل الحفظ — اضغط للمحاولة'
+    );
   }
 }
+
+function applyRemoteState(state,force=false){
+  const incomingRevision=Number(state.revision||0);
+  const incomingUpdatedAt=Number(state.updatedAt||0);
+  const newer=force||incomingRevision>remoteRevision||incomingUpdatedAt>remoteUpdatedAt;
+  if(!newer)return false;
+
+  applyingRemoteState=true;
+  try{
+    patients=Array.isArray(state.patients)
+      ? state.patients.map(p=>({...p,name:firstName(p.name)}))
+      : [];
+    dataStore[selectedDate]=patients;
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore));
+
+    notesStore[selectedDate]=state.notes||'';
+    localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore));
+    if(typeof clinicNotes!=='undefined'&&clinicNotes){
+      clinicNotes.value=notesStore[selectedDate];
+    }
+
+    const incomingAlert=(state.updateAlert&&typeof state.updateAlert==='object')
+      ? {
+          active:Boolean(state.updateAlert.active),
+          message:String(state.updateAlert.message||'').slice(0,180),
+          updatedAt:Number(state.updateAlert.updatedAt||0),
+          kind:String(state.updateAlert.kind||'')
+        }
+      : {active:false,message:'',updatedAt:0,kind:''};
+
+    const alertChanged=
+      incomingAlert.updatedAt!==Number(updateAlert.updatedAt||0)||
+      incomingAlert.active!==Boolean(updateAlert.active)||
+      incomingAlert.message!==String(updateAlert.message||'')||
+      incomingAlert.kind!==String(updateAlert.kind||'');
+
+    updateAlert=incomingAlert;
+    renderUpdateAlert();
+    if(alertChanged)notifyIncomingUpdateAlert(incomingAlert);
+
+    remoteRevision=incomingRevision;
+    remoteUpdatedAt=incomingUpdatedAt;
+    render();
+
+    const badge=document.getElementById('liveSyncBadge');
+    if(badge){
+      badge.classList.remove('remote-flash');
+      void badge.offsetWidth;
+      badge.classList.add('remote-flash');
+    }
+    return true;
+  }finally{
+    applyingRemoteState=false;
+  }
+}
+
 async function pullRemoteState(force=false){
-  if(remoteRequestInFlight)return;
+  if(remoteRequestInFlight)return false;
   remoteRequestInFlight=true;
   try{
-    const res=await fetchWithTimeout(REMOTE_SYNC_ENDPOINT+'?date='+encodeURIComponent(selectedDate)+'&_='+Date.now(),{cache:'no-store'},10000);
-    if(!res.ok)throw new Error('Sync read failed '+res.status);
-    const state=await res.json();
+    const state=await readRemoteState();
+
     if(!state.exists){
       remoteSyncReady=true;
+      remoteRevision=0;
+      remoteUpdatedAt=0;
+      lastSyncError='';
       setLiveSyncState('synced',currentLanguage==='en'?'● Live sync active':'● المزامنة المباشرة مفعلة');
-      updateAlert={active:false,message:'',updatedAt:0};
-      renderUpdateAlert();
-      if(patients.length || (notesStore[selectedDate]||''))scheduleRemotePush();
-      return;
+
+      const hasLocal=patients.length>0||Boolean(notesStore[selectedDate]||'')||Boolean(updateAlert.active);
+      if(hasLocal)await pushRemoteState();
+      return true;
     }
-    const incomingRevision=Number(state.revision||0);
-    const incomingUpdatedAt=Number(state.updatedAt||0);
-    const shouldApply=force || incomingRevision>remoteRevision || incomingUpdatedAt>remoteUpdatedAt;
-    if(shouldApply){
-      applyingRemoteState=true;
-      patients=Array.isArray(state.patients)?state.patients.map(p=>({...p,name:firstName(p.name)})):[];
-      dataStore[selectedDate]=patients;
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore));
-      notesStore[selectedDate]=state.notes||'';
-      localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore));
-      clinicNotes.value=notesStore[selectedDate];
-      const incomingAlert=(state.updateAlert&&typeof state.updateAlert==='object')
-        ? {
-            active:Boolean(state.updateAlert.active),
-            message:String(state.updateAlert.message||'').slice(0,180),
-            updatedAt:Number(state.updateAlert.updatedAt||0),
-            kind:String(state.updateAlert.kind||'')
-          }
-        : {active:false,message:'',updatedAt:0,kind:''};
-      const alertChanged=incomingAlert.updatedAt!==Number(updateAlert.updatedAt||0)||
-        incomingAlert.active!==Boolean(updateAlert.active)||
-        incomingAlert.message!==String(updateAlert.message||'')||
-        incomingAlert.kind!==String(updateAlert.kind||'');
-      updateAlert=incomingAlert;
-      renderUpdateAlert();
-      if(alertChanged)notifyIncomingUpdateAlert(incomingAlert);
-      remoteRevision=incomingRevision;
-      remoteUpdatedAt=incomingUpdatedAt;
-      render();
-      const syncBadge=document.getElementById('liveSyncBadge');
-      if(syncBadge){
-        syncBadge.classList.remove('remote-flash');
-        void syncBadge.offsetWidth;
-        syncBadge.classList.add('remote-flash');
-      }
-      applyingRemoteState=false;
-    }else{
-      remoteRevision=Math.max(remoteRevision,incomingRevision);
-      remoteUpdatedAt=Math.max(remoteUpdatedAt,incomingUpdatedAt);
-    }
+
+    applyRemoteState(state,force);
     remoteSyncReady=true;
+    lastSyncError='';
     setLiveSyncState('synced',currentLanguage==='en'?'● Live sync active':'● المزامنة المباشرة مفعلة');
+    return true;
   }catch(err){
-    console.error(err);
+    console.error('Live sync read failed:',err);
     remoteSyncReady=false;
-    setLiveSyncState('offline',currentLanguage==='en'?'● Sync unavailable':'● تعذر المزامنة');
+    lastSyncError=String(err?.message||err);
+    setLiveSyncState('offline',
+      currentLanguage==='en'
+        ? '● Connection failed — tap'
+        : '● فشل الاتصال — اضغط'
+    );
+    return false;
   }finally{
     remoteRequestInFlight=false;
   }
 }
+
 function startRemoteLiveSync(){
   clearInterval(remotePollTimer);
   remotePollTimer=setInterval(()=>pullRemoteState(false),REMOTE_POLL_MS);
-  if(sameDeviceChannel){
-    sameDeviceChannel.onmessage=(event)=>{
-      const msg=event.data||{};
-      if(msg.date===selectedDate && Number(msg.revision||0)>remoteRevision)pullRemoteState(false);
-    };
-  }
   window.addEventListener('focus',()=>pullRemoteState(false));
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)pullRemoteState(false)});
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden)pullRemoteState(false);
+  });
+  window.addEventListener('online',()=>pullRemoteState(true));
+}
+
+async function retryLiveSync(){
+  remoteRequestInFlight=false;
+  lastSyncError='';
+  setLiveSyncState('syncing',currentLanguage==='en'?'● Connecting...':'● جارٍ الاتصال...');
+  await pullRemoteState(true);
 }
 
 function autoStatus(p){
@@ -2338,24 +2396,10 @@ lastScheduleSignature=getScheduleState().signature;
 updateClock();
 setInterval(updateClock,1000);
 
-/* Reliable live synchronization bootstrap */
+/* Start simple central synchronization */
 setLiveSyncState('syncing',currentLanguage==='en'?'● Connecting...':'● جارٍ الاتصال...');
 startRemoteLiveSync();
-
-(async()=>{
-  try{
-    await pullRemoteState(true);
-    if(remoteSyncReady){
-      setLiveSyncState('synced',currentLanguage==='en'?'● Live sync active':'● المزامنة المباشرة مفعلة');
-    }else{
-      throw new Error('Remote sync did not become ready');
-    }
-  }catch(error){
-    console.error('Initial live sync failed',error);
-    remoteRequestInFlight=false;
-    setLiveSyncState('offline',currentLanguage==='en'?'● Tap to retry':'● اضغط لإعادة المحاولة');
-  }
-})();
+retryLiveSync();
 
 </script>
 </body>
