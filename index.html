@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>لوحة شاشة استقبال العيادة</title>
+<style>
+:root{--bg:#f3f6f9;--surface:#fff;--surface-soft:#f8fafc;--line:#d7e0e8;--text:#203040;--muted:#68798a;--navy:#1f4b66;--navy-2:#2f607d;--teal:#2d8f91;--green:#3b8f63;--amber:#b8872d;--red:#b7525d;--blue:#537fb7;--shadow:0 8px 24px rgba(34,52,68,.08)}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:"Tajawal","Segoe UI",Tahoma,Arial,sans-serif;color:var(--text);background:linear-gradient(180deg,#f7f9fb 0%,var(--bg) 100%)}
+.wrapper{max-width:1880px;margin:auto;padding:14px}.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.header{padding:18px 22px;display:grid;grid-template-columns:1.15fr auto auto;gap:18px;align-items:center;border-top:5px solid var(--navy)}
+.brand h1{margin:0;font-size:clamp(26px,2.7vw,38px);font-weight:900;color:var(--navy)}.brand p{margin:7px 0 0;color:var(--muted);font-size:14px}
+.live-clock{text-align:center;min-width:255px}.live-clock .time{font-size:38px;font-weight:900;color:var(--navy);letter-spacing:.5px}.live-clock .date{font-size:14px;color:var(--muted);margin-top:4px}
+.pill{display:flex;align-items:center;justify-content:center;min-height:76px;padding:12px 18px;border-radius:12px;background:var(--surface-soft);border:1px solid var(--line)}.pill strong{display:block;font-size:12px;color:var(--muted)}.pill span{display:block;font-size:24px;font-weight:900;color:var(--navy)}
+.toolbar{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}button,input,select,textarea{font:inherit}button,input,select,textarea{color:var(--text);background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px}button{cursor:pointer;font-weight:800}button:hover{background:#f4f7f9}button.primary{background:#edf5f7;color:#20566d;border-color:#c9dce5}button.green{background:#edf7f1;color:#2d6f4d;border-color:#cde2d5}button.gold{background:#faf4e8;color:#7a5a1e;border-color:#e8d8b7}button.red{background:#fbefef;color:#8d3e47;border-color:#e7cbd0}button.dark{background:#edf1f4;color:#344b5d}input::placeholder,textarea::placeholder{color:#95a3af}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:14px 0}.stat{padding:14px 16px;border-right:4px solid #d9e3ea}.stat:nth-child(1){border-right-color:var(--navy)}.stat:nth-child(2){border-right-color:var(--green)}.stat:nth-child(3){border-right-color:var(--amber)}.stat:nth-child(4){border-right-color:var(--blue)}.stat:nth-child(5){border-right-color:var(--red)}.stat:nth-child(6){border-right-color:var(--teal)}.stat .label{font-size:12px;color:var(--muted);font-weight:800}.stat .value{font-size:30px;font-weight:900;margin-top:5px;color:var(--navy)}.stat .sub{font-size:11px;color:var(--muted)}.progress{margin-top:9px;height:7px;border-radius:999px;background:#e6ecef;overflow:hidden}.progress div{height:100%;width:0;background:var(--teal);transition:.25s}
+.screen-grid{display:grid;grid-template-columns:1.35fr .95fr .9fr;gap:10px;align-items:stretch;margin-bottom:10px}.hero{position:relative;padding:20px 22px;min-height:240px;border-top:4px solid var(--navy)}.hero.active{background:#fffdf8}.hero.active.ok{border-top-color:var(--active-green);background:var(--active-green-bg)}.hero.active.warning{border-top-color:var(--amber);background:var(--active-yellow-bg)}.hero.active.danger{border-top-color:var(--red);background:var(--active-red-bg)}.hero .tag{display:inline-flex;align-items:center;padding:7px 11px;border-radius:8px;font-size:12px;font-weight:900;background:#eef4f7;border:1px solid #d6e2e8;color:var(--navy)}.hero .name{font-size:clamp(36px,4.1vw,68px);font-weight:900;line-height:1.08;margin:16px 0 8px;color:var(--navy)}.hero.active.ok .name{color:var(--active-green)}.hero.active.warning .name{color:#8a641c}.hero.active.danger .name{color:var(--active-red)}.hero .meta{font-size:15px;color:#455b6d;line-height:1.85}.hero .count{font-size:clamp(42px,4.2vw,76px);font-weight:900;direction:ltr;margin:18px 0 6px;color:var(--navy)}.hero .hint{font-size:13px;color:var(--muted)}
+.mini-panel{padding:20px;min-height:240px;border-top:4px solid var(--teal)}.mini-panel:nth-child(3){border-top-color:var(--navy-2)}.mini-panel h3{margin:0;font-size:14px;color:var(--navy)}.mini-panel .big{font-size:31px;font-weight:900;margin:14px 0 6px;color:var(--navy)}.mini-panel .count{font-size:43px;font-weight:900;direction:ltr;margin:16px 0 6px;color:var(--navy-2)}.mini-panel .desc{font-size:13px;color:var(--muted);line-height:1.75}.steps{font-size:13px;line-height:1.9;color:#465d6f}
+.main{display:grid;grid-template-columns:1fr 350px;gap:10px}.section-title{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--surface-soft)}.section-title h2{margin:0;font-size:19px;color:var(--navy)}.filter-row{display:flex;gap:8px;flex-wrap:wrap}.table-wrap{overflow:auto}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1100px}th{position:sticky;top:0;z-index:2;padding:11px 10px;font-size:12px;text-align:right;color:#405a6f;background:#eef3f6;border-bottom:1px solid var(--line)}td{padding:11px 10px;font-size:13px;border-top:1px solid #e8edf1;vertical-align:middle}tr:hover{background:#fafcfd}tr.current{box-shadow:inset -4px 0 0 var(--amber)}tr.current.current-ok{background:var(--active-green-bg);box-shadow:inset -4px 0 0 var(--active-green)}tr.current.current-warning{background:var(--active-yellow-bg);box-shadow:inset -4px 0 0 var(--amber)}tr.current.current-danger{background:var(--active-red-bg);box-shadow:inset -4px 0 0 var(--active-red)}tr.next{background:#eef8f8;box-shadow:inset -4px 0 0 var(--teal)}tr.done-row{opacity:.82}.patient{font-weight:900;color:#263f52}tr.current .patient{font-size:20px}tr.current.current-ok .patient{color:var(--active-green)} tr.current.current-warning .patient{color:#8a641c} tr.current.current-danger .patient{color:var(--active-red)}.time-pill{display:inline-block;padding:6px 9px;border-radius:7px;background:#f1f5f8;border:1px solid #dce5eb;font-weight:900;color:#284b62}.status-chip{display:inline-block;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:900;border:1px solid transparent}.waiting-chip{background:#eef3fb;color:#496c9d;border-color:#d6e0ef}.active-ok-chip{background:#edf6f0;color:#2d7350;border-color:#d2e5d8}.active-warning-chip{background:#faf2df;color:#8a641c;border-color:#ead8b2}.active-danger-chip{background:#faeeee;color:#99414c;border-color:#e8cfd3}.done-chip{background:#edf6f0;color:#2d7350;border-color:#d2e5d8}.late-chip{background:#faeeee;color:#99414c;border-color:#e8cfd3}.cancel-chip{background:#f0f3f5;color:#667683;border-color:#dfe5e9}.status-select{display:block;margin-top:6px;min-width:132px}.icon-btn{padding:7px 9px}.countdown{font-weight:900;direction:ltr;color:#274d66}
+.side{display:flex;flex-direction:column;gap:10px}.box{padding:17px 18px}.box h3{margin:0 0 13px;font-size:16px;color:var(--navy)}.timeline-item{display:grid;grid-template-columns:44px 1fr;gap:10px;padding:9px 0;position:relative}.timeline-item:before{content:"";position:absolute;right:20px;top:34px;bottom:-9px;width:2px;background:#e3e9ee}.timeline-item:last-child:before{display:none}.dot{width:11px;height:11px;border-radius:50%;background:#8ca0af;margin:3px auto 0;box-shadow:0 0 0 5px #f0f4f7}.timeline-item.current.ok .dot{background:var(--active-green);box-shadow:0 0 0 5px #edf6f0}.timeline-item.current.warning .dot{background:var(--amber);box-shadow:0 0 0 5px #faf2df}.timeline-item.current.danger .dot{background:var(--active-red);box-shadow:0 0 0 5px #faeeee}.timeline-item.next .dot{background:var(--teal);box-shadow:0 0 0 5px #e8f6f5}.timeline-item.done .dot{background:var(--green);box-shadow:0 0 0 5px #edf6f0}.box textarea{width:100%;min-height:110px;resize:vertical}.helper{font-size:12px;color:var(--muted);line-height:1.75}
+.ticker{margin-top:10px;padding:11px 16px;border-radius:12px;border:1px solid var(--line);background:#f7fafc;display:flex;align-items:center;gap:14px;overflow:hidden}.ticker strong{white-space:nowrap;color:var(--navy)}.ticker-track{display:inline-block;white-space:nowrap;animation:marquee 32s linear infinite;color:#496073;font-weight:700}@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.modal{position:fixed;inset:0;background:rgba(30,47,60,.32);display:none;align-items:center;justify-content:center;padding:18px;z-index:100}.modal.show{display:flex}.modal-card{width:min(860px,100%);background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 18px 50px rgba(30,47,60,.18)}.modal-card h3{margin:0 0 14px;color:var(--navy)}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .full{grid-column:1/-1}.form-grid label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}.big-text{width:100%;min-height:250px;resize:vertical;line-height:1.8}.modal-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px}.empty{padding:44px;text-align:center;color:var(--muted)}.toast-wrap{position:fixed;left:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:120}.toast{min-width:290px;max-width:420px;padding:14px 16px;border-radius:12px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);color:var(--text)}.toast strong{display:block;margin-bottom:4px}
+.screen-mode .hide-screen,.screen-mode .status-select,.screen-mode .notes,.screen-mode .sync .helper,.screen-mode .actions-col{display:none!important}.screen-mode .wrapper{max-width:none;padding:8px}.screen-mode .hero .name{font-size:78px}.screen-mode .hero .count{font-size:80px}.screen-mode tr.current .patient{font-size:24px}.screen-mode .main{grid-template-columns:1fr 320px}.screen-mode .screen-grid{grid-template-columns:1.45fr .9fr .85fr}.screen-mode .header{grid-template-columns:1.15fr auto auto}
+
+body.lang-en{direction:ltr}
+body.lang-en .brand,body.lang-en .section-title,body.lang-en th,body.lang-en td,body.lang-en .box,body.lang-en .mini-panel,body.lang-en .hero{text-align:left}
+body.lang-en .live-clock{text-align:center}
+body.lang-en .stat{border-right:1px solid var(--line);border-left:4px solid #d9e3ea}
+body.lang-en .stat:nth-child(1){border-left-color:var(--navy)}
+body.lang-en .stat:nth-child(2){border-left-color:var(--green)}
+body.lang-en .stat:nth-child(3){border-left-color:var(--amber)}
+body.lang-en .stat:nth-child(4){border-left-color:var(--blue)}
+body.lang-en .stat:nth-child(5){border-left-color:var(--red)}
+body.lang-en .stat:nth-child(6){border-left-color:var(--teal)}
+body.lang-en tr.current,body.lang-en tr.next{box-shadow:inset 4px 0 0 currentColor}
+body.lang-en .timeline-item:before{right:auto;left:20px}
+body.lang-en .countdown,body.lang-en .hero .count,body.lang-en .mini-panel .count{direction:ltr}
+
+@media(max-width:1280px){.header{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.screen-grid{grid-template-columns:1fr}.main{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}}
+@media(max-width:760px){.wrapper{padding:10px}.stats{grid-template-columns:1fr 1fr}.side{display:flex}.form-grid{grid-template-columns:1fr}}
+@media print{.toolbar,.filter-row,.side,.actions-col,.toast-wrap,.hide-screen,.ticker{display:none!important}.wrapper{padding:0;max-width:none}.main{display:block}}
+
+.ocr-layout{display:grid;grid-template-columns:1fr 1fr;gap:14px}.ocr-panel{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px}.ocr-preview{width:100%;min-height:250px;max-height:420px;object-fit:contain;background:#eef2f5;border:1px dashed #c6d2dc;border-radius:10px}.ocr-controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.ocr-progress{height:10px;background:#e3e9ee;border-radius:999px;overflow:hidden;margin:10px 0}.ocr-progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--navy));transition:.2s}.ocr-table-wrap{overflow:auto;max-height:360px;border:1px solid var(--line);border-radius:10px}.ocr-table{min-width:760px}.ocr-table input{width:100%;padding:7px 8px;border-radius:7px}.ocr-raw{width:100%;min-height:150px;resize:vertical;line-height:1.65}.ocr-drop{display:flex;align-items:center;justify-content:center;min-height:86px;border:2px dashed #b9c8d4;border-radius:12px;background:#fff;color:var(--muted);font-weight:800;cursor:pointer;text-align:center;padding:14px}.ocr-drop.dragover{border-color:var(--teal);background:#eefaf8;transform:translateY(-1px)}.ocr-drop.drag{border-color:var(--teal);background:#eef8f8}.ocr-note{font-size:12px;color:var(--muted);line-height:1.7}.ocr-status{font-size:13px;font-weight:800;color:var(--navy)}
+@media(max-width:900px){.ocr-layout{grid-template-columns:1fr}}
+
+.template-box{margin-top:12px;padding:13px 14px;border:1px solid #bfd7df;background:#f3fafb;border-radius:12px}.template-title{font-weight:900;color:#1f5d6f;margin-bottom:5px}.template-desc{font-size:12px;color:var(--muted);line-height:1.7}.template-check{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#40596b;padding:8px 10px;background:#fff;border:1px solid var(--line);border-radius:9px}.template-check input{width:auto}.ocr-preview.template-overlay{outline:3px solid rgba(45,143,145,.25)}
+
+.precision-note{margin-top:10px;padding:10px 12px;border:1px solid #cfe1e7;background:#f3fafb;border-radius:10px;color:#335d69;font-size:12px;line-height:1.7}
+.conf-high{background:#edf7f1!important}.conf-mid{background:#fff8e8!important}.conf-low{background:#fff0f1!important}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header class="card header">
+    <div class="brand">
+      <h1>شاشة استقبال ومتابعة المرضى</h1>
+      <p>عرض مباشر للمريض الحالي، الموعد القادم، والتقدم اليومي داخل العيادة</p>
+
+      <div class="toolbar hide-screen">
+        <input id="dayPicker" type="date" onchange="switchDate()">
+        <button class="primary" onclick="openDailyUpdate()">تحديث قائمة اليوم</button>
+        <button onclick="document.getElementById('csvFile').click()">استيراد CSV</button>
+        <input id="csvFile" type="file" accept=".csv" hidden onchange="importCSV(event)">
+        <button class="primary" id="ocrOpenButton" onclick="openOCRModal()">استخراج من صورة</button>
+        <button class="green" onclick="syncFromUrl()">سحب من رابط CSV</button>
+        <button class="dark" onclick="toggleScreenMode()">وضع الشاشة</button>
+        <button class="primary" id="languageToggle" onclick="toggleLanguage()">English</button>
+        <button class="gold" onclick="toggleSound()"><span id="soundLabel">🔔 التنبيه: مفعل</span></button>
+        <button onclick="exportCSV()">تصدير CSV</button>
+        <button class="red" onclick="clearDay()">مسح اليوم</button>
+      </div>
+    </div>
+
+    <div class="live-clock">
+      <div class="time" id="liveTime">--:--:--</div>
+      <div class="date" id="liveDate">--</div>
+    </div>
+
+    <div class="pill">
+      <div>
+        <strong>رابط الشاشة المباشر</strong>
+        <span id="screenShortLabel">جاهز</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div class="card stat"><div class="label">إجمالي المرضى</div><div class="value" id="totalCount">0</div><div class="sub">مواعيد اليوم</div></div>
+    <div class="card stat"><div class="label">تم الإنجاز</div><div class="value" id="doneCount">0</div><div class="sub">حالات مكتملة</div></div>
+    <div class="card stat"><div class="label">قيد العلاج</div><div class="value" id="activeCount">0</div><div class="sub">الحالي الآن</div></div>
+    <div class="card stat"><div class="label">المتبقي</div><div class="value" id="remainingCount">0</div><div class="sub">لم تبدأ</div></div>
+    <div class="card stat"><div class="label">المتأخرون</div><div class="value" id="lateCount">0</div><div class="sub">تجاوزوا الموعد</div></div>
+    <div class="card stat">
+      <div class="label">نسبة الإنجاز</div><div class="value" id="progressValue">0%</div>
+      <div class="progress"><div id="progressBar"></div></div>
+    </div>
+  </section>
+
+  <section class="screen-grid">
+    <div class="card hero" id="currentHero">
+      <div class="tag">المريض الحالي</div>
+      <div class="name" id="currentName">لا يوجد الآن</div>
+      <div class="meta" id="currentMeta">—</div>
+      <div class="count" id="currentCountdown">--:--:--</div>
+      <div class="hint" id="currentHint">سيظهر العد التنازلي هنا</div>
+    </div>
+
+    <div class="card mini-panel">
+      <h3>الموعد التالي</h3>
+      <div class="big" id="nextName">لا يوجد</div>
+      <div class="meta" id="nextMeta">—</div>
+      <div class="count" id="nextCountdown">--:--:--</div>
+      <div class="desc" id="nextHint">لا توجد مواعيد تالية</div>
+    </div>
+
+    <div class="card mini-panel">
+      <h3>الربط السريع اليومي</h3>
+      <div class="steps">
+        1) جهّز Google Sheet أو ملف CSV<br>
+        2) الأعمدة: <b>الاسم الأول، رقم الملف، البداية، النهاية، الإجراء</b><br>
+        3) انشره كرابط CSV مباشر<br>
+        4) الصق الرابط في المزامنة واضغط <b>سحب من رابط CSV</b>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker">
+    <strong>شريط المتابعة:</strong>
+    <div class="ticker-track" id="tickerTrack">
+      قائمة اليوم جاهزة للعرض — استخدم تحديث قائمة اليوم أو رابط CSV للمزامنة — يعرض النظام المريض الحالي والموعد القادم والتنبيه التلقائي قبل 5 دقائق — 
+      قائمة اليوم جاهزة للعرض — استخدم تحديث قائمة اليوم أو رابط CSV للمزامنة — يعرض النظام المريض الحالي والموعد القادم والتنبيه التلقائي قبل 5 دقائق —
+    </div>
+  </div>
+
+  <section class="main">
+    <div class="card">
+      <div class="section-title">
+        <h2>قائمة المرضى اليومية</h2>
+        <div class="filter-row hide-screen">
+          <input id="searchInput" placeholder="بحث بالاسم الأول أو رقم الملف..." oninput="render()">
+          <select id="statusFilter" onchange="render()">
+            <option value="">كل الحالات</option>
+            <option value="waiting">بانتظار الموعد</option>
+            <option value="active">قيد العلاج</option>
+            <option value="done">مكتمل</option>
+            <option value="late">متأخر</option>
+            <option value="cancel">ملغي</option>
+          </select>
+          <button onclick="openModal()">إضافة مريض</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>الاسم الأول</th>
+              <th>رقم الملف</th>
+              <th>بداية الموعد</th>
+              <th>نهاية الموعد</th>
+              <th>المدة</th>
+              <th>العد التنازلي</th>
+              <th>الإجراء</th>
+              <th>الحالة</th>
+              <th class="actions-col hide-screen">إجراء</th>
+            </tr>
+          </thead>
+          <tbody id="patientsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="card box">
+        <h3>الخط الزمني</h3>
+        <div id="timeline"></div>
+      </div>
+
+      <div class="card box sync hide-screen">
+        <h3>المزامنة السريعة</h3>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:12px;color:#b8c7d4;margin-bottom:6px;font-weight:800">رابط CSV مباشر</label>
+          <input id="sourceUrl" placeholder="الصق رابط CSV هنا">
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:12px;color:#b8c7d4;margin-bottom:6px;font-weight:800">التحديث التلقائي</label>
+          <select id="autoRefresh" onchange="saveSettings()">
+            <option value="0">إيقاف</option>
+            <option value="1">كل 1 دقيقة</option>
+            <option value="2">كل 2 دقيقة</option>
+            <option value="5">كل 5 دقائق</option>
+            <option value="10">كل 10 دقائق</option>
+          </select>
+        </div>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:12px;color:#b8c7d4;margin-bottom:6px;font-weight:800">رابط الشاشة المباشر</label>
+          <input id="screenLink" readonly onclick="this.select()">
+        </div>
+        <button class="green" onclick="syncFromUrl()">سحب القائمة الآن</button>
+        <button onclick="copyScreenLink()">نسخ رابط الشاشة</button>
+        <div class="helper" style="margin-top:10px">
+          افتح الصفحة على شاشة العيادة ثم فعّل وضع الشاشة.  
+          إذا وضعت رابط CSV مباشر، يمكن للداشبورد التحديث تلقائيًا بدون تدخل يدوي.
+        </div>
+      </div>
+
+      <div class="card box notes hide-screen">
+        <h3>ملاحظات اليوم</h3>
+        <textarea id="clinicNotes" placeholder="اكتب ملاحظات اليوم..." oninput="saveNotes()"></textarea>
+      </div>
+    </aside>
+  </section>
+</div>
+
+<div class="modal" id="dailyModal">
+  <div class="modal-card">
+    <h3>تحديث قائمة اليوم</h3>
+    <p style="margin-top:0;color:#b7c5d3">ألصق كل مريض في سطر مستقل بهذا التنسيق:
+      <strong>الاسم الأول, رقم الملف, البداية, النهاية, الإجراء</strong>
+    </p>
+    <textarea id="bulkInput" class="big-text" placeholder="مها,727,15:30,16:00,مراجعة&#10;زهراء,9100,16:00,16:40,كشف جديد"></textarea>
+    <div class="modal-actions">
+      <button onclick="closeDailyUpdate()">إلغاء</button>
+      <button onclick="previewBulk()">معاينة</button>
+      <button class="primary" onclick="applyBulk()">حفظ القائمة</button>
+    </div>
+    <div id="bulkPreview" style="margin-top:14px;color:#dce8f3;font-size:13px"></div>
+  </div>
+</div>
+
+<div class="modal" id="patientModal">
+  <div class="modal-card">
+    <h3 id="modalTitle">إضافة مريض</h3>
+    <div class="form-grid">
+      <div>
+        <label>الاسم الأول</label>
+        <input id="fName" maxlength="30">
+      </div>
+      <div>
+        <label>رقم الملف</label>
+        <input id="fFile">
+      </div>
+      <div>
+        <label>وقت البداية</label>
+        <input id="fStart" type="time">
+      </div>
+      <div>
+        <label>وقت النهاية</label>
+        <input id="fEnd" type="time">
+      </div>
+      <div class="full">
+        <label>الإجراء العلاجي</label>
+        <input id="fProcedure">
+      </div>
+      <div>
+        <label>الحالة</label>
+        <select id="fStatus">
+          <option value="waiting">بانتظار الموعد</option>
+          <option value="active">قيد العلاج</option>
+          <option value="done">مكتمل</option>
+          <option value="late">متأخر</option>
+          <option value="cancel">ملغي</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal()">إلغاء</button>
+      <button class="primary" onclick="savePatient()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal" id="ocrModal">
+  <div class="modal-card" style="width:min(1180px,98vw);max-height:94vh;overflow:auto">
+    <h3 id="ocrModalTitle">تحويل صورة جدول المواعيد إلى قائمة مرضى</h3>
+    <div class="ocr-layout">
+      <section class="ocr-panel">
+        <label class="ocr-drop" id="ocrDropZone" for="ocrFileInput">
+          اضغط أو اسحب صورة جدول المواعيد هنا
+        </label>
+        <input id="ocrFileInput" type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif" hidden onchange="loadOCRImage(event)">
+        <input id="ocrCameraInput" type="file" accept="image/*" capture="environment" hidden onchange="loadOCRImage(event)">
+        <div class="ocr-controls" style="margin-top:10px">
+          <button class="primary" id="ocrChooseFileButton" onclick="document.getElementById('ocrFileInput').click()">📁 اختيار صورة من الملفات</button>
+          <button id="ocrCameraButton" onclick="document.getElementById('ocrCameraInput').click()">📷 التقاط صورة بالكاميرا</button>
+        </div>
+        <div class="ocr-controls">
+          <button onclick="rotateOCRImage(-90)">↶ تدوير</button>
+          <button onclick="rotateOCRImage(90)">↷ تدوير</button>
+          <button onclick="enhanceOCRImage()">تحسين الوضوح</button>
+          <button onclick="resetOCRImage()">إعادة الصورة</button>
+        </div>
+        <canvas id="ocrCanvas" class="ocr-preview"></canvas>
+        <div class="ocr-progress"><div id="ocrProgressBar"></div></div>
+        <div class="ocr-status" id="ocrStatus">لم يتم اختيار صورة بعد</div>
+        <div class="ocr-note" style="margin-top:8px">
+          تتم معالجة الصورة داخل المتصفح. راجع النتائج قبل اعتمادها؛ دقة قراءة الجداول العربية تعتمد على وضوح الصورة واستقامة الصفوف.
+        </div>
+        <div class="template-box">
+          <div class="template-title">استخراج مخصص لنموذج جدول المواعيد</div>
+          <div class="template-desc">يستخدم تقسيم الصفوف والأعمدة الخاص بالنموذج المرفق، ثم يقرأ الاسم ورقم الملف ووقت البداية والنهاية كل حقل على حدة لرفع الدقة.</div>
+          <div class="ocr-controls">
+            <button class="primary" id="templateRunButton" onclick="runPrecisionTemplateOCR()">استخراج فائق الدقة من النموذج</button>
+            <button onclick="autoPrepareTemplateImage()">تهيئة الصورة تلقائيًا</button><button onclick="showTemplateOverlay()">إظهار مناطق القراءة</button>
+            <label class="template-check"><input id="templateProcedureOCR" type="checkbox"> قراءة نوع الموعد أيضًا</label><div class="precision-note">الوضع الجديد يدوّر الصورة تلقائيًا، يكتشف حدود الجدول والصفوف، ويجرب ثلاث معالجات لكل خانة ثم يختار النتيجة الأعلى ثقة. الصف الأخضر موثوق، الأصفر يحتاج مراجعة، والأحمر يحتاج تصحيح.</div>
+          </div>
+        </div>
+        <div class="modal-actions" style="justify-content:flex-start">
+          <button id="ocrRunButton" onclick="runOCR()">استخراج عام للصورة</button>
+        </div>
+      </section>
+
+      <section class="ocr-panel">
+        <label style="display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px">النص المستخرج</label>
+        <textarea id="ocrRawText" class="ocr-raw" placeholder="سيظهر النص المستخرج هنا..."></textarea>
+        <div class="ocr-controls">
+          <button onclick="parseOCRTextToRows()">إعادة ترتيب المواعيد</button>
+          <button onclick="addOCRReviewRow()">إضافة صف</button>
+          <button onclick="clearOCRRows()">مسح النتائج</button>
+        </div>
+        <div class="ocr-table-wrap">
+          <table class="ocr-table">
+            <thead><tr><th>#</th><th>الاسم الأول</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>حذف</th></tr></thead>
+            <tbody id="ocrReviewBody"><tr><td colspan="7" class="empty">لم تُستخرج مواعيد بعد</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeOCRModal()">إلغاء</button>
+      <button onclick="downloadOCRCSV()">تنزيل CSV</button>
+      <button class="primary" onclick="applyOCRRowsToDashboard()">اعتماد وعرض القائمة</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script>
+const STORAGE_KEY='clinic_dashboard_tv_days_v2_20260715';
+const NOTES_KEY='clinic_dashboard_tv_notes_v2_20260715';
+const SETTINGS_KEY='clinic_dashboard_tv_settings_v2_20260715';
+const ALERT_KEY='clinic_dashboard_tv_alerts_v2_20260715';
+const DEFAULT_DATE='2026-07-15';
+
+const samplePatients=[
+  {id:1,name:'مها',file:'727',start:'15:30',end:'16:00',procedure:'مراجعة مريض',status:'waiting'},
+  {id:2,name:'زهراء',file:'9100',start:'16:00',end:'16:40',procedure:'كشف جديد',status:'waiting'},
+  {id:3,name:'محسن',file:'0',start:'16:45',end:'17:00',procedure:'مراجعة مريض',status:'waiting'},
+  {id:4,name:'راجي',file:'17828',start:'17:00',end:'17:30',procedure:'مراجعة مريض',status:'waiting'},
+  {id:5,name:'سلطان',file:'0',start:'17:30',end:'18:00',procedure:'مراجعة مريض',status:'waiting'},
+  {id:6,name:'ملاك',file:'12206',start:'18:00',end:'18:40',procedure:'مراجعة مريض',status:'waiting'},
+  {id:7,name:'غالب',file:'12201',start:'18:40',end:'19:20',procedure:'مراجعة مريض',status:'waiting'},
+  {id:8,name:'ضحى',file:'16232',start:'19:20',end:'20:10',procedure:'موعد طويل',status:'waiting'},
+  {id:9,name:'إسراء',file:'11849',start:'20:10',end:'20:15',procedure:'حالة ضرورية',status:'waiting'},
+  {id:10,name:'الشريفة',file:'11542',start:'20:15',end:'20:55',procedure:'مراجعة مريض',status:'waiting'},
+  {id:11,name:'نوال',file:'16117',start:'20:55',end:'21:20',procedure:'مراجعة مريض',status:'waiting'},
+  {id:12,name:'فاطمة',file:'11476',start:'21:20',end:'21:50',procedure:'الكسرة الأمامية',status:'waiting'}
+];
+
+let dataStore=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+if(!dataStore[DEFAULT_DATE]) dataStore[DEFAULT_DATE]=samplePatients;
+let notesStore=JSON.parse(localStorage.getItem(NOTES_KEY)||'{}');
+let settings=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+let currentLanguage=settings.language||'ar';
+let selectedDate=settings.selectedDate||DEFAULT_DATE;
+let patients=[];
+let soundEnabled=settings.soundEnabled!==false;
+let sourceUrlValue=settings.sourceUrl||'';
+let autoRefreshMinutes=Number(settings.autoRefresh||0);
+let editingId=null;
+let alertFlags=JSON.parse(sessionStorage.getItem(ALERT_KEY)||'{}');
+let activeAnnouncedKey=null;
+let refreshTimer=null;
+
+function firstName(v){return String(v||'مريض').trim().split(/\s+/)[0]}
+function minutes(t){const [h,m]=String(t).split(':').map(Number);return h*60+m}
+function dayTime(t){const d=new Date();const [h,m]=String(t).split(':').map(Number);d.setHours(h,m,0,0);return d}
+function duration(s,e){return Math.max(0,minutes(e)-minutes(s))}
+function formatDuration(n){return n<60?`${n} د`:`${Math.floor(n/60)} س ${n%60?n%60+' د':''}`}
+function formatCountdown(ms){const sign=ms<0?'-':'';ms=Math.abs(ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return sign+[h,m,s].map(x=>String(x).padStart(2,'0')).join(':')}
+function statusText(s){
+  const labels={
+    ar:{waiting:'بانتظار الموعد',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي'},
+    en:{waiting:'Waiting',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled'}
+  };
+  return (labels[currentLanguage]||labels.ar)[s]||s;
+}
+function statusChipClass(s){return ({waiting:'waiting-chip',active:'active-chip',done:'done-chip',late:'late-chip',cancel:'cancel-chip'})[s]||'waiting-chip'}
+function saveData(){dataStore[selectedDate]=patients;localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore))}
+function saveNotes(){notesStore[selectedDate]=clinicNotes.value;localStorage.setItem(NOTES_KEY,JSON.stringify(notesStore))}
+function loadNotes(){clinicNotes.value=notesStore[selectedDate]||''}
+function saveSettings(){
+  settings.selectedDate=selectedDate;
+  settings.soundEnabled=soundEnabled;
+  settings.sourceUrl=sourceUrl.value.trim();
+  settings.autoRefresh=autoRefresh.value;
+  settings.language=currentLanguage;
+  localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));
+  applyAutoRefresh();
+  buildScreenLink();
+}
+function loadPatients(){patients=(dataStore[selectedDate]||[]).map(p=>({...p,name:firstName(p.name)}))}
+function switchDate(){selectedDate=dayPicker.value||DEFAULT_DATE;loadPatients();loadNotes();saveSettings();render()}
+function autoStatus(p){
+  if(['done','cancel'].includes(p.status)) return p.status;
+  const now=new Date(), st=dayTime(p.start), en=dayTime(p.end);
+  if(now>=st && now<=en) return 'active';
+  if(now>en) return p.status==='waiting'?'late':p.status;
+  return p.status==='late'?'waiting':p.status;
+}
+function t(key){
+  const d={
+    ar:{
+      untilStart:'حتى بداية الموعد',untilEnd:'حتى نهاية الموعد',overdue:'تجاوز الموعد',
+      noData:'لا توجد بيانات',file:'رقم الملف',appointment:'الموعد',procedure:'الإجراء',
+      currentNow:'المريض الحالي',nextAppointment:'الموعد التالي',noCurrent:'لا يوجد الآن',
+      noNext:'لا يوجد',noMore:'لا توجد مواعيد تالية',dayComplete:'انتهت مواعيد اليوم',
+      noRemaining:'لا توجد مواعيد متبقية',completedDay:'اكتمل اليوم',untilNext:'حتى بداية الموعد التالي',
+      currentPatientAlert:'حان موعد المريض',nextAlert:'تنبيه الموعد التالي',minutes:'دقيقة',
+      imported:'تم الاستيراد',syncDone:'تمت المزامنة',listUpdated:'تم تحديث القائمة'
+    },
+    en:{
+      untilStart:'Until appointment starts',untilEnd:'Until appointment ends',overdue:'Appointment overdue',
+      noData:'No data available',file:'File number',appointment:'Appointment',procedure:'Procedure',
+      currentNow:'Current patient',nextAppointment:'Next appointment',noCurrent:'No current patient',
+      noNext:'None',noMore:'No upcoming appointments',dayComplete:'Today’s appointments are complete',
+      noRemaining:'No appointments remaining',completedDay:'Day completed',untilNext:'Until next appointment',
+      currentPatientAlert:'Patient appointment is now',nextAlert:'Next appointment alert',minutes:'minutes',
+      imported:'Imported',syncDone:'Sync completed',listUpdated:'List updated'
+    }
+  };
+  return (d[currentLanguage]||d.ar)[key]||key;
+}
+function countdownFor(p){
+  const now=new Date(), st=dayTime(p.start), en=dayTime(p.end);
+  if(now<st) return {text:formatCountdown(st-now), hint:t('untilStart')};
+  if(now<=en) return {text:formatCountdown(en-now), hint:t('untilEnd')};
+  return {text:formatCountdown(now-en), hint:t('overdue')};
+}
+function getTimingState(p){
+  const now=new Date(), st=dayTime(p.start), en=dayTime(p.end);
+  const total=Math.max(1, en-st);
+  if(now<st) return 'upcoming';
+  if(now>en) return 'overdue';
+  const remain=en-now;
+  if(remain<=5*60*1000 || (remain/total)<=0.2) return 'ending';
+  return 'active-ok';
+}
+function getActiveChipClass(p){
+  const state=getTimingState(p);
+  if(state==='active-ok') return 'active-ok-chip';
+  if(state==='ending') return 'active-warning-chip';
+  if(state==='overdue') return 'active-danger-chip';
+  return 'active-ok-chip';
+}
+function getCurrentRowStateClass(p){
+  const state=getTimingState(p);
+  if(state==='active-ok') return 'current-ok';
+  if(state==='ending') return 'current-warning';
+  if(state==='overdue') return 'current-danger';
+  return 'current-warning';
+}
+function getSorted(){return [...patients].sort((a,b)=>a.start.localeCompare(b.start))}
+function showToast(title,text){
+  const wrap=document.getElementById('toastWrap');
+  const div=document.createElement('div');
+  div.className='toast';
+  div.innerHTML=`<strong>${title}</strong><div>${text}</div>`;
+  wrap.appendChild(div);
+  setTimeout(()=>div.remove(),5200);
+}
+function beep(){
+  if(!soundEnabled) return;
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.type='sine'; osc.frequency.value=860;
+    gain.gain.setValueAtTime(.001,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(.08,ctx.currentTime+.01);
+    gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.35);
+    osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime+.36);
+  }catch(e){}
+}
+function speak(txt){
+  if(!soundEnabled || !('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(txt);
+    u.lang=currentLanguage==='en'?'en-US':'ar-SA'; u.rate=.95;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function announce(currentPatient,nextPatient){
+  if(currentPatient){
+    const key=`${selectedDate}_${currentPatient.id}_${currentPatient.start}`;
+    if(activeAnnouncedKey!==key){
+      activeAnnouncedKey=key;
+      showToast('حان موعد المريض', `${currentPatient.name} • ملف ${currentPatient.file||'—'}`);
+      beep(); speak(`حان الآن موعد المريض ${currentPatient.name}`);
+    }
+  }
+  if(nextPatient){
+    const diff=dayTime(nextPatient.start)-new Date();
+    if(diff>0 && diff<=5*60*1000){
+      const nk=`${selectedDate}_next_${nextPatient.id}_${nextPatient.start}`;
+      if(!alertFlags[nk]){
+        alertFlags[nk]=true;
+        sessionStorage.setItem(ALERT_KEY,JSON.stringify(alertFlags));
+        showToast('تنبيه الموعد التالي', `بعد ${Math.ceil(diff/60000)} دقيقة: ${nextPatient.name}`);
+        beep(); speak(`تنبيه. الموعد التالي للمريض ${nextPatient.name} بعد دقائق`);
+      }
+    }
+  }
+}
+function renderTicker(activePatient,nextPatient){
+  const total=patients.length;
+  const done=patients.filter(p=>p.status==='done').length;
+  const remaining=patients.filter(p=>['waiting','late'].includes(p.status)).length;
+  const currentTxt=activePatient?`الآن: ${activePatient.name} من ${activePatient.start} إلى ${activePatient.end}`:'لا يوجد مريض حالي الآن';
+  const nextTxt=nextPatient?`التالي: ${nextPatient.name} عند ${nextPatient.start}`:'لا يوجد موعد تالٍ';
+  const base=`${currentTxt} — ${nextTxt} — إجمالي المرضى ${total} — تم الإنجاز ${done} — المتبقي ${remaining} — `;
+  tickerTrack.textContent=base+base+base;
+}
+function render(){
+  patients.forEach(p=>p.status=autoStatus(p));
+  const sorted=getSorted();
+  const now=new Date();
+  const activePatient=sorted.find(p=>p.status==='active');
+  const upcoming=sorted.filter(p=>dayTime(p.start)>now && !['done','cancel'].includes(p.status));
+  const nextPatient=upcoming[0]||null;
+  announce(activePatient,nextPatient);
+
+  const q=searchInput.value.trim();
+  const f=statusFilter.value;
+  const filtered=sorted.filter(p=>(!q||p.name.includes(q)||String(p.file).includes(q))&&(!f||p.status===f));
+
+  if(!filtered.length){
+    patientsBody.innerHTML=`<tr><td colspan="10" class="empty">${t('noData')}</td></tr>`;
+  }else{
+    patientsBody.innerHTML=filtered.map((p,i)=>{
+      const cd=countdownFor(p);
+      const current=activePatient && p.id===activePatient.id;
+      const next=nextPatient && p.id===nextPatient.id;
+      const currentStateClass=current ? getCurrentRowStateClass(p) : '';
+      const chipClass=(p.status==='active') ? getActiveChipClass(p) : statusChipClass(p.status);
+      return `<tr class="${current?'current '+currentStateClass:(next?'next':'')} ${p.status==='done'?'done-row':''}">
+        <td>${i+1}</td>
+        <td><div class="patient">${p.name}</div></td>
+        <td>${p.file||'—'}</td>
+        <td><span class="time-pill">${p.start}</span></td>
+        <td><span class="time-pill">${p.end}</span></td>
+        <td>${formatDuration(duration(p.start,p.end))}</td>
+        <td><span class="countdown row-countdown" data-patient-id="${p.id}">${cd.text}</span><div class="row-countdown-hint" data-patient-id="${p.id}" style="font-size:12px;color:#b7c6d4">${cd.hint}</div></td>
+        <td>${p.procedure||'—'}</td>
+        <td>
+          <div class="status-chip ${chipClass}">${statusText(p.status)}</div>
+          <select class="status-select hide-screen" onchange="changeStatus(${p.id},this.value)">
+            ${['waiting','active','done','late','cancel'].map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${statusText(s)}</option>`).join('')}
+          </select>
+        </td>
+        <td class="actions-col hide-screen">
+          <button class="icon-btn" onclick="editPatient(${p.id})">✎</button>
+          <button class="icon-btn" onclick="deletePatient(${p.id})">🗑</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  renderStats();
+  renderHero(activePatient,nextPatient,sorted);
+  renderTimeline(activePatient,nextPatient,sorted);
+  renderTicker(activePatient,nextPatient);
+  saveData();
+}
+function renderStats(){
+  const total=patients.length;
+  const done=patients.filter(p=>p.status==='done').length;
+  const active=patients.filter(p=>p.status==='active').length;
+  const late=patients.filter(p=>p.status==='late').length;
+  const remaining=patients.filter(p=>['waiting','late'].includes(p.status)).length;
+  const progress=total?Math.round(done/total*100):0;
+  totalCount.textContent=total;
+  doneCount.textContent=done;
+  activeCount.textContent=active;
+  lateCount.textContent=late;
+  remainingCount.textContent=remaining;
+  progressValue.textContent=progress+'%';
+  progressBar.style.width=progress+'%';
+}
+function renderHero(activePatient,nextPatient,sorted){
+  const nearest=activePatient||nextPatient||sorted.find(p=>!['done','cancel'].includes(p.status));
+  if(activePatient){
+    currentHero.classList.remove('ok','warning','danger');
+    currentHero.classList.add('active');
+    const activeState=getTimingState(activePatient);
+    if(activeState==='active-ok') currentHero.classList.add('ok');
+    else if(activeState==='ending') currentHero.classList.add('warning');
+    else currentHero.classList.add('danger');
+    const cd=countdownFor(activePatient);
+    currentName.textContent=activePatient.name;
+    currentMeta.innerHTML=`<strong>${t('file')}:</strong> ${activePatient.file||'—'} &nbsp;•&nbsp; <strong>${t('appointment')}:</strong> ${activePatient.start} - ${activePatient.end} &nbsp;•&nbsp; <strong>${t('procedure')}:</strong> ${activePatient.procedure||'—'}`;
+    currentCountdown.textContent=cd.text;
+    currentHint.textContent=cd.hint;
+  }else if(nearest){
+    currentHero.classList.remove('active','ok','warning','danger');
+    const cd=countdownFor(nearest);
+    currentName.textContent=nearest.name;
+    currentMeta.innerHTML=`<strong>${t('file')}:</strong> ${nearest.file||'—'} &nbsp;•&nbsp; <strong>${t('appointment')}:</strong> ${nearest.start} - ${nearest.end} &nbsp;•&nbsp; <strong>${t('procedure')}:</strong> ${nearest.procedure||'—'}`;
+    currentCountdown.textContent=cd.text;
+    currentHint.textContent=currentLanguage==='en'?'Waiting for appointment':'بانتظار الموعد';
+  }else{
+    currentHero.classList.remove('active','ok','warning','danger');
+    currentName.textContent=t('dayComplete');
+    currentMeta.textContent=t('noRemaining');
+    currentCountdown.textContent='00:00:00';
+    currentHint.textContent=t('completedDay');
+  }
+
+  if(nextPatient){
+    nextName.textContent=nextPatient.name;
+    nextMeta.innerHTML=`<strong>ملف:</strong> ${nextPatient.file||'—'} &nbsp;•&nbsp; <strong>${nextPatient.start} - ${nextPatient.end}</strong> &nbsp;•&nbsp; ${nextPatient.procedure||'—'}`;
+    nextCountdown.textContent=formatCountdown(dayTime(nextPatient.start)-new Date());
+    nextHint.textContent=t('untilNext');
+  }else{
+    nextName.textContent=t('noNext');
+    nextMeta.textContent=t('noMore');
+    nextCountdown.textContent='--:--:--';
+    nextHint.textContent=t('noMore');
+  }
+}
+function renderTimeline(activePatient,nextPatient,sorted){
+  timeline.innerHTML=sorted.slice(0,10).map(p=>{
+    let cls='';
+    if(activePatient && p.id===activePatient.id){
+      const st=getTimingState(p);
+      cls='current ' + (st==='active-ok'?'ok':(st==='ending'?'warning':'danger'));
+    }
+    else if(nextPatient && p.id===nextPatient.id) cls='next';
+    else if(p.status==='done') cls='done';
+    return `<div class="timeline-item ${cls}">
+      <div><div class="dot"></div></div>
+      <div>
+        <div style="font-weight:900">${p.start} — ${p.name}</div>
+        <div style="font-size:12px;color:#b7c6d4">${statusText(p.status)} • ${p.procedure||'—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let lastScheduleSignature='';
+let renderDeferred=false;
+
+function isInteractiveControlOpen(){
+  const el=document.activeElement;
+  return !!(el && (
+    el.matches('select,input,textarea') ||
+    el.closest('.modal')
+  ));
+}
+function getScheduleState(){
+  patients.forEach(p=>p.status=autoStatus(p));
+  const sorted=getSorted();
+  const now=new Date();
+  const activePatient=sorted.find(p=>p.status==='active')||null;
+  const nextPatient=sorted.find(p=>dayTime(p.start)>now && !['done','cancel'].includes(p.status))||null;
+  const signature=sorted.map(p=>`${p.id}:${p.status}`).join('|')+
+    `|A:${activePatient?.id||''}|N:${nextPatient?.id||''}`;
+  return {sorted,activePatient,nextPatient,signature};
+}
+function updateLiveCountdowns(){
+  document.querySelectorAll('.row-countdown[data-patient-id]').forEach(el=>{
+    const id=Number(el.dataset.patientId);
+    const p=patients.find(x=>Number(x.id)===id);
+    if(!p)return;
+    const cd=countdownFor(p);
+    el.textContent=cd.text;
+    const hint=document.querySelector(`.row-countdown-hint[data-patient-id="${id}"]`);
+    if(hint)hint.textContent=cd.hint;
+  });
+}
+function updateLiveDashboard(){
+  const state=getScheduleState();
+
+  // Rebuild only when a patient crosses a time boundary or status changes.
+  if(state.signature!==lastScheduleSignature){
+    if(isInteractiveControlOpen()){
+      renderDeferred=true;
+    }else{
+      lastScheduleSignature=state.signature;
+      renderDeferred=false;
+      render();
+      return;
+    }
+  }
+
+  // Update clocks and countdowns without rebuilding the table.
+  updateLiveCountdowns();
+  renderHero(state.activePatient,state.nextPatient,state.sorted);
+  renderTicker(state.activePatient,state.nextPatient);
+}
+document.addEventListener('focusout',()=>{
+  if(renderDeferred){
+    setTimeout(()=>{
+      if(!isInteractiveControlOpen()){
+        const state=getScheduleState();
+        lastScheduleSignature=state.signature;
+        renderDeferred=false;
+        render();
+      }
+    },120);
+  }
+});
+
+function updateClock(){
+  const now=new Date();
+  liveTime.textContent=now.toLocaleTimeString(currentLanguage==='en'?'en-US':'ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  liveDate.textContent=now.toLocaleDateString(currentLanguage==='en'?'en-US':'ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  updateLiveDashboard();
+}
+function openDailyUpdate(){bulkInput.value='';bulkPreview.innerHTML='';dailyModal.classList.add('show')}
+function closeDailyUpdate(){dailyModal.classList.remove('show')}
+function parseBulk(txt){
+  return txt.split(/\r?\n/).map(x=>x.trim()).filter(Boolean).map((line,i)=>{
+    const cols=line.split(/[,\t;|]/).map(x=>x.trim());
+    if(cols.length<4) return null;
+    return {id:Date.now()+i,name:firstName(cols[0]),file:cols[1]||'',start:cols[2]||'08:00',end:cols[3]||'08:30',procedure:cols[4]||'',status:'waiting'};
+  }).filter(Boolean).sort((a,b)=>a.start.localeCompare(b.start));
+}
+function previewBulk(){
+  const parsed=parseBulk(bulkInput.value);
+  bulkPreview.innerHTML=parsed.length?`تم التعرف على <strong>${parsed.length}</strong> مريض.<br>`+parsed.slice(0,5).map(p=>`• ${p.name} — ملف ${p.file||'—'} — ${p.start} إلى ${p.end} — ${p.procedure||'—'}`).join('<br>'):'<span style="color:#ffafb7">لا توجد بيانات صالحة</span>';
+}
+function applyBulk(){
+  const parsed=parseBulk(bulkInput.value);
+  if(!parsed.length){alert('لم يتم التعرف على بيانات صالحة');return}
+  patients=parsed;closeDailyUpdate();render();showToast('تم تحديث القائمة',`تم حفظ ${parsed.length} مريض`)
+}
+function openModal(){editingId=null;modalTitle.textContent='إضافة مريض';['fName','fFile','fStart','fEnd','fProcedure'].forEach(id=>document.getElementById(id).value='');fStatus.value='waiting';patientModal.classList.add('show')}
+function closeModal(){patientModal.classList.remove('show')}
+function savePatient(){
+  const name=firstName(fName.value), start=fStart.value, end=fEnd.value;
+  if(!name||!start||!end){alert('أدخل الاسم الأول ووقت البداية والنهاية');return}
+  if(minutes(end)<=minutes(start)){alert('وقت النهاية يجب أن يكون بعد وقت البداية');return}
+  const obj={name,file:fFile.value.trim(),start,end,procedure:fProcedure.value.trim(),status:fStatus.value};
+  if(editingId){Object.assign(patients.find(p=>p.id===editingId),obj)}
+  else{patients.push({id:Date.now(),...obj})}
+  closeModal();render();
+}
+function editPatient(id){
+  const p=patients.find(x=>x.id===id);if(!p)return;
+  editingId=id;modalTitle.textContent='تعديل بيانات المريض';
+  fName.value=p.name;fFile.value=p.file;fStart.value=p.start;fEnd.value=p.end;fProcedure.value=p.procedure;fStatus.value=p.status;
+  patientModal.classList.add('show');
+}
+function deletePatient(id){if(confirm('حذف هذا المريض؟')){patients=patients.filter(p=>p.id!==id);render()}}
+function clearDay(){if(confirm('سيتم حذف قائمة اليوم بالكامل.')){patients=[];notesStore[selectedDate]='';clinicNotes.value='';render();saveNotes()}}
+function changeStatus(id,status){const p=patients.find(x=>x.id===id);if(p){p.status=status;render()}}
+function exportCSV(){
+  const rows=[['الاسم الأول','رقم الملف','وقت البداية','وقت النهاية','الإجراء','الحالة'],...getSorted().map(p=>[p.name,p.file,p.start,p.end,p.procedure,statusText(p.status)])];
+  const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`patient_list_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href);
+}
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(Boolean);
+  return lines.slice(1).map((line,i)=>{
+    const cols=line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g)?.map(x=>x.replace(/^"|"$/g,'').replaceAll('""','"'))||[];
+    return {id:Date.now()+i,name:firstName(cols[0]||'مريض'),file:cols[1]||'',start:cols[2]||'08:00',end:cols[3]||'08:30',procedure:cols[4]||'',status:'waiting'};
+  }).filter(Boolean).sort((a,b)=>a.start.localeCompare(b.start));
+}
+function importCSV(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{const parsed=parseCSV(reader.result);if(parsed.length){patients=parsed;render();showToast('تم الاستيراد',`تم استيراد ${parsed.length} مريض`)}else{showToast('تعذر الاستيراد','الملف لا يحتوي بيانات صالحة')}};
+  reader.readAsText(file,'UTF-8');
+}
+async function syncFromUrl(){
+  const url=sourceUrl.value.trim();
+  if(!url){showToast('الرابط مطلوب','أدخل رابط CSV أولاً');return}
+  try{
+    showToast('جاري المزامنة','يتم سحب البيانات الآن...');
+    const res=await fetch(url,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const txt=await res.text();
+    const parsed=parseCSV(txt);
+    if(!parsed.length) throw new Error('no valid rows');
+    patients=parsed;saveSettings();render();showToast('تمت المزامنة',`تم سحب ${parsed.length} مريض من الرابط`);
+  }catch(err){
+    showToast('فشل السحب','تأكد أن الرابط مباشر لملف CSV ومتاح بدون تسجيل دخول');
+  }
+}
+function applyAutoRefresh(){
+  if(refreshTimer) clearInterval(refreshTimer);
+  const mins=Number(autoRefresh.value||0);
+  if(mins>0){
+    refreshTimer=setInterval(()=>{if(sourceUrl.value.trim()) syncFromUrl()}, mins*60*1000);
+  }
+}
+function toggleSound(){soundEnabled=!soundEnabled;soundLabel.textContent=soundEnabled?'🔔 التنبيه: مفعل':'🔕 التنبيه: متوقف';saveSettings();showToast('التنبيه الصوتي',soundEnabled?'تم تفعيل التنبيه':'تم إيقاف التنبيه')}
+function buildScreenLink(){
+  const base=location.href.split('?')[0];
+  const params=new URLSearchParams();
+  params.set('screen','1');
+  params.set('date',selectedDate);
+  if(sourceUrl.value.trim()) params.set('src',sourceUrl.value.trim());
+  screenLink.value=base+'?'+params.toString();
+  screenShortLabel.textContent='جاهز';
+}
+function copyScreenLink(){screenLink.select();document.execCommand('copy');showToast('تم النسخ','تم نسخ رابط الشاشة')}
+function toggleScreenMode(){
+  document.body.classList.toggle('screen-mode');
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+const staticTranslations={
+  'لوحة شاشة استقبال العيادة':'Clinic Reception Dashboard',
+  'شاشة استقبال ومتابعة المرضى':'Patient Reception & Tracking Screen',
+  'عرض مباشر للمريض الحالي، الموعد القادم، والتقدم اليومي داخل العيادة':'Live display of the current patient, next appointment, and daily clinic progress',
+  'تحديث قائمة اليوم':'Update Today’s List',
+  'استيراد CSV':'Import CSV',
+  'سحب من رابط CSV':'Load from CSV URL',
+  'وضع الشاشة':'Display Mode',
+  'تصدير CSV':'Export CSV',
+  'مسح اليوم':'Clear Day',
+  'إجمالي المرضى':'Total Patients',
+  'مواعيد اليوم':'Today’s appointments',
+  'تم الإنجاز':'Completed',
+  'حالات مكتملة':'Completed cases',
+  'قيد العلاج':'In Treatment',
+  'الحالي الآن':'Current now',
+  'المتبقي':'Remaining',
+  'لم تبدأ':'Not started',
+  'المتأخرون':'Overdue',
+  'تجاوزوا الموعد':'Past appointment time',
+  'نسبة الإنجاز':'Completion Rate',
+  'المريض الحالي':'Current Patient',
+  'الموعد التالي':'Next Appointment',
+  'الربط السريع اليومي':'Quick Daily Sync',
+  'الخط الزمني':'Timeline',
+  'المزامنة السريعة':'Quick Sync',
+  'رابط CSV مباشر':'Direct CSV URL',
+  'التحديث التلقائي':'Auto Refresh',
+  'إيقاف':'Off',
+  'كل 1 دقيقة':'Every 1 minute',
+  'كل 2 دقيقة':'Every 2 minutes',
+  'كل 5 دقائق':'Every 5 minutes',
+  'كل 10 دقائق':'Every 10 minutes',
+  'رابط الشاشة المباشر':'Direct Display Link',
+  'سحب القائمة الآن':'Load List Now',
+  'نسخ رابط الشاشة':'Copy Display Link',
+  'ملاحظات اليوم':'Today’s Notes',
+  'قائمة المرضى اليومية':'Daily Patient List',
+  'كل الحالات':'All Statuses',
+  'بانتظار الموعد':'Waiting',
+  'مكتمل':'Completed',
+  'متأخر':'Overdue',
+  'ملغي':'Cancelled',
+  'إضافة مريض':'Add Patient',
+  'الاسم الأول':'First Name',
+  'رقم الملف':'File Number',
+  'بداية الموعد':'Start Time',
+  'نهاية الموعد':'End Time',
+  'المدة':'Duration',
+  'العد التنازلي':'Countdown',
+  'الإجراء':'Procedure',
+  'الحالة':'Status',
+  'إلغاء':'Cancel',
+  'معاينة':'Preview',
+  'حفظ القائمة':'Save List',
+  'وقت البداية':'Start Time',
+  'وقت النهاية':'End Time',
+  'الإجراء العلاجي':'Treatment Procedure',
+  'حفظ':'Save',
+  'إجراء':'Action',
+  'شريط المتابعة:':'Status Bar:',
+  'جاهز':'Ready',
+  'استخراج من صورة':'Extract from Image',
+  'تحويل صورة جدول المواعيد إلى قائمة مرضى':'Convert Appointment Image to Patient List',
+  'اضغط أو اسحب صورة جدول المواعيد هنا':'Click or drop the appointment schedule image here',
+  'استخراج دقيق من النموذج المعتمد':'High-Accuracy Template Extraction',
+  'استخراج عام للصورة':'General Image Extraction',
+  'اختيار صورة من الملفات':'Choose Image File',
+  'التقاط صورة بالكاميرا':'Take Photo with Camera',
+  'تدوير':'Rotate',
+  'تحسين الوضوح':'Enhance Image',
+  'إعادة الصورة':'Reset Image',
+  'بدء استخراج البيانات':'Extract Data',
+  'النص المستخرج':'Recognized Text',
+  'إعادة ترتيب المواعيد':'Parse Appointments',
+  'إضافة صف':'Add Row',
+  'مسح النتائج':'Clear Results',
+  'البداية':'Start',
+  'النهاية':'End',
+  'حذف':'Delete',
+  'تنزيل CSV':'Download CSV',
+  'اعتماد وعرض القائمة':'Apply and Display List'
+};
+const reverseTranslations=Object.fromEntries(Object.entries(staticTranslations).map(([ar,en])=>[en,ar]));
+function translateStaticText(){
+  const map=currentLanguage==='en'?staticTranslations:reverseTranslations;
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  const nodes=[];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node=>{
+    const raw=node.nodeValue;
+    const trimmed=raw.trim();
+    if(map[trimmed]) node.nodeValue=raw.replace(trimmed,map[trimmed]);
+  });
+  const placeholders={
+    ar:{
+      searchInput:'بحث بالاسم الأول أو رقم الملف...',sourceUrl:'الصق رابط CSV هنا',clinicNotes:'اكتب ملاحظات اليوم...',
+      bulkInput:'مها,727,15:30,16:00,مراجعة\nزهراء,9100,16:00,16:40,كشف جديد'
+    },
+    en:{
+      searchInput:'Search by first name or file number...',sourceUrl:'Paste the direct CSV URL here',clinicNotes:'Enter today’s notes...',
+      bulkInput:'Maha,727,15:30,16:00,Review\nZahra,9100,16:00,16:40,New examination'
+    }
+  };
+  const p=placeholders[currentLanguage];
+  Object.entries(p).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.placeholder=val});
+  document.documentElement.lang=currentLanguage;
+  document.documentElement.dir=currentLanguage==='en'?'ltr':'rtl';
+  document.body.classList.toggle('lang-en',currentLanguage==='en');
+  document.title=currentLanguage==='en'?'Clinic Reception Dashboard':'لوحة شاشة استقبال العيادة';
+  const btn=document.getElementById('languageToggle');
+  if(btn) btn.textContent=currentLanguage==='en'?'العربية':'English';
+  soundLabel.textContent=soundEnabled?(currentLanguage==='en'?'🔔 Alerts: On':'🔔 التنبيه: مفعل'):(currentLanguage==='en'?'🔕 Alerts: Off':'🔕 التنبيه: متوقف');
+}
+function toggleLanguage(){
+  currentLanguage=currentLanguage==='ar'?'en':'ar';
+  saveSettings();
+  translateStaticText();
+  render();
+  updateClock();
+}
+
+
+let ocrOriginalImage=null;
+let ocrRotation=0;
+let ocrEnhanced=false;
+let ocrReviewRows=[];
+let templateOverlayVisible=false;
+
+function ocrMsg(ar,en){return currentLanguage==='en'?en:ar}
+function openOCRModal(){
+  ocrModal.classList.add('show');
+  document.getElementById('ocrModalTitle').textContent=ocrMsg('تحويل صورة جدول المواعيد إلى قائمة مرضى','Convert Appointment Image to Patient List');
+  document.getElementById('ocrOpenButton').textContent=ocrMsg('استخراج من صورة','Extract from Image');
+  const chooseFileBtn=document.getElementById('ocrChooseFileButton');
+  if(chooseFileBtn) chooseFileBtn.textContent=ocrMsg('📁 اختيار صورة من الملفات','📁 Choose Image File');
+  const cameraBtn=document.getElementById('ocrCameraButton');
+  if(cameraBtn) cameraBtn.textContent=ocrMsg('📷 التقاط صورة بالكاميرا','📷 Take Photo with Camera');
+}
+function closeOCRModal(){ocrModal.classList.remove('show')}
+function setOCRStatus(ar,en){ocrStatus.textContent=ocrMsg(ar,en)}
+function initOCRDropZone(){
+  const zone=document.getElementById('ocrDropZone');
+  if(!zone)return;
+  ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,e=>{e.preventDefault();zone.classList.add('dragover')}));
+  ['dragleave','drop'].forEach(type=>zone.addEventListener(type,e=>{e.preventDefault();zone.classList.remove('dragover')}));
+  zone.addEventListener('drop',e=>{
+    const file=e.dataTransfer?.files?.[0];
+    if(file) loadOCRImage({target:{files:[file]}});
+  });
+}
+function loadOCRImage(event){
+  const file=event.target.files?.[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){setOCRStatus('الملف المختار ليس صورة','Selected file is not an image');return}
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{ocrOriginalImage=img;ocrRotation=0;ocrEnhanced=false;drawOCRCanvas();setOCRStatus('الصورة جاهزة للاستخراج','Image is ready for extraction')};
+    img.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+function drawOCRCanvas(){
+  if(!ocrOriginalImage)return;
+  const c=ocrCanvas,ctx=c.getContext('2d',{willReadFrequently:true});
+  const rad=(ocrRotation%360)*Math.PI/180;
+  const swap=Math.abs(ocrRotation%180)===90;
+  const maxW=1800,maxH=1500;
+  let w=ocrOriginalImage.naturalWidth,h=ocrOriginalImage.naturalHeight;
+  const scale=Math.min(1.8,maxW/w,maxH/h);
+  w=Math.round(w*scale);h=Math.round(h*scale);
+  c.width=swap?h:w;c.height=swap?w:h;
+  ctx.save();ctx.translate(c.width/2,c.height/2);ctx.rotate(rad);ctx.drawImage(ocrOriginalImage,-w/2,-h/2,w,h);ctx.restore();
+  if(ocrEnhanced){
+    const image=ctx.getImageData(0,0,c.width,c.height),d=image.data;
+    for(let i=0;i<d.length;i+=4){
+      const gray=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+      const v=gray>185?255:Math.max(0,Math.min(255,(gray-80)*1.8));
+      d[i]=d[i+1]=d[i+2]=v;
+    }
+    ctx.putImageData(image,0,0);
+  }
+}
+function rotateOCRImage(deg){if(!ocrOriginalImage)return;ocrRotation=(ocrRotation+deg)%360;drawOCRCanvas()}
+function enhanceOCRImage(){if(!ocrOriginalImage)return;ocrEnhanced=!ocrEnhanced;drawOCRCanvas();setOCRStatus(ocrEnhanced?'تم تطبيق تحسين التباين':'تم إلغاء تحسين التباين',ocrEnhanced?'Contrast enhancement applied':'Contrast enhancement removed')}
+function resetOCRImage(){if(!ocrOriginalImage)return;ocrRotation=0;ocrEnhanced=false;drawOCRCanvas();setOCRStatus('تمت إعادة الصورة الأصلية','Original image restored')}
+
+
+
+function autoPrepareTemplateImage(){
+  if(!ocrOriginalImage){setOCRStatus('اختر صورة أولاً','Choose an image first');return}
+  const w=ocrOriginalImage.naturalWidth,h=ocrOriginalImage.naturalHeight;
+  if(h>w){ocrRotation=(ocrRotation+90)%360}
+  ocrEnhanced=true;
+  drawOCRCanvas();
+  setOCRStatus('تم تدوير الصورة وتحسينها تلقائيًا. استخدم إظهار مناطق القراءة للتأكد.','Image was auto-rotated and enhanced. Use Show Reading Zones to verify.');
+}
+function detectAdaptiveTableRect(){
+  const {data,w,h}=canvasGrayData();
+  const x0=Math.floor(w*.015),x1=Math.floor(w*.985);
+  const rowScores=[];
+  for(let y=Math.floor(h*.08);y<Math.floor(h*.96);y++){
+    let dark=0;
+    for(let x=x0;x<x1;x+=3){
+      const i=(y*w+x)*4;
+      const g=.299*data[i]+.587*data[i+1]+.114*data[i+2];
+      if(g<115) dark++;
+    }
+    rowScores.push([y,dark/Math.max(1,(x1-x0)/3)]);
+  }
+  const ys=rowScores.filter(v=>v[1]>.23).map(v=>v[0]);
+  if(ys.length<5) return null;
+  const groups=[];
+  let g=[ys[0]];
+  for(let i=1;i<ys.length;i++){
+    if(ys[i]-ys[i-1]<=4) g.push(ys[i]); else {groups.push(g);g=[ys[i]]}
+  }
+  groups.push(g);
+  const lines=groups.map(a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length));
+  if(lines.length<5) return null;
+  let top=lines[0],bottom=lines[lines.length-1];
+  // Prefer the dense lower table area, excluding the report header.
+  for(let i=0;i<lines.length-4;i++){
+    const span=lines[Math.min(lines.length-1,i+4)]-lines[i];
+    if(span<Math.max(220,h*.32)){top=lines[i];break}
+  }
+  const usableLines=lines.filter(y=>y>=top);
+  bottom=usableLines[usableLines.length-1];
+  const colScores=[];
+  for(let x=x0;x<x1;x++){
+    let dark=0;
+    for(let y=top;y<=bottom;y+=3){
+      const i=(y*w+x)*4;
+      const gg=.299*data[i]+.587*data[i+1]+.114*data[i+2];
+      if(gg<115) dark++;
+    }
+    colScores.push([x,dark/Math.max(1,(bottom-top)/3)]);
+  }
+  const xs=colScores.filter(v=>v[1]>.32).map(v=>v[0]);
+  if(xs.length<2) return {x:x0,y:top,w:x1-x0,h:bottom-top};
+  const xgroups=[];let xg=[xs[0]];
+  for(let i=1;i<xs.length;i++){
+    if(xs[i]-xs[i-1]<=4)xg.push(xs[i]);else{xgroups.push(xg);xg=[xs[i]]}
+  }
+  xgroups.push(xg);
+  const xlines=xgroups.map(a=>Math.round(a.reduce((s,v)=>s+v,0)/a.length));
+  const left=xlines[0],right=xlines[xlines.length-1];
+  return {x:left,y:top,w:right-left,h:bottom-top};
+}
+function scoreRecognizedValue(kind,value){
+  if(!value)return 0;
+  if(kind==='name'){
+    const words=String(value).match(/[\u0600-\u06FF]{2,}/g)||[];
+    return Math.min(100,words.join('').length*12);
+  }
+  if(kind==='file'){
+    const n=parseTemplateFile(value);
+    return n && n.length<=6 ? 80+n.length*3 : 0;
+  }
+  if(kind==='time'){
+    const t=parseTemplateTime(value);
+    return t ? 100 : 0;
+  }
+  if(kind==='procedure'){
+    return /[\u0600-\u06FF]{2,}/.test(value)?80:20;
+  }
+  return 0;
+}
+function makeFieldCanvasVariant(row,field,scale=4,threshold=155,invert=false){
+  const r=templateTableRect();
+  const cols={
+    procedure:[.075,.165],
+    name:[.545,.680],
+    file:[.680,.738],
+    end:[.738,.794],
+    start:[.794,.855]
+  };
+  const c=cols[field];
+  const sx=Math.round(r.x+r.w*c[0]);
+  const sw=Math.max(4,Math.round(r.w*(c[1]-c[0])));
+  const sy=Math.max(0,row.top-2),sh=Math.max(8,row.bottom-row.top+4);
+  const out=document.createElement('canvas');
+  out.width=sw*scale;out.height=sh*scale;
+  const ctx=out.getContext('2d',{willReadFrequently:true});
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(ocrCanvas,sx,sy,sw,sh,0,0,out.width,out.height);
+  const im=ctx.getImageData(0,0,out.width,out.height),d=im.data;
+  for(let i=0;i<d.length;i+=4){
+    const gray=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+    let v=gray<threshold?0:255;
+    if(invert)v=255-v;
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(im,0,0);
+  return out;
+}
+async function recognizeBestTemplateField(worker,row,kind){
+  const configs = kind==='name'
+    ? [{t:135,s:5},{t:155,s:5},{t:175,s:5}]
+    : kind==='time'
+      ? [{t:130,s:5},{t:155,s:5},{t:180,s:5}]
+      : [{t:140,s:5},{t:165,s:5},{t:185,s:5}];
+  let best={raw:'',score:-1};
+  for(const cfg of configs){
+    const canvas=makeFieldCanvasVariant(row,kind,cfg.s,cfg.t,false);
+    const raw=await recognizeTemplateField(worker,canvas,kind==='file'?'time':kind);
+    const score=scoreRecognizedValue(kind,raw);
+    if(score>best.score)best={raw,score};
+    if(score>=100)break;
+  }
+  return best;
+}
+function rowConfidence(row){
+  let score=0;
+  if(row.name)score+=35;
+  if(row.file)score+=20;
+  if(row.start)score+=25;
+  if(row.end)score+=20;
+  return score;
+}
+
+function templateTableRect(){
+  const adaptive=detectAdaptiveTableRect();
+  if(adaptive && adaptive.w>ocrCanvas.width*.55 && adaptive.h>ocrCanvas.height*.22)return adaptive;
+  const w=ocrCanvas.width,h=ocrCanvas.height;
+  return {x:Math.round(w*0.045),y:Math.round(h*0.22),w:Math.round(w*0.91),h:Math.round(h*0.62)};
+}
+function canvasGrayData(){
+  const ctx=ocrCanvas.getContext('2d',{willReadFrequently:true});
+  const img=ctx.getImageData(0,0,ocrCanvas.width,ocrCanvas.height);
+  return {data:img.data,w:img.width,h:img.height};
+}
+function clusterPositions(values,maxGap=3){
+  if(!values.length)return[];
+  const groups=[];let g=[values[0]];
+  for(let i=1;i<values.length;i++){
+    if(values[i]-values[i-1]<=maxGap)g.push(values[i]);
+    else{groups.push(g);g=[values[i]]}
+  }
+  groups.push(g);
+  return groups.map(a=>Math.round(a.reduce((x,y)=>x+y,0)/a.length));
+}
+function detectTemplateRows(){
+  const rect=templateTableRect();
+  const {data,w}=canvasGrayData();
+  const candidates=[];
+  for(let y=rect.y;y<rect.y+rect.h;y++){
+    let dark=0;
+    for(let x=rect.x;x<rect.x+rect.w;x+=2){
+      const i=(y*w+x)*4;
+      const gray=.299*data[i]+.587*data[i+1]+.114*data[i+2];
+      if(gray<105)dark++;
+    }
+    if(dark>(rect.w/2)*.32)candidates.push(y);
+  }
+  let lines=clusterPositions(candidates,3).filter(y=>y>=rect.y&&y<=rect.y+rect.h);
+  // Remove extremely close duplicates and keep plausible row separators.
+  lines=lines.filter((y,i)=>i===0||y-lines[i-1]>5);
+  const pairs=[];
+  for(let i=0;i<lines.length-1;i++){
+    const height=lines[i+1]-lines[i];
+    if(height>=24&&height<=85)pairs.push({top:lines[i]+2,bottom:lines[i+1]-2});
+  }
+  // Fallback calibrated row segmentation for the same screenshot family.
+  if(pairs.length<8){
+    const approxTop=rect.y+8, rowH=rect.h/12.2;
+    return Array.from({length:12},(_,i)=>({top:Math.round(approxTop+i*rowH),bottom:Math.round(approxTop+(i+1)*rowH-2)}));
+  }
+  return pairs.slice(-14);
+}
+function makeFieldCanvas(row,field,scale=3){
+  const r=templateTableRect();
+  const cols={
+    procedure:[.075,.165],
+    name:[.545,.680],
+    file:[.680,.738],
+    end:[.738,.794],
+    start:[.794,.855]
+  };
+  const c=cols[field];
+  const sx=Math.round(r.x+r.w*c[0]);
+  const sw=Math.max(4,Math.round(r.w*(c[1]-c[0])));
+  const sy=Math.max(0,row.top-1),sh=Math.max(8,row.bottom-row.top+2);
+  const out=document.createElement('canvas');
+  out.width=sw*scale;out.height=sh*scale;
+  const ctx=out.getContext('2d',{willReadFrequently:true});
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(ocrCanvas,sx,sy,sw,sh,0,0,out.width,out.height);
+  const im=ctx.getImageData(0,0,out.width,out.height),d=im.data;
+  for(let i=0;i<d.length;i+=4){
+    const gray=.299*d[i]+.587*d[i+1]+.114*d[i+2];
+    const v=gray<155?0:255;
+    d[i]=d[i+1]=d[i+2]=v;
+  }
+  ctx.putImageData(im,0,0);
+  return out;
+}
+function cleanTemplateName(s){
+  const groups=String(s||'').replace(/[|_.,:؛،0-9A-Za-z]/g,' ').match(/[\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,5}/g)||[];
+  const blocked=new Set(['الأربعاء','الخميس','الثلاثاء','الاثنين','الأحد','السبت','الجمعة','مريض','مراجعة','كشف','موعد']);
+  for(const g of groups){
+    const words=g.trim().split(/\s+/).filter(w=>w.length>1&&!blocked.has(w));
+    if(words.length)return words[0];
+  }
+  return '';
+}
+function parseTemplateTime(s){
+  let t=normalizeOCRDigits(s).toUpperCase().replace(/[OQ]/g,'0').replace(/[IL]/g,'1');
+  const m=t.match(/(\d{1,2})\D{0,3}(\d{2})\s*(AM|PM)?/);
+  if(!m)return'';
+  let h=Number(m[1]),min=Number(m[2]);
+  if(min>59||h>23)return'';
+  if(m[3]==='PM'&&h<12)h+=12;if(m[3]==='AM'&&h===12)h=0;
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+function parseTemplateFile(s){
+  const nums=normalizeOCRDigits(s).replace(/[^0-9]/g,'');
+  return nums.slice(0,6)||'';
+}
+function cleanTemplateProcedure(s){
+  const v=String(s||'').replace(/[^\u0600-\u06FF\s]/g,' ').replace(/\s+/g,' ').trim();
+  if(v.includes('كشف'))return'كشف جديد';
+  if(v.includes('مراجعة'))return'مراجعة مريض';
+  return v.split(' ').slice(0,3).join(' ');
+}
+async function recognizeTemplateField(worker,canvas,kind){
+  if(kind==='name'||kind==='procedure'){
+    await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM?.SINGLE_LINE||7,preserve_interword_spaces:'1'});
+  }else{
+    await worker.setParameters({tessedit_pageseg_mode:Tesseract.PSM?.SINGLE_LINE||7,tessedit_char_whitelist:'0123456789:AMP '});
+  }
+  const res=await worker.recognize(canvas);
+  return (res.data.text||'').trim();
+}
+
+async function runPrecisionTemplateOCR(){
+  if(!ocrOriginalImage){setOCRStatus('اختر صورة أولاً','Choose an image first');return}
+  if(!window.Tesseract){setOCRStatus('تعذر تحميل محرك القراءة','OCR engine failed to load');return}
+  const btn=document.getElementById('templateRunButton');btn.disabled=true;ocrProgressBar.style.width='2%';
+  try{
+    autoPrepareTemplateImage();
+    setOCRStatus('تحديد الجدول والصفوف تلقائيًا...','Automatically locating table and rows...');
+    const rows=detectTemplateRows();
+    const worker=await Tesseract.createWorker(['ara','eng'],1,{logger:m=>{
+      if(typeof m.progress==='number')ocrProgressBar.style.width=Math.max(3,Math.round(m.progress*100))+'%';
+    }});
+    const output=[];const raw=[];
+    for(let i=0;i<rows.length;i++){
+      setOCRStatus(`تحليل الصف ${i+1} من ${rows.length} بثلاث معالجات...`,`Analyzing row ${i+1} of ${rows.length} with multiple passes...`);
+      const n=await recognizeBestTemplateField(worker,rows[i],'name');
+      const f=await recognizeBestTemplateField(worker,rows[i],'file');
+      const s=await recognizeBestTemplateField(worker,rows[i],'start');
+      const e=await recognizeBestTemplateField(worker,rows[i],'end');
+      let p={raw:'',score:0};
+      if(document.getElementById('templateProcedureOCR').checked)p=await recognizeBestTemplateField(worker,rows[i],'procedure');
+      let row={
+        name:cleanTemplateName(n.raw),
+        file:parseTemplateFile(f.raw),
+        start:parseTemplateTime(s.raw),
+        end:parseTemplateTime(e.raw),
+        procedure:cleanTemplateProcedure(p.raw)
+      };
+      if(row.start&&row.end&&minutes(row.end)<=minutes(row.start)){
+        const temp=row.start;row.start=row.end;row.end=temp;
+      }
+      row.confidence=rowConfidence(row);
+      raw.push(`ROW ${i+1} [${row.confidence}%] | NAME:${n.raw} | FILE:${f.raw} | START:${s.raw} | END:${e.raw} | TYPE:${p.raw}`);
+      if(row.name||row.file||row.start||row.end)output.push(row);
+    }
+    await worker.terminate();
+    ocrRawText.value=raw.join('\n');
+    ocrReviewRows=output
+      .filter(r=>r.name||r.file)
+      .map(r=>({...r,start:r.start||'',end:r.end||''}))
+      .sort((a,b)=>(a.start||'99:99').localeCompare(b.start||'99:99'));
+    renderOCRReview();
+    [...document.querySelectorAll('#ocrReviewBody tr')].forEach((tr,i)=>{
+      const c=ocrReviewRows[i]?.confidence||0;
+      tr.classList.add(c>=80?'conf-high':c>=55?'conf-mid':'conf-low');
+    });
+    ocrProgressBar.style.width='100%';
+    const high=ocrReviewRows.filter(r=>(r.confidence||0)>=80).length;
+    setOCRStatus(`اكتمل الاستخراج: ${ocrReviewRows.length} صفًا، منها ${high} صفوف عالية الثقة. راجع الأصفر والأحمر فقط.`,`Extraction complete: ${ocrReviewRows.length} rows, ${high} high-confidence. Review yellow and red rows only.`);
+  }catch(err){
+    console.error(err);
+    setOCRStatus('تعذر الاستخراج. استخدم تهيئة الصورة ثم تحقق من مناطق القراءة.','Extraction failed. Auto-prepare the image and verify reading zones.');
+  }finally{btn.disabled=false}
+}
+
+async function runTemplateOCR(){
+  if(!ocrOriginalImage){setOCRStatus('اختر صورة أولاً','Choose an image first');return}
+  if(!window.Tesseract){setOCRStatus('تعذر تحميل محرك القراءة','OCR engine failed to load');return}
+  const btn=document.getElementById('templateRunButton');btn.disabled=true;ocrProgressBar.style.width='2%';
+  try{
+    setOCRStatus('تحليل خطوط النموذج وتقسيم الصفوف...','Detecting template rows and columns...');
+    if(!ocrEnhanced){ocrEnhanced=true;drawOCRCanvas()}
+    const rows=detectTemplateRows();
+    const worker=await Tesseract.createWorker(['ara','eng'],1,{logger:m=>{
+      if(typeof m.progress==='number')ocrProgressBar.style.width=Math.max(3,Math.round(m.progress*100))+'%';
+    }});
+    const output=[];const raw=[];
+    for(let i=0;i<rows.length;i++){
+      setOCRStatus(`قراءة الصف ${i+1} من ${rows.length}...`,`Reading row ${i+1} of ${rows.length}...`);
+      const nameRaw=await recognizeTemplateField(worker,makeFieldCanvas(rows[i],'name',4),'name');
+      const fileRaw=await recognizeTemplateField(worker,makeFieldCanvas(rows[i],'file',4),'file');
+      const startRaw=await recognizeTemplateField(worker,makeFieldCanvas(rows[i],'start',4),'time');
+      const endRaw=await recognizeTemplateField(worker,makeFieldCanvas(rows[i],'end',4),'time');
+      let procedure='';let procedureRaw='';
+      if(document.getElementById('templateProcedureOCR').checked){
+        procedureRaw=await recognizeTemplateField(worker,makeFieldCanvas(rows[i],'procedure',3),'procedure');
+        procedure=cleanTemplateProcedure(procedureRaw);
+      }
+      const name=cleanTemplateName(nameRaw),file=parseTemplateFile(fileRaw),start=parseTemplateTime(startRaw),end=parseTemplateTime(endRaw);
+      raw.push(`ROW ${i+1} | NAME:${nameRaw} | FILE:${fileRaw} | START:${startRaw} | END:${endRaw} | TYPE:${procedureRaw}`);
+      if(name||file||start||end){output.push({name:name||'',file,start,end,procedure})}
+    }
+    await worker.terminate();
+    ocrRawText.value=raw.join('\n');
+    ocrReviewRows=output.filter(r=>r.name||r.file).map(r=>{
+      let {start,end}=r;
+      if(start&&end&&minutes(end)<=minutes(start)){const z=start;start=end;end=z}
+      return {...r,start:start||'08:00',end:end||'08:30'};
+    }).sort((a,b)=>a.start.localeCompare(b.start));
+    renderOCRReview();ocrProgressBar.style.width='100%';
+    setOCRStatus(`اكتمل الاستخراج المخصص: ${ocrReviewRows.length} صفًا. راجع الحقول المظللة فقط.`,`Template extraction complete: ${ocrReviewRows.length} rows. Review the fields before applying.`);
+  }catch(err){console.error(err);setOCRStatus('تعذر الاستخراج المخصص. تأكد أن الصورة كاملة ومستقيمة وتشبه النموذج المعتمد.','Template extraction failed. Use a full, straight image matching the calibrated model.');}
+  finally{btn.disabled=false}
+}
+function showTemplateOverlay(){
+  if(!ocrOriginalImage)return;
+  drawOCRCanvas();
+  const ctx=ocrCanvas.getContext('2d');const r=templateTableRect();const rows=detectTemplateRows();
+  ctx.save();ctx.lineWidth=Math.max(2,ocrCanvas.width/700);ctx.strokeStyle='rgba(29,145,150,.9)';ctx.strokeRect(r.x,r.y,r.w,r.h);
+  const cols={procedure:[.075,.165],name:[.545,.680],file:[.680,.738],end:[.738,.794],start:[.794,.855]};
+  const colors={procedure:'#8a6d3b',name:'#238751',file:'#456fcb',end:'#b34756',start:'#9a711c'};
+  for(const [key,c] of Object.entries(cols)){
+    ctx.strokeStyle=colors[key];ctx.strokeRect(r.x+r.w*c[0],r.y,r.w*(c[1]-c[0]),r.h);
+  }
+  ctx.strokeStyle='rgba(80,90,100,.45)';rows.forEach(row=>ctx.strokeRect(r.x,row.top,r.w,row.bottom-row.top));ctx.restore();
+  setOCRStatus('تم إظهار مناطق القراءة المعتمدة: الاسم، الملف، البداية، النهاية.','Calibrated reading zones are displayed.');
+}
+
+async function runOCR(){
+  if(!ocrOriginalImage){setOCRStatus('اختر صورة أولاً','Choose an image first');return}
+  if(!window.Tesseract){setOCRStatus('تعذر تحميل محرك القراءة. تحقق من اتصال الإنترنت','OCR engine failed to load. Check internet connection');return}
+  ocrRunButton.disabled=true;ocrProgressBar.style.width='2%';
+  try{
+    setOCRStatus('تحميل نموذج اللغة العربية والإنجليزية...','Loading Arabic and English recognition models...');
+    const worker=await Tesseract.createWorker(['ara','eng'],1,{logger:m=>{
+      if(typeof m.progress==='number')ocrProgressBar.style.width=Math.round(m.progress*100)+'%';
+      if(m.status)setOCRStatus('جاري معالجة الصورة: '+m.status,'Processing image: '+m.status);
+    }});
+    await worker.setParameters({preserve_interword_spaces:'1',tessedit_pageseg_mode:Tesseract.PSM?.AUTO||3});
+    const result=await worker.recognize(ocrCanvas);
+    await worker.terminate();
+    ocrRawText.value=result.data.text||'';
+    ocrProgressBar.style.width='100%';
+    parseOCRTextToRows();
+    setOCRStatus(`اكتمل الاستخراج. تم العثور على ${ocrReviewRows.length} موعدًا مبدئيًا`,`Extraction completed. ${ocrReviewRows.length} provisional appointments found`);
+  }catch(err){
+    console.error(err);
+    setOCRStatus('فشل الاستخراج. جرّب تحسين الصورة أو تدويرها','Extraction failed. Try enhancing or rotating the image');
+  }finally{ocrRunButton.disabled=false}
+}
+function normalizeOCRDigits(s){
+  const map={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9','۰':'0','۱':'1','۲':'2','۳':'3','۴':'4','۵':'5','۶':'6','۷':'7','۸':'8','۹':'9'};
+  return String(s||'').replace(/[٠-٩۰-۹]/g,ch=>map[ch]||ch).replace(/[|]/g,' ');
+}
+function normalizeTimeToken(token){
+  let s=normalizeOCRDigits(token).toUpperCase().replace(/\s+/g,' ').trim();
+  s=s.replace(/[؛،]/g,':').replace(/\.(?=\d{2}\b)/g,':');
+  const m=s.match(/\b(\d{1,2})\s*[:：]\s*(\d{2})\s*(AM|PM)?\b/);
+  if(!m)return null;
+  let h=Number(m[1]),min=Number(m[2]);const ap=m[3];
+  if(min>59||h>23)return null;
+  if(ap==='PM'&&h<12)h+=12;if(ap==='AM'&&h===12)h=0;
+  return `${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+function extractTimes(line){
+  const norm=normalizeOCRDigits(line).toUpperCase();
+  const matches=[...norm.matchAll(/\b\d{1,2}\s*[:：.]\s*\d{2}\s*(?:AM|PM)?\b/g)].map(m=>normalizeTimeToken(m[0])).filter(Boolean);
+  return [...new Set(matches)];
+}
+function extractFirstArabicName(line){
+  let cleaned=normalizeOCRDigits(line)
+    .replace(/\b\d{1,2}\s*[:：.]\s*\d{2}\s*(?:AM|PM)?\b/gi,' ')
+    .replace(/\b\d{1,4}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g,' ')
+    .replace(/\b\d{7,}\b/g,' ')
+    .replace(/[A-Za-z]+/g,' ')
+    .replace(/[0-9_+*=<>]/g,' ');
+  const groups=cleaned.match(/[\u0600-\u06FF]+(?:\s+[\u0600-\u06FF]+){0,4}/g)||[];
+  const blocked=['الأربعاء','الخميس','الثلاثاء','الاثنين','الأحد','السبت','الجمعة','مراجعة','مريض','كشف','جديد','موعد','طويل','ضروري','العيادة'];
+  for(const g of groups){
+    const words=g.trim().split(/\s+/).filter(w=>w.length>1&&!blocked.includes(w));
+    if(words.length)return words[0];
+  }
+  return '';
+}
+function extractFileNumber(line,times){
+  let s=normalizeOCRDigits(line);
+  times.forEach(t=>{const [h,m]=t.split(':');s=s.replace(new RegExp(`\\b0?${Number(h)}\\s*[:：.]\\s*${m}\\b`,'g'),' ')});
+  const nums=s.match(/\b\d{1,6}\b/g)||[];
+  const valid=nums.filter(n=>!/^20\d{2}$/.test(n)&&Number(n)<=999999);
+  return valid.length?valid[valid.length-1]:'';
+}
+function inferProcedure(line,name){
+  let s=normalizeOCRDigits(line)
+    .replace(/\b\d{1,2}\s*[:：.]\s*\d{2}\s*(?:AM|PM)?\b/gi,' ')
+    .replace(/\b\d+\b/g,' ').replace(/[A-Za-z]+/g,' ');
+  if(name)s=s.replace(name,' ');
+  s=s.replace(/\s+/g,' ').trim();
+  const candidates=['كشف جديد','مراجعة مريض','موعد طويل','حالة ضرورية','الكسرة الأمامية','مراجعة'];
+  return candidates.find(x=>s.includes(x))||'';
+}
+function parseOCRTextToRows(){
+  const raw=ocrRawText.value||'';
+  const lines=raw.split(/\r?\n/).map(x=>x.trim()).filter(x=>x.length>3);
+  const rows=[];
+  for(const line of lines){
+    const times=extractTimes(line);
+    if(times.length<2)continue;
+    let start=times[0],end=times[1];
+    if(minutes(end)<=minutes(start) && times.length>2){start=times[times.length-2];end=times[times.length-1]}
+    if(minutes(end)<=minutes(start)){const tmp=start;start=end;end=tmp}
+    const name=extractFirstArabicName(line);
+    const file=extractFileNumber(line,times);
+    if(!name&&!file)continue;
+    rows.push({name:name||ocrMsg('مريض','Patient'),file,start,end,procedure:inferProcedure(line,name)});
+  }
+  // Merge likely wrapped OCR lines by time uniqueness and remove duplicates.
+  const seen=new Set();
+  ocrReviewRows=rows.filter(r=>{const k=`${r.start}|${r.end}|${r.file}`;if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>a.start.localeCompare(b.start));
+  renderOCRReview();
+  if(!ocrReviewRows.length)setOCRStatus('لم يتم ترتيب الصفوف تلقائيًا. عدّل النص المستخرج أو أضف الصفوف يدويًا','No rows were parsed automatically. Edit the recognized text or add rows manually');
+}
+function renderOCRReview(){
+  if(!ocrReviewRows.length){ocrReviewBody.innerHTML=`<tr><td colspan="7" class="empty">${ocrMsg('لم تُستخرج مواعيد بعد','No appointments extracted yet')}</td></tr>`;return}
+  ocrReviewBody.innerHTML=ocrReviewRows.map((r,i)=>`<tr>
+    <td>${i+1}</td>
+    <td><input value="${escapeHTML(r.name)}" oninput="updateOCRRow(${i},'name',this.value)"></td>
+    <td><input value="${escapeHTML(r.file)}" oninput="updateOCRRow(${i},'file',this.value)"></td>
+    <td><input type="time" value="${r.start}" oninput="updateOCRRow(${i},'start',this.value)"></td>
+    <td><input type="time" value="${r.end}" oninput="updateOCRRow(${i},'end',this.value)"></td>
+    <td><input value="${escapeHTML(r.procedure)}" oninput="updateOCRRow(${i},'procedure',this.value)"></td>
+    <td><button class="red" onclick="removeOCRRow(${i})">×</button></td>
+  </tr>`).join('');
+}
+function escapeHTML(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+function updateOCRRow(i,key,value){if(ocrReviewRows[i])ocrReviewRows[i][key]=value}
+function removeOCRRow(i){ocrReviewRows.splice(i,1);renderOCRReview()}
+function addOCRReviewRow(){ocrReviewRows.push({name:'',file:'',start:'08:00',end:'08:30',procedure:''});renderOCRReview()}
+function clearOCRRows(){ocrReviewRows=[];renderOCRReview()}
+function validOCRRows(){return ocrReviewRows.filter(r=>r.name&&r.start&&r.end&&minutes(r.end)>minutes(r.start))}
+function applyOCRRowsToDashboard(){
+  const valid=validOCRRows();
+  if(!valid.length){showToast(ocrMsg('لا توجد قائمة صالحة','No valid list'),ocrMsg('راجع الأسماء والأوقات أولاً','Review names and times first'));return}
+  patients=valid.map((r,i)=>({id:Date.now()+i,name:firstName(r.name),file:String(r.file||''),start:r.start,end:r.end,procedure:r.procedure||'',status:'waiting'}));
+  render();closeOCRModal();showToast(ocrMsg('تم اعتماد القائمة','List applied'),ocrMsg(`تم عرض ${patients.length} مريضًا`,` ${patients.length} patients are now displayed`));
+}
+function downloadOCRCSV(){
+  const valid=validOCRRows();
+  if(!valid.length){showToast(ocrMsg('لا توجد بيانات','No data'),ocrMsg('استخرج أو أضف المواعيد أولاً','Extract or add appointments first'));return}
+  const rows=[[ocrMsg('الاسم الأول','First Name'),ocrMsg('رقم الملف','File Number'),ocrMsg('وقت البداية','Start Time'),ocrMsg('وقت النهاية','End Time'),ocrMsg('الإجراء','Procedure')],...valid.map(r=>[firstName(r.name),r.file,r.start,r.end,r.procedure])];
+  const csv='\ufeff'+rows.map(row=>row.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`ocr_patient_list_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href);
+}
+function setupOCRDrop(){
+  const zone=document.getElementById('ocrDropZone');
+  ['dragenter','dragover'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag')}));
+  ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag')}));
+  zone.addEventListener('drop',e=>{const f=e.dataTransfer.files?.[0];if(f){const dt=new DataTransfer();dt.items.add(f);ocrImageInput.files=dt.files;loadOCRImage({target:{files:[f]}})}});
+}
+
+function applyQueryParams(){
+  const params=new URLSearchParams(location.search);
+  if(params.get('date')) selectedDate=params.get('date');
+  if(params.get('src')) sourceUrlValue=params.get('src');
+  if(params.get('screen')==='1') document.body.classList.add('screen-mode');
+}
+function initInputs(){
+  dayPicker.value=selectedDate;
+  sourceUrl.value=sourceUrlValue;
+  autoRefresh.value=String(autoRefreshMinutes);
+  soundLabel.textContent=soundEnabled?'🔔 التنبيه: مفعل':'🔕 التنبيه: متوقف';
+  buildScreenLink();
+  applyAutoRefresh();
+}
+dailyModal.addEventListener('click',e=>{if(e.target===dailyModal) closeDailyUpdate()});
+patientModal.addEventListener('click',e=>{if(e.target===patientModal) closeModal()});
+ocrModal.addEventListener('click',e=>{if(e.target===ocrModal) closeOCRModal()});
+setupOCRDrop();
+
+initOCRDropZone();
+applyQueryParams();
+loadPatients();
+loadNotes();
+initInputs();
+translateStaticText();
+render();
+lastScheduleSignature=getScheduleState().signature;
+updateClock();
+setInterval(updateClock,1000);
+</script>
+</body>
+</html>
