@@ -1016,7 +1016,7 @@ function statusText(s){
 }
 function statusChipClass(s){return ({waiting:'waiting-chip',active:'active-chip',done:'done-chip',late:'late-chip',cancel:'cancel-chip'})[s]||'waiting-chip'}
 function saveData(){
-  dataStore[selectedDate]=patients;
+  dataStore[selectedDate]=patients.map(p=>({...p}));
   localStorage.setItem(STORAGE_KEY,JSON.stringify(dataStore));
   if(!applyingRemoteState)scheduleRemotePush();
 }
@@ -1583,7 +1583,11 @@ function previewBulk(){
 function applyBulk(){
   const parsed=parseBulk(bulkInput.value);
   if(!parsed.length){alert('لم يتم التعرف على بيانات صالحة');return}
-  patients=parsed;closeDailyUpdate();render();showToast('تم تحديث القائمة',`تم حفظ ${parsed.length} مريض`)
+  patients=parsed;
+  saveData();
+  closeDailyUpdate();
+  render();
+  showToast('تم تحديث القائمة',`تم حفظ ${parsed.length} مريض`);
 }
 function openModal(){editingId=null;modalTitle.textContent='إضافة مريض';['fName','fFile','fStart','fEnd','fProcedure'].forEach(id=>document.getElementById(id).value='');fStatus.value='waiting';patientModal.classList.add('show')}
 function closeModal(){patientModal.classList.remove('show')}
@@ -1594,7 +1598,9 @@ function savePatient(){
   const obj={name,file:fFile.value.trim(),start,end,procedure:fProcedure.value.trim(),status:fStatus.value};
   if(editingId){Object.assign(patients.find(p=>p.id===editingId),obj)}
   else{patients.push({id:Date.now(),...obj})}
-  closeModal();render();
+  saveData();
+  closeModal();
+  render();
 }
 function editPatient(id){
   const p=patients.find(x=>x.id===id);if(!p)return;
@@ -1602,14 +1608,32 @@ function editPatient(id){
   fName.value=p.name;fFile.value=p.file;fStart.value=p.start;fEnd.value=p.end;fProcedure.value=p.procedure;fStatus.value=p.status;
   patientModal.classList.add('show');
 }
-function deletePatient(id){if(confirm('حذف هذا المريض؟')){patients=patients.filter(p=>p.id!==id);render()}}
-function clearDay(){if(confirm('سيتم حذف قائمة اليوم بالكامل.')){patients=[];notesStore[selectedDate]='';clinicNotes.value='';render();saveNotes()}}
-function changeStatus(id,status){const p=patients.find(x=>x.id===id);if(p){p.status=status;render()}
-  const changedPatient=patients.find(p=>String(p.id)===String(id));
-  if(status==='cancel'){
-    activateCancellationAlert(changedPatient?.name||'');
+function deletePatient(id){
+  if(confirm('حذف هذا المريض؟')){
+    patients=patients.filter(p=>p.id!==id);
+    saveData();
+    render();
   }
-
+}
+function clearDay(){
+  if(confirm('سيتم حذف قائمة اليوم بالكامل.')){
+    patients=[];
+    notesStore[selectedDate]='';
+    clinicNotes.value='';
+    saveData();
+    saveNotes();
+    render();
+  }
+}
+function changeStatus(id,status){
+  const changedPatient=patients.find(p=>String(p.id)===String(id));
+  if(!changedPatient)return;
+  changedPatient.status=status;
+  saveData();
+  render();
+  if(status==='cancel'){
+    activateCancellationAlert(changedPatient.name||'');
+  }
 }
 function exportCSV(){
   const rows=[['الاسم الأول','رقم الملف','وقت البداية','وقت النهاية','الإجراء','الحالة'],...getSorted().map(p=>[p.name,p.file,p.start,p.end,p.procedure,statusText(p.status)])];
@@ -1626,7 +1650,17 @@ function parseCSV(text){
 function importCSV(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=()=>{const parsed=parseCSV(reader.result);if(parsed.length){patients=parsed;render();showToast('تم الاستيراد',`تم استيراد ${parsed.length} مريض`)}else{showToast('تعذر الاستيراد','الملف لا يحتوي بيانات صالحة')}};
+  reader.onload=()=>{
+    const parsed=parseCSV(reader.result);
+    if(parsed.length){
+      patients=parsed;
+      saveData();
+      render();
+      showToast('تم الاستيراد',`تم استيراد ${parsed.length} مريض`);
+    }else{
+      showToast('تعذر الاستيراد','الملف لا يحتوي بيانات صالحة');
+    }
+  };
   reader.readAsText(file,'UTF-8');
 }
 async function syncFromUrl(){
@@ -1639,7 +1673,11 @@ async function syncFromUrl(){
     const txt=await res.text();
     const parsed=parseCSV(txt);
     if(!parsed.length) throw new Error('no valid rows');
-    patients=parsed;saveSettings();render();showToast('تمت المزامنة',`تم سحب ${parsed.length} مريض من الرابط`);
+    patients=parsed;
+    saveData();
+    saveSettings();
+    render();
+    showToast('تمت المزامنة',`تم سحب ${parsed.length} مريض من الرابط`);
   }catch(err){
     showToast('فشل السحب','تأكد أن الرابط مباشر لملف CSV ومتاح بدون تسجيل دخول');
   }
