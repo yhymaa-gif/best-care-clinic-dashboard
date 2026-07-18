@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-6-all-upcoming-dynamic-pwa-20260718';
+const CACHE_NAME='bestcare-v7-7-iphone-install-guide-pwa-20260718';
 const APP_SHELL=[
   './',
   './index.html',
