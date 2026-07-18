@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-3-image-ocr-pwa-20260718';
+const CACHE_NAME='bestcare-v7-4-flexible-csv-pwa-20260718';
 const APP_SHELL=[
   './',
   './index.html',
