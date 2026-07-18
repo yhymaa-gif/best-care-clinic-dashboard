@@ -1,9 +1,10 @@
-const CACHE_NAME='bestcare-v7-2-icons-pwa-20260718';
+const CACHE_NAME='bestcare-v7-3-image-ocr-pwa-20260718';
 const APP_SHELL=[
   './',
   './index.html',
   './offline.html',
   './manifest.webmanifest',
+  './ocr-import-v7-3-1.js',
   './best-care-logo.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
