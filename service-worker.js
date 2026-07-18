@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-shell-20260718';
+const CACHE_NAME='bestcare-v7-2-icons-pwa-20260718';
 const APP_SHELL=[
   './',
   './index.html',
