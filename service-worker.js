@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-7-iphone-install-guide-pwa-20260718';
+const CACHE_NAME='bestcare-v7-8-upcoming-treemap-pwa-20260719';
 const APP_SHELL=[
   './',
   './index.html',
