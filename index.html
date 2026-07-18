@@ -34,7 +34,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1
 .empty{padding:34px;text-align:center;color:var(--muted)}.modal{position:fixed;inset:0;background:rgba(14,42,31,.38);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}.modal.open{display:flex}.modal-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;border:1px solid var(--line);padding:20px;box-shadow:0 24px 65px rgba(12,47,33,.25)}.modal-card h3{margin-top:0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:5px}.grid input,.grid select{width:100%}.full{grid-column:1/-1}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:15px;flex-wrap:wrap}.bulk{width:100%;min-height:260px;line-height:1.8}
 .toast-wrap{position:fixed;left:16px;bottom:16px;z-index:200;display:grid;gap:8px}.toast{min-width:280px;max-width:420px;padding:13px 15px;border-radius:13px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}.toast strong{display:block;margin-bottom:4px}.exit-full{display:none;position:fixed;left:14px;top:14px;z-index:300;background:#142f25;color:#fff;border:0}body.screen-mode .hide-screen{display:none!important}body.screen-mode .app{max-width:none;padding:8px}body.screen-mode .exit-full{display:block}body.screen-mode .main{grid-template-columns:1fr}body.screen-mode .side{display:none}body.screen-mode .patient-name{font-size:82px}
 @media(max-width:1050px){.stats{grid-template-columns:repeat(3,1fr)}.focus-grid,.main{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr}}@media(max-width:680px){.app{padding:8px}.header{grid-template-columns:1fr}.header-side{justify-items:stretch}.alert-trigger{width:100%;min-width:0}.brand{align-items:flex-start}.logo{width:68px;height:68px;flex-basis:68px}.stats{grid-template-columns:1fr 1fr}.side{display:flex}.grid{grid-template-columns:1fr}.full{grid-column:auto}.patient-name{font-size:44px}.countdown{font-size:42px}}
-body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .settings-menu button{text-align:left}body.lang-en .settings-menu{left:auto;right:0}
+body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .settings-menu button,body.lang-en .alert-trigger,body.lang-en .alert-row{text-align:left}body.lang-en .settings-menu{left:auto;right:0}
 
 .status-select{
   touch-action:manipulation;
@@ -70,16 +70,16 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 .timer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:16px}.timer-box{padding:12px 14px;border-radius:15px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.82)}.timer-box small{display:block;color:#48665a;font-weight:900}.timer-box strong{display:block;margin-top:5px;font-size:clamp(25px,3vw,42px);direction:ltr;color:#164f3b}.timer-box.actual strong{color:#215a70}.actual-hint{font-size:11px;color:var(--muted);margin-top:3px}
 .patient-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.patient-actions button{background:rgba(255,255,255,.78);border-color:rgba(36,91,69,.18);backdrop-filter:blur(5px)}.patient-actions .finish{background:#164f3b;color:#fff;border-color:#164f3b}
 .upcoming-panel{padding:18px;overflow:hidden}.upcoming-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}.upcoming-head h2{font-size:19px;margin:0;color:var(--navy)}.upcoming-head small{color:var(--muted)}.upcoming-stack{display:grid;gap:10px;align-content:start}
-.queue-card{position:relative;overflow:hidden;border-radius:17px;border:1px solid #cee1d8;padding:16px;transition:transform .45s cubic-bezier(.2,.8,.2,1),min-height .45s ease,box-shadow .45s ease;background:linear-gradient(135deg,#e5f6ed,#fff 67%,#d1ebdf);animation:queueEnter .45s ease both}.queue-card::after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;left:-52px;bottom:-70px;background:rgba(255,255,255,.48)}
-.queue-card.queue-1{min-height:190px;box-shadow:0 15px 34px rgba(32,124,86,.16);background:linear-gradient(135deg,#cdeedc,#fff 65%,#afe0c5)}.queue-card.queue-2{min-height:145px;margin-inline-start:9%;background:linear-gradient(135deg,#e8f5d3,#fff 65%,#d3e9ac)}.queue-card.queue-3{min-height:112px;margin-inline-start:18%;background:linear-gradient(135deg,#fff0c7,#fff 65%,#f2d98e)}
-.queue-card.called{border-color:#d99b20;box-shadow:0 0 0 3px rgba(217,155,32,.12),0 15px 34px rgba(126,87,14,.15)}.queue-position{font-size:11px;font-weight:900;color:#477062}.queue-name{font-size:clamp(22px,2.6vw,36px);font-weight:900;color:#164f3b;margin:7px 0}.queue-meta{font-size:12px;color:#537166;line-height:1.7}.queue-countdown{display:inline-block;direction:ltr;font-size:19px;font-weight:900;color:#235d48;margin-top:8px}.queue-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.queue-actions button{padding:8px 10px;background:rgba(255,255,255,.82);position:relative;z-index:2}.queue-empty{padding:48px 12px;text-align:center;color:var(--muted)}
+.queue-card{--queue-height:150px;--queue-indent:8%;--queue-font:27px;position:relative;overflow:hidden;border-radius:17px;border:1px solid #cee1d8;padding:16px;min-height:var(--queue-height);margin-inline-start:var(--queue-indent);transition:transform .48s cubic-bezier(.2,.8,.2,1),min-height .48s ease,margin .48s ease,box-shadow .48s ease,background .48s ease;background:linear-gradient(135deg,#e5f6ed,#fff 67%,#d1ebdf);animation:queueEnter .45s ease both}.queue-card::after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;left:-52px;bottom:-70px;background:rgba(255,255,255,.48)}
+.queue-card.queue-1{box-shadow:0 15px 34px rgba(32,124,86,.16)}.queue-card.proximity-far{background:linear-gradient(135deg,#edf5f1,#fff 65%,#dcebe4);border-color:#d6e5de}.queue-card.proximity-soon{background:linear-gradient(135deg,#e6f5d5,#fff 63%,#cae7a7);border-color:#bedb9d}.queue-card.proximity-near{background:linear-gradient(135deg,#fff1bd,#fff 62%,#f0d36f);border-color:#dfc04f;box-shadow:0 15px 34px rgba(202,159,35,.18)}.queue-card.proximity-now{background:linear-gradient(135deg,#ffd9b3,#fff5e8 62%,#f7ae64);border-color:#e68b35;box-shadow:0 17px 38px rgba(217,112,29,.22)}.queue-card.status-asks-delay{background:linear-gradient(135deg,#fff0b8,#fff9e9 62%,#f3ca58);border-color:#d8a91f}.queue-card.status-asks-delay .queue-position::before{content:"؟ ";font-size:18px;color:#9f6e00}
+.queue-card.called{border-color:#d99b20;box-shadow:0 0 0 3px rgba(217,155,32,.12),0 15px 34px rgba(126,87,14,.15)}.queue-position{font-size:11px;font-weight:900;color:#477062}.queue-name{font-size:var(--queue-font);font-weight:900;color:#164f3b;margin:7px 0;transition:font-size .48s ease}.queue-meta{font-size:12px;color:#537166;line-height:1.7}.queue-countdown{display:inline-block;direction:ltr;font-size:19px;font-weight:900;color:#235d48;margin-top:8px}.queue-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.queue-actions button{padding:8px 10px;background:rgba(255,255,255,.82);position:relative;z-index:2}.queue-empty{padding:48px 12px;text-align:center;color:var(--muted)}
 @keyframes queueEnter{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
 .main-clean{grid-template-columns:minmax(0,1fr) 330px}.collapsible{overflow:hidden}.collapsible>summary{list-style:none;cursor:pointer;padding:15px 17px;font-weight:900;color:var(--navy);background:#f8fbf9;border-bottom:1px solid var(--line)}.collapsible>summary::-webkit-details-marker{display:none}.collapsible>summary::after{content:"⌄";float:left;color:var(--muted)}.collapsible[open]>summary::after{content:"⌃"}.notes-panel textarea{margin:14px;width:calc(100% - 28px)}
 .pwa-update{display:none;margin-top:10px;padding:11px 15px;border-radius:14px;background:#e8f4ff;border:1px solid #bed9ed;color:#24556f;align-items:center;justify-content:space-between;gap:10px}.pwa-update.show{display:flex}.pwa-update button{padding:7px 10px;background:#24556f;color:#fff;border-color:#24556f}
 #installBtn[hidden]{display:none}#installBtn{background:#eaf6ef;color:#176344;border-color:#bcdcca}
 body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,.8fr)}body.screen-mode .current-card{min-height:calc(100vh - 210px)}body.screen-mode .main-clean{display:none}
-@media(max-width:1050px){.focus-grid{grid-template-columns:1fr}.upcoming-stack{grid-template-columns:1.25fr 1fr .8fr;align-items:start}.queue-card.queue-1,.queue-card.queue-2,.queue-card.queue-3{margin:0}.queue-card.queue-1{min-height:180px}.queue-card.queue-2{min-height:155px}.queue-card.queue-3{min-height:130px}.main-clean{grid-template-columns:1fr}.notes-panel{order:2}}
-@media(max-width:680px){.current-card{min-height:390px;padding:18px}.focus-grid{gap:8px}.timer-grid{grid-template-columns:1fr}.timer-box strong{font-size:31px}.upcoming-panel{padding:13px}.upcoming-stack{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}.queue-card.queue-1,.queue-card.queue-2,.queue-card.queue-3{flex:0 0 82%;margin:0;min-height:175px;scroll-snap-align:center}.queue-card.queue-2{flex-basis:70%;min-height:155px}.queue-card.queue-3{flex-basis:60%;min-height:138px}.patient-actions{display:grid;grid-template-columns:1fr 1fr}.patient-actions button{padding:9px}.timeline-chip{min-width:82px}.main-clean{display:block}.notes-panel{margin-top:8px}}
+@media(max-width:1050px){.focus-grid{grid-template-columns:1fr}.upcoming-stack{grid-template-columns:1.25fr 1fr .8fr;align-items:start}.queue-card.queue-1,.queue-card.queue-2,.queue-card.queue-3{margin:0}.main-clean{grid-template-columns:1fr}.notes-panel{order:2}}
+@media(max-width:680px){.current-card{min-height:390px;padding:18px}.focus-grid{gap:8px}.timer-grid{grid-template-columns:1fr}.timer-box strong{font-size:31px}.upcoming-panel{padding:13px}.upcoming-stack{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}.queue-card.queue-1,.queue-card.queue-2,.queue-card.queue-3{flex:0 0 var(--queue-basis,72%);margin:0;min-height:var(--queue-height);scroll-snap-align:center}.patient-actions{display:grid;grid-template-columns:1fr 1fr}.patient-actions button{padding:9px}.timeline-chip{min-width:82px}.main-clean{display:block}.notes-panel{margin-top:8px}}
 
 </style>
 </head>
@@ -173,12 +173,18 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.0-pwa-preview';
+const DASHBOARD_BUILD='7.1-language-flow-statuses';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
-const STATUS={waiting:'بانتظار الموعد',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي'};
-const EN={waiting:'Waiting',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled'};
+const STATUS={waiting:'بانتظار الموعد',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
+const EN={waiting:'Waiting',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
+const I18N={
+  ar:{documentTitle:'لوحة استقبال عيادات أفضل عناية',pageTitle:'عيادات أفضل عناية للأسنان',pageSubtitle:'شاشة استقبال ومتابعة المرضى — مزامنة مباشرة بين الأجهزة',updateToday:'تحديث قائمة اليوم',addPatient:'إضافة مريض',screenMode:'وضع الشاشة',installApp:'⬇ تثبيت التطبيق',settings:'⚙ الإعدادات ▾',importCsv:'📥 استيراد CSV',exportCsv:'📤 تصدير CSV',testSync:'🧪 اختبار المزامنة',clearToday:'🗑 مسح قائمة اليوم',alertTitle:'تنبيه تعديل',alertInactiveHint:'إرسال ملاحظة للطبيب',alertActiveHint:'تنبيه فعّال — اضغط للإدارة',defaultAlert:'يوجد تعديل جديد على قائمة المواعيد',updateAvailable:'يتوفر تحديث جديد للتطبيق.',updateNow:'تحديث الآن',totalPatients:'إجمالي المرضى',completed:'تم الإنجاز',inTreatment:'قيد العلاج',remaining:'المتبقي',cancelled:'الملغاة',completionRate:'نسبة الإنجاز',originalTime:'وقت الموعد الأصلي',originalHint:'يبقى محفوظًا حسب جدول الموعد',actualDuration:'مدة العلاج الفعلية',actualStartHint:'يبدأ عند دخول المريض',upcomingPatients:'المرضى القادمون',upcomingHint:'يتغير الحجم تلقائيًا حسب قرب الموعد',addNewPatient:'إضافة مريض جديد',editPatient:'تعديل بيانات المريض',add:'إضافة',editing:'تعديل',formIntro:'أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.',firstName:'الاسم الأول',fileNumber:'رقم الملف',startTime:'وقت البداية',endTime:'وقت النهاية',procedure:'الإجراء العلاجي',status:'الحالة',namePlaceholder:'اسم المريض',filePlaceholder:'رقم الملف',procedurePlaceholder:'مثال: مراجعة، كشف جديد',resetFields:'تفريغ الحقول',cancelEdit:'إلغاء التعديل',saveAdd:'حفظ وإضافة المريض',saveChanges:'حفظ التعديل',patientList:'قائمة المرضى اليومية',searchPlaceholder:'بحث بالاسم أو رقم الملف',allStatuses:'كل الحالات',name:'الاسم',start:'البداية',end:'النهاية',action:'إجراء',todayNotes:'ملاحظات اليوم',notesPlaceholder:'اكتب ملاحظات اليوم...',exitFullscreen:'⤢ إلغاء ملء الشاشة',bulkTitle:'تحديث قائمة اليوم',bulkHelp:'كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء',cancel:'إلغاء',saveList:'حفظ القائمة',alertModalTitle:'🔔 إرسال تنبيه تعديل',alertModalHelp:'اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.',alertMessage:'رسالة التنبيه',alertPlaceholder:'مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة',alertTip:'يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.',close:'إغلاق',clearAlert:'إلغاء التنبيه الحالي',publishAlert:'نشر التنبيه',noAppointments:'لا توجد مواعيد لهذا اليوم',noUpcoming:'لا يوجد مرضى قادمون',edit:'تعديل',delete:'حذف',currentPatient:'المريض الحالي',nextToCall:'التالي للاستدعاء',noCurrent:'لا يوجد مريض قيد العلاج',noSchedule:'أضف قائمة المرضى لبدء المتابعة',fileLabel:'رقم الملف',nextDirect:'التالي مباشرة',patientNumber:'المريض رقم',lastCall:'آخر استدعاء',recall:'🔔 إعادة الاستدعاء',callNext:'🔔 استدعاء التالي',callPatient:'🔔 استدعاء المريض',startActual:'▶ بدء وقت الدخول الفعلي',actualRunning:'✓ الوقت الفعلي يعمل',finishPatient:'✓ إنهاء المريض',startedAt:'بدأ'},
+  en:{documentTitle:'Best Care Clinic Reception Dashboard',pageTitle:'Best Care Dental Clinics',pageSubtitle:'Patient reception and tracking — live sync across devices',updateToday:"Update today's list",addPatient:'Add patient',screenMode:'Screen mode',installApp:'⬇ Install app',settings:'⚙ Settings ▾',importCsv:'📥 Import CSV',exportCsv:'📤 Export CSV',testSync:'🧪 Test sync',clearToday:"🗑 Clear today's list",alertTitle:'Update alert',alertInactiveHint:'Send a note to the doctor',alertActiveHint:'Alert active — tap to manage',defaultAlert:'A new update was made to the appointment list',updateAvailable:'A new app update is available.',updateNow:'Update now',totalPatients:'Total patients',completed:'Completed',inTreatment:'In treatment',remaining:'Remaining',cancelled:'Cancelled',completionRate:'Completion rate',originalTime:'Original appointment',originalHint:'Kept according to the appointment schedule',actualDuration:'Actual treatment duration',actualStartHint:'Starts when the patient enters',upcomingPatients:'Upcoming patients',upcomingHint:'Cards resize automatically as appointments approach',addNewPatient:'Add new patient',editPatient:'Edit patient',add:'Add',editing:'Editing',formIntro:'Enter the appointment details and save; changes sync automatically across devices.',firstName:'First name',fileNumber:'File number',startTime:'Start time',endTime:'End time',procedure:'Procedure',status:'Status',namePlaceholder:'Patient name',filePlaceholder:'File number',procedurePlaceholder:'Example: Review, new consultation',resetFields:'Clear fields',cancelEdit:'Cancel editing',saveAdd:'Save and add patient',saveChanges:'Save changes',patientList:'Daily patient list',searchPlaceholder:'Search by name or file number',allStatuses:'All statuses',name:'Name',start:'Start',end:'End',action:'Actions',todayNotes:"Today's notes",notesPlaceholder:"Write today's notes...",exitFullscreen:'⤢ Exit fullscreen',bulkTitle:"Update today's list",bulkHelp:'One patient per line: name, file number, start, end, procedure',cancel:'Cancel',saveList:'Save list',alertModalTitle:'🔔 Send update alert',alertModalHelp:'Write a short, clear note to appear immediately on connected devices.',alertMessage:'Alert message',alertPlaceholder:'Example: The next appointment was updated; please review the list',alertTip:'The alert appears in red and syncs live. Clear it after the doctor has reviewed it.',close:'Close',clearAlert:'Clear current alert',publishAlert:'Publish alert',noAppointments:'No appointments for this day',noUpcoming:'No upcoming patients',edit:'Edit',delete:'Delete',currentPatient:'Current patient',nextToCall:'Next to call',noCurrent:'No patient currently in treatment',noSchedule:'Add patients to start tracking',fileLabel:'File number',nextDirect:'Next',patientNumber:'Patient number',lastCall:'Last call',recall:'🔔 Recall',callNext:'🔔 Call next',callPatient:'🔔 Call patient',startActual:'▶ Start actual entry time',actualRunning:'✓ Actual timer running',finishPatient:'✓ Finish patient',startedAt:'Started'}
+};
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
+const statusText=status=>(lang==='en'?EN[status]:STATUS[status])||status;
 let sync={
   revision:0,
   updatedAt:0,
@@ -391,17 +397,17 @@ async function startAutomaticSync(){
   await runAutomaticSync();
 }
 function mutate(fn){fn();markDirty();}
-function derivedStatus(p){if(['done','cancel'].includes(p.status))return p.status;const now=new Date(),st=timeDate(p.start),en=timeDate(p.end);if(now>=st&&now<=en)return'active';if(now>en&&p.status==='waiting')return'late';return p.status;}
+function derivedStatus(p){if(['done','cancel','left','asks_delay'].includes(p.status))return p.status;const now=new Date(),st=timeDate(p.start),en=timeDate(p.end);if(now>=st&&now<=en)return'active';if(now>en&&p.status==='waiting')return'late';return p.status;}
 function currentPatient(){
-  const available=patients.filter(p=>!['done','cancel'].includes(p.status));
+  const available=patients.filter(p=>!['done','cancel','left'].includes(p.status));
   return available.find(p=>p.status==='active')||available.find(p=>derivedStatus(p)==='active')||null;
 }
 function sortedPendingPatients(){
   return patients
-    .filter(p=>!['done','cancel'].includes(p.status))
+    .filter(p=>!['done','cancel','left'].includes(p.status))
     .sort((a,b)=>{
-      const aLate=derivedStatus(a)==='late'?0:1,bLate=derivedStatus(b)==='late'?0:1;
-      return aLate-bLate||String(a.start||'').localeCompare(String(b.start||''));
+      const priority=p=>p.status==='asks_delay'?0:derivedStatus(p)==='late'?1:2;
+      return priority(a)-priority(b)||String(a.start||'').localeCompare(String(b.start||''));
     });
 }
 function flowLeadPatient(){return currentPatient()||sortedPendingPatients()[0]||null}
@@ -420,7 +426,7 @@ function renderTable(){
     .sort((a,b)=>a.start.localeCompare(b.start));
 
   els.patientRows.innerHTML=visible.length
-    ? visible.map((p,i)=>`<tr class="${p.status==='cancel'?'cancelled':''}">
+    ? visible.map((p,i)=>`<tr class="${['cancel','left'].includes(p.status)?'cancelled':''}">
         <td>${i+1}</td>
         <td><strong>${escapeHtml(firstName(p.name))}</strong></td>
         <td>${escapeHtml(p.file)}</td>
@@ -429,29 +435,29 @@ function renderTable(){
         <td>${escapeHtml(p.procedure||'—')}</td>
         <td>
           <select class="status-select" data-status-id="${escapeHtml(p.id)}">
-            ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${p.status===k?'selected':''}>${lang==='en'?EN[k]:v}</option>`).join('')}
+            ${Object.keys(STATUS).map(k=>`<option value="${k}" ${p.status===k?'selected':''}>${escapeHtml(statusText(k))}</option>`).join('')}
           </select>
         </td>
         <td class="hide-screen">
           <div class="row-actions">
-            <button class="mini" data-edit-id="${escapeHtml(p.id)}">تعديل</button>
-            <button class="mini danger" data-delete-id="${escapeHtml(p.id)}">حذف</button>
+            <button class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
+            <button class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
         </td>
       </tr>`).join('')
-    : `<tr><td colspan="8" class="empty">لا توجد مواعيد لهذا اليوم</td></tr>`;
+    : `<tr><td colspan="8" class="empty">${escapeHtml(tr('noAppointments'))}</td></tr>`;
 }
 
 function patientById(id){return patients.find(p=>String(p.id)===String(id))||null}
 function announcePatient(p,repeated=false){
   if(!p)return;
-  const message=`${repeated?'إعادة استدعاء':'استدعاء'} المريض ${firstName(p.name)}`;
-  toast(repeated?'إعادة استدعاء':'تم استدعاء المريض',`${firstName(p.name)} — ${p.start}`);
+  const message=lang==='en'?`${repeated?'Recall':'Calling'} patient ${firstName(p.name)}`:`${repeated?'إعادة استدعاء':'استدعاء'} المريض ${firstName(p.name)}`;
+  toast(repeated?(lang==='en'?'Recall':'إعادة استدعاء'):(lang==='en'?'Patient called':'تم استدعاء المريض'),`${firstName(p.name)} — ${p.start}`);
   if('speechSynthesis' in window){
     try{
       window.speechSynthesis.cancel();
       const speech=new SpeechSynthesisUtterance(message);
-      speech.lang='ar-SA';speech.rate=.92;speech.pitch=1;
+      speech.lang=lang==='en'?'en-US':'ar-SA';speech.rate=.92;speech.pitch=1;
       window.speechSynthesis.speak(speech);
     }catch(error){console.warn('Patient announcement unavailable',error)}
   }
@@ -482,34 +488,51 @@ function renderCompactTimeline(cur){
     const status=derivedStatus(p);
     const currentClass=cur&&String(cur.id)===String(p.id)?' is-current':'';
     const stateClass=status==='done'?' is-done':status==='cancel'?' is-cancel':'';
-    return `<div class="timeline-chip${currentClass}${stateClass}" title="${escapeHtml(lang==='en'?EN[status]:STATUS[status])}"><strong>${escapeHtml(p.start||'--:--')} · ${escapeHtml(firstName(p.name))}</strong><small>${escapeHtml(lang==='en'?EN[status]:STATUS[status])}</small></div>`;
-  }).join(''):'<div class="queue-empty">لا توجد مواعيد</div>';
+    return `<div class="timeline-chip${currentClass}${stateClass}" title="${escapeHtml(statusText(status))}"><strong>${escapeHtml(p.start||'--:--')} · ${escapeHtml(firstName(p.name))}</strong><small>${escapeHtml(statusText(status))}</small></div>`;
+  }).join(''):`<div class="queue-empty">${escapeHtml(tr('noAppointments'))}</div>`;
 }
 function renderUpcoming(lead){
   const queue=upcomingPatients(3,lead?.id??null);
   $('upcomingStack').innerHTML=queue.length?queue.map((p,index)=>{
     const called=Number(p.callCount||0)>0;
     const position=index+1;
-    const callLabel=called?'🔔 إعادة الاستدعاء':'🔔 استدعاء التالي';
-    const lastCall=called?` · آخر استدعاء ${new Date(Number(p.lastCalledAt)).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
-    return `<article class="queue-card queue-${position}${called?' called':''}" data-patient-card-id="${escapeHtml(p.id)}">
-      <div class="queue-position">${position===1?'التالي مباشرة':`المريض رقم ${position+1}`}${lastCall}</div>
+    const callLabel=called?tr('recall'):tr('callNext');
+    const lastCall=called?` · ${tr('lastCall')} ${new Date(Number(p.lastCalledAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
+    return `<article class="queue-card queue-${position}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}" data-patient-card-id="${escapeHtml(p.id)}">
+      <div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div>
       <div class="queue-name">${escapeHtml(firstName(p.name))}</div>
-      <div class="queue-meta">ملف ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')}</div>
+      <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
       <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
-      ${position===1?`<div class="queue-actions"><button type="button" data-call-id="${escapeHtml(p.id)}">${callLabel}</button><button type="button" data-actual-id="${escapeHtml(p.id)}">▶ بدء الدخول الفعلي</button></div>`:''}
+      ${position===1?`<div class="queue-actions"><button type="button" data-call-id="${escapeHtml(p.id)}">${escapeHtml(callLabel)}</button><button type="button" data-actual-id="${escapeHtml(p.id)}">${escapeHtml(tr('startActual'))}</button></div>`:''}
     </article>`;
-  }).join(''):'<div class="queue-empty">لا يوجد مرضى قادمون</div>';
+  }).join(''):`<div class="queue-empty">${escapeHtml(tr('noUpcoming'))}</div>`;
+  updateUpcomingCardVisuals();
+}
+function updateUpcomingCardVisuals(){
+  document.querySelectorAll('[data-patient-card-id]').forEach((card,index)=>{
+    const p=patientById(card.dataset.patientCardId);if(!p)return;
+    const minutesUntil=(timeDate(p.start).getTime()-Date.now())/60000;
+    const proximity=Math.max(0,Math.min(1,1-Math.max(0,minutesUntil)/120));
+    const base=[.52,.36,.22][index]??.18;
+    const gain=[.48,.38,.28][index]??.2;
+    const emphasis=Math.max(.18,Math.min(1,base+gain*proximity));
+    card.style.setProperty('--queue-height',`${Math.round(112+emphasis*94)}px`);
+    card.style.setProperty('--queue-indent',`${Math.round((1-emphasis)*19)}%`);
+    card.style.setProperty('--queue-font',`${(20+emphasis*17).toFixed(1)}px`);
+    card.style.setProperty('--queue-basis',`${Math.round(57+emphasis*28)}%`);
+    card.classList.remove('proximity-far','proximity-soon','proximity-near','proximity-now');
+    card.classList.add(minutesUntil<=10?'proximity-now':minutesUntil<=30?'proximity-near':minutesUntil<=75?'proximity-soon':'proximity-far');
+  });
 }
 function renderAlertUI(){
   const active=Boolean(updateAlert.active);
   els.alertRow.classList.toggle('show',active);
-  els.alertText.textContent=updateAlert.message||'يوجد تعديل جديد على قائمة المواعيد';
+  els.alertText.textContent=updateAlert.message||tr('defaultAlert');
   els.alertBtn.classList.toggle('is-active',active);
   els.alertBtn.setAttribute('aria-pressed',String(active));
   els.alertBtnHint.textContent=active
-    ? (lang==='en'?'Alert active — tap to manage':'تنبيه فعّال — اضغط للإدارة')
-    : (lang==='en'?'Send a note to the doctor':'إرسال ملاحظة للطبيب');
+    ? tr('alertActiveHint')
+    : tr('alertInactiveHint');
   els.clearAlertBtn.hidden=!active;
 }
 function renderLive(updateStructure=true){
@@ -517,10 +540,10 @@ function renderLive(updateStructure=true){
   $('statTotal').textContent=patients.length;
   $('statDone').textContent=derived.filter(s=>s==='done').length;
   $('statActive').textContent=derived.filter(s=>s==='active').length;
-  $('statWaiting').textContent=derived.filter(s=>['waiting','late'].includes(s)).length;
+  $('statWaiting').textContent=derived.filter(s=>['waiting','late','asks_delay'].includes(s)).length;
   $('statCancel').textContent=derived.filter(s=>s==='cancel').length;
 
-  const denominator=Math.max(1,patients.filter(p=>p.status!=='cancel').length);
+  const denominator=Math.max(1,patients.filter(p=>!['cancel','left'].includes(p.status)).length);
   $('statPercent').textContent=Math.round(patients.filter(p=>p.status==='done').length/denominator*100)+'%';
 
   const cur=currentPatient();
@@ -528,22 +551,23 @@ function renderLive(updateStructure=true){
   const card=$('currentCard');
   const activelyTreating=Boolean(cur&&lead&&String(cur.id)===String(lead.id));
   card.className='card current-card '+stageFor(lead);
-  $('currentLabel').textContent=activelyTreating?'المريض الحالي':'التالي للاستدعاء';
-  $('currentName').textContent=lead?firstName(lead.name):'لا يوجد مريض قيد العلاج';
-  $('currentMeta').textContent=lead?`رقم الملف: ${lead.file||'—'} • ${lead.start}–${lead.end} • ${lead.procedure||'—'}`:'أضف قائمة المرضى لبدء المتابعة';
+  $('currentLabel').textContent=activelyTreating?tr('currentPatient'):tr('nextToCall');
+  $('currentName').textContent=lead?firstName(lead.name):tr('noCurrent');
+  $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.start}–${lead.end} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
   $('currentCountdown').textContent=lead?fmtMs(timeDate(lead.end)-new Date()):'--:--:--';
   $('actualTimer').textContent=lead?.actualStartedAt?fmtMs(Date.now()-Number(lead.actualStartedAt)):'--:--:--';
-  $('actualTimerHint').textContent=lead?.actualStartedAt?`بدأ ${new Date(Number(lead.actualStartedAt)).toLocaleTimeString('ar-SA')}`:'يبدأ عند دخول المريض';
+  $('actualTimerHint').textContent=lead?.actualStartedAt?`${tr('startedAt')} ${new Date(Number(lead.actualStartedAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA')}`:tr('actualStartHint');
 
   document.querySelectorAll('[data-queue-countdown-id]').forEach(el=>{
     const p=patientById(el.dataset.queueCountdownId);
     if(p)el.textContent=fmtMs(timeDate(p.start)-new Date());
   });
+  updateUpcomingCardVisuals();
 
   if(updateStructure){
     renderCompactTimeline(lead);
     renderUpcoming(lead);
-    $('currentActions').innerHTML=lead?`<button type="button" data-call-id="${escapeHtml(lead.id)}">${Number(lead.callCount||0)>0?'🔔 إعادة الاستدعاء':'🔔 استدعاء المريض'}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${lead.actualStartedAt?'✓ الوقت الفعلي يعمل':'▶ بدء وقت الدخول الفعلي'}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">✓ إنهاء المريض</button>`:''}`:'';
+    $('currentActions').innerHTML=lead?`<button type="button" data-call-id="${escapeHtml(lead.id)}">${escapeHtml(Number(lead.callCount||0)>0?tr('recall'):tr('callPatient'))}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${escapeHtml(lead.actualStartedAt?tr('actualRunning'):tr('startActual'))}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">${escapeHtml(tr('finishPatient'))}</button>`:''}`:'';
     renderAlertUI();
   }
 }
@@ -571,8 +595,8 @@ function suggestedTimes(){
 function resetPatientForm(focusName=false){
   editingId=null;
   const suggested=suggestedTimes();
-  $('patientFormTitle').textContent=lang==='en'?'Add new patient':'إضافة مريض جديد';
-  $('patientFormMode').textContent=lang==='en'?'Add':'إضافة';
+  $('patientFormTitle').textContent=tr('addNewPatient');
+  $('patientFormMode').textContent=tr('add');
   $('patientFormCard').classList.remove('editing');
   $('fName').value='';
   $('fFile').value='';
@@ -580,7 +604,7 @@ function resetPatientForm(focusName=false){
   $('fEnd').value=suggested.end;
   $('fProcedure').value='';
   $('fStatus').value='waiting';
-  $('savePatientBtn').textContent=lang==='en'?'Save and add patient':'حفظ وإضافة المريض';
+  $('savePatientBtn').textContent=tr('saveAdd');
   $('cancelEditBtn').hidden=true;
   if(focusName){
     $('patientFormCard').scrollIntoView({behavior:'smooth',block:'center'});
@@ -591,8 +615,8 @@ function openPatient(id=null){
   const p=id?patients.find(x=>String(x.id)===String(id)):null;
   if(!p){resetPatientForm(true);return}
   editingId=String(p.id);
-  $('patientFormTitle').textContent=lang==='en'?'Edit patient':'تعديل بيانات المريض';
-  $('patientFormMode').textContent=lang==='en'?'Editing':'تعديل';
+  $('patientFormTitle').textContent=tr('editPatient');
+  $('patientFormMode').textContent=tr('editing');
   $('patientFormCard').classList.add('editing');
   $('fName').value=p.name||'';
   $('fFile').value=p.file||'';
@@ -600,10 +624,19 @@ function openPatient(id=null){
   $('fEnd').value=p.end||'08:30';
   $('fProcedure').value=p.procedure||'';
   $('fStatus').value=p.status||'waiting';
-  $('savePatientBtn').textContent=lang==='en'?'Save changes':'حفظ التعديل';
+  $('savePatientBtn').textContent=tr('saveChanges');
   $('cancelEditBtn').hidden=false;
   $('patientFormCard').scrollIntoView({behavior:'smooth',block:'center'});
   setTimeout(()=>$('fName').focus(),250);
+}
+function applyAutomaticStatusAlert(p,status){
+  const name=firstName(p.name);
+  const messages={
+    cancel:`تم إلغاء موعد المريض ${name} — يرجى مراجعة القائمة`,
+    left:`المريض ${name} غادر العيادة — يرجى مراجعة القائمة`,
+    asks_delay:`المريض ${name} يستفسر عن التأخير — يرجى المتابعة`
+  };
+  if(messages[status])updateAlert={active:true,message:messages[status],updatedAt:Date.now(),kind:`status-${status}`};
 }
 function savePatient(){
   const rawName=$('fName').value.trim();
@@ -624,7 +657,7 @@ function savePatient(){
     const i=patients.findIndex(p=>String(p.id)===String(item.id));
     if(i>=0)patients[i]=item;else patients.push(item);
     patients.sort((a,b)=>a.start.localeCompare(b.start));
-    if(item.status==='cancel')updateAlert={active:true,message:`تم إلغاء موعد للمريض ${firstName(item.name)} — يرجى مراجعة القائمة`,updatedAt:Date.now(),kind:'cancellation'};
+    applyAutomaticStatusAlert(item,item.status);
   });
   $('patientFormCard').classList.remove('saved-flash');
   void $('patientFormCard').offsetWidth;
@@ -654,7 +687,7 @@ async function syncTest(){
   }
 }
 function openAlertComposer(){
-  els.alertMessageInput.value=updateAlert.active?String(updateAlert.message||''):'يوجد تعديل جديد على قائمة المواعيد';
+  els.alertMessageInput.value=updateAlert.active?String(updateAlert.message||''):tr('defaultAlert');
   renderAlertUI();
   openModal('alertModal');
 }
@@ -707,21 +740,81 @@ async function registerPwa(){
     navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
   }catch(error){console.warn('PWA registration failed',error)}
 }
+function setText(selector,value){const el=document.querySelector(selector);if(el)el.textContent=value}
+function setTexts(selector,values){document.querySelectorAll(selector).forEach((el,index)=>{if(values[index]!==undefined)el.textContent=values[index]})}
+function rebuildStatusSelect(select,includeAll=false){
+  if(!select)return;
+  const value=select.value;
+  select.innerHTML=(includeAll?`<option value="">${escapeHtml(tr('allStatuses'))}</option>`:'')+Object.keys(STATUS).map(key=>`<option value="${key}">${escapeHtml(statusText(key))}</option>`).join('');
+  if([...select.options].some(option=>option.value===value))select.value=value;
+}
 function applyLang(){
   document.documentElement.lang=lang;
   document.documentElement.dir=lang==='en'?'ltr':'rtl';
   document.body.classList.toggle('lang-en',lang==='en');
+  document.title=tr('documentTitle');
+  setText('#pageTitle',tr('pageTitle'));
+  setText('#pageSubtitle',tr('pageSubtitle'));
+  $('datePicker').setAttribute('aria-label',lang==='en'?'Date':'التاريخ');
+  $('timeline').setAttribute('aria-label',lang==='en'?'Patient timeline':'الخط الزمني للمرضى');
+  setText('#bulkBtn',tr('updateToday'));
+  setText('#addBtn',tr('addPatient'));
+  setText('#screenBtn',tr('screenMode'));
+  setText('#installBtn',tr('installApp'));
+  setText('#settingsBtn',tr('settings'));
+  setText('#importBtn',tr('importCsv'));
+  setText('#exportBtn',tr('exportCsv'));
+  setText('#syncTestBtn',tr('testSync'));
+  setText('#clearBtn',tr('clearToday'));
+  setText('#alertBtn strong',tr('alertTitle'));
+  setText('#pwaUpdateBar span',tr('updateAvailable'));
+  setText('#pwaUpdateBtn',tr('updateNow'));
+  setTexts('.stats .stat small',[tr('totalPatients'),tr('completed'),tr('inTreatment'),tr('remaining'),tr('cancelled'),tr('completionRate')]);
+  setTexts('.timer-box small',[tr('originalTime'),tr('actualDuration')]);
+  setText('.timer-box:not(.actual) .actual-hint',tr('originalHint'));
+  setText('.upcoming-head h2',tr('upcomingPatients'));
+  setText('.upcoming-head small',tr('upcomingHint'));
+  setText('.quick-add-head p',tr('formIntro'));
+  setTexts('.quick-add-grid label',[tr('firstName'),tr('fileNumber'),tr('startTime'),tr('endTime'),tr('procedure'),tr('status')]);
+  $('fName').placeholder=tr('namePlaceholder');
+  $('fFile').placeholder=tr('filePlaceholder');
+  $('fProcedure').placeholder=tr('procedurePlaceholder');
+  setText('#resetPatientBtn',tr('resetFields'));
+  setText('#cancelEditBtn',tr('cancelEdit'));
+  setText('.main-clean details:first-child > summary',tr('patientList'));
+  $('searchInput').placeholder=tr('searchPlaceholder');
+  setTexts('table thead th',['#',tr('name'),tr('fileNumber'),tr('start'),tr('end'),tr('procedure'),tr('status'),tr('action')]);
+  setText('.notes-panel > summary',tr('todayNotes'));
+  $('notes').placeholder=tr('notesPlaceholder');
+  setText('#exitScreenBtn',tr('exitFullscreen'));
+  setText('#bulkModal h3',tr('bulkTitle'));
+  setText('#bulkModal p',tr('bulkHelp'));
+  setTexts('#bulkModal .modal-actions button',[tr('cancel'),tr('saveList')]);
+  setText('#alertModalTitle',tr('alertModalTitle'));
+  setText('.alert-modal-head p',tr('alertModalHelp'));
+  setText('.alert-modal-body label',tr('alertMessage'));
+  $('alertMessageInput').placeholder=tr('alertPlaceholder');
+  setText('.alert-preview span:last-child',tr('alertTip'));
+  setTexts('#alertModal .modal-actions button',[tr('close'),tr('clearAlert'),tr('publishAlert')]);
+  rebuildStatusSelect($('fStatus'));
+  rebuildStatusSelect($('filterStatus'),true);
   $('langBtn').textContent=lang==='en'?'العربية':'English';
+  if(sync.error)setBadge('error',lang==='en'?'Connection failed — retrying':'فشل الاتصال — ستتم إعادة المحاولة',sync.error);
+  else if(sync.pushing||sync.dirty)setBadge('saving',lang==='en'?'Saving automatically…':'جارٍ الحفظ تلقائيًا…');
+  else if(sync.ready)setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+  else setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ الاتصال تلقائيًا…');
   if(editingId){
-    $('patientFormTitle').textContent=lang==='en'?'Edit patient':'تعديل بيانات المريض';
-    $('patientFormMode').textContent=lang==='en'?'Editing':'تعديل';
-    $('savePatientBtn').textContent=lang==='en'?'Save changes':'حفظ التعديل';
+    $('patientFormTitle').textContent=tr('editPatient');
+    $('patientFormMode').textContent=tr('editing');
+    $('savePatientBtn').textContent=tr('saveChanges');
   }else if($('patientFormTitle')){
-    $('patientFormTitle').textContent=lang==='en'?'Add new patient':'إضافة مريض جديد';
-    $('patientFormMode').textContent=lang==='en'?'Add':'إضافة';
-    $('savePatientBtn').textContent=lang==='en'?'Save and add patient':'حفظ وإضافة المريض';
+    $('patientFormTitle').textContent=tr('addNewPatient');
+    $('patientFormMode').textContent=tr('add');
+    $('savePatientBtn').textContent=tr('saveAdd');
   }
+  renderAlertUI();
   render();
+  updateClock();
 }
 function toggleLang(){lang=lang==='ar'?'en':'ar';localStorage.setItem('bestcare_lang',lang);applyLang()}
 function updateClock(){
@@ -770,7 +863,7 @@ els.syncBadge.addEventListener('click',syncTest);
 els.patientRows.addEventListener('change',event=>{
   const id=event.target.dataset.statusId;if(!id)return;
   const status=event.target.value;
-  mutate(()=>{const p=patientById(id);if(p){p.status=status;if(status==='cancel')updateAlert={active:true,message:`تم إلغاء موعد للمريض ${firstName(p.name)} — يرجى مراجعة القائمة`,updatedAt:Date.now(),kind:'cancellation'}}});
+  mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
   const edit=event.target.dataset.editId,del=event.target.dataset.deleteId;
