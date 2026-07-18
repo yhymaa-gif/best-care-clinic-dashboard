@@ -76,10 +76,10 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 .timeline-chip strong,.timeline-chip small{display:block}.timeline-chip strong{font-size:13px}.timeline-chip small{margin-top:3px;color:var(--muted);font-size:11px}.timeline-chip.is-current{background:#fff;border-color:#63b188;box-shadow:0 7px 18px rgba(25,111,76,.16);transform:translateY(-2px)}.timeline-chip.is-done{opacity:.55}.timeline-chip.is-cancel{opacity:.42;text-decoration:line-through}
 .timer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:16px}.timer-box{padding:12px 14px;border-radius:15px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.82)}.timer-box small{display:block;color:#48665a;font-weight:900}.timer-box strong{display:block;margin-top:5px;font-size:clamp(25px,3vw,42px);direction:ltr;color:#164f3b}.timer-box.actual strong{color:#215a70}.actual-hint{font-size:11px;color:var(--muted);margin-top:3px}
 .patient-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.patient-actions button{background:rgba(255,255,255,.78);border-color:rgba(36,91,69,.18);backdrop-filter:blur(5px)}.patient-actions .finish{background:#164f3b;color:#fff;border-color:#164f3b}
-.upcoming-panel{padding:18px;overflow:hidden}.upcoming-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}.upcoming-head h2{font-size:19px;margin:0;color:var(--navy)}.upcoming-head small{color:var(--muted)}.upcoming-stack{display:grid;gap:10px;align-content:start}
-.queue-card{--queue-height:150px;--queue-indent:8%;--queue-font:27px;position:relative;overflow:hidden;border-radius:17px;border:1px solid #cee1d8;padding:16px;min-height:var(--queue-height);margin-inline-start:var(--queue-indent);transition:transform .48s cubic-bezier(.2,.8,.2,1),min-height .48s ease,margin .48s ease,box-shadow .48s ease,background .48s ease;background:linear-gradient(135deg,#e5f6ed,#fff 67%,#d1ebdf);animation:queueEnter .45s ease both}.queue-card::after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;left:-52px;bottom:-70px;background:rgba(255,255,255,.48)}
+.upcoming-panel{padding:18px;overflow:hidden}.upcoming-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}.upcoming-head h2{font-size:19px;margin:0;color:var(--navy)}.upcoming-head small{color:var(--muted)}.upcoming-stack{display:grid;gap:10px;align-content:start;max-height:min(640px,calc(100vh - 250px));overflow-y:auto;padding-inline-end:5px;scrollbar-width:thin;scrollbar-color:rgba(31,96,72,.24) transparent}.upcoming-stack::-webkit-scrollbar{width:6px}.upcoming-stack::-webkit-scrollbar-thumb{background:rgba(31,96,72,.24);border-radius:999px}
+.queue-card{--queue-height:150px;--queue-indent:8%;--queue-font:27px;--queue-padding:16px;--queue-progress:0%;position:relative;overflow:hidden;border-radius:17px;border:1px solid #cee1d8;padding:var(--queue-padding);min-height:var(--queue-height);margin-inline-start:var(--queue-indent);transition:transform .48s cubic-bezier(.2,.8,.2,1),min-height .48s ease,margin .48s ease,padding .48s ease,box-shadow .48s ease,background .48s ease;background:linear-gradient(135deg,#e5f6ed,#fff 67%,#d1ebdf);animation:queueEnter .45s ease both}.queue-card::after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;left:-52px;bottom:-70px;background:rgba(255,255,255,.48)}
 .queue-card.queue-1{box-shadow:0 15px 34px rgba(32,124,86,.16)}.queue-card.proximity-far{background:linear-gradient(135deg,#edf5f1,#fff 65%,#dcebe4);border-color:#d6e5de}.queue-card.proximity-soon{background:linear-gradient(135deg,#e6f5d5,#fff 63%,#cae7a7);border-color:#bedb9d}.queue-card.proximity-near{background:linear-gradient(135deg,#fff1bd,#fff 62%,#f0d36f);border-color:#dfc04f;box-shadow:0 15px 34px rgba(202,159,35,.18)}.queue-card.proximity-now{background:linear-gradient(135deg,#ffd9b3,#fff5e8 62%,#f7ae64);border-color:#e68b35;box-shadow:0 17px 38px rgba(217,112,29,.22)}.queue-card.status-asks-delay{background:linear-gradient(135deg,#fff0b8,#fff9e9 62%,#f3ca58);border-color:#d8a91f}.queue-card.status-asks-delay .queue-position::before{content:"؟ ";font-size:18px;color:#9f6e00}
-.queue-card.called{border-color:#d99b20;box-shadow:0 0 0 3px rgba(217,155,32,.12),0 15px 34px rgba(126,87,14,.15)}.queue-position{font-size:11px;font-weight:900;color:#477062}.queue-name{font-size:var(--queue-font);font-weight:900;color:#164f3b;margin:7px 0;transition:font-size .48s ease}.queue-meta{font-size:12px;color:#537166;line-height:1.7}.queue-countdown{display:inline-block;direction:ltr;font-size:19px;font-weight:900;color:#235d48;margin-top:8px}.queue-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.queue-actions button{padding:8px 10px;background:rgba(255,255,255,.82);position:relative;z-index:2}.queue-empty{padding:48px 12px;text-align:center;color:var(--muted)}
+.queue-card.called{border-color:#d99b20;box-shadow:0 0 0 3px rgba(217,155,32,.12),0 15px 34px rgba(126,87,14,.15)}.queue-position{font-size:11px;font-weight:900;color:#477062}.queue-name{font-size:var(--queue-font);font-weight:900;color:#164f3b;margin:7px 0;transition:font-size .48s ease}.queue-meta{font-size:12px;color:#537166;line-height:1.7}.queue-countdown{display:inline-block;direction:ltr;font-size:19px;font-weight:900;color:#235d48;margin-top:8px}.queue-proximity-meter{position:relative;z-index:2;display:block;width:100%;height:5px;margin-top:10px;overflow:hidden;border-radius:999px;background:rgba(38,103,76,.10)}.queue-proximity-meter>i{display:block;width:var(--queue-progress);height:100%;border-radius:inherit;background:linear-gradient(90deg,#58a97f,#e5bc3e,#e87532);transition:width .7s ease}.queue-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.queue-actions button{padding:8px 10px;background:rgba(255,255,255,.82);position:relative;z-index:2}.queue-empty{padding:48px 12px;text-align:center;color:var(--muted)}
 @keyframes queueEnter{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:none}}
 .main-clean{grid-template-columns:minmax(0,1fr) 330px}.collapsible{overflow:hidden}.collapsible>summary{list-style:none;cursor:pointer;padding:15px 17px;font-weight:900;color:var(--navy);background:#f8fbf9;border-bottom:1px solid var(--line)}.collapsible>summary::-webkit-details-marker{display:none}.collapsible>summary::after{content:"⌄";float:left;color:var(--muted)}.collapsible[open]>summary::after{content:"⌃"}.notes-panel textarea{margin:14px;width:calc(100% - 28px)}
 .pwa-update{display:none;margin-top:10px;padding:11px 15px;border-radius:14px;background:#e8f4ff;border:1px solid #bed9ed;color:#24556f;align-items:center;justify-content:space-between;gap:10px}.pwa-update.show{display:flex}.pwa-update button{padding:7px 10px;background:#24556f;color:#fff;border-color:#24556f}
@@ -92,8 +92,8 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 .patient-actions button,.queue-actions button,.row-actions button{transition:transform .2s ease,box-shadow .2s ease}.patient-actions button:hover,.queue-actions button:hover,.row-actions button:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(26,80,59,.13)}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(36,139,93,.24);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,.8fr)}body.screen-mode .current-card{min-height:calc(100vh - 210px)}body.screen-mode .main-clean{display:none}
-@media(max-width:1050px){.focus-grid{grid-template-columns:1fr}.upcoming-stack{grid-template-columns:1.25fr 1fr .8fr;align-items:start}.queue-card.queue-1,.queue-card.queue-2,.queue-card.queue-3{margin:0}.main-clean{grid-template-columns:1fr}.notes-panel{order:2}}
-@media(max-width:680px){.current-card{min-height:390px;padding:18px}.focus-grid{gap:8px}.timer-grid{grid-template-columns:1fr}.timer-box strong{font-size:31px}.upcoming-panel{padding:13px}.upcoming-stack{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}.queue-card.queue-1,.queue-card.queue-2,.queue-card.queue-3{flex:0 0 var(--queue-basis,72%);margin:0;min-height:var(--queue-height);scroll-snap-align:center}.patient-actions{display:grid;grid-template-columns:1fr 1fr}.patient-actions button{padding:9px}.timeline-chip{min-width:82px}.main-clean{display:block}.notes-panel{margin-top:8px}}
+@media(max-width:1050px){.focus-grid{grid-template-columns:1fr}.upcoming-stack{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;max-height:620px}.queue-card{margin:0}.main-clean{grid-template-columns:1fr}.notes-panel{order:2}}
+@media(max-width:680px){.current-card{min-height:390px;padding:18px}.focus-grid{gap:8px}.timer-grid{grid-template-columns:1fr}.timer-box strong{font-size:31px}.upcoming-panel{padding:13px}.upcoming-stack{display:flex;align-items:flex-start;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;padding:2px 2px 8px;scroll-snap-type:x mandatory}.queue-card{flex:0 0 var(--queue-basis,72%);margin:0;min-height:var(--queue-height);scroll-snap-align:center}.patient-actions{display:grid;grid-template-columns:1fr 1fr}.patient-actions button{padding:9px}.timeline-chip{min-width:82px}.main-clean{display:block}.notes-panel{margin-top:8px}}
 
 </style>
 </head>
@@ -203,7 +203,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.5-edit-patient-date-pwa';
+const DASHBOARD_BUILD='7.6-all-upcoming-dynamic-pwa';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const STATUS={waiting:'بانتظار الموعد',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
 const EN={waiting:'Waiting',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
@@ -235,7 +235,7 @@ const localKey=d=>`bestcare_dashboard_v4_${d}`;
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
 const firstName=v=>String(v||'مريض').trim().split(/\s+/)[0];
 const mins=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+m};
-const timeDate=t=>{const d=new Date();const [h,m]=String(t||'0:0').split(':').map(Number);d.setHours(h,m,0,0);return d};
+const timeDate=t=>{const d=/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)?new Date(`${selectedDate}T00:00:00`):new Date();const [h,m]=String(t||'0:0').split(':').map(Number);d.setHours(h,m,0,0);return d};
 const fmtMs=ms=>{const sign=ms<0?'-':'';ms=Math.abs(ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return sign+[h,m,s].map(v=>String(v).padStart(2,'0')).join(':')};
 function toast(title,msg){const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${escapeHtml(title)}</strong><div>${escapeHtml(msg)}</div>`;$('toastWrap').appendChild(el);setTimeout(()=>el.remove(),4200)}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -441,8 +441,8 @@ function sortedPendingPatients(){
     });
 }
 function flowLeadPatient(){return currentPatient()||sortedPendingPatients()[0]||null}
-function upcomingPatients(limit=3,excludedId=null){
-  return sortedPendingPatients().filter(p=>excludedId===null||String(p.id)!==String(excludedId)).slice(0,limit);
+function upcomingPatients(excludedId=null){
+  return sortedPendingPatients().filter(p=>excludedId===null||String(p.id)!==String(excludedId));
 }
 function stageFor(p){if(!p)return'stage-idle';const st=timeDate(p.start).getTime(),en=timeDate(p.end).getTime(),now=Date.now();const ratio=Math.max(0,Math.min(1,(now-st)/Math.max(1,en-st)));if(ratio<.5)return'stage-green';if(ratio<.75)return'stage-yellow';if(ratio<.9)return'stage-orange';return'stage-red';}
 function renderTable(){
@@ -522,7 +522,9 @@ function renderCompactTimeline(cur){
   }).join(''):`<div class="queue-empty">${escapeHtml(tr('noAppointments'))}</div>`;
 }
 function renderUpcoming(lead){
-  const queue=upcomingPatients(3,lead?.id??null);
+  const queue=upcomingPatients(lead?.id??null);
+  const queueCountLabel=lang==='en'?`${queue.length} patients`:`${queue.length} مرضى`;
+  document.querySelector('.upcoming-head small').textContent=`${queueCountLabel} · ${tr('upcomingHint')}`;
   $('upcomingStack').innerHTML=queue.length?queue.map((p,index)=>{
     const called=Number(p.callCount||0)>0;
     const position=index+1;
@@ -533,23 +535,26 @@ function renderUpcoming(lead){
       <div class="queue-name">${escapeHtml(firstName(p.name))}</div>
       <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
       <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
+      <span class="queue-proximity-meter" aria-hidden="true"><i></i></span>
       ${position===1?`<div class="queue-actions"><button type="button" data-call-id="${escapeHtml(p.id)}">${escapeHtml(callLabel)}</button><button type="button" data-actual-id="${escapeHtml(p.id)}">${escapeHtml(tr('startActual'))}</button></div>`:''}
     </article>`;
   }).join(''):`<div class="queue-empty">${escapeHtml(tr('noUpcoming'))}</div>`;
   updateUpcomingCardVisuals();
 }
 function updateUpcomingCardVisuals(){
-  document.querySelectorAll('[data-patient-card-id]').forEach((card,index)=>{
+  const cards=[...document.querySelectorAll('[data-patient-card-id]')];
+  cards.forEach((card,index)=>{
     const p=patientById(card.dataset.patientCardId);if(!p)return;
     const minutesUntil=(timeDate(p.start).getTime()-Date.now())/60000;
-    const proximity=Math.max(0,Math.min(1,1-Math.max(0,minutesUntil)/120));
-    const base=[.52,.36,.22][index]??.18;
-    const gain=[.48,.38,.28][index]??.2;
-    const emphasis=Math.max(.18,Math.min(1,base+gain*proximity));
-    card.style.setProperty('--queue-height',`${Math.round(112+emphasis*94)}px`);
-    card.style.setProperty('--queue-indent',`${Math.round((1-emphasis)*19)}%`);
-    card.style.setProperty('--queue-font',`${(20+emphasis*17).toFixed(1)}px`);
-    card.style.setProperty('--queue-basis',`${Math.round(57+emphasis*28)}%`);
+    const proximity=Math.max(0,Math.min(1,1-Math.max(0,minutesUntil)/180));
+    const rankWeight=Math.max(.12,1-index/Math.max(4,cards.length));
+    const emphasis=Math.max(.16,Math.min(1,.13+rankWeight*.52+proximity*.35));
+    card.style.setProperty('--queue-height',`${Math.round(92+emphasis*112)}px`);
+    card.style.setProperty('--queue-indent',`${Math.round((1-emphasis)*18)}%`);
+    card.style.setProperty('--queue-font',`${(17+emphasis*18).toFixed(1)}px`);
+    card.style.setProperty('--queue-padding',`${Math.round(10+emphasis*7)}px`);
+    card.style.setProperty('--queue-basis',`${Math.round(50+emphasis*38)}%`);
+    card.style.setProperty('--queue-progress',`${Math.round(proximity*100)}%`);
     card.classList.remove('proximity-far','proximity-soon','proximity-near','proximity-now');
     card.classList.add(minutesUntil<=10?'proximity-now':minutesUntil<=30?'proximity-near':minutesUntil<=75?'proximity-soon':'proximity-far');
   });
