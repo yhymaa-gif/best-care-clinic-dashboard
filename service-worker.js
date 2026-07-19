@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-10-role-payment-completion-pwa-20260719';
+const CACHE_NAME='bestcare-v7-11-2-inline-review-stars-pwa-20260719';
 const APP_SHELL=[
   './',
   './index.html',

@@ -111,7 +111,8 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 #patientRows tr{transition:background .25s ease,box-shadow .25s ease}#patientRows tr.row-status-waiting{background:transparent}#patientRows tr.row-status-arrived{background:#dcf7ea}#patientRows tr.row-status-early_arrival{background:#e3f0ff}#patientRows tr.row-status-active{background:#dceff5}#patientRows tr.row-status-done{background:#dcf4e3}#patientRows tr.row-status-late{background:#fff0df}#patientRows tr.row-status-cancel{background:#fde1e5}#patientRows tr.row-status-left{background:#ecefed;color:#66716c}#patientRows tr.row-status-asks_delay{background:#fff6cc}#patientRows tr:hover{box-shadow:inset 4px 0 0 rgba(24,100,70,.22);filter:saturate(1.05)}#patientRows tr td:first-child{border-inline-start:5px solid transparent}#patientRows tr.row-status-arrived td:first-child{border-color:#2aa878}#patientRows tr.row-status-early_arrival td:first-child{border-color:#4b94d6}#patientRows tr.row-status-active td:first-child{border-color:#3c9dbc}#patientRows tr.row-status-done td:first-child{border-color:#31a35a}#patientRows tr.row-status-late td:first-child{border-color:#e4892e}#patientRows tr.row-status-cancel td:first-child{border-color:#d94759}#patientRows tr.row-status-left td:first-child{border-color:#7f8d87}#patientRows tr.row-status-asks_delay td:first-child{border-color:#caa21b}.status-select{font-weight:900;border-width:1px;background:rgba(255,255,255,.72)}
 .payment-panel{padding:20px;margin-bottom:10px;border-color:#9dd9b7;background:linear-gradient(135deg,#eaf9f0,#fff)}.payment-panel-head{display:flex;align-items:center;justify-content:space-between;gap:18px}.payment-panel-head h2{margin:3px 0 5px;color:#14583b}.payment-panel-head p{margin:0;color:var(--muted)}.payment-kicker{font-size:11px;font-weight:900;color:#28835d}.payment-panel-head>strong{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:#1a885a;color:#fff;font-size:24px}.payment-queue{display:grid;gap:9px;margin-top:16px}.payment-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1px solid #a9ddbe;border-radius:14px;background:#fff;box-shadow:0 8px 20px rgba(25,112,75,.08)}.payment-item.acknowledged{opacity:.66;background:#f2f7f4}.payment-item strong,.payment-item small{display:block}.payment-item strong{color:#14603f}.payment-item small{margin-top:4px;color:var(--muted)}.payment-item button{background:#1a885a;color:#fff;border-color:#1a885a}.payment-empty{padding:25px;text-align:center;color:var(--muted)}.payment-modal-card{max-width:520px}.payment-check{display:flex;align-items:center;gap:12px;margin:18px 0;padding:15px;border:1px solid #b8ddc8;border-radius:14px;background:#eff9f3;cursor:pointer}.payment-check input{width:21px;height:21px}.payment-check strong,.payment-check small{display:block}.payment-check small{margin-top:3px;color:var(--muted)}.payment-action-field{margin:14px 0}.payment-action-field label{display:block;margin-bottom:7px;font-weight:900}.payment-action-field input{width:100%}
 .payment-item p{margin:5px 0;color:#245d47;font-weight:800}.payment-item.received{border-color:#e3ba55;background:#fffaf0}.payment-item.completed{border-color:#42aa70;background:#eaf9f0}.payment-done{color:#1a885a;font-weight:900}.payment-received{color:#9a6d08;font-weight:900}.payment-actions-inline{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.payment-row-badge{display:flex;width:max-content;align-items:center;gap:4px;margin-top:6px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;white-space:nowrap}.payment-row-badge.requested{background:#fff0c9;color:#8b6200}.payment-row-badge.received{background:#e9f1ff;color:#28659b}.payment-row-badge.completed{background:#d9f5e4;color:#147744;box-shadow:0 0 0 1px #79c99a}.role-modal-card{max-width:760px;text-align:center}.role-modal-card>p{margin:5px auto 20px;max-width:590px;color:var(--muted)}.role-options{display:grid;grid-template-columns:1fr 1fr;gap:14px}.role-option{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center;padding:20px;text-align:start;border:1px solid #b9d7c8;border-radius:18px;background:linear-gradient(145deg,#fff,#f2f9f5);color:var(--navy);box-shadow:0 12px 28px rgba(23,79,58,.08)}.role-option:hover{transform:translateY(-2px);border-color:#4d9b78}.role-option .role-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:17px;background:#174f3a;color:#fff;font-size:27px}.role-option strong,.role-option small{display:block}.role-option strong{font-size:17px}.role-option small{margin-top:5px;color:var(--muted);line-height:1.55}.role-note{margin-top:16px!important;font-size:12px}.queue-card.status-arrived{border-color:#33b484;background:linear-gradient(145deg,#e4faef,#c8f2df)}.queue-card.status-early-arrival{border-color:#599fde;background:linear-gradient(145deg,#ebf5ff,#d9eaff)}.current-visual-icon.arrival-pulse{background:#1fa874;color:#fff;animation:arrivalIconPulse 1.15s ease-in-out infinite}@keyframes arrivalIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(31,168,116,.42)}50%{transform:scale(1.12);box-shadow:0 0 0 13px rgba(31,168,116,0)}}
-@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}}
+.review-modal-card{max-width:620px}.review-modal-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}.review-modal-head>span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#dcf7e9;color:#128451;font-size:24px}.review-modal-head h3,.review-modal-head p{margin:0}.review-modal-head p{margin-top:4px;color:var(--muted);font-size:12px}.review-field{display:grid;gap:6px;margin:13px 0}.review-field label{font-size:12px;font-weight:900;color:#325c4b}.review-field input,.review-field textarea{width:100%}.review-field textarea{min-height:150px;line-height:1.8}.review-link-preview{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#f0f8f4;color:#266049;font-size:11px}.review-link-preview a{color:#147b50;font-weight:900}.review-send{background:#16a563;color:#fff;border-color:#16a563}.review-send:hover{background:#0e8d52;color:#fff}.review-row-btn{position:relative;isolation:isolate;display:inline-flex!important;align-items:center;gap:7px;overflow:visible!important;padding:6px 11px!important;border-color:#d9b13f!important;background:linear-gradient(135deg,#fffdf4,#fff0ac)!important;color:#6e5200!important;box-shadow:0 0 0 1px rgba(222,179,54,.24),0 0 15px rgba(226,185,62,.38)!important;animation:reviewGoldGlow 1.9s ease-in-out infinite}.review-row-btn:hover{transform:translateY(-1px) scale(1.04);background:linear-gradient(135deg,#fff9dc,#ffe582)!important;box-shadow:0 0 0 2px rgba(222,179,54,.28),0 0 25px rgba(226,185,62,.58)!important}.whatsapp-gold-mark{position:relative;z-index:1;display:grid;place-items:center;width:25px;height:25px;transform-origin:50% 12%;color:#d6a514;filter:drop-shadow(0 0 5px rgba(231,192,71,.78));animation:reviewSwing 1.35s ease-in-out infinite}.whatsapp-gold-mark svg{display:block;width:25px;height:25px;fill:currentColor}.review-row-btn .review-star{position:absolute;z-index:3;color:#ffd53e;font-size:11px;line-height:1;pointer-events:none;text-shadow:0 0 5px #fff,0 0 10px #ffd940;animation:reviewStar 1.7s ease-in-out infinite}.review-row-btn .star-one{inset-inline-start:1px;top:-9px}.review-row-btn .star-two{inset-inline-start:22px;top:-12px;animation-delay:.5s}.review-row-btn .star-three{inset-inline-start:42px;top:-7px;animation-delay:1s}@keyframes reviewGoldGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}@keyframes reviewSwing{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}@keyframes reviewStar{0%,100%{opacity:.2;transform:translateY(2px) scale(.6) rotate(0deg)}45%{opacity:1;transform:translateY(-3px) scale(1.4) rotate(145deg)}70%{opacity:.7;transform:translateY(-1px) scale(.95) rotate(230deg)}}@media(prefers-reduced-motion:reduce){.review-row-btn,.whatsapp-gold-mark,.review-row-btn .review-star{animation:none}}
+@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 </style>
 </head>
 <body>
@@ -206,6 +207,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 <div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary">حفظ القائمة</button></div></div></div>
 <div id="alertModal" class="modal"><div class="modal-card alert-modal-card" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle"><div class="alert-modal-head"><h3 id="alertModalTitle">🔔 إرسال تنبيه تعديل</h3><p>اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.</p></div><div class="alert-modal-body"><label for="alertMessageInput">رسالة التنبيه</label><textarea id="alertMessageInput" maxlength="220" placeholder="مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة"></textarea><div class="alert-preview"><span aria-hidden="true">💡</span><span>يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.</span></div></div><div class="modal-actions"><button type="button" data-close="alertModal">إغلاق</button><button id="clearAlertBtn" type="button" class="danger alert-clear" hidden>إلغاء التنبيه الحالي</button><button id="sendAlertBtn" type="button" class="alert-send">نشر التنبيه</button></div></div></div>
 <div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle"><h3 id="paymentModalTitle">إكمال العلاج وإجراء الدفع</h3><p id="paymentPatientText">اختر ما إذا كان المريض يحتاج إجراءً للدفع.</p><label class="payment-check"><input id="paymentRequiredCheck" type="checkbox"><span><strong>يوجد سند دفع</strong><small>سيصل تنبيه أخضر إلى صفحة الإدارة فقط</small></span></label><div id="paymentActionField" class="payment-action-field" hidden><label for="paymentActionInput">الإجراء المختصر المطلوب</label><input id="paymentActionInput" maxlength="120" placeholder="مثال: تحصيل قيمة الكشف أو إصدار فاتورة تنظيف"></div><div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج</button></div></div></div>
+<div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
 <div id="roleModal" class="modal role-modal"><div class="modal-card role-modal-card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle"><h3 id="roleModalTitle">حدد مهمتك لفتح الصفحة المناسبة</h3><p id="roleModalHelp">يمكنك تغيير المهمة في أي وقت من الشريط العلوي.</p><div class="role-options"><button type="button" class="role-option" data-role-view="admin"><span class="role-icon">🗓️</span><span><strong id="adminRoleTitle">تنسيق المواعيد والإدارة</strong><small id="adminRoleHelp">إضافة وتعديل المرضى، متابعة التنبيهات، واستلام وتنفيذ طلبات الدفع.</small></span></button><button type="button" class="role-option" data-role-view="clinic"><span class="role-icon">🦷</span><span><strong id="clinicRoleTitle">شاشة العيادة والطبيب</strong><small id="clinicRoleHelp">استدعاء المرضى، بدء وإنهاء العلاج، ومتابعة الوقت والحالات.</small></span></button></div><p id="rolePrivacyNote" class="role-note">كلتا الصفحتين تستخدمان القائمة نفسها والمزامنة المباشرة.</p></div></div>
 <div id="ocrModal" class="modal ocr-modal"><div class="modal-card ocr-modal-card" role="dialog" aria-modal="true" aria-labelledby="ocrModalTitle">
   <div class="ocr-modal-head"><div><h3 id="ocrModalTitle">📷 تحويل صورة المواعيد إلى قائمة مرضى</h3><p id="ocrModalHelp">تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.</p></div><span id="ocrPrivacy" class="ocr-privacy">🔒 معالجة محلية — لا تُرفع الصورة</span></div>
@@ -245,7 +247,8 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.10-role-payment-completion-pwa';
+const DASHBOARD_BUILD='7.11.2-inline-review-stars-pwa';
+const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const STATUS={waiting:'بانتظار الموعد',arrived:'وصل المريض',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
 const EN={waiting:'Waiting',arrived:'Patient arrived',early_arrival:'Early arrival',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
@@ -258,7 +261,7 @@ const IOS_INSTALL_COPY={
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
-let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
 const NEED_ROLE_CHOICE=!['admin','clinic'].includes(REQUESTED_VIEW);
@@ -500,6 +503,53 @@ function paymentBadgeMarkup(p){
   const labels=lang==='en'?{requested:'Payment requested',received:'Request received',completed:'Payment completed'}:{requested:'بانتظار استلام طلب الدفع',received:'تم استلام طلب الدفع',completed:'✓ تم تنفيذ الدفع'};
   return `<span class="payment-row-badge ${stage}">${escapeHtml(labels[stage])}</span>`;
 }
+function reviewRequestMessage(patient,url){
+  const name=firstName(patient?.name);
+  if(lang==='en')return `Hello ${name},\n\nIt was a pleasure serving you at Best Care Dental Clinics. Your feedback about your experience matters to us and helps us improve. We would appreciate your review on Google through the following link:\n${url}\n\nThank you for your trust. We wish you continued health and a beautiful smile.`;
+  return `مرحبًا ${name}،\n\nسعدنا بخدمتك في عيادات أفضل عناية للأسنان. يهمنا رأيك في تجربتك، ويساعدنا تقييمك على الاستمرار في تحسين خدماتنا. يسعدنا أن تشاركنا تقييمك عبر Google من خلال الرابط التالي:\n${url}\n\nشكرًا لثقتك، ونتمنى لك دوام الصحة والابتسامة.`;
+}
+function normalizeWhatsappNumber(value){
+  let digits=String(value||'').replace(/\D/g,'');
+  if(digits.startsWith('00'))digits=digits.slice(2);
+  if(digits.startsWith('05'))digits=`966${digits.slice(1)}`;
+  if(digits.startsWith('5')&&digits.length===9)digits=`966${digits}`;
+  return digits;
+}
+function openReviewComposer(id){
+  const patient=patientById(id);if(!patient)return;
+  pendingReviewId=patient.id;
+  const storedUrl=localStorage.getItem('bestcare_google_review_url')||'';
+  const url=storedUrl&&!storedUrl.includes('search.google.com/local/writereview')?storedUrl:DEFAULT_GOOGLE_REVIEW_URL;
+  $('reviewPatientText').textContent=lang==='en'?`Ready WhatsApp message for ${firstName(patient.name)}`:`رسالة واتساب جاهزة للمريض ${firstName(patient.name)}`;
+  $('reviewPhoneInput').value='';
+  $('reviewUrlInput').value=url;
+  $('reviewMessageInput').value=reviewRequestMessage(patient,url);
+  $('reviewLinkPreview').href=url;
+  openModal('reviewModal');
+}
+function refreshReviewMessageFromUrl(){
+  const patient=patientById(pendingReviewId);if(!patient)return;
+  const url=$('reviewUrlInput').value.trim()||DEFAULT_GOOGLE_REVIEW_URL;
+  $('reviewLinkPreview').href=url;
+  $('reviewMessageInput').value=reviewRequestMessage(patient,url);
+}
+function sendReviewWhatsapp(){
+  const patient=patientById(pendingReviewId);if(!patient)return;
+  const url=$('reviewUrlInput').value.trim();
+  if(!/^https:\/\//i.test(url)){toast(lang==='en'?'Invalid review link':'رابط التقييم غير صالح',lang==='en'?'Use a secure Google review URL.':'أدخل رابط Google يبدأ بـ https://');$('reviewUrlInput').focus();return}
+  const message=$('reviewMessageInput').value.trim();
+  if(!message){toast(lang==='en'?'Message required':'الرسالة مطلوبة',lang==='en'?'Write the WhatsApp message first.':'اكتب رسالة واتساب أولًا.');return}
+  localStorage.setItem('bestcare_google_review_url',url);
+  const phone=normalizeWhatsappNumber($('reviewPhoneInput').value);
+  const whatsappUrl=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;
+  window.open(whatsappUrl,'_blank','noopener');
+  closeModal('reviewModal');
+  toast(lang==='en'?'WhatsApp opened':'تم فتح واتساب',phone?(lang==='en'?'The message is ready to send.':'الرسالة جاهزة للإرسال.'):(lang==='en'?'Choose the patient contact, then send.':'اختر جهة اتصال المريض ثم أرسل الرسالة.'));
+}
+async function copyReviewMessage(){
+  const message=$('reviewMessageInput').value.trim();if(!message)return;
+  try{await navigator.clipboard.writeText(message);toast(lang==='en'?'Message copied':'تم نسخ الرسالة',lang==='en'?'Paste it into WhatsApp.':'يمكنك لصقها الآن في واتساب.')}catch{toast(lang==='en'?'Copy failed':'تعذر النسخ',lang==='en'?'Select and copy the message manually.':'حدد الرسالة وانسخها يدويًا.')}
+}
 function renderTable(){
   const activeStatusSelect=document.activeElement?.classList?.contains('status-select');
   if(activeStatusSelect)return;
@@ -525,6 +575,7 @@ function renderTable(){
         </td>
         <td class="hide-screen">
           <div class="row-actions">
+            ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
             <button class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
@@ -1279,6 +1330,13 @@ function applyLang(){
   if($('patientFormSummary'))$('patientFormSummary').innerHTML=`<span>${lang==='en'?'➕ Add or edit a patient':'➕ إضافة أو تعديل مريض'}</span><small>${lang==='en'?'Tap to open the form':'اضغط لفتح النموذج'}</small>`;
   setText('#paymentModalTitle',lang==='en'?'Complete treatment and payment':'إكمال العلاج وإجراء الدفع');
   setText('#confirmCompletionBtn',lang==='en'?'Confirm completion':'اعتماد إكمال العلاج');
+  setText('#reviewModalTitle',lang==='en'?'Request patient experience review':'طلب تقييم تجربة المريض');
+  setText('#reviewPhoneLabel',lang==='en'?'Patient WhatsApp number (optional)':'رقم واتساب المريض (اختياري)');
+  setText('#reviewMessageLabel',lang==='en'?'Message text':'نص الرسالة');
+  setText('#reviewUrlLabel',lang==='en'?'Google review link':'رابط تقييم Google');
+  setText('#reviewLinkHint',lang==='en'?'Opens the Best Care Dental Clinics profile on Google Maps.':'يفتح ملف عيادات أفضل عناية على Google Maps.');
+  setText('#reviewLinkPreview',lang==='en'?'Preview link':'معاينة الرابط');
+  setTexts('#reviewModal .modal-actions button',[lang==='en'?'Cancel':'إلغاء',lang==='en'?'Copy message':'نسخ الرسالة',lang==='en'?'Send via WhatsApp':'إرسال عبر واتساب']);
   setText('#ocrModalTitle',tr('ocrTitle'));
   setText('#ocrModalHelp',tr('ocrHelp'));
   setText('#ocrPrivacy',tr('ocrPrivacy'));
@@ -1376,7 +1434,8 @@ els.patientRows.addEventListener('change',event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
-  const edit=event.target.dataset.editId,del=event.target.dataset.deleteId;
+  const review=event.target.closest('[data-review-id]')?.dataset.reviewId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  if(review)openReviewComposer(review);
   if(edit)openPatient(edit);
   if(del&&confirm('حذف هذا المريض؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
 });
@@ -1396,6 +1455,10 @@ $('paymentQueue').addEventListener('click',event=>{
     toast(lang==='en'?'Payment completed':'تم تنفيذ الدفع',lang==='en'?'A clear completion mark now appears on both pages.':'ظهرت علامة إتمام الدفع في صفحة الإدارة وصفحة العيادة.');
   }
 });
+$('reviewUrlInput').addEventListener('change',refreshReviewMessageFromUrl);
+$('reviewUrlInput').addEventListener('input',()=>{$('reviewLinkPreview').href=$('reviewUrlInput').value.trim()||DEFAULT_GOOGLE_REVIEW_URL});
+$('copyReviewBtn').addEventListener('click',copyReviewMessage);
+$('sendReviewWhatsappBtn').addEventListener('click',sendReviewWhatsapp);
 $('roleBtn').addEventListener('click',()=>openModal('roleModal'));
 $('roleModal').addEventListener('click',event=>{
   const mode=event.target.closest('[data-role-view]')?.dataset.roleView;if(!mode)return;
