@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-9-clinic-admin-workflow-pwa-20260719';
+const CACHE_NAME='bestcare-v7-10-role-payment-completion-pwa-20260719';
 const APP_SHELL=[
   './',
   './index.html',

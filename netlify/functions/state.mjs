@@ -20,7 +20,8 @@ const cleanPatient=p=>({
  paymentRequired:Boolean(p?.paymentRequired),
  paymentAction:String(p?.paymentAction||'').slice(0,120),
  paymentRequestedAt:Number(p?.paymentRequestedAt||0),
- paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0)
+ paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0),
+ paymentCompletedAt:Number(p?.paymentCompletedAt||0)
 });
 export default async request=>{
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
