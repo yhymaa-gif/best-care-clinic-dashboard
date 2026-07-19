@@ -102,6 +102,15 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 @keyframes treemapEnter{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
 @media(max-width:1050px){.upcoming-stack.treemap-mode{display:flex;grid-template-columns:none;height:500px;max-height:none}.treemap-mode .queue-card{margin:0}}
 @media(max-width:680px){.upcoming-stack.treemap-mode{display:flex;height:470px;overflow:hidden;padding:0;scroll-snap-type:none}.queue-split{gap:5px}.treemap-mode .queue-card{flex:none;padding:8px;scroll-snap-align:none}.treemap-mode .rank-1{padding:13px}.treemap-mode .rank-1 .queue-name{font-size:25px}.treemap-mode .rank-1 .queue-meta{font-size:11px}.treemap-mode .rank-1 .queue-countdown{font-size:18px}.treemap-mode .rank-2 .queue-name{font-size:18px}.treemap-mode .rank-3 .queue-name{font-size:15px}.treemap-mode .rank-4 .queue-name{font-size:13px}.treemap-mode .rank-5 .queue-position,.treemap-mode .rank-6 .queue-position,.treemap-mode .rank-7 .queue-position,.treemap-mode .rank-8 .queue-position{display:none}.queue-overflow-strip{max-width:100%}}
+.view-switch{display:flex;justify-content:center;gap:7px;margin:-2px 0 10px}.view-switch a{display:inline-flex;align-items:center;justify-content:center;min-width:150px;padding:10px 15px;border:1px solid var(--line);border-radius:12px;background:#fff;color:#315b4b;text-decoration:none;font-weight:900;box-shadow:0 6px 16px rgba(29,73,55,.06)}.view-switch a.active{background:#174f3a;color:#fff;border-color:#174f3a}.admin-only{display:none}body.view-admin .admin-only{display:block}body.view-admin #flowStage,body.view-admin #patientFormCard,body.view-admin #addBtn,body.view-admin #bulkBtn,body.view-admin #screenBtn{display:none!important}.main-clean{grid-template-columns:1fr}.stats .stat{min-height:94px}
+.quick-add{padding:0;overflow:hidden}.quick-add>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer;padding:16px 20px;background:linear-gradient(135deg,#edf8f2,#fff);color:#174f3a;font-weight:900;border-bottom:1px solid transparent}.quick-add>summary::-webkit-details-marker{display:none}.quick-add>summary::after{content:"⌄";font-size:19px;color:#4e7465}.quick-add[open]>summary{border-bottom-color:var(--line)}.quick-add[open]>summary::after{content:"⌃"}.quick-add>summary small{margin-inline-start:auto;color:var(--muted);font-weight:700}.quick-add .quick-add-head{padding:18px 20px 0}.quick-add .quick-add-grid{padding-inline:20px}.quick-add .quick-add-actions{padding:0 20px 20px}
+.current-status-notice{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;margin-top:13px;padding:12px 14px;border-radius:15px;background:rgba(255,255,255,.66);border:1px solid rgba(255,255,255,.84);min-height:68px}.status-notice-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#fff3cf;color:#9a6f00;font-size:20px}.current-status-notice strong,.current-status-notice small{display:block}.current-status-notice small{margin-top:3px;color:var(--muted)}#waitingTimer{direction:ltr;font-size:20px;color:#73540c}.current-status-notice.is-arrived{background:rgba(222,248,237,.78);border-color:#a9d9c2}.current-status-notice.is-arrived .status-notice-icon{background:#d5f3e5;color:#13714d;animation:arrivalBounce 1.5s ease-in-out infinite}.current-status-notice.is-active{background:rgba(218,241,249,.72);border-color:#acd6e4}.current-status-notice.is-active .status-notice-icon{background:#d9f0f7;color:#226d83}.current-status-notice.is-active #waitingTimer{color:#226d83}@keyframes arrivalBounce{50%{transform:translateY(-4px) scale(1.08)}}
+.alert-row.kind-arrival{background:linear-gradient(90deg,#0f8b62,#39ad83);border-color:#0f7b57;color:#fff}.alert-row.kind-arrival span:first-child,.alert-trigger.kind-arrival .alert-icon{animation:arrivalBell 1.1s ease-in-out infinite}.alert-trigger.kind-arrival{background:#e2f7ed;border-color:#68bc94;color:#126445}.alert-trigger.kind-arrival .alert-state{background:#13a16d}.alert-trigger.kind-delay{background:#fff4cf;border-color:#e5c45a}.alert-row.kind-delay{background:#fff3c4;border-color:#d9b83d;color:#735407}@keyframes arrivalBell{20%,60%{transform:rotate(12deg) scale(1.08)}40%,80%{transform:rotate(-12deg) scale(1.08)}}
+.status-legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.legend-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid rgba(32,74,57,.1);border-radius:999px;background:#fff;font-size:10px;color:#3e5e51;white-space:nowrap}.legend-chip::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--legend)}.legend-waiting{--legend:rgba(255,255,255,.4)}.legend-arrived{--legend:#67c7a0}.legend-early_arrival{--legend:#78aee8}.legend-active{--legend:#67b8d1}.legend-done{--legend:#65bd83}.legend-late{--legend:#f0aa58}.legend-cancel{--legend:#e56a76}.legend-left{--legend:#aeb7b3}.legend-asks_delay{--legend:#e3c14c}
+#patientRows tr{transition:background .25s ease,box-shadow .25s ease}#patientRows tr.row-status-waiting{background:transparent}#patientRows tr.row-status-arrived{background:#dcf7ea}#patientRows tr.row-status-early_arrival{background:#e3f0ff}#patientRows tr.row-status-active{background:#dceff5}#patientRows tr.row-status-done{background:#dcf4e3}#patientRows tr.row-status-late{background:#fff0df}#patientRows tr.row-status-cancel{background:#fde1e5}#patientRows tr.row-status-left{background:#ecefed;color:#66716c}#patientRows tr.row-status-asks_delay{background:#fff6cc}#patientRows tr:hover{box-shadow:inset 4px 0 0 rgba(24,100,70,.22);filter:saturate(1.05)}#patientRows tr td:first-child{border-inline-start:5px solid transparent}#patientRows tr.row-status-arrived td:first-child{border-color:#2aa878}#patientRows tr.row-status-early_arrival td:first-child{border-color:#4b94d6}#patientRows tr.row-status-active td:first-child{border-color:#3c9dbc}#patientRows tr.row-status-done td:first-child{border-color:#31a35a}#patientRows tr.row-status-late td:first-child{border-color:#e4892e}#patientRows tr.row-status-cancel td:first-child{border-color:#d94759}#patientRows tr.row-status-left td:first-child{border-color:#7f8d87}#patientRows tr.row-status-asks_delay td:first-child{border-color:#caa21b}.status-select{font-weight:900;border-width:1px;background:rgba(255,255,255,.72)}
+.payment-panel{padding:20px;margin-bottom:10px;border-color:#9dd9b7;background:linear-gradient(135deg,#eaf9f0,#fff)}.payment-panel-head{display:flex;align-items:center;justify-content:space-between;gap:18px}.payment-panel-head h2{margin:3px 0 5px;color:#14583b}.payment-panel-head p{margin:0;color:var(--muted)}.payment-kicker{font-size:11px;font-weight:900;color:#28835d}.payment-panel-head>strong{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:#1a885a;color:#fff;font-size:24px}.payment-queue{display:grid;gap:9px;margin-top:16px}.payment-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1px solid #a9ddbe;border-radius:14px;background:#fff;box-shadow:0 8px 20px rgba(25,112,75,.08)}.payment-item.acknowledged{opacity:.66;background:#f2f7f4}.payment-item strong,.payment-item small{display:block}.payment-item strong{color:#14603f}.payment-item small{margin-top:4px;color:var(--muted)}.payment-item button{background:#1a885a;color:#fff;border-color:#1a885a}.payment-empty{padding:25px;text-align:center;color:var(--muted)}.payment-modal-card{max-width:520px}.payment-check{display:flex;align-items:center;gap:12px;margin:18px 0;padding:15px;border:1px solid #b8ddc8;border-radius:14px;background:#eff9f3;cursor:pointer}.payment-check input{width:21px;height:21px}.payment-check strong,.payment-check small{display:block}.payment-check small{margin-top:3px;color:var(--muted)}.payment-action-field{margin:14px 0}.payment-action-field label{display:block;margin-bottom:7px;font-weight:900}.payment-action-field input{width:100%}
+.payment-item p{margin:5px 0;color:#245d47;font-weight:800}.payment-done{color:#1a885a;font-weight:900}.queue-card.status-arrived{border-color:#33b484;background:linear-gradient(145deg,#e4faef,#c8f2df)}.queue-card.status-early-arrival{border-color:#599fde;background:linear-gradient(145deg,#ebf5ff,#d9eaff)}.current-visual-icon.arrival-pulse{background:#1fa874;color:#fff;animation:arrivalIconPulse 1.15s ease-in-out infinite}@keyframes arrivalIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(31,168,116,.42)}50%{transform:scale(1.12);box-shadow:0 0 0 13px rgba(31,168,116,0)}}
+@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}}
 </style>
 </head>
 <body>
@@ -120,7 +129,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
       <div class="settings"><button id="settingsBtn">الإعدادات ▾</button><div id="settingsMenu" class="settings-menu">
         <button id="iosInstallGuideBtn">📱 تثبيت التطبيق على iPhone</button>
         <button id="imageOcrBtn">📷 قراءة صورة المواعيد</button><input id="imageOcrInput" type="file" accept="image/jpeg,image/png,image/webp,image/bmp" hidden>
-        <button id="importBtn">📥 استيراد CSV</button><input id="csvInput" type="file" accept=".csv,text/csv" hidden>
+        <button id="importBtn">📥 استيراد CSV / Excel</button><input id="csvInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
         <button id="exportBtn">📤 تصدير CSV</button>
         <button id="syncTestBtn">🧪 اختبار المزامنة</button>
         <button id="clearBtn" class="danger">🗑 مسح قائمة اليوم</button>
@@ -129,8 +138,10 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   </div>
   <div class="header-side"><div id="clock" class="clock">--:--:--</div><div id="dateText" class="date-text">--</div><button id="alertBtn" class="alert-trigger" type="button" aria-haspopup="dialog" aria-controls="alertModal" aria-pressed="false"><span class="alert-icon" aria-hidden="true">🔔</span><span class="alert-copy"><strong>تنبيه تعديل</strong><small id="alertBtnHint">إرسال ملاحظة للطبيب</small></span><span class="alert-state" aria-hidden="true"></span></button></div>
 </header>
+<nav class="view-switch hide-screen" aria-label="نوع الصفحة"><a id="clinicViewLink" href="?view=clinic">🦷 صفحة العيادة</a><a id="adminViewLink" href="?view=admin">💳 صفحة الإدارة</a></nav>
 <div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span></div>
 <div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
+<section id="paymentPanel" class="card payment-panel admin-only"><div class="payment-panel-head"><div><span class="payment-kicker">متابعة الإدارة</span><h2>إجراءات الدفع المطلوبة</h2><p>تظهر هنا فقط الحالات التي أرسلها الطبيب بعد إكمال العلاج.</p></div><strong id="paymentCount">0</strong></div><div id="paymentQueue" class="payment-queue"></div></section>
 <section class="stats">
   <div class="card stat"><small>إجمالي المرضى</small><strong id="statTotal">0</strong><span class="stat-icon" aria-hidden="true">♙</span></div>
   <div class="card stat"><small>تم الإنجاز</small><strong id="statDone">0</strong><span class="stat-icon" aria-hidden="true">✓</span></div>
@@ -145,6 +156,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
     <div id="currentName" class="patient-name">لا يوجد الآن</div>
     <div id="timeline" class="timeline-strip" aria-label="الخط الزمني للمرضى"></div>
     <div id="currentMeta" class="patient-meta">—</div>
+    <div id="currentStatusNotice" class="current-status-notice"><span class="status-notice-icon">⌛</span><div><strong id="currentStatusTitle">بانتظار بدء العلاج</strong><small id="currentStatusText">سيبدأ العداد عند وصول المريض</small></div><b id="waitingTimer">--:--:--</b></div>
     <div class="timer-grid">
       <div class="timer-box"><span class="timer-icon" aria-hidden="true">◷</span><small>وقت الموعد الأصلي</small><strong id="currentCountdown">--:--:--</strong><div class="actual-hint">يبقى محفوظًا حسب جدول الموعد</div></div>
       <div class="timer-box actual"><span class="timer-icon" aria-hidden="true">▶</span><small>مدة العلاج الفعلية</small><strong id="actualTimer">--:--:--</strong><div id="actualTimerHint" class="actual-hint">يبدأ عند دخول المريض</div></div>
@@ -157,7 +169,8 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   </div>
 </section>
 
-<section id="patientFormCard" class="card quick-add hide-screen">
+<details id="patientFormCard" class="card quick-add hide-screen">
+  <summary id="patientFormSummary"><span>＋ إضافة أو تعديل مريض</span><small>اضغط لفتح النموذج</small></summary>
   <div class="quick-add-head">
     <div>
       <h2 id="patientFormTitle">إضافة مريض جديد</h2>
@@ -179,11 +192,11 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
     <button id="cancelEditBtn" type="button" class="danger" hidden>إلغاء التعديل</button>
     <button id="savePatientBtn" type="button" class="primary">حفظ وإضافة المريض</button>
   </div>
-</section>
+</details>
 
 <section class="main main-clean">
-  <details class="card collapsible" open><summary>قائمة المرضى اليومية</summary><div class="section-head"><div></div><div class="filters hide-screen"><input id="searchInput" placeholder="بحث بالاسم أو رقم الملف"><select id="filterStatus"><option value="">كل الحالات</option><option value="waiting">بانتظار الموعد</option><option value="active">قيد العلاج</option><option value="done">مكتمل</option><option value="late">متأخر</option><option value="cancel">ملغي</option></select></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>الحالة</th><th class="hide-screen">إجراء</th></tr></thead><tbody id="patientRows"></tbody></table></div></details>
-  <details class="card collapsible notes-panel hide-screen"><summary>ملاحظات اليوم</summary><textarea id="notes" placeholder="اكتب ملاحظات اليوم..."></textarea></details>
+  <details class="card collapsible" open><summary>قائمة المرضى اليومية</summary><div class="section-head"><div id="statusLegend" class="status-legend"></div><div class="filters hide-screen"><input id="searchInput" placeholder="بحث بالاسم أو رقم الملف"><select id="filterStatus"><option value="">كل الحالات</option></select></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>الحالة</th><th class="hide-screen">إجراء</th></tr></thead><tbody id="patientRows"></tbody></table></div></details>
+  <textarea id="notes" hidden aria-hidden="true"></textarea>
 </section>
 <footer class="app-footer"><span class="footer-mark" aria-hidden="true">BC</span><span id="developerRights">جميع الحقوق محفوظة — تطوير يحيى هادي</span></footer>
 </div>
@@ -191,6 +204,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 <input id="hiddenCsv" type="file" hidden>
 <div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary">حفظ القائمة</button></div></div></div>
 <div id="alertModal" class="modal"><div class="modal-card alert-modal-card" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle"><div class="alert-modal-head"><h3 id="alertModalTitle">🔔 إرسال تنبيه تعديل</h3><p>اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.</p></div><div class="alert-modal-body"><label for="alertMessageInput">رسالة التنبيه</label><textarea id="alertMessageInput" maxlength="220" placeholder="مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة"></textarea><div class="alert-preview"><span aria-hidden="true">💡</span><span>يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.</span></div></div><div class="modal-actions"><button type="button" data-close="alertModal">إغلاق</button><button id="clearAlertBtn" type="button" class="danger alert-clear" hidden>إلغاء التنبيه الحالي</button><button id="sendAlertBtn" type="button" class="alert-send">نشر التنبيه</button></div></div></div>
+<div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle"><h3 id="paymentModalTitle">إكمال العلاج وإجراء الدفع</h3><p id="paymentPatientText">اختر ما إذا كان المريض يحتاج إجراءً للدفع.</p><label class="payment-check"><input id="paymentRequiredCheck" type="checkbox"><span><strong>يوجد سند دفع</strong><small>سيصل تنبيه أخضر إلى صفحة الإدارة فقط</small></span></label><div id="paymentActionField" class="payment-action-field" hidden><label for="paymentActionInput">الإجراء المختصر المطلوب</label><input id="paymentActionInput" maxlength="120" placeholder="مثال: تحصيل قيمة الكشف أو إصدار فاتورة تنظيف"></div><div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج</button></div></div></div>
 <div id="ocrModal" class="modal ocr-modal"><div class="modal-card ocr-modal-card" role="dialog" aria-modal="true" aria-labelledby="ocrModalTitle">
   <div class="ocr-modal-head"><div><h3 id="ocrModalTitle">📷 تحويل صورة المواعيد إلى قائمة مرضى</h3><p id="ocrModalHelp">تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.</p></div><span id="ocrPrivacy" class="ocr-privacy">🔒 معالجة محلية — لا تُرفع الصورة</span></div>
   <div class="ocr-modal-body">
@@ -221,6 +235,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   <div class="modal-actions"><button id="iosInstallCloseBtn" type="button" data-close="iosInstallModal">تم، فهمت الخطوات</button></div>
 </div></div>
 <div id="toastWrap" class="toast-wrap"></div>
+<script src="./assets/vendor/xlsx.full.min.js?v=7.9"></script>
 <script src="./ocr-import-v7-3-1.js"></script>
 <script>
 (()=>{
@@ -228,10 +243,10 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.8-upcoming-treemap-pwa';
+const DASHBOARD_BUILD='7.9-clinic-admin-workflow-pwa';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
-const STATUS={waiting:'بانتظار الموعد',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
-const EN={waiting:'Waiting',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
+const STATUS={waiting:'بانتظار الموعد',arrived:'وصل المريض',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
+const EN={waiting:'Waiting',arrived:'Patient arrived',early_arrival:'Early arrival',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
 const I18N={
   ar:{documentTitle:'لوحة استقبال عيادات أفضل عناية',pageTitle:'عيادات أفضل عناية للأسنان',pageSubtitle:'شاشة استقبال ومتابعة المرضى — مزامنة مباشرة بين الأجهزة',updateToday:'تحديث قائمة اليوم',addPatient:'إضافة مريض',screenMode:'وضع الشاشة',installApp:'تثبيت التطبيق',settings:'الإعدادات ▾',imageOcr:'📷 قراءة صورة المواعيد',importCsv:'📥 استيراد CSV',exportCsv:'📤 تصدير CSV',testSync:'🧪 اختبار المزامنة',clearToday:'🗑 مسح قائمة اليوم',alertTitle:'تنبيه تعديل',alertInactiveHint:'إرسال ملاحظة للطبيب',alertActiveHint:'تنبيه فعّال — اضغط للإدارة',defaultAlert:'يوجد تعديل جديد على قائمة المواعيد',updateAvailable:'يتوفر تحديث جديد للتطبيق.',updateNow:'تحديث الآن',totalPatients:'إجمالي المرضى',completed:'تم الإنجاز',inTreatment:'قيد العلاج',remaining:'المتبقي',cancelled:'الملغاة',completionRate:'نسبة الإنجاز',originalTime:'وقت الموعد الأصلي',originalHint:'يبقى محفوظًا حسب جدول الموعد',actualDuration:'مدة العلاج الفعلية',actualStartHint:'يبدأ عند دخول المريض',upcomingPatients:'المرضى القادمون',upcomingHint:'خريطة أحجام حسب ترتيب الموعد',addNewPatient:'إضافة مريض جديد',editPatient:'تعديل بيانات المريض',add:'إضافة',editing:'تعديل',formIntro:'أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.',firstName:'الاسم الأول',fileNumber:'رقم الملف',appointmentDate:'تاريخ الموعد',startTime:'وقت البداية',endTime:'وقت النهاية',procedure:'الإجراء العلاجي',status:'الحالة',namePlaceholder:'اسم المريض',filePlaceholder:'رقم الملف',procedurePlaceholder:'مثال: مراجعة، كشف جديد',resetFields:'تفريغ الحقول',cancelEdit:'إلغاء التعديل',saveAdd:'حفظ وإضافة المريض',saveChanges:'حفظ التعديل',patientUpdated:'تم حفظ التعديل',patientAdded:'تمت إضافة المريض',movingPatient:'جارٍ نقل الموعد…',dateMoveFailed:'تعذر تغيير تاريخ الموعد',sourceSaveFailed:'تعذر حفظ قائمة اليوم القديم',targetLoadFailed:'تعذر قراءة قائمة اليوم الجديد',targetSaveFailed:'تعذر حفظ المريض في اليوم الجديد',patientList:'قائمة المرضى اليومية',searchPlaceholder:'بحث بالاسم أو رقم الملف',allStatuses:'كل الحالات',name:'الاسم',start:'البداية',end:'النهاية',action:'إجراء',todayNotes:'ملاحظات اليوم',notesPlaceholder:'اكتب ملاحظات اليوم...',exitFullscreen:'⤢ إلغاء ملء الشاشة',bulkTitle:'تحديث قائمة اليوم',bulkHelp:'كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء',cancel:'إلغاء',saveList:'حفظ القائمة',alertModalTitle:'🔔 إرسال تنبيه تعديل',alertModalHelp:'اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.',alertMessage:'رسالة التنبيه',alertPlaceholder:'مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة',alertTip:'يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.',close:'إغلاق',clearAlert:'إلغاء التنبيه الحالي',publishAlert:'نشر التنبيه',noAppointments:'لا توجد مواعيد لهذا اليوم',noUpcoming:'لا يوجد مرضى قادمون',edit:'تعديل',delete:'حذف',currentPatient:'المريض الحالي',nextToCall:'التالي للاستدعاء',noCurrent:'لا يوجد مريض قيد العلاج',noSchedule:'أضف قائمة المرضى لبدء المتابعة',fileLabel:'رقم الملف',nextDirect:'التالي مباشرة',patientNumber:'المريض رقم',lastCall:'آخر استدعاء',recall:'🔔 إعادة الاستدعاء',callNext:'🔔 استدعاء التالي',callPatient:'🔔 استدعاء المريض',startActual:'▶ بدء وقت الدخول الفعلي',actualRunning:'✓ الوقت الفعلي يعمل',finishPatient:'✓ إنهاء المريض',startedAt:'بدأ',developerRights:'جميع الحقوق محفوظة — تطوير يحيى هادي',ocrTitle:'📷 تحويل صورة المواعيد إلى قائمة مرضى',ocrHelp:'تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.',ocrPrivacy:'🔒 معالجة محلية — لا تُرفع الصورة',ocrChoose:'اختيار صورة من الجهاز',ocrDrop:'أو اسحب صورة جدول المواعيد هنا',ocrDropHint:'JPG أو PNG أو WEBP — حتى 20 MB',ocrNoFile:'لم يتم اختيار صورة',ocrRotate:'↻ تدوير الصورة 90°',ocrReady:'جاهز للاستخراج',ocrInitialHint:'اختر صورة واضحة يظهر فيها الجدول كاملًا.',ocrReviewTitle:'مسودة المراجعة',ocrReviewCaption:'يمكنك تعديل أي خانة قبل الدمج',ocrConfidence:'دقة القراءة',ocrStart:'بدء الاستخراج',ocrDownload:'تنزيل CSV',ocrMerge:'دمج في قائمة اليوم'},
   en:{documentTitle:'Best Care Clinic Reception Dashboard',pageTitle:'Best Care Dental Clinics',pageSubtitle:'Patient reception and tracking — live sync across devices',updateToday:"Update today's list",addPatient:'Add patient',screenMode:'Screen mode',installApp:'Install app',settings:'Settings ▾',imageOcr:'📷 Read appointment image',importCsv:'📥 Import CSV',exportCsv:'📤 Export CSV',testSync:'🧪 Test sync',clearToday:"🗑 Clear today's list",alertTitle:'Update alert',alertInactiveHint:'Send a note to the doctor',alertActiveHint:'Alert active — tap to manage',defaultAlert:'A new update was made to the appointment list',updateAvailable:'A new app update is available.',updateNow:'Update now',totalPatients:'Total patients',completed:'Completed',inTreatment:'In treatment',remaining:'Remaining',cancelled:'Cancelled',completionRate:'Completion rate',originalTime:'Original appointment',originalHint:'Kept according to the appointment schedule',actualDuration:'Actual treatment duration',actualStartHint:'Starts when the patient enters',upcomingPatients:'Upcoming patients',upcomingHint:'Cards resize automatically as appointments approach',addNewPatient:'Add new patient',editPatient:'Edit patient',add:'Add',editing:'Editing',formIntro:'Enter the appointment details and save; changes sync automatically across devices.',firstName:'First name',fileNumber:'File number',appointmentDate:'Appointment date',startTime:'Start time',endTime:'End time',procedure:'Procedure',status:'Status',namePlaceholder:'Patient name',filePlaceholder:'File number',procedurePlaceholder:'Example: Review, new consultation',resetFields:'Clear fields',cancelEdit:'Cancel editing',saveAdd:'Save and add patient',saveChanges:'Save changes',patientUpdated:'Patient updated',patientAdded:'Patient added',movingPatient:'Moving appointment…',dateMoveFailed:'Could not change appointment date',sourceSaveFailed:'Could not save the original day list',targetLoadFailed:'Could not load the new day list',targetSaveFailed:'Could not save the patient on the new day',patientList:'Daily patient list',searchPlaceholder:'Search by name or file number',allStatuses:'All statuses',name:'Name',start:'Start',end:'End',action:'Actions',todayNotes:"Today's notes",notesPlaceholder:"Write today's notes...",exitFullscreen:'⤢ Exit fullscreen',bulkTitle:"Update today's list",bulkHelp:'One patient per line: name, file number, start, end, procedure',cancel:'Cancel',saveList:'Save list',alertModalTitle:'🔔 Send update alert',alertModalHelp:'Write a short, clear note to appear immediately on connected devices.',alertMessage:'Alert message',alertPlaceholder:'Example: The next appointment was updated; please review the list',alertTip:'The alert appears in red and syncs live. Clear it after the doctor has reviewed it.',close:'Close',clearAlert:'Clear current alert',publishAlert:'Publish alert',noAppointments:'No appointments for this day',noUpcoming:'No upcoming patients',edit:'Edit',delete:'Delete',currentPatient:'Current patient',nextToCall:'Next to call',noCurrent:'No patient currently in treatment',noSchedule:'Add patients to start tracking',fileLabel:'File number',nextDirect:'Next',patientNumber:'Patient number',lastCall:'Last call',recall:'🔔 Recall',callNext:'🔔 Call next',callPatient:'🔔 Call patient',startActual:'▶ Start actual entry time',actualRunning:'✓ Actual timer running',finishPatient:'✓ Finish patient',startedAt:'Started',developerRights:'All rights reserved — Developed by Yahya Hadi',ocrTitle:'📷 Convert appointment image to patient list',ocrHelp:'The image is read on this device. Review the draft, then merge valid rows into today’s list.',ocrPrivacy:'🔒 Local processing — image is not uploaded',ocrChoose:'Choose image',ocrDrop:'or drop the appointment image here',ocrDropHint:'JPG, PNG, or WEBP — up to 20 MB',ocrNoFile:'No image selected',ocrRotate:'↻ Rotate image 90°',ocrReady:'Ready to extract',ocrInitialHint:'Choose a clear image showing the full table.',ocrReviewTitle:'Review draft',ocrReviewCaption:'Edit any field before merging',ocrConfidence:'Reading confidence',ocrStart:'Start extraction',ocrDownload:'Download CSV',ocrMerge:"Merge into today's list"}
@@ -241,7 +256,8 @@ const IOS_INSTALL_COPY={
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
-let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+const VIEW_MODE=new URLSearchParams(location.search).get('view')==='admin'?'admin':'clinic';
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 const statusText=status=>(lang==='en'?EN[status]:STATUS[status])||status;
 let sync={
@@ -456,7 +472,7 @@ async function startAutomaticSync(){
   await runAutomaticSync();
 }
 function mutate(fn){fn();markDirty();}
-function derivedStatus(p){if(['done','cancel','left','asks_delay'].includes(p.status))return p.status;const now=new Date(),st=timeDate(p.start),en=timeDate(p.end);if(now>=st&&now<=en)return'active';if(now>en&&p.status==='waiting')return'late';return p.status;}
+function derivedStatus(p){if(['done','cancel','left','asks_delay','arrived','early_arrival','active'].includes(p.status))return p.status;const now=new Date(),en=timeDate(p.end);if(now>en&&p.status==='waiting')return'late';return p.status;}
 function currentPatient(){
   const available=patients.filter(p=>!['done','cancel','left'].includes(p.status));
   return available.find(p=>p.status==='active')||available.find(p=>derivedStatus(p)==='active')||null;
@@ -465,7 +481,7 @@ function sortedPendingPatients(){
   return patients
     .filter(p=>!['done','cancel','left'].includes(p.status))
     .sort((a,b)=>{
-      const priority=p=>p.status==='asks_delay'?0:derivedStatus(p)==='late'?1:2;
+      const priority=p=>p.status==='arrived'?0:p.status==='early_arrival'?1:p.status==='asks_delay'?2:derivedStatus(p)==='late'?3:4;
       return priority(a)-priority(b)||String(a.start||'').localeCompare(String(b.start||''));
     });
 }
@@ -485,7 +501,7 @@ function renderTable(){
     .sort((a,b)=>a.start.localeCompare(b.start));
 
   els.patientRows.innerHTML=visible.length
-    ? visible.map((p,i)=>`<tr class="${['cancel','left'].includes(p.status)?'cancelled':''}">
+    ? visible.map((p,i)=>{const displayStatus=derivedStatus(p);return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
         <td><strong>${escapeHtml(firstName(p.name))}</strong></td>
         <td>${escapeHtml(p.file)}</td>
@@ -503,8 +519,9 @@ function renderTable(){
             <button class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
         </td>
-      </tr>`).join('')
+      </tr>`}).join('')
     : `<tr><td colspan="8" class="empty">${escapeHtml(tr('noAppointments'))}</td></tr>`;
+  $('statusLegend').innerHTML=Object.keys(STATUS).map(key=>`<span class="legend-chip legend-${key}">${escapeHtml(statusText(key))}</span>`).join('');
 }
 
 function patientById(id){return patients.find(p=>String(p.id)===String(id))||null}
@@ -537,9 +554,30 @@ function startActualTreatment(id){
 }
 function finishPatient(id){
   const p=patientById(id);if(!p)return;
-  mutate(()=>{p.status='done';p.completedAt=Date.now()});
+  pendingCompletionId=String(id);
+  $('paymentPatientText').textContent=lang==='en'?`Complete ${firstName(p.name)} and choose whether an admin payment action is required.`:`إكمال علاج ${firstName(p.name)} وتحديد ما إذا كان يوجد إجراء للدفع.`;
+  $('paymentRequiredCheck').checked=false;
+  $('paymentActionField').hidden=true;
+  $('paymentActionInput').value='';
+  openModal('paymentModal');
+}
+function confirmPatientCompletion(){
+  const p=patientById(pendingCompletionId);if(!p)return;
+  const paymentRequired=$('paymentRequiredCheck').checked;
+  const paymentAction=$('paymentActionInput').value.trim();
+  if(paymentRequired&&!paymentAction){toast(lang==='en'?'Payment action required':'أدخل إجراء الدفع',lang==='en'?'Add a short instruction for administration.':'اكتب الإجراء المطلوب باختصار لإرساله إلى الإدارة.');$('paymentActionInput').focus();return}
+  mutate(()=>{
+    p.status='done';
+    p.completedAt=Date.now();
+    p.paymentRequired=paymentRequired;
+    p.paymentAction=paymentRequired?paymentAction:'';
+    p.paymentRequestedAt=paymentRequired?Date.now():0;
+    p.paymentAcknowledgedAt=0;
+  });
+  closeModal('paymentModal');
+  pendingCompletionId=null;
   const upcoming=flowLeadPatient();
-  toast('اكتمل العلاج',upcoming?`أصبح ${firstName(upcoming.name)} في مقدمة الانتظار`:'لا يوجد مريض تالٍ');
+  toast(paymentRequired?(lang==='en'?'Payment sent to administration':'تم إرسال إجراء الدفع للإدارة'):(lang==='en'?'Treatment completed':'اكتمل العلاج'),paymentRequired?paymentAction:(upcoming?`${lang==='en'?'Next': 'أصبح'} ${firstName(upcoming.name)} ${lang==='en'?'is now first in queue':'في مقدمة الانتظار'}`:(lang==='en'?'No next patient':'لا يوجد مريض تالٍ')));
 }
 function renderCompactTimeline(cur){
   const sorted=patients.slice().sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')));
@@ -555,7 +593,7 @@ function queueCardMarkup(p,index){
   const position=index+1;
   const callLabel=called?tr('recall'):tr('callNext');
   const lastCall=called&&p.lastCalledAt?` · ${tr('lastCall')} ${new Date(Number(p.lastCalledAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
-  return `<article class="queue-card rank-${position} queue-${position}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
+  return `<article class="queue-card rank-${position} queue-${position}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
     <div class="queue-card-top"><div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div><span class="queue-orbit" aria-hidden="true">#${position+1}</span></div>
     <div class="queue-name">${escapeHtml(firstName(p.name))}</div>
     <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
@@ -597,9 +635,15 @@ function updateUpcomingCardVisuals(){
 }
 function renderAlertUI(){
   const active=Boolean(updateAlert.active);
+  const arrival=['status-arrived','status-early_arrival'].includes(updateAlert.kind);
+  const delay=updateAlert.kind==='status-asks_delay';
   els.alertRow.classList.toggle('show',active);
+  els.alertRow.classList.toggle('kind-arrival',arrival);
+  els.alertRow.classList.toggle('kind-delay',delay);
   els.alertText.textContent=updateAlert.message||tr('defaultAlert');
   els.alertBtn.classList.toggle('is-active',active);
+  els.alertBtn.classList.toggle('kind-arrival',arrival);
+  els.alertBtn.classList.toggle('kind-delay',delay);
   els.alertBtn.setAttribute('aria-pressed',String(active));
   els.alertBtnHint.textContent=active
     ? tr('alertActiveHint')
@@ -611,7 +655,7 @@ function renderLive(updateStructure=true){
   $('statTotal').textContent=patients.length;
   $('statDone').textContent=derived.filter(s=>s==='done').length;
   $('statActive').textContent=derived.filter(s=>s==='active').length;
-  $('statWaiting').textContent=derived.filter(s=>['waiting','late','asks_delay'].includes(s)).length;
+  $('statWaiting').textContent=derived.filter(s=>['waiting','arrived','early_arrival','late','asks_delay'].includes(s)).length;
   $('statCancel').textContent=derived.filter(s=>s==='cancel').length;
 
   const denominator=Math.max(1,patients.filter(p=>!['cancel','left'].includes(p.status)).length);
@@ -621,14 +665,27 @@ function renderLive(updateStructure=true){
   const lead=cur||flowLeadPatient();
   const card=$('currentCard');
   const activelyTreating=Boolean(cur&&lead&&String(cur.id)===String(lead.id));
+  const leadStatus=lead?derivedStatus(lead):'';
   card.className='card current-card '+stageFor(lead);
-  $('currentVisualIcon').textContent=activelyTreating?'●':lead?'➜':'○';
-  $('currentLabel').textContent=activelyTreating?tr('currentPatient'):tr('nextToCall');
+  $('currentVisualIcon').textContent=activelyTreating?'●':['arrived','early_arrival'].includes(leadStatus)?'✓':lead?'➜':'○';
+  $('currentVisualIcon').classList.toggle('arrival-pulse',['arrived','early_arrival'].includes(leadStatus));
+  $('currentLabel').textContent=activelyTreating?tr('currentPatient'):['arrived','early_arrival'].includes(leadStatus)?statusText(leadStatus):tr('nextToCall');
   $('currentName').textContent=lead?firstName(lead.name):tr('noCurrent');
   $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.start}–${lead.end} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
-  $('currentCountdown').textContent=lead?fmtMs(timeDate(lead.end)-new Date()):'--:--:--';
+  $('currentCountdown').textContent=lead?fmtMs((activelyTreating?timeDate(lead.end):timeDate(lead.start))-new Date()):'--:--:--';
   $('actualTimer').textContent=lead?.actualStartedAt?fmtMs(Date.now()-Number(lead.actualStartedAt)):'--:--:--';
   $('actualTimerHint').textContent=lead?.actualStartedAt?`${tr('startedAt')} ${new Date(Number(lead.actualStartedAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA')}`:tr('actualStartHint');
+  const notice=$('currentStatusNotice');
+  notice.hidden=!lead;
+  notice.className='current-status-notice '+(activelyTreating?'is-active':['arrived','early_arrival'].includes(leadStatus)?'is-arrived':'is-waiting');
+  if(lead){
+    const appointmentStart=timeDate(lead.start).getTime();
+    const waitingBase=Number(lead.arrivedAt||appointmentStart);
+    const beforeAppointment=Date.now()<appointmentStart;
+    $('currentStatusTitle').textContent=activelyTreating?(lang==='en'?'Treatment confirmed and running':'تم تأكيد بدء العلاج'):leadStatus==='arrived'?(lang==='en'?'Patient arrived — waiting to start':'وصل المريض — بانتظار بدء العلاج'):leadStatus==='early_arrival'?(lang==='en'?'Early arrival — waiting for appointment':'وصول مبكر — بانتظار موعد العلاج'):(lang==='en'?'Waiting for treatment confirmation':'بانتظار تأكيد بدء العلاج');
+    $('currentStatusText').textContent=activelyTreating?(lang==='en'?'Actual treatment time is being tracked':'يتم الآن احتساب مدة العلاج الفعلية'):beforeAppointment?(lang==='en'?'Time remaining until the scheduled appointment':'الوقت المتبقي حتى الموعد المحدد'):(lang==='en'?'Waiting time until treatment starts':'مدة الانتظار حتى بدء العلاج');
+    $('waitingTimer').textContent=activelyTreating?fmtMs(Date.now()-Number(lead.actualStartedAt||Date.now())):beforeAppointment?fmtMs(appointmentStart-Date.now()):fmtMs(Date.now()-waitingBase);
+  }
 
   document.querySelectorAll('[data-queue-countdown-id]').forEach(el=>{
     const p=patientById(el.dataset.queueCountdownId);
@@ -647,6 +704,28 @@ function renderLive(updateStructure=true){
 function render(){
   renderTable();
   renderLive();
+  renderPaymentPanel();
+}
+function viewUrl(mode){
+  const params=new URLSearchParams(location.search);
+  params.set('view',mode);
+  params.set('date',selectedDate||today());
+  return `${location.pathname}?${params.toString()}`;
+}
+function applyViewMode(){
+  document.body.classList.toggle('view-admin',VIEW_MODE==='admin');
+  document.body.classList.toggle('view-clinic',VIEW_MODE==='clinic');
+  $('clinicViewLink').classList.toggle('active',VIEW_MODE==='clinic');
+  $('adminViewLink').classList.toggle('active',VIEW_MODE==='admin');
+  $('clinicViewLink').href=viewUrl('clinic');
+  $('adminViewLink').href=viewUrl('admin');
+}
+function renderPaymentPanel(){
+  if(!$('paymentQueue'))return;
+  const invoices=patients.filter(p=>p.paymentRequired).sort((a,b)=>Number(b.paymentRequestedAt||0)-Number(a.paymentRequestedAt||0));
+  const pending=invoices.filter(p=>!p.paymentAcknowledgedAt);
+  $('paymentCount').textContent=String(pending.length);
+  $('paymentQueue').innerHTML=invoices.length?invoices.map(p=>`<article class="payment-item${p.paymentAcknowledgedAt?' acknowledged':''}"><div><strong>💳 ${escapeHtml(firstName(p.name))} — ${escapeHtml(p.file||'بدون رقم ملف')}</strong><p>${escapeHtml(p.paymentAction||'إجراء دفع')}</p><small>${p.paymentRequestedAt?new Date(Number(p.paymentRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'):''}</small></div>${p.paymentAcknowledgedAt?`<span class="payment-done">✓ ${lang==='en'?'Acknowledged':'تم الاستلام'}</span>`:`<button type="button" data-payment-ack-id="${escapeHtml(p.id)}">${lang==='en'?'Acknowledge':'تأكيد استلام الإجراء'}</button>`}</article>`).join(''):`<div class="payment-empty">${lang==='en'?'No pending payment actions.':'لا توجد إجراءات دفع معلقة.'}</div>`;
 }
 function suggestedTimes(){
   const sorted=patients.filter(p=>p.end).slice().sort((a,b)=>a.end.localeCompare(b.end));
@@ -680,6 +759,7 @@ function resetPatientForm(focusName=false){
   $('fStatus').value='waiting';
   $('savePatientBtn').textContent=tr('saveAdd');
   $('cancelEditBtn').hidden=true;
+  $('patientFormCard').open=Boolean(focusName);
   if(focusName){
     $('patientFormCard').scrollIntoView({behavior:'smooth',block:'center'});
     setTimeout(()=>$('fName').focus(),250);
@@ -692,6 +772,7 @@ function openPatient(id=null){
   $('patientFormTitle').textContent=tr('editPatient');
   $('patientFormMode').textContent=tr('editing');
   $('patientFormCard').classList.add('editing');
+  $('patientFormCard').open=true;
   $('appointmentDateField').hidden=false;
   $('fDate').value=selectedDate||today();
   $('fName').value=p.name||'';
@@ -708,10 +789,13 @@ function openPatient(id=null){
 function applyAutomaticStatusAlert(p,status){
   const name=firstName(p.name);
   const messages={
+    arrived:`وصل المريض ${name} — بانتظار تأكيد بدء العلاج`,
+    early_arrival:`وصل المريض ${name} مبكرًا — بانتظار موعده`,
     cancel:`تم إلغاء موعد المريض ${name} — يرجى مراجعة القائمة`,
     left:`المريض ${name} غادر العيادة — يرجى مراجعة القائمة`,
     asks_delay:`المريض ${name} يستفسر عن التأخير — يرجى المتابعة`
   };
+  if(['arrived','early_arrival'].includes(status))p.arrivedAt=Date.now();
   if(messages[status])updateAlert={active:true,message:messages[status],updatedAt:Date.now(),kind:`status-${status}`};
 }
 function patientFormSavedFeedback(wasEditing,item,message=''){
@@ -845,7 +929,9 @@ async function savePatient(){
   const start=$('fStart').value,end=$('fEnd').value;
   if(!rawName){toast('تعذر الحفظ','اكتب اسم المريض أولًا');$('fName').focus();return}
   if(!start||!end||mins(end)<=mins(start)){toast('وقت غير صحيح','يجب أن يكون وقت النهاية بعد وقت البداية');$('fStart').focus();return}
+  const existing=editingId?patientById(editingId):null;
   const item={
+    ...(existing||{}),
     id:editingId||(crypto.randomUUID?.()||`patient-${Date.now()}-${Math.random().toString(36).slice(2)}`),
     name:firstName(rawName),
     file:$('fFile').value.trim(),
@@ -968,21 +1054,35 @@ function parsePatientCsv(text){
   }).filter(patient=>patient.name&&patient.start&&patient.end&&mins(patient.end)>mins(patient.start));
   return{rows,date:dates.size===1?[...dates][0]:'',reason:rows.length?'':'rows'};
 }
-function importCsv(file){
+async function acceptPatientImport(parsed){
+  if(!parsed.rows.length){
+    const detail=lang==='en'?'Required columns: patient name, start time, and end time.':'الأعمدة المطلوبة: اسم المريض، وقت البدء، ووقت الانتهاء.';
+    toast(lang==='en'?'Import failed':'تعذر الاستيراد',detail);els.csvInput.value='';return;
+  }
+  if(parsed.date&&parsed.date!==selectedDate){await setDate(parsed.date);els.datePicker.value=parsed.date;}
+  mutate(()=>patients=parsed.rows);
+  const dateMessage=parsed.date?(lang==='en'?` for ${parsed.date}`:` لتاريخ ${parsed.date}`):'';
+  toast(lang==='en'?'Import complete':'تم الاستيراد',lang==='en'?`${parsed.rows.length} patients imported${dateMessage}`:`تم استيراد ${parsed.rows.length} مريض${dateMessage}`);
+  els.csvInput.value='';
+}
+function importPatientFile(file){
+  const extension=String(file.name||'').split('.').pop().toLowerCase();
   const reader=new FileReader();
-  reader.onload=async()=>{
-    const parsed=parsePatientCsv(String(reader.result||''));
-    if(!parsed.rows.length){
-      const detail=lang==='en'?'Required columns: patient name, start time, and end time.':'الأعمدة المطلوبة: اسم المريض، وقت البدء، ووقت الانتهاء.';
-      toast(lang==='en'?'Import failed':'تعذر الاستيراد',detail);els.csvInput.value='';return;
-    }
-    if(parsed.date&&parsed.date!==selectedDate){await setDate(parsed.date);els.datePicker.value=parsed.date;}
-    mutate(()=>patients=parsed.rows);
-    const dateMessage=parsed.date?(lang==='en'?` for ${parsed.date}`:` لتاريخ ${parsed.date}`):'';
-    toast(lang==='en'?'Import complete':'تم الاستيراد',lang==='en'?`${parsed.rows.length} patients imported${dateMessage}`:`تم استيراد ${parsed.rows.length} مريض${dateMessage}`);
-    els.csvInput.value='';
-  };
   reader.onerror=()=>toast(lang==='en'?'Import failed':'تعذر الاستيراد',lang==='en'?'The file could not be read.':'تعذرت قراءة الملف.');
+  if(['xlsx','xls'].includes(extension)){
+    if(!window.XLSX){toast(lang==='en'?'Excel reader unavailable':'قارئ Excel غير متاح',lang==='en'?'Check the internet connection and try again.':'تحقق من الاتصال بالإنترنت ثم أعد المحاولة.');return}
+    reader.onload=()=>{
+      try{
+        const workbook=window.XLSX.read(reader.result,{type:'array'});
+        const worksheet=workbook.Sheets[workbook.SheetNames[0]];
+        const csv=window.XLSX.utils.sheet_to_csv(worksheet,{FS:',',RS:'\n'});
+        acceptPatientImport(parsePatientCsv(csv));
+      }catch(error){toast(lang==='en'?'Excel import failed':'تعذر استيراد Excel',String(error.message||error));els.csvInput.value=''}
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  reader.onload=()=>acceptPatientImport(parsePatientCsv(String(reader.result||'')));
   reader.readAsText(file,'utf-8');
 }
 function mergeOcrRows(rows){
@@ -1034,7 +1134,7 @@ function clearAlert(){
   closeModal('alertModal');
   toast('تم إلغاء التنبيه','أزيل التنبيه من الشاشات المتصلة');
 }
-async function setDate(date){if(sync.dirty)await pushState();selectedDate=date||today();sync.revision=0;sync.updatedAt=0;sync.ready=false;sync.dirty=false;sync.localVersion=0;loadLocal(selectedDate);await pullState(true)}
+async function setDate(date){if(sync.dirty)await pushState();selectedDate=date||today();sync.revision=0;sync.updatedAt=0;sync.ready=false;sync.dirty=false;sync.localVersion=0;applyViewMode();loadLocal(selectedDate);await pullState(true)}
 function enterScreen(){
   document.body.classList.add('screen-mode');
   document.documentElement.requestFullscreen?.().catch(()=>{});
@@ -1099,9 +1199,12 @@ function applyLang(){
   document.documentElement.lang=lang;
   document.documentElement.dir=lang==='en'?'ltr':'rtl';
   document.body.classList.toggle('lang-en',lang==='en');
-  document.title=tr('documentTitle');
-  setText('#pageTitle',tr('pageTitle'));
-  setText('#pageSubtitle',tr('pageSubtitle'));
+  document.title=VIEW_MODE==='admin'?(lang==='en'?'Best Care Administration':'إدارة أفضل عناية'):tr('documentTitle');
+  applyViewMode();
+  setText('#clinicViewLink',lang==='en'?'🦷 Clinic page':'🦷 صفحة العيادة');
+  setText('#adminViewLink',lang==='en'?'💳 Administration':'💳 صفحة الإدارة');
+  setText('#pageTitle',VIEW_MODE==='admin'?(lang==='en'?'Best Care Administration':'إدارة أفضل عناية'):tr('pageTitle'));
+  setText('#pageSubtitle',VIEW_MODE==='admin'?(lang==='en'?'Payment actions and synchronized clinic updates':'إجراءات الدفع وتحديثات العيادة المتزامنة'):tr('pageSubtitle'));
   $('datePicker').setAttribute('aria-label',lang==='en'?'Date':'التاريخ');
   $('timeline').setAttribute('aria-label',lang==='en'?'Patient timeline':'الخط الزمني للمرضى');
   setText('#bulkBtn',tr('updateToday'));
@@ -1111,7 +1214,7 @@ function applyLang(){
   setText('#settingsBtn',tr('settings'));
   applyIosInstallLanguage();
   setText('#imageOcrBtn',tr('imageOcr'));
-  setText('#importBtn',tr('importCsv'));
+  setText('#importBtn',lang==='en'?'📥 Import CSV / Excel':'📥 استيراد CSV / Excel');
   setText('#exportBtn',tr('exportCsv'));
   setText('#syncTestBtn',tr('testSync'));
   setText('#clearBtn',tr('clearToday'));
@@ -1146,6 +1249,9 @@ function applyLang(){
   setText('.alert-preview span:last-child',tr('alertTip'));
   setTexts('#alertModal .modal-actions button',[tr('close'),tr('clearAlert'),tr('publishAlert')]);
   setText('#developerRights',tr('developerRights'));
+  if($('patientFormSummary'))$('patientFormSummary').innerHTML=`<span>${lang==='en'?'➕ Add or edit a patient':'➕ إضافة أو تعديل مريض'}</span><small>${lang==='en'?'Tap to open the form':'اضغط لفتح النموذج'}</small>`;
+  setText('#paymentModalTitle',lang==='en'?'Complete treatment and payment':'إكمال العلاج وإجراء الدفع');
+  setText('#confirmCompletionBtn',lang==='en'?'Confirm completion':'اعتماد إكمال العلاج');
   setText('#ocrModalTitle',tr('ocrTitle'));
   setText('#ocrModalHelp',tr('ocrHelp'));
   setText('#ocrPrivacy',tr('ocrPrivacy'));
@@ -1205,7 +1311,7 @@ $('applyBulkBtn').addEventListener('click',applyBulk);
 $('settingsBtn').addEventListener('click',event=>{event.stopPropagation();els.settingsMenu.classList.toggle('open')});
 document.addEventListener('click',()=>els.settingsMenu.classList.remove('open'));
 $('importBtn').addEventListener('click',()=>els.csvInput.click());
-els.csvInput.addEventListener('change',event=>event.target.files[0]&&importCsv(event.target.files[0]));
+els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
 $('syncTestBtn').addEventListener('click',syncTest);
 $('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
@@ -1234,6 +1340,12 @@ els.syncBadge.addEventListener('click',syncTest);
 els.patientRows.addEventListener('change',event=>{
   const id=event.target.dataset.statusId;if(!id)return;
   const status=event.target.value;
+  if(status==='done'){
+    const patient=patientById(id);
+    event.target.value=patient?.status||'waiting';
+    finishPatient(id);
+    return;
+  }
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
@@ -1243,6 +1355,13 @@ els.patientRows.addEventListener('click',event=>{
 });
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal)closeModal(modal.id)}));
+$('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked)$('paymentActionInput').focus()});
+$('confirmCompletionBtn').addEventListener('click',confirmPatientCompletion);
+$('paymentQueue').addEventListener('click',event=>{
+  const id=event.target.closest('[data-payment-ack-id]')?.dataset.paymentAckId;if(!id)return;
+  mutate(()=>{const p=patientById(id);if(p)p.paymentAcknowledgedAt=Date.now()});
+  toast(lang==='en'?'Payment action acknowledged':'تم استلام إجراء الدفع',lang==='en'?'The clinic update was synchronized.':'تمت مزامنة التحديث مع صفحة العيادة.');
+});
 window.BestCareOCR?.init({
   escapeHtml,
   toast,
@@ -1256,6 +1375,7 @@ window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();def
 window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true;toast('تم التثبيت','أصبح Best Care Flow متاحًا كتطبيق على الجهاز')});
 selectedDate=new URLSearchParams(location.search).get('date')||today();
 els.datePicker.value=selectedDate;
+applyViewMode();
 applyLang();
 if(isIosDevice()&&!isStandalone())$('installBtn').hidden=false;
 loadLocal(selectedDate);

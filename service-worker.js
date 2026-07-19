@@ -1,10 +1,11 @@
-const CACHE_NAME='bestcare-v7-8-upcoming-treemap-pwa-20260719';
+const CACHE_NAME='bestcare-v7-9-clinic-admin-workflow-pwa-20260719';
 const APP_SHELL=[
   './',
   './index.html',
   './offline.html',
   './manifest.webmanifest',
   './ocr-import-v7-3-1.js',
+  './assets/vendor/xlsx.full.min.js',
   './best-care-logo.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
