@@ -248,8 +248,8 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.11-whatsapp-review-pwa';
-const DEFAULT_GOOGLE_REVIEW_URL='https://search.google.com/local/writereview?placeid=ChIJAxR3lwir_BURVIDAw3qPaWM';
+const DASHBOARD_BUILD='7.11.1-short-review-link-pwa';
+const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const STATUS={waiting:'بانتظار الموعد',arrived:'وصل المريض',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
 const EN={waiting:'Waiting',arrived:'Patient arrived',early_arrival:'Early arrival',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
@@ -519,7 +519,8 @@ function normalizeWhatsappNumber(value){
 function openReviewComposer(id){
   const patient=patientById(id);if(!patient)return;
   pendingReviewId=patient.id;
-  const url=localStorage.getItem('bestcare_google_review_url')||DEFAULT_GOOGLE_REVIEW_URL;
+  const storedUrl=localStorage.getItem('bestcare_google_review_url')||'';
+  const url=storedUrl&&!storedUrl.includes('search.google.com/local/writereview')?storedUrl:DEFAULT_GOOGLE_REVIEW_URL;
   $('reviewPatientText').textContent=lang==='en'?`Ready WhatsApp message for ${firstName(patient.name)}`:`رسالة واتساب جاهزة للمريض ${firstName(patient.name)}`;
   $('reviewPhoneInput').value='';
   $('reviewUrlInput').value=url;

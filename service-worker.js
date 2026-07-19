@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-11-whatsapp-review-pwa-20260719';
+const CACHE_NAME='bestcare-v7-11-1-short-review-link-pwa-20260719';
 const APP_SHELL=[
   './',
   './index.html',

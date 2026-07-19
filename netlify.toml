@@ -6,6 +6,12 @@
   node_bundler = "esbuild"
 
 [[redirects]]
+  from = "/review"
+  to = "https://search.google.com/local/writereview?placeid=ChIJAxR3lwir_BURVIDAw3qPaWM"
+  status = 302
+  force = true
+
+[[redirects]]
   from = "/api/state"
   to = "/.netlify/functions/state"
   status = 200
