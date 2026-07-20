@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-12-payment-items-system-notifications-pwa-20260720';
+const CACHE_NAME='bestcare-v7-13-true-web-push-pwa-20260720';
 const APP_SHELL=[
   './',
   './index.html',
@@ -37,6 +37,19 @@ self.addEventListener('notificationclick',event=>{
     if(existing){if('navigate' in existing)existing.navigate(target);return existing.focus()}
     return self.clients.openWindow(target);
   }));
+});
+
+self.addEventListener('push',event=>{
+  let data={};
+  try{data=event.data?.json()||{}}catch{data={body:event.data?.text()||''}}
+  const title=data.title||'تنبيه جديد من أفضل عناية';
+  const options={
+    body:data.body||'يوجد تحديث جديد داخل لوحة المتابعة.',
+    icon:'./assets/icons/icon-192.png',badge:'./assets/icons/icon-192.png',
+    tag:data.tag||'bestcare-update',renotify:true,requireInteraction:data.type==='payment',
+    vibrate:[220,90,220,90,320],data:{url:data.url||'./?view=admin'}
+  };
+  event.waitUntil(self.registration.showNotification(title,options));
 });
 
 self.addEventListener('fetch',event=>{

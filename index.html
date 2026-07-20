@@ -248,8 +248,9 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 'use strict';
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
+const PUSH_API='/.netlify/functions/push-subscription';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.12-payment-items-system-notifications-pwa';
+const DASHBOARD_BUILD='7.13-true-web-push-pwa';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -309,6 +310,23 @@ function setBadge(mode,text,detail=''){
   els.syncBadge.dataset.build=DASHBOARD_BUILD;
 }
 function systemNotificationsEnabled(){return 'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('bestcare_system_notifications')==='enabled'}
+function urlBase64ToUint8Array(value){
+  const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64);return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)));
+}
+async function ensurePushSubscription(){
+  if(!systemNotificationsEnabled()||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
+  const registration=await navigator.serviceWorker.ready;
+  let subscription=await registration.pushManager.getSubscription();
+  if(!subscription){
+    const response=await fetch(PUSH_API,{cache:'no-store'});if(!response.ok)throw new Error('Push service unavailable');
+    const {publicKey}=await response.json();
+    subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
+  }
+  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID})});
+  if(!saved.ok)throw new Error('Subscription save failed');
+  localStorage.setItem('bestcare_push_registered','enabled');return true;
+}
 function updateNotificationsButton(){
   const button=$('notificationsBtn');if(!button)return;
   button.classList.toggle('notification-enabled',systemNotificationsEnabled());
@@ -317,11 +335,15 @@ function updateNotificationsButton(){
 }
 async function requestSystemNotifications(){
   if(!('Notification' in window)){toast(lang==='en'?'Notifications unavailable':'الإشعارات غير متاحة',lang==='en'?'This browser does not support system notifications.':'هذا المتصفح لا يدعم إشعارات النظام.');return}
+  if(Notification.permission==='denied'){
+    toast(lang==='en'?'Notifications are blocked':'الإشعارات محظورة',lang==='en'?'Open site settings, allow Notifications, then reload the app.':'افتح إعدادات الموقع من رمز القفل بجانب الرابط، اختر الإشعارات: سماح، ثم أعد فتح التطبيق.');return;
+  }
   const permission=await Notification.requestPermission();
   if(permission==='granted'){
     localStorage.setItem('bestcare_system_notifications','enabled');
     updateNotificationsButton();
-    showSystemNotification({type:'patient',title:lang==='en'?'Best Care notifications enabled':'تم تفعيل إشعارات أفضل عناية',body:lang==='en'?'Patient and payment updates will appear outside the app while it is running.':'ستظهر تحديثات المراجعين والفواتير خارج نافذة التطبيق أثناء تشغيله.'});
+    try{await ensurePushSubscription();showSystemNotification({type:'patient',title:lang==='en'?'Best Care push notifications enabled':'تم تفعيل تنبيهات أفضل عناية الخارجية',body:lang==='en'?'Updates will arrive even when the app is closed.':'ستصل تحديثات المراجعين والفواتير حتى عند إغلاق التطبيق.'})}
+    catch(error){console.warn('Push subscription failed',error);toast('تعذر ربط التنبيه الخارجي','تحقق من الاتصال ثم اضغط زر التفعيل مرة أخرى.')}
   }else{
     localStorage.removeItem('bestcare_system_notifications');
     updateNotificationsButton();
@@ -1342,6 +1364,7 @@ async function registerPwa(){
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{
     const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
+    if(systemNotificationsEnabled())ensurePushSubscription().catch(error=>console.warn('Push subscription refresh failed',error));
     const showUpdate=worker=>{waitingServiceWorker=worker;$('pwaUpdateBar').classList.add('show')};
     if(registration.waiting)showUpdate(registration.waiting);
     registration.addEventListener('updatefound',()=>{
