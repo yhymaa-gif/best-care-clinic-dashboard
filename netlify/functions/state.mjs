@@ -4,6 +4,7 @@ const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers
 const validDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||"");
 const cleanAlert=v=>({active:Boolean(v?.active),message:String(v?.message||"").slice(0,200),updatedAt:Number(v?.updatedAt||0),kind:String(v?.kind||"").slice(0,30)});
 const allowedStatuses=new Set(['waiting','arrived','early_arrival','active','done','late','cancel','left','asks_delay']);
+const cleanPaymentItems=items=>(Array.isArray(items)?items:[]).slice(0,10).map(item=>({code:String(item?.code||'other').slice(0,40),name:String(item?.name||'').slice(0,100),quantity:Math.max(1,Math.min(99,Number(item?.quantity||1))),free:Boolean(item?.free)})).filter(item=>item.name);
 const cleanPatient=p=>({
  id:String(p?.id||'').slice(0,80),
  name:String(p?.name||'').slice(0,80),
@@ -19,6 +20,8 @@ const cleanPatient=p=>({
  callCount:Math.max(0,Math.min(99,Number(p?.callCount||0))),
  paymentRequired:Boolean(p?.paymentRequired),
  paymentAction:String(p?.paymentAction||'').slice(0,120),
+ paymentItems:cleanPaymentItems(p?.paymentItems),
+ paymentDiscount:String(p?.paymentDiscount||'').slice(0,120),
  paymentRequestedAt:Number(p?.paymentRequestedAt||0),
  paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0),
  paymentCompletedAt:Number(p?.paymentCompletedAt||0)
