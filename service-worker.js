@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-11-2-inline-review-stars-pwa-20260719';
+const CACHE_NAME='bestcare-v7-12-payment-items-system-notifications-pwa-20260720';
 const APP_SHELL=[
   './',
   './index.html',
@@ -27,6 +27,16 @@ self.addEventListener('activate',event=>{
 
 self.addEventListener('message',event=>{
   if(event.data?.type==='SKIP_WAITING')self.skipWaiting();
+});
+
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const target=new URL(event.notification.data?.url||'./?view=admin',self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(windows=>{
+    const existing=windows.find(client=>new URL(client.url).origin===self.location.origin);
+    if(existing){if('navigate' in existing)existing.navigate(target);return existing.focus()}
+    return self.clients.openWindow(target);
+  }));
 });
 
 self.addEventListener('fetch',event=>{
