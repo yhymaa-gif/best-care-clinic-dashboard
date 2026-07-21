@@ -21,6 +21,11 @@
   to = "/.netlify/functions/push-subscription"
   status = 200
 
+[[redirects]]
+  from = "/api/clinics"
+  to = "/.netlify/functions/clinics"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

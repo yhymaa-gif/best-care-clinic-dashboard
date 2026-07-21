@@ -11,7 +11,7 @@ export default async request=>{
   }
   let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}
   if(request.method==='POST'){
-    try{await savePushSubscription(body.subscription,{role:body.role,clientId:body.clientId});return reply({ok:true})}
+    try{await savePushSubscription(body.subscription,{role:body.role,clientId:body.clientId,clinicId:body.clinicId,showPatientDetails:body.showPatientDetails});return reply({ok:true})}
     catch{return reply({error:'Invalid subscription'},400)}
   }
   if(request.method==='DELETE'){
