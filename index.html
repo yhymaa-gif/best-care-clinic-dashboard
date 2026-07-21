@@ -116,6 +116,9 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 @media(max-width:780px){.clinic-picker{width:100%;justify-content:space-between}.clinic-picker select{flex:1;min-width:0}.clinic-config-grid{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:1fr auto}.payment-procedure-name,.payment-other-input{grid-column:1/-1}.payment-free{grid-column:auto}.patient-phone{font-size:12px}}
 .review-modal-card{max-width:620px}.review-modal-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}.review-modal-head>span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#dcf7e9;color:#128451;font-size:24px}.review-modal-head h3,.review-modal-head p{margin:0}.review-modal-head p{margin-top:4px;color:var(--muted);font-size:12px}.review-field{display:grid;gap:6px;margin:13px 0}.review-field label{font-size:12px;font-weight:900;color:#325c4b}.review-field input,.review-field textarea{width:100%}.review-field textarea{min-height:150px;line-height:1.8}.review-link-preview{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#f0f8f4;color:#266049;font-size:11px}.review-link-preview a{color:#147b50;font-weight:900}.review-send{background:#16a563;color:#fff;border-color:#16a563}.review-send:hover{background:#0e8d52;color:#fff}.review-row-btn{position:relative;isolation:isolate;display:inline-flex!important;align-items:center;gap:7px;overflow:visible!important;padding:6px 11px!important;border-color:#d9b13f!important;background:linear-gradient(135deg,#fffdf4,#fff0ac)!important;color:#6e5200!important;box-shadow:0 0 0 1px rgba(222,179,54,.24),0 0 15px rgba(226,185,62,.38)!important;animation:reviewGoldGlow 1.9s ease-in-out infinite}.review-row-btn:hover{transform:translateY(-1px) scale(1.04);background:linear-gradient(135deg,#fff9dc,#ffe582)!important;box-shadow:0 0 0 2px rgba(222,179,54,.28),0 0 25px rgba(226,185,62,.58)!important}.whatsapp-gold-mark{position:relative;z-index:1;display:grid;place-items:center;width:25px;height:25px;transform-origin:50% 12%;color:#d6a514;filter:drop-shadow(0 0 5px rgba(231,192,71,.78));animation:reviewSwing 1.35s ease-in-out infinite}.whatsapp-gold-mark svg{display:block;width:25px;height:25px;fill:currentColor}.review-row-btn .review-star{position:absolute;z-index:3;color:#ffd53e;font-size:11px;line-height:1;pointer-events:none;text-shadow:0 0 5px #fff,0 0 10px #ffd940;animation:reviewStar 1.7s ease-in-out infinite}.review-row-btn .star-one{inset-inline-start:1px;top:-9px}.review-row-btn .star-two{inset-inline-start:22px;top:-12px;animation-delay:.5s}.review-row-btn .star-three{inset-inline-start:42px;top:-7px;animation-delay:1s}@keyframes reviewGoldGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}@keyframes reviewSwing{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}@keyframes reviewStar{0%,100%{opacity:.2;transform:translateY(2px) scale(.6) rotate(0deg)}45%{opacity:1;transform:translateY(-3px) scale(1.4) rotate(145deg)}70%{opacity:.7;transform:translateY(-1px) scale(.95) rotate(230deg)}}@media(prefers-reduced-motion:reduce){.review-row-btn,.whatsapp-gold-mark,.review-row-btn .review-star{animation:none}}
 @media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:1fr 1fr}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
+.admin-insights{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.insight-card{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:15px;background:linear-gradient(135deg,#fff,#f6faf8);box-shadow:0 8px 22px rgba(29,73,55,.06)}.insight-card>span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#e9f6ef;color:#17704b;font-size:19px}.insight-card small,.insight-card strong{display:block}.insight-card small{color:var(--muted);font-weight:800;font-size:11px}.insight-card strong{margin-top:3px;color:#174f3a;font-size:18px}.clinic-insight>span{background:#e9f0f7;color:#2a6077}.role-clinic-pick{display:grid;gap:6px;max-width:390px;margin:0 auto 18px;text-align:right;color:#315b4b;font-size:12px;font-weight:900}.role-clinic-pick select{width:100%;background:#f7fbf9;border-color:#c9ded3}.view-switch #waitingViewLink.active{background:#2b6573;color:#fff;border-color:#2b6573}body.view-waiting .admin-only,body.view-waiting #flowStage,body.view-waiting #screenBtn,body.view-waiting #alertBtn,body.view-waiting .view-switch{display:none!important}body.view-waiting .header{border-top-color:#2b6573}body.view-waiting .brand h1{color:#2b6573}body.view-waiting .upcoming-panel{display:block;min-height:560px}body.view-waiting .upcoming-head{text-align:center}body.view-waiting .upcoming-stack{height:520px}.view-waiting .queue-card{font-size:1.1em}.view-waiting .queue-meta{font-size:15px}.view-waiting .queue-actions{display:none}.view-waiting .queue-name{font-size:clamp(28px,5vw,60px)}
+@media(max-width:900px){.admin-insights{grid-template-columns:repeat(2,1fr)}}@media(max-width:560px){.admin-insights{grid-template-columns:1fr}.clinic-badge{display:none}.clinic-picker select{font-size:13px}}
+body.view-waiting #flowStage{display:block!important}body.view-waiting #currentCard{display:none!important}
 </style>
 </head>
 <body>
@@ -146,7 +149,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   </div>
   <div class="header-side"><div id="clock" class="clock">--:--:--</div><div id="dateText" class="date-text">--</div><button id="alertBtn" class="alert-trigger" type="button" aria-haspopup="dialog" aria-controls="alertModal" aria-pressed="false"><span class="alert-icon" aria-hidden="true">🔔</span><span class="alert-copy"><strong>تنبيه تعديل</strong><small id="alertBtnHint">إرسال ملاحظة للطبيب</small></span><span class="alert-state" aria-hidden="true"></span></button></div>
 </header>
-<nav class="view-switch hide-screen" aria-label="نوع الصفحة"><a id="clinicViewLink" href="?view=clinic">🦷 صفحة العيادة</a><a id="adminViewLink" href="?view=admin">🗓️ تنسيق المواعيد والإدارة</a><button id="roleBtn" type="button">↔ تغيير المهمة</button></nav>
+<nav class="view-switch hide-screen" aria-label="نوع الصفحة"><a id="clinicViewLink" href="?view=clinic">🦷 صفحة العيادة</a><a id="adminViewLink" href="?view=admin">🗓️ تنسيق المواعيد والإدارة</a><a id="waitingViewLink" href="?view=waiting">📺 شاشة الانتظار</a><button id="roleBtn" type="button">↔ تغيير المهمة</button></nav>
 <div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span></div>
 <div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
 <section id="paymentPanel" class="card payment-panel admin-only"><div class="payment-panel-head"><div><span class="payment-kicker">متابعة الإدارة</span><h2>إجراءات الدفع المطلوبة</h2><p>تظهر هنا فقط الحالات التي أرسلها الطبيب بعد إكمال العلاج.</p></div><strong id="paymentCount">0</strong></div><div id="paymentQueue" class="payment-queue"></div></section>
@@ -157,6 +160,12 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   <div class="card stat"><small>المتبقي</small><strong id="statWaiting">0</strong><span class="stat-icon" aria-hidden="true">⌛</span></div>
   <div class="card stat"><small>الملغاة</small><strong id="statCancel">0</strong><span class="stat-icon" aria-hidden="true">×</span></div>
   <div class="card stat"><small>نسبة الإنجاز</small><strong id="statPercent">0%</strong><span class="stat-icon" aria-hidden="true">%</span></div>
+</section>
+<section id="adminInsights" class="admin-insights admin-only" aria-label="ملخص الإدارة">
+  <article class="insight-card"><span>⏳</span><div><small>متوسط الانتظار</small><strong id="avgWaitInsight">—</strong></div></article>
+  <article class="insight-card"><span>🔔</span><div><small>تنبيهات غير مقروءة</small><strong id="alertInsight">0</strong></div></article>
+  <article class="insight-card"><span>💳</span><div><small>طلبات الدفع المعلقة</small><strong id="paymentInsight">0</strong></div></article>
+  <article class="insight-card clinic-insight"><span>🏥</span><div><small>العيادة الحالية</small><strong id="clinicInsight">—</strong></div></article>
 </section>
 <section id="flowStage" class="focus-grid">
   <div id="currentCard" class="card current-card stage-idle">
@@ -215,7 +224,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 <div id="alertModal" class="modal"><div class="modal-card alert-modal-card" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle"><div class="alert-modal-head"><h3 id="alertModalTitle">🔔 إرسال تنبيه تعديل</h3><p>اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.</p></div><div class="alert-modal-body"><label for="alertMessageInput">رسالة التنبيه</label><textarea id="alertMessageInput" maxlength="220" placeholder="مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة"></textarea><div class="alert-preview"><span aria-hidden="true">💡</span><span>يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.</span></div></div><div class="modal-actions"><button type="button" data-close="alertModal">إغلاق</button><button id="clearAlertBtn" type="button" class="danger alert-clear" hidden>إلغاء التنبيه الحالي</button><button id="sendAlertBtn" type="button" class="alert-send">نشر التنبيه</button></div></div></div>
 <div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle"><h3 id="paymentModalTitle">إكمال العلاج وإجراء الدفع</h3><p id="paymentPatientText">اختر ما إذا كان المريض يحتاج إجراءً للدفع.</p><label class="payment-check"><input id="paymentRequiredCheck" type="checkbox"><span><strong>يوجد أمر دفع</strong><small>اختر الإجراءات والعدد، وحدد المجاني أو الخصم إن وجد</small></span></label><div id="paymentActionField" class="payment-action-field" hidden><label id="paymentItemsLabel">إجراءات أمر الدفع</label><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" maxlength="100" placeholder="اكتب الإجراء الآخر"><label class="payment-quantity"><small>العدد</small><span class="quantity-stepper"><button type="button" data-quantity-input="paymentOtherQuantity" data-quantity-step="-1" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="number" min="1" max="99" value="1" readonly><button type="button" data-quantity-input="paymentOtherQuantity" data-quantity-step="1" aria-label="زيادة العدد">+</button></span></label><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div><div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج</button></div></div></div>
 <div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
-<div id="roleModal" class="modal role-modal"><div class="modal-card role-modal-card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle"><h3 id="roleModalTitle">حدد مهمتك لفتح الصفحة المناسبة</h3><p id="roleModalHelp">يمكنك تغيير المهمة في أي وقت من الشريط العلوي.</p><div class="role-options"><button type="button" class="role-option" data-role-view="admin"><span class="role-icon">🗓️</span><span><strong id="adminRoleTitle">تنسيق المواعيد والإدارة</strong><small id="adminRoleHelp">إضافة وتعديل المرضى، متابعة التنبيهات، واستلام وتنفيذ طلبات الدفع.</small></span></button><button type="button" class="role-option" data-role-view="clinic"><span class="role-icon">🦷</span><span><strong id="clinicRoleTitle">شاشة العيادة والطبيب</strong><small id="clinicRoleHelp">استدعاء المرضى، بدء وإنهاء العلاج، ومتابعة الوقت والحالات.</small></span></button></div><p id="rolePrivacyNote" class="role-note">كلتا الصفحتين تستخدمان القائمة نفسها والمزامنة المباشرة.</p></div></div>
+<div id="roleModal" class="modal role-modal"><div class="modal-card role-modal-card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle"><h3 id="roleModalTitle">حدد مهمتك لفتح الصفحة المناسبة</h3><p id="roleModalHelp">يمكنك تغيير المهمة في أي وقت من الشريط العلوي.</p><label class="role-clinic-pick"><span>اختر العيادة أولًا</span><select id="roleClinicSelect" aria-label="اختيار العيادة عند فتح التطبيق"></select></label><div class="role-options"><button type="button" class="role-option" data-role-view="admin"><span class="role-icon">🗓️</span><span><strong id="adminRoleTitle">تنسيق المواعيد والإدارة</strong><small id="adminRoleHelp">إضافة وتعديل المرضى، متابعة التنبيهات، واستلام وتنفيذ طلبات الدفع.</small></span></button><button type="button" class="role-option" data-role-view="clinic"><span class="role-icon">🦷</span><span><strong id="clinicRoleTitle">شاشة العيادة والطبيب</strong><small id="clinicRoleHelp">استدعاء المرضى، بدء وإنهاء العلاج، ومتابعة الوقت والحالات.</small></span></button><button type="button" class="role-option" data-role-view="waiting"><span class="role-icon">📺</span><span><strong id="waitingRoleTitle">شاشة انتظار المرضى</strong><small id="waitingRoleHelp">عرض رقم الاستدعاء والعيادة فقط على شاشة الاستقبال.</small></span></button></div><p id="rolePrivacyNote" class="role-note">تظل بيانات المرضى الحساسة داخل صفحات العمل فقط.</p></div></div>
 <div id="clinicModal" class="modal"><div class="modal-card clinic-modal-card" role="dialog" aria-modal="true" aria-labelledby="clinicModalTitle"><h3 id="clinicModalTitle">بيانات العيادة والطبيب</h3><p id="clinicModalHelp">تُحفظ هذه البيانات مركزيًا وتظهر في تنبيهات العيادة.</p><div class="clinic-config-grid"><label>اسم العيادة<input id="clinicNameInput" maxlength="60"></label><label>اسم الطبيب<input id="clinicDoctorInput" maxlength="60"></label><label>رقم العيادة<input id="clinicRoomInput" maxlength="20"></label></div><label class="notification-details-option"><input id="notificationDetailsCheck" type="checkbox"><span>إظهار اسم المريض ورقم الملف في إشعارات النظام<small>فعّلها فقط على أجهزة العمل الموثوقة؛ قد تظهر التفاصيل على شاشة القفل.</small></span></label><div class="modal-actions"><button type="button" data-close="clinicModal">إلغاء</button><button id="saveClinicBtn" type="button" class="primary">حفظ بيانات العيادة</button></div></div></div>
 <div id="ocrModal" class="modal ocr-modal"><div class="modal-card ocr-modal-card" role="dialog" aria-modal="true" aria-labelledby="ocrModalTitle">
   <div class="ocr-modal-head"><div><h3 id="ocrModalTitle">📷 تحويل صورة المواعيد إلى قائمة مرضى</h3><p id="ocrModalHelp">تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.</p></div><span id="ocrPrivacy" class="ocr-privacy">🔒 معالجة محلية — لا تُرفع الصورة</span></div>
@@ -281,8 +290,8 @@ const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('se
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
 const PAGE_PARAMS=new URLSearchParams(location.search);
 const REQUESTED_VIEW=PAGE_PARAMS.get('view');
-const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
-const NEED_ROLE_CHOICE=!['admin','clinic'].includes(REQUESTED_VIEW);
+const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':REQUESTED_VIEW==='waiting'?'waiting':'clinic';
+const NEED_ROLE_CHOICE=!['admin','clinic','waiting'].includes(REQUESTED_VIEW);
 const REQUESTED_CLINIC=PAGE_PARAMS.get('clinic')||'clinic-1';
 const CLINIC_ID=/^clinic-([1-9]|1[0-5])$/.test(REQUESTED_CLINIC)?REQUESTED_CLINIC:'clinic-1';
 const DEFAULT_CLINICS=Array.from({length:15},(_,index)=>({id:`clinic-${index+1}`,name:`عيادة ${index+1}`,doctorName:'',roomNumber:String(index+1),active:true}));
@@ -858,6 +867,12 @@ function renderLive(updateStructure=true){
 
   const denominator=Math.max(1,patients.filter(p=>!['cancel','left'].includes(p.status)).length);
   $('statPercent').textContent=Math.round(patients.filter(p=>p.status==='done').length/denominator*100)+'%';
+  const waiters=patients.filter(p=>['arrived','early_arrival','waiting','asks_delay'].includes(derivedStatus(p)));
+  const waitMinutes=waiters.length?Math.round(waiters.reduce((sum,p)=>sum+Math.max(0,(Date.now()-Number(p.arrivedAt||timeDate(p.start).getTime()))/60000),0)/waiters.length):0;
+  if($('avgWaitInsight'))$('avgWaitInsight').textContent=waiters.length?`${waitMinutes} ${lang==='en'?'min':'د'}`:'—';
+  if($('alertInsight'))$('alertInsight').textContent=updateAlert.active?'1':'0';
+  if($('paymentInsight'))$('paymentInsight').textContent=String(patients.filter(p=>p.paymentRequired&&!p.paymentCompletedAt).length);
+  if($('clinicInsight'))$('clinicInsight').textContent=currentClinic().name||'—';
 
   const cur=currentPatient();
   const lead=cur||flowLeadPatient();
@@ -913,14 +928,16 @@ function viewUrl(mode){
 }
 function renderClinicControls(){
   const select=$('clinicSelect');if(!select)return;
-  select.innerHTML=clinics.filter(c=>c.active!==false).map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name||c.id)}</option>`).join('');
+  const options=clinics.filter(c=>c.active!==false).map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name||c.id)}</option>`).join('');
+  select.innerHTML=options;
   select.value=CLINIC_ID;
+  if($('roleClinicSelect')){$('roleClinicSelect').innerHTML=options;$('roleClinicSelect').value=CLINIC_ID}
   const badge=$('clinicBadge');if(badge){const c=currentClinic();badge.textContent=`${c.name||'عيادة'} · ${c.roomNumber||''}`}
 }
 function applyClinicIdentity(){
   renderClinicControls();
   const c=currentClinic();
-  const subtitle=VIEW_MODE==='admin'?(lang==='en'?'Patient lists, scheduling, alerts, and payment actions':'قوائم المرضى والمواعيد والتنبيهات وإجراءات الدفع'):(lang==='en'?'Live clinic patient flow':'متابعة المرضى داخل العيادة');
+  const subtitle=VIEW_MODE==='admin'?(lang==='en'?'Patient lists, scheduling, alerts, and payment actions':'قوائم المرضى والمواعيد والتنبيهات وإجراءات الدفع'):VIEW_MODE==='waiting'?(lang==='en'?'Live patient calling screen':'شاشة استدعاء المرضى المباشرة'):(lang==='en'?'Live clinic patient flow':'متابعة المرضى داخل العيادة');
   const details=`${c.name||`عيادة ${CLINIC_ID.replace('clinic-','')}`} · ${c.doctorName||'دون طبيب'} · ${lang==='en'?'Room':'غرفة'} ${c.roomNumber||CLINIC_ID.replace('clinic-','')}`;
   setText('#pageSubtitle',`${subtitle} — ${details}`);
 }
@@ -940,10 +957,13 @@ async function saveClinicConfig(){
 function applyViewMode(){
   document.body.classList.toggle('view-admin',VIEW_MODE==='admin');
   document.body.classList.toggle('view-clinic',VIEW_MODE==='clinic');
+  document.body.classList.toggle('view-waiting',VIEW_MODE==='waiting');
   $('clinicViewLink').classList.toggle('active',VIEW_MODE==='clinic');
   $('adminViewLink').classList.toggle('active',VIEW_MODE==='admin');
+  $('waitingViewLink').classList.toggle('active',VIEW_MODE==='waiting');
   $('clinicViewLink').href=viewUrl('clinic');
   $('adminViewLink').href=viewUrl('admin');
+  $('waitingViewLink').href=viewUrl('waiting');
 }
 function renderPaymentPanel(){
   if(!$('paymentQueue'))return;
@@ -1438,10 +1458,11 @@ function applyLang(){
   document.documentElement.lang=lang;
   document.documentElement.dir=lang==='en'?'ltr':'rtl';
   document.body.classList.toggle('lang-en',lang==='en');
-  document.title=VIEW_MODE==='admin'?(lang==='en'?'Best Care Scheduling & Administration':'تنسيق المواعيد وإدارة أفضل عناية'):tr('documentTitle');
+  document.title=VIEW_MODE==='admin'?(lang==='en'?'Best Care Scheduling & Administration':'تنسيق المواعيد وإدارة أفضل عناية'):VIEW_MODE==='waiting'?(lang==='en'?'Best Care Waiting Room':'شاشة انتظار أفضل عناية'):tr('documentTitle');
   applyViewMode();
   setText('#clinicViewLink',lang==='en'?'🦷 Clinic page':'🦷 صفحة العيادة');
   setText('#adminViewLink',lang==='en'?'🗓️ Scheduling & administration':'🗓️ تنسيق المواعيد والإدارة');
+  setText('#waitingViewLink',lang==='en'?'📺 Waiting room':'📺 شاشة الانتظار');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
   setText('#roleModalTitle',lang==='en'?'Choose your task':'حدد مهمتك لفتح الصفحة المناسبة');
   setText('#roleModalHelp',lang==='en'?'You can change the task at any time from the top bar.':'يمكنك تغيير المهمة في أي وقت من الشريط العلوي.');
@@ -1449,9 +1470,11 @@ function applyLang(){
   setText('#adminRoleHelp',lang==='en'?'Add and edit patients, manage lists, alerts, and payment requests.':'إضافة وتعديل المرضى، إدارة القوائم والتنبيهات، واستلام وتنفيذ طلبات الدفع.');
   setText('#clinicRoleTitle',lang==='en'?'Clinic and doctor screen':'شاشة العيادة والطبيب');
   setText('#clinicRoleHelp',lang==='en'?'Call patients, start and finish treatment, and track time and status.':'استدعاء المرضى، بدء وإنهاء العلاج، ومتابعة الوقت والحالات.');
+  setText('#waitingRoleTitle',lang==='en'?'Waiting room screen':'شاشة انتظار المرضى');
+  setText('#waitingRoleHelp',lang==='en'?'Show the called number and clinic on the reception screen.':'عرض رقم الاستدعاء والعيادة فقط على شاشة الاستقبال.');
   setText('#rolePrivacyNote',lang==='en'?'Both pages use the same live synchronized list.':'كلتا الصفحتين تستخدمان القائمة نفسها والمزامنة المباشرة.');
-  setText('#pageTitle',VIEW_MODE==='admin'?(lang==='en'?'Best Care Scheduling & Administration':'تنسيق المواعيد وإدارة أفضل عناية'):tr('pageTitle'));
-  setText('#pageSubtitle',VIEW_MODE==='admin'?(lang==='en'?'Patient lists, scheduling, alerts, and payment actions':'قوائم المرضى والمواعيد والتنبيهات وإجراءات الدفع'):tr('pageSubtitle'));
+  setText('#pageTitle',VIEW_MODE==='admin'?(lang==='en'?'Best Care Scheduling & Administration':'تنسيق المواعيد وإدارة أفضل عناية'):VIEW_MODE==='waiting'?(lang==='en'?'Best Care Waiting Room':'شاشة انتظار أفضل عناية'):tr('pageTitle'));
+  setText('#pageSubtitle',VIEW_MODE==='admin'?(lang==='en'?'Patient lists, scheduling, alerts, and payment actions':'قوائم المرضى والمواعيد والتنبيهات وإجراءات الدفع'):VIEW_MODE==='waiting'?(lang==='en'?'Live patient calling screen':'شاشة استدعاء المرضى المباشرة'):tr('pageSubtitle'));
   $('datePicker').setAttribute('aria-label',lang==='en'?'Date':'التاريخ');
   $('timeline').setAttribute('aria-label',lang==='en'?'Patient timeline':'الخط الزمني للمرضى');
   setText('#bulkBtn',tr('updateToday'));
@@ -1648,7 +1671,7 @@ $('clinicSettingsBtn').addEventListener('click',openClinicSettings);
 $('saveClinicBtn').addEventListener('click',saveClinicConfig);
 $('roleModal').addEventListener('click',event=>{
   const mode=event.target.closest('[data-role-view]')?.dataset.roleView;if(!mode)return;
-  location.href=viewUrl(mode);
+  const params=new URLSearchParams(location.search);params.set('view',mode);params.set('clinic',$('roleClinicSelect').value||CLINIC_ID);params.set('date',selectedDate||today());location.href=`${location.pathname}?${params.toString()}`;
 });
 window.BestCareOCR?.init({
   escapeHtml,
