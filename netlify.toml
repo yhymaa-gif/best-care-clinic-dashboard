@@ -24,6 +24,8 @@
 [[redirects]]
   from = "/api/auth"
   to = "/.netlify/functions/auth"
+
+[[redirects]]
   from = "/api/clinics"
   to = "/.netlify/functions/clinics"
   status = 200
