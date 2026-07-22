@@ -119,7 +119,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 </style>
 </head>
 <body class="auth-locked">
-<div id="authGate" aria-live="polite"><div class="auth-card"><div class="auth-brand"><span class="auth-brand-mark">BC</span><div><h2>تسجيل الدخول المحلي</h2><p>استخدم اسم المستخدم وكلمة المرور للدخول إلى لوحة أفضل عناية. لا يحتاج هذا الوضع إلى بريد أو رسائل SMS.</p></div></div><div id="authRequestStep"><label>اسم المستخدم<input id="authUsername" autocomplete="username" maxlength="48" value="bestcare"></label><label>كلمة المرور<input id="authPassword" type="password" autocomplete="current-password" placeholder="أدخل كلمة المرور"></label><button id="authRequestBtn" class="primary" type="button">دخول</button></div><div id="authVerifyStep" hidden></div><p id="authError" class="auth-error"></p><small style="display:block;margin-top:12px;color:#6c7e76">هذا وضع محلي للاختبار. غيّر بيانات الدخول قبل النشر العام.</small></div></div>
+<div id="authGate" aria-live="polite"><div class="auth-card"><div class="auth-brand"><span class="auth-brand-mark">BC</span><div><h2>تسجيل الدخول</h2><p>أدخل اسم المستخدم وكلمة المرور للوصول الآمن إلى لوحة أفضل عناية.</p></div></div><div id="authRequestStep"><label>اسم المستخدم<input id="authUsername" autocomplete="username" maxlength="48" value="bestcare"></label><label>كلمة المرور<input id="authPassword" type="password" autocomplete="current-password" placeholder="أدخل كلمة المرور"></label><button id="authRequestBtn" class="primary" type="button">دخول</button></div><div id="authVerifyStep" hidden><input id="authCode" type="hidden"><button id="authVerifyBtn" type="button" hidden></button><button id="authBackBtn" type="button" hidden></button></div><p id="authError" class="auth-error"></p></div></div>
 <div class="app">
 <header class="card header">
   <div>
@@ -287,9 +287,9 @@ const authErrorMessage=message=>{const node=$('authError');if(node)node.textCont
 async function authRequest(path,options={}){const response=await fetch(`/api/auth${path}`,{credentials:'include',...options});let data={};try{data=await response.json()}catch{}if(!response.ok&&response.status!==401)throw new Error(data.error||'تعذر الاتصال بخدمة الدخول');return{response,data};}
 function startSyncAfterAuth(){if(window.__syncStarted)return;window.__syncStarted=true;startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(3000)})}
 function unlockApp(){document.body.classList.remove('auth-locked');$('authGate').hidden=true;authReady=true;authLastActivity=Date.now();authKeepAliveAt=Date.now();startAuthIdleProtection();startSyncAfterAuth()}
-function lockApp(message='انتهت الجلسة بسبب الخمول. سجّل الدخول مرة أخرى.'){document.body.classList.add('auth-locked');$('authGate').hidden=false;$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;$('authCode').value='';authErrorMessage(message)}
+function lockApp(message='انتهت الجلسة بسبب الخمول. سجّل الدخول مرة أخرى.'){document.body.classList.add('auth-locked');$('authGate').hidden=false;$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;if($('authCode'))$('authCode').value='';authErrorMessage(message)}
 async function initAuth(){document.body.classList.add('auth-locked');try{const {response,data}=await authRequest('?action=session');if(!data.enabled){lockApp('الحماية غير مفعّلة بعد. يجب ضبط AUTH_ENABLED ومفاتيح SMS في Netlify قبل استخدام التطبيق.');return}if(data.authenticated){unlockApp();return}$('authGate').hidden=false;authErrorMessage('')}catch(error){lockApp(error.message||'تعذر التحقق من الجلسة')}}
-async function requestAuthOtp(){const username=$('authUsername').value.trim(),phone=$('authPhone').value.trim();if(!username||!phone){authErrorMessage('أدخل اسم المستخدم ورقم الجوال.');return}authErrorMessage('جارٍ إرسال الرمز…');try{const {data}=await authRequest('?action=request-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,phone})});if(!data.challengeId){authErrorMessage(data.error||'لم يتم إرسال الرمز.');return}authChallenge=data.challengeId;$('authRequestStep').hidden=true;$('authVerifyStep').hidden=false;authErrorMessage('تم إرسال رمز التحقق إلى الجوال.')}catch(error){authErrorMessage(error.message)}}
+async function requestAuthOtp(){const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
 async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
 function openUsersModal(){openModal('usersModal');$('usersError').textContent=''}
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
@@ -1634,33 +1634,6 @@ selectedDate=new URLSearchParams(location.search).get('date')||today();
 els.datePicker.value=selectedDate;
 applyViewMode();
 applyLang();
-setupEmailAuth();
-requestAuthOtp=async function(){const username=$('authUsername').value.trim(),email=($('authEmail')?.value||'').trim(),phone=$('authPhone').value.trim(),contact=authMethod==='email'?email:phone;if(!username||!contact){authErrorMessage(authMethod==='email'?'أدخل اسم المستخدم والبريد الإلكتروني.':'أدخل اسم المستخدم ورقم الجوال.');return}authErrorMessage('جارٍ إرسال الرمز…');try{const {data}=await authRequest('?action=request-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,method:authMethod,email,phone})});if(!data.challengeId){authErrorMessage(data.error||'لم يتم إرسال الرمز.');return}authChallenge=data.challengeId;$('authRequestStep').hidden=true;$('authVerifyStep').hidden=false;authErrorMessage(authMethod==='email'?'تم إرسال رمز التحقق إلى البريد الإلكتروني.':'تم إرسال رمز التحقق إلى الجوال.')}catch(error){authErrorMessage(error.message)}};
-/* Local username/password mode. This intentionally bypasses remote OTP providers
-   for offline/local testing; do not use the sample password on a public deployment. */
-const LOCAL_LOGIN_USERNAME = 'bestcare';
-const LOCAL_LOGIN_PASSWORD = 'BestCare@2026';
-function initLocalAuth(){
-  document.body.classList.add('auth-locked');
-  const saved = sessionStorage.getItem('bc_local_session');
-  if(saved === '1'){ unlockApp(); return; }
-  $('authGate').hidden = false;
-  $('authRequestStep').hidden = false;
-  $('authVerifyStep').hidden = true;
-  authErrorMessage('');
-}
-requestAuthOtp = function(){
-  const username = $('authUsername').value.trim().toLowerCase();
-  const password = $('authPassword').value;
-  if(username !== LOCAL_LOGIN_USERNAME || password !== LOCAL_LOGIN_PASSWORD){
-    authErrorMessage('اسم المستخدم أو كلمة المرور غير صحيحة.');
-    return;
-  }
-  sessionStorage.setItem('bc_local_session','1');
-  unlockApp();
-};
-verifyAuthOtp = function(){};
-initAuth = initLocalAuth;
 initAuth();
 if(isIosDevice()&&!isStandalone())$('installBtn').hidden=false;
 loadLocal(selectedDate);

@@ -58,7 +58,7 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
 export default async request=>{
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
  if(!(await authSession(request)))return reply({error:'Authentication required'},401);
-  const url=new URL(request.url),date=url.searchParams.get('date'),clinicId=url.searchParams.get('clinic')||'clinic-1';
+ const url=new URL(request.url),date=url.searchParams.get('date'),clinicId=url.searchParams.get('clinic')||'clinic-1';
  if(!validDate(date))return reply({error:'Invalid date'},400);
  if(!validClinic(clinicId))return reply({error:'Invalid clinic'},400);
  const store=getStore({name:'clinic-dashboard-days',consistency:'strong'}),key=clinicId==='clinic-1'?`days/${date}`:`clinics/${clinicId}/days/${date}`;
