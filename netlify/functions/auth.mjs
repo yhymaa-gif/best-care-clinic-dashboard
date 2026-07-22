@@ -19,6 +19,8 @@ const authEnabled = () => process.env.AUTH_ENABLED === 'true';
 const store = name => getStore({ name, consistency: 'strong' });
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const sign = value => createHmac('sha256', process.env.AUTH_SESSION_SECRET || 'change-me-before-production').update(value).digest('hex');
+const passwordHash = value => createHash('sha256').update(String(value)).digest();
+const passwordMatches = value => timingSafeEqual(passwordHash(value), passwordHash(process.env.AUTH_BOOTSTRAP_PASSWORD || 'BestCare@2026'));
 const token = () => randomBytes(32).toString('base64url');
 const cleanUsername = value => String(value || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 48);
 const cleanPhone = value => {
@@ -96,6 +98,14 @@ export default async request => {
   if (request.method === 'GET' && action === 'session') {
     const session = await sessionFrom(request);
     return reply({ enabled: true, authenticated: Boolean(session), user: session ? safeUser(session.user) : null }, session ? 200 : 401);
+  }
+  if (request.method === 'POST' && action === 'password-login') {
+    const body = await json(request);
+    const user = bootstrapUser();
+    if (!user || cleanUsername(body.username) !== user.username || !passwordMatches(body.password)) return reply({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, 401);
+    const raw = token(); const now = Date.now();
+    await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + 12 * 60 * 60 * 1000 });
+    return reply({ ok: true, user: safeUser(user) }, 200, { 'set-cookie': sessionCookie(raw) });
   }
   if (request.method === 'POST' && action === 'request-otp') {
     const body = await json(request);
