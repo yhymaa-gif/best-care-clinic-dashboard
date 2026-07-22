@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-v7-2-icons-pwa-20260718';
+const CACHE_NAME='bestcare-auth-session-v2-20260723';
 const APP_SHELL=[
   './',
   './index.html',
@@ -12,6 +12,7 @@ const APP_SHELL=[
 ];
 
 self.addEventListener('install',event=>{
+  self.skipWaiting();
   event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(APP_SHELL)));
 });
 
