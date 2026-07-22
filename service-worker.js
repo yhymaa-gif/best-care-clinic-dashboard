@@ -1,11 +1,9 @@
-const CACHE_NAME='bestcare-v7-13-true-web-push-pwa-20260720';
+const CACHE_NAME='bestcare-v7-2-icons-pwa-20260718';
 const APP_SHELL=[
   './',
   './index.html',
   './offline.html',
   './manifest.webmanifest',
-  './ocr-import-v7-3-1.js',
-  './assets/vendor/xlsx.full.min.js',
   './best-care-logo.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
@@ -27,29 +25,6 @@ self.addEventListener('activate',event=>{
 
 self.addEventListener('message',event=>{
   if(event.data?.type==='SKIP_WAITING')self.skipWaiting();
-});
-
-self.addEventListener('notificationclick',event=>{
-  event.notification.close();
-  const target=new URL(event.notification.data?.url||'./?view=admin',self.location.origin).href;
-  event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(windows=>{
-    const existing=windows.find(client=>new URL(client.url).origin===self.location.origin);
-    if(existing){if('navigate' in existing)existing.navigate(target);return existing.focus()}
-    return self.clients.openWindow(target);
-  }));
-});
-
-self.addEventListener('push',event=>{
-  let data={};
-  try{data=event.data?.json()||{}}catch{data={body:event.data?.text()||''}}
-  const title=data.title||'تنبيه جديد من أفضل عناية';
-  const options={
-    body:data.body||'يوجد تحديث جديد داخل لوحة المتابعة.',
-    icon:'./assets/icons/icon-192.png',badge:'./assets/icons/icon-192.png',
-    tag:data.tag||'bestcare-update',renotify:true,requireInteraction:data.type==='payment',
-    vibrate:[220,90,220,90,320],data:{url:data.url||'./?view=admin'}
-  };
-  event.waitUntil(self.registration.showNotification(title,options));
 });
 
 self.addEventListener('fetch',event=>{
