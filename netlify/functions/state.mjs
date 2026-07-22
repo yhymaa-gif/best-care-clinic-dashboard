@@ -1,7 +1,19 @@
 import { getStore } from "@netlify/blobs";
 import { sendPushNotifications } from './lib/push.mjs';
+import { createHash, createHmac } from 'node:crypto';
 const headers={"content-type":"application/json; charset=utf-8","cache-control":"no-store, no-cache, must-revalidate","access-control-allow-origin":"*","access-control-allow-methods":"GET,PUT,POST,OPTIONS","access-control-allow-headers":"content-type,accept"};
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
+const authSession=async request=>{
+ if(process.env.AUTH_ENABLED!=='true')return true;
+ const raw=(request.headers.get('cookie')||'').split(';').map(v=>v.trim()).find(v=>v.startsWith('bc_session='))?.slice(11);
+ if(!raw)return false;
+ const key=`sessions/${createHash('sha256').update(raw).digest('hex')}`;
+ const sessionStore=getStore({name:'clinic-dashboard-auth-sessions',consistency:'strong'});
+ const session=await sessionStore.get(key,{type:'json',consistency:'strong'}); const now=Date.now();
+ const signature=createHmac('sha256',process.env.AUTH_SESSION_SECRET||'change-me-before-production').update(raw).digest('hex');
+ if(!session||session.tokenSignature!==signature||now-Number(session.lastSeenAt||0)>3*60*60*1000||now>Number(session.expiresAt||0)){if(session)await sessionStore.delete(key);return false}
+ session.lastSeenAt=now;await sessionStore.setJSON(key,session);return true;
+};
 const validDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||"");
 const validClinic=v=>/^clinic-([1-9]|1[0-5])$/.test(v||'');
 const cleanAlert=v=>({active:Boolean(v?.active),message:String(v?.message||"").slice(0,200),updatedAt:Number(v?.updatedAt||0),kind:String(v?.kind||"").slice(0,30)});
@@ -45,6 +57,8 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
 };
 export default async request=>{
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
+ if(!(await authSession(request)))return reply({error:'Authentication required'},401);
+ const url=new URL(request.url),date=url.searchParams.get('date');
  const url=new URL(request.url),date=url.searchParams.get('date'),clinicId=url.searchParams.get('clinic')||'clinic-1';
  if(!validDate(date))return reply({error:'Invalid date'},400);
  if(!validClinic(clinicId))return reply({error:'Invalid clinic'},400);
