@@ -1640,7 +1640,10 @@ $('installBtn').addEventListener('click',installApp);
 $('iosInstallGuideBtn').addEventListener('click',()=>{els.settingsMenu.classList.remove('open');openIosInstallGuide()});
 $('copyAppLinkBtn').addEventListener('click',copyAppLink);
 $('pwaUpdateBtn').addEventListener('click',()=>waitingServiceWorker?.postMessage({type:'SKIP_WAITING'}));
-$('authRequestBtn').addEventListener('click',requestAuthOtp);
+// Resolve the handler at click time so the email/SMS-aware implementation
+// installed during the security bootstrap is used instead of the legacy
+// phone-only function captured during initial binding.
+$('authRequestBtn').addEventListener('click',()=>requestAuthOtp());
 $('authVerifyBtn').addEventListener('click',verifyAuthOtp);
 $('authBackBtn').addEventListener('click',()=>{$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;authErrorMessage('')});
 $('usersBtn').addEventListener('click',()=>{els.settingsMenu.classList.remove('open');openUsersModal()});
