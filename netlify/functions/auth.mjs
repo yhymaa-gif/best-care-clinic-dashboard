@@ -28,20 +28,24 @@ const cleanPhone = value => {
   if (/^5\d{8}$/.test(phone)) phone = `+966${phone}`;
   return phone.slice(0, 20);
 };
+const cleanEmail = value => String(value || '').trim().toLowerCase().slice(0, 160);
+const emailMatches = (a, b) => cleanEmail(a) === cleanEmail(b);
 const phoneMatches = (a, b) => cleanPhone(a) === cleanPhone(b);
 const safeUser = user => ({ username: user.username, displayName: user.displayName, role: user.role, clinicId: user.clinicId || '' });
 const bootstrapUser = () => {
   const username = cleanUsername(process.env.AUTH_BOOTSTRAP_USERNAME);
   const phone = cleanPhone(process.env.AUTH_BOOTSTRAP_PHONE);
-  return username && phone ? { username, phone, displayName: 'Administrator', role: 'admin', clinicId: '', createdAt: 0 } : null;
+  const email = cleanEmail(process.env.AUTH_BOOTSTRAP_EMAIL);
+  return username && (phone || email) ? { username, phone, email, displayName: 'Administrator', role: 'admin', clinicId: '', createdAt: 0 } : null;
 };
-async function findUser(username, phone) {
+async function findUser(username, contact, method = 'phone') {
   const normalized = cleanUsername(username);
   const boot = bootstrapUser();
-  if (boot && boot.username === normalized && phoneMatches(boot.phone, phone)) return boot;
+  const matches = method === 'email' ? emailMatches(boot?.email, contact) : phoneMatches(boot?.phone, contact);
+  if (boot && boot.username === normalized && matches) return boot;
   if (!normalized) return null;
   const user = await store('clinic-dashboard-auth-users').get(`users/${normalized}`, { type: 'json', consistency: 'strong' });
-  return user && phoneMatches(user.phone, phone) ? user : null;
+  return user && (method === 'email' ? emailMatches(user.email, contact) : phoneMatches(user.phone, contact)) ? user : null;
 }
 async function sendOtp(phone, code) {
   const message = `Best Care verification code: ${code}`;
@@ -52,6 +56,18 @@ async function sendOtp(phone, code) {
     return true;
   }
   throw new Error('SMS provider is not configured');
+}
+async function sendEmailOtp(email, code) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.AUTH_EMAIL_FROM || 'Best Care Dashboard <onboarding@resend.dev>';
+  if (!apiKey) throw new Error('Email provider is not configured');
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ from, to: [email], subject: 'Best Care - رمز تسجيل الدخول', text: `رمز تسجيل الدخول الخاص بك هو: ${code}\n\nالرمز صالح لمدة خمس دقائق ولا تشاركه مع أي شخص.` })
+  });
+  if (!response.ok) throw new Error('Email provider rejected request');
+  return true;
 }
 async function sessionFrom(request) {
   const cookie = request.headers.get('cookie') || '';
@@ -83,14 +99,15 @@ export default async request => {
   }
   if (request.method === 'POST' && action === 'request-otp') {
     const body = await json(request);
-    const username = cleanUsername(body.username); const phone = cleanPhone(body.phone);
-    const user = await findUser(username, phone);
+    const username = cleanUsername(body.username); const method = body.method === 'email' ? 'email' : 'phone';
+    const contact = method === 'email' ? cleanEmail(body.email) : cleanPhone(body.phone);
+    const user = await findUser(username, contact, method);
     // Do not reveal whether a username/phone pair exists.
     if (!user) return reply({ ok: true, message: 'If the details match an account, a code will be sent.' });
     const code = String(randomInt(1000, 10000));
     const challengeId = token();
-    await store('clinic-dashboard-auth-otp').setJSON(`challenges/${hash(challengeId)}`, { username, phone, codeHash: hash(code), createdAt: Date.now(), expiresAt: Date.now() + OTP_MS, attempts: 0 });
-    try { await sendOtp(phone, code); } catch (error) { await store('clinic-dashboard-auth-otp').delete(`challenges/${hash(challengeId)}`); return reply({ error: 'SMS provider is not configured' }, 503); }
+    await store('clinic-dashboard-auth-otp').setJSON(`challenges/${hash(challengeId)}`, { username, method, contact, phone: method === 'phone' ? contact : '', email: method === 'email' ? contact : '', codeHash: hash(code), createdAt: Date.now(), expiresAt: Date.now() + OTP_MS, attempts: 0 });
+    try { method === 'email' ? await sendEmailOtp(contact, code) : await sendOtp(contact, code); } catch (error) { await store('clinic-dashboard-auth-otp').delete(`challenges/${hash(challengeId)}`); return reply({ error: method === 'email' ? 'Email provider is not configured' : 'SMS provider is not configured' }, 503); }
     return reply({ ok: true, challengeId, expiresIn: OTP_MS });
   }
   if (request.method === 'POST' && action === 'verify-otp') {
@@ -100,7 +117,7 @@ export default async request => {
     challenge.attempts += 1; await otpStore.setJSON(key, challenge);
     if (!timingSafeEqual(Buffer.from(hash(code)), Buffer.from(challenge.codeHash))) return reply({ error: 'Invalid or expired code' }, 401);
     await otpStore.delete(key);
-    const user = await findUser(challenge.username, challenge.phone); if (!user) return reply({ error: 'Account unavailable' }, 401);
+    const user = await findUser(challenge.username, challenge.method === 'email' ? challenge.email : challenge.phone, challenge.method || 'phone'); if (!user) return reply({ error: 'Account unavailable' }, 401);
     const raw = token(); const now = Date.now(); await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + 12 * 60 * 60 * 1000 });
     return reply({ ok: true, user: safeUser(user) }, 200, { 'set-cookie': sessionCookie(raw) });
   }
@@ -109,9 +126,9 @@ export default async request => {
   if (!session) return reply({ error: 'Authentication required' }, 401, { 'set-cookie': clearCookie });
   if (request.method === 'POST' && action === 'users') {
     if (session.user.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
-    const body = await json(request); const username = cleanUsername(body.username); const phone = cleanPhone(body.phone);
-    if (!username || !/^\+\d{8,15}$/.test(phone)) return reply({ error: 'Invalid username or phone' }, 400);
-    await store('clinic-dashboard-auth-users').setJSON(`users/${username}`, { username, phone, displayName: String(body.displayName || username).slice(0, 80), role: body.role === 'admin' ? 'admin' : 'clinic', clinicId: String(body.clinicId || '').slice(0, 40), createdAt: Date.now() });
+    const body = await json(request); const username = cleanUsername(body.username); const phone = cleanPhone(body.phone); const email = cleanEmail(body.email);
+    if (!username || (!/^\+\d{8,15}$/.test(phone) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return reply({ error: 'Invalid username, phone, or email' }, 400);
+    await store('clinic-dashboard-auth-users').setJSON(`users/${username}`, { username, phone, email, displayName: String(body.displayName || username).slice(0, 80), role: body.role === 'admin' ? 'admin' : 'clinic', clinicId: String(body.clinicId || '').slice(0, 40), createdAt: Date.now() });
     return reply({ ok: true });
   }
   return reply({ error: 'Unsupported action' }, 400);
