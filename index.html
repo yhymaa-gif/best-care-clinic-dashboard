@@ -117,7 +117,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 @media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:1fr 1fr}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 </style>
 </head>
-<body>
+<body class="auth-locked">
 <div id="authGate" aria-live="polite"><div class="auth-card"><div class="auth-brand"><span class="auth-brand-mark">BC</span><div><h2>تسجيل الدخول</h2><p>أدخل اسم المستخدم ورقم الجوال، ثم استخدم رمز التحقق المرسل إليك.</p></div></div><div id="authRequestStep"><label>اسم المستخدم<input id="authUsername" autocomplete="username" maxlength="48"></label><label>رقم الجوال<input id="authPhone" inputmode="tel" autocomplete="tel" placeholder="05xxxxxxxx"></label><button id="authRequestBtn" class="primary" type="button">إرسال رمز التحقق</button></div><div id="authVerifyStep" hidden><label>رمز التحقق من 4 أرقام<input id="authCode" class="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="4"></label><button id="authVerifyBtn" class="primary" type="button">تأكيد الدخول</button><button id="authBackBtn" type="button">تغيير البيانات</button></div><p id="authError" class="auth-error"></p></div></div>
 <div class="app">
 <header class="card header">
@@ -280,10 +280,11 @@ const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
 const NEED_ROLE_CHOICE=!['admin','clinic'].includes(REQUESTED_VIEW);
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
-let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0;
+let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false;
 const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=message||''};
 async function authRequest(path,options={}){const response=await fetch(`/api/auth${path}`,{credentials:'include',...options});let data={};try{data=await response.json()}catch{}if(!response.ok&&response.status!==401)throw new Error(data.error||'تعذر الاتصال بخدمة الدخول');return{response,data};}
-function unlockApp(){document.body.classList.remove('auth-locked');$('authGate').hidden=true;authLastActivity=Date.now();authKeepAliveAt=Date.now();startAuthIdleProtection()}
+function startSyncAfterAuth(){if(window.__syncStarted)return;window.__syncStarted=true;startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(3000)})}
+function unlockApp(){document.body.classList.remove('auth-locked');$('authGate').hidden=true;authReady=true;authLastActivity=Date.now();authKeepAliveAt=Date.now();startAuthIdleProtection();startSyncAfterAuth()}
 function lockApp(message='انتهت الجلسة بسبب الخمول. سجّل الدخول مرة أخرى.'){document.body.classList.add('auth-locked');$('authGate').hidden=false;$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;$('authCode').value='';authErrorMessage(message)}
 async function initAuth(){document.body.classList.add('auth-locked');try{const {response,data}=await authRequest('?action=session');if(!data.enabled||data.authenticated){unlockApp();return}$('authGate').hidden=false;authErrorMessage('')}catch(error){$('authGate').hidden=false;authErrorMessage(error.message||'تعذر التحقق من الجلسة')}}
 async function requestAuthOtp(){const username=$('authUsername').value.trim(),phone=$('authPhone').value.trim();if(!username||!phone){authErrorMessage('أدخل اسم المستخدم ورقم الجوال.');return}authErrorMessage('جارٍ إرسال الرمز…');try{const {data}=await authRequest('?action=request-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,phone})});if(!data.challengeId){authErrorMessage(data.error||'لم يتم إرسال الرمز.');return}authChallenge=data.challengeId;$('authRequestStep').hidden=true;$('authVerifyStep').hidden=false;authErrorMessage('تم إرسال رمز التحقق إلى الجوال.')}catch(error){authErrorMessage(error.message)}}
@@ -1638,13 +1639,6 @@ updateClock();
 setInterval(updateClock,1000);
 registerPwa();
 
-/* Automatic synchronization starts immediately; no button press is required. */
-startAutomaticSync().catch(error=>{
-  console.error('Automatic synchronization failed to start',error);
-  sync.error=String(error?.message||error);
-  setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);
-  scheduleAutomaticSync(3000);
-});
 })();
 </script>
 </body></html>
