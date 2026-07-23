@@ -42,6 +42,8 @@ async function authSession(request) {
 const cleanItem = item => ({
   code: cleanText(item?.code, 50),
   service: cleanText(item?.service, 160),
+  variant: ['with-prep', 'without-prep'].includes(item?.variant) ? item.variant : '',
+  customService: cleanText(item?.customService, 160),
   teeth: (Array.isArray(item?.teeth) ? item.teeth : []).map(String).filter(value => /^[1-4][1-8]$/.test(value)).slice(0, 32),
   qty: Math.max(1, Math.min(99, Number(item?.qty || 1))),
   unitPriceBefore: cleanNumber(item?.unitPriceBefore),

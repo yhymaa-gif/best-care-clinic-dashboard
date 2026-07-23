@@ -74,6 +74,12 @@
     body.preview-mode select.edit-field{pointer-events:none}
     body.preview-mode .workspace-hero,body.preview-mode .editor-panel{display:none}
     body.preview-mode .workspace{display:block;width:min(210mm,calc(100% - 28px));margin-top:18px}
+    .entry-flow{display:grid;gap:8px}.entry-flow button{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:9px;text-align:start}
+    .entry-flow button b{display:grid;place-items:center;width:32px;height:32px;border-radius:11px;background:#e3f3ef;color:#1d756b;font-size:15px}
+    .clinic-general{display:grid;gap:8px;padding:10px 12px;border:1px solid #d9e6e1;border-radius:14px;background:#f7fbf9}.clinic-general strong{font-size:13px;color:var(--ink)}
+    .procedure-select,.variant-select{width:100%;min-height:34px;border:0;border-bottom:1px solid #a8bdb5;background:transparent;color:var(--ink);font:inherit;font-weight:700}
+    .custom-procedure{margin-top:5px}.item-note{display:block;margin-top:4px;color:var(--ink-2);font-size:7.2pt;line-height:1.4}
+    .signature-row.simple{grid-template-columns:1fr 1fr}.clinic-approval{display:grid;align-content:center;text-align:center}.clinic-approval strong{color:var(--teal);font-size:10pt}
     .diagnosis-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:4mm}
     .tooth-map{border:1px solid var(--rule);border-radius:3mm;padding:3mm;text-align:center}
     .jaw{display:flex;justify-content:center;gap:2px;direction:ltr}.jaw+.jaw{margin-top:2px;padding-top:2px;border-top:.4pt solid var(--rule)}
@@ -161,7 +167,7 @@
       <div class="hero-copy">
         <span class="hero-eyebrow">✦ ملف علاجي ومالي موحّد</span>
         <h1 id="heroTitle">الخطة العلاجية وعرض التكلفة التقديري</h1>
-        <p>صمّم الخطة، حدّد الأسنان والمراحل، ثم راجعها واطبعها للمريض والملف من شاشة واحدة.</p>
+        <p>راجع بيانات المريض، رتّب مراحل العلاج، واختر الإجراءات وعدد الأسنان والتكلفة ثم عاين الورقة قبل الطباعة.</p>
         <div class="hero-metrics">
           <div class="metric"><strong id="heroPatient">مريض جديد</strong><span>المريض</span></div>
           <div class="metric"><strong id="heroPhaseCount">1</strong><span>مراحل العلاج</span></div>
@@ -177,19 +183,19 @@
           <h2>جاهزية الخطة</h2>
           <p id="progressText">أكمل البيانات الأساسية قبل الطباعة.</p>
           <div class="progress-track" aria-hidden="true"><span id="progressBar"></span></div>
-          <div class="section-nav">
-            <button type="button" data-scroll="patientSection">بيانات المريض والطبيب</button>
-            <button type="button" data-scroll="toothSection">خريطة الأسنان</button>
-            <button type="button" data-scroll="phasesSection">مراحل العلاج</button>
-            <button type="button" data-scroll="financeSection">الملخص المالي</button>
-            <button type="button" data-scroll="consentSection">الموافقة والتواقيع</button>
+          <div class="section-nav entry-flow">
+            <button type="button" data-scroll="patientSection"><b>1</b><span>👤 بيانات المريض</span></button>
+            <button type="button" data-scroll="phasesSection"><b>2</b><span>▦ مراحل العلاج</span></button>
+            <button type="button" data-scroll="phasesSection"><b>3</b><span>🦷 الإجراءات وعدد الأسنان</span></button>
+            <button type="button" data-scroll="financeSection"><b>4</b><span>﷼ التكلفة والملخص</span></button>
+            <button id="sidePreviewBtn" type="button"><b>5</b><span>👁 المعاينة والطباعة</span></button>
           </div>
         </section>
         <section class="panel-card">
-          <h2>طريقة سريعة</h2>
-          <div class="tip"><b>1</b><span>اختر بند العلاج، ثم اضغط الأسنان المطلوبة على الخريطة.</span></div>
-          <div class="tip" style="margin-top:8px"><b>2</b><span>حقول الأسعار فارغة عمدًا، وأي حقل غير مدخل لا يُحسب.</span></div>
-          <div class="tip" style="margin-top:8px"><b>3</b><span>استخدم المعاينة قبل الطباعة للتأكد من شكل النسخة النهائية.</span></div>
+          <h2>طريقة الإدخال</h2>
+          <div class="tip"><b>1</b><span>راجع بيانات المريض المسحوبة تلقائيًا من قائمة المواعيد.</span></div>
+          <div class="tip" style="margin-top:8px"><b>2</b><span>اختر الإجراء وحدد عدد الأسنان، ثم اكتب سعر الوحدة عند الحاجة.</span></div>
+          <div class="tip" style="margin-top:8px"><b>3</b><span>عاين الورقة العامة ثم احفظها أو اطبعها PDF.</span></div>
         </section>
         <details class="panel-card json-panel">
           <summary><strong>استيراد بيانات JSON</strong></summary>
@@ -205,8 +211,8 @@
           <header class="document-header">
             <div id="docCode" class="doc-code" aria-label="رمز المستند"></div>
             <div class="clinic-title">
-              <strong>عيادة أفضل عناية الطبية</strong>
-              <span>Best Care Dental Clinic — أبها</span>
+              <strong>عيادات أفضل عناية للأسنان</strong>
+              <span>Best Care Dental Clinics — أبها</span>
               <span>ترخيص وزارة الصحة: <input id="mohLicense" class="line-input" style="width:82px" aria-label="رقم ترخيص وزارة الصحة" placeholder="________"></span>
             </div>
             <img class="doc-logo" src="./best-care-logo.png" alt="شعار عيادات أفضل عناية">
@@ -227,21 +233,15 @@
               <div class="field-grid">
                 <label class="field wide">الاسم الكامل<input id="patientName" class="edit-field" autocomplete="name"></label>
                 <label class="field">رقم الملف<input id="patientFile" class="edit-field" inputmode="numeric"></label>
-                <label class="field">رقم الهوية / الإقامة<input id="patientIdNo" class="edit-field" inputmode="numeric" maxlength="10"></label>
-                <label class="field">الجنسية<select id="patientNationality" class="edit-field"><option value="saudi">سعودي</option><option value="non-saudi">غير سعودي</option></select></label>
-                <label class="field">العمر<input id="patientAge" class="edit-field" type="number" min="0" max="120"></label>
                 <label class="field wide">رقم الجوال<input id="patientMobile" class="edit-field" inputmode="tel" maxlength="10" placeholder="05xxxxxxxx"></label>
               </div>
             </div>
             <div class="info-card">
-              <span class="section-kicker">VISIT & DOCTOR</span>
-              <h2 class="section-title">بيانات الزيارة والطبيب</h2>
+              <span class="section-kicker">CLINIC & VISIT</span>
+              <h2 class="section-title">بيانات العيادة والزيارة</h2>
               <div class="field-grid">
                 <label class="field wide">التاريخ والوقت<input id="visitDate" class="edit-field" type="datetime-local"></label>
-                <label class="field wide">اسم الطبيب المعالج<input id="doctorName" class="edit-field"></label>
-                <label class="field">رقم تصنيف الهيئة<input id="doctorScfhs" class="edit-field"></label>
-                <label class="field">التخصص<input id="doctorSpecialty" class="edit-field" value="طب وإصلاح الأسنان"></label>
-                <label class="field wide">شُرحت الخطة بواسطة<input id="explainedBy" class="edit-field"></label>
+                <div class="field wide clinic-general"><span>اسم المنشأة</span><strong>عيادات أفضل عناية للأسنان</strong><small>Best Care Dental Clinics</small></div>
               </div>
             </div>
           </section>
@@ -259,17 +259,9 @@
             </div>
           </section>
 
-          <section id="toothSection" class="section tooth-map">
-            <span class="section-kicker">FDI DENTAL MAP</span>
-            <h2 class="section-title" style="justify-content:center">خريطة الأسنان</h2>
-            <div id="upperJaw" class="jaw" aria-label="الفك العلوي"></div>
-            <div id="lowerJaw" class="jaw" aria-label="الفك السفلي"></div>
-            <div class="tooth-legend"><span><i class="legend-dot one"></i>المرحلة الأولى</span><span><i class="legend-dot two"></i>المرحلة الثانية</span><span><i class="legend-dot more"></i>مرحلة لاحقة</span></div>
-          </section>
-
           <section id="phasesSection" class="section">
             <span class="section-kicker">TREATMENT PHASES</span>
-            <h2 class="section-title">مراحل الخطة العلاجية</h2>
+            <h2 class="section-title">مراحل العلاج والإجراءات والتكلفة</h2>
             <div id="phasesContainer"></div>
           </section>
 
@@ -277,15 +269,12 @@
             <div class="financial-summary">
               <span class="section-kicker">FINANCIAL SUMMARY</span>
               <h2 class="section-title">الملخص المالي</h2>
-              <div class="money-row"><span>الإجمالي قبل الخصم</span><strong id="grandBefore">—</strong></div>
-              <div class="money-row"><span>قيمة الخصم</span><strong id="discountTotal">—</strong></div>
-              <div class="money-row"><span>الإجمالي بعد الخصم</span><strong id="grandAfter">—</strong></div>
+              <div class="money-row"><span>إجمالي الإجراءات</span><strong id="grandAfter">—</strong></div>
               <div class="money-row"><span id="vatLabel">ضريبة القيمة المضافة: تتحمّلها الدولة عن المواطن</span><strong id="vatAmount">—</strong></div>
               <div class="money-row net"><span>الصافي المستحق</span><strong id="netPayable">—</strong></div>
-              <div id="savingBox" class="saving-box">وفّرت: —</div>
               <label class="field edit-only" style="margin-top:2mm">معالجة الضريبة
                 <select id="vatMode" class="edit-field">
-                  <option value="auto">تلقائي حسب الجنسية</option>
+                  <option value="auto">تلقائي — تتحملها الدولة</option>
                   <option value="borne_by_state">تتحملها الدولة</option>
                   <option value="standard_15">ضريبة 15%</option>
                   <option value="exempt">معفى</option>
@@ -332,7 +321,7 @@
           <section class="section">
             <span class="section-kicker">SIGNATURES</span>
             <h2 class="section-title">التواقيع والاعتماد</h2>
-            <div class="signature-row">
+            <div class="signature-row simple">
               <div class="signature-box">
                 <h4>المريض / الوصي</h4>
                 <label class="edit-only" style="font-size:7pt"><input id="digitalSignToggle" type="checkbox"> استخدام التوقيع الإلكتروني</label>
@@ -343,8 +332,7 @@
                 <div id="paperSignatureLine" class="signature-line"></div>
                 <div class="signature-meta"><input id="signerName" class="line-input" placeholder="الاسم"><input id="guardianRelation" class="line-input" placeholder="صلة القرابة"></div>
               </div>
-              <div class="signature-box"><h4>الطبيب المعالج</h4><div class="signature-line"></div><div class="signature-meta"><input id="doctorSignName" class="line-input" placeholder="الاسم"><input id="doctorSignTime" class="line-input" placeholder="التاريخ والوقت"></div></div>
-              <div class="signature-box"><h4>الشاهد / منسق المرضى</h4><div class="signature-line"></div><div class="signature-meta"><input id="witnessName" class="line-input" placeholder="الاسم"><input id="witnessTime" class="line-input" placeholder="التاريخ والوقت"></div></div>
+              <div class="signature-box clinic-approval"><h4>اعتماد العيادة</h4><strong>عيادات أفضل عناية للأسنان</strong><div class="signature-line"></div><small>الختم والتاريخ</small></div>
             </div>
           </section>
 
@@ -390,11 +378,26 @@
       localStorage.setItem(key,String(next));
       return `TP-${year}-${String(next).padStart(6,'0')}`;
     };
-    const blankItem=()=>({code:'',service:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',type:'billable',includedLabel:''});
+    const PROCEDURES=[
+      ['', 'اختر الإجراء'],
+      ['علاج عصب', 'علاج عصب'],
+      ['إعادة علاج عصب', 'إعادة علاج عصب'],
+      ['إزالة وتد', 'إزالة وتد'],
+      ['تركيب وتد', 'تركيب وتد'],
+      ['إزالة تاج', 'إزالة تاج'],
+      ['إعادة تثبيت تاج', 'إعادة تثبيت تاج'],
+      ['تركيب سيراميك تاج', 'تركيب سيراميك تاج'],
+      ['تركيب سيراميك فينير', 'تركيب سيراميك فينير'],
+      ['تركيبة زراعة', 'تركيبة زراعة'],
+      ['زراعة - الجزء الجراحي', 'زراعة — الجزء الجراحي'],
+      ['خلع الأسنان', 'خلع الأسنان'],
+      ['إجراء آخر', 'إجراء آخر']
+    ];
+    const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
       meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft'},
-      clinic:{nameAr:'عيادة أفضل عناية الطبية',nameEn:'Best Care Dental Clinic',mohLicense:'',city:'أبها',address:'',phone:''},
+      clinic:{nameAr:'عيادات أفضل عناية للأسنان',nameEn:'Best Care Dental Clinics',mohLicense:'',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
       clinical:{diagnosis:'',radiographs:'',notes:''},
@@ -465,15 +468,8 @@
       state.clinic.mohLicense=$('mohLicense').value.trim();
       state.patient.fullName=$('patientName').value.trim();
       state.patient.fileNo=$('patientFile').value.trim();
-      state.patient.nationalId=$('patientIdNo').value.replace(/\D/g,'').slice(0,10);
-      state.patient.nationality=$('patientNationality').value;
-      state.patient.age=$('patientAge').value;
       state.patient.mobile=$('patientMobile').value.replace(/\D/g,'').slice(0,10);
       state.meta.issuedAt=$('visitDate').value?new Date($('visitDate').value).toISOString():state.meta.issuedAt;
-      state.doctor.name=$('doctorName').value.trim();
-      state.doctor.scfhsNo=$('doctorScfhs').value.trim();
-      state.doctor.specialty=$('doctorSpecialty').value.trim();
-      state.doctor.explainedBy=$('explainedBy').value.trim();
       state.clinical.diagnosis=$('diagnosis').value.trim();
       state.clinical.radiographs=$('radiographs').value.trim();
       state.alternatives=$('alternatives').value.trim();
@@ -483,24 +479,13 @@
       state.consent.photoConsent=$('photoConsent').checked;
       state.signatures.signerName=$('signerName').value.trim();
       state.signatures.guardianRelation=$('guardianRelation').value.trim();
-      state.signatures.doctorName=$('doctorSignName').value.trim();
-      state.signatures.doctorSignedAt=$('doctorSignTime').value.trim();
-      state.signatures.witnessName=$('witnessName').value.trim();
-      state.signatures.witnessSignedAt=$('witnessTime').value.trim();
     }
     function hydrateFields(){
       $('mohLicense').value=state.clinic.mohLicense||'';
       $('patientName').value=state.patient.fullName||'';
       $('patientFile').value=state.patient.fileNo||'';
-      $('patientIdNo').value=state.patient.nationalId||'';
-      $('patientNationality').value=state.patient.nationality||'saudi';
-      $('patientAge').value=state.patient.age??'';
       $('patientMobile').value=state.patient.mobile||'';
       $('visitDate').value=state.meta.issuedAt?new Date(new Date(state.meta.issuedAt)-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16):nowLocal();
-      $('doctorName').value=state.doctor.name||'';
-      $('doctorScfhs').value=state.doctor.scfhsNo||'';
-      $('doctorSpecialty').value=state.doctor.specialty||'';
-      $('explainedBy').value=state.doctor.explainedBy||'';
       $('diagnosis').value=state.clinical.diagnosis||'';
       $('radiographs').value=Array.isArray(state.clinical.radiographs)?state.clinical.radiographs.join('، '):(state.clinical.radiographs||'');
       $('alternatives').value=Array.isArray(state.alternatives)?state.alternatives.map(v=>`${v.option||''}${v.note?` — ${v.note}`:''}`).join('\n'):(state.alternatives||'');
@@ -510,10 +495,6 @@
       $('photoConsent').checked=Boolean(state.consent.photoConsent);
       $('signerName').value=state.signatures.signerName||'';
       $('guardianRelation').value=state.signatures.guardianRelation||'';
-      $('doctorSignName').value=state.signatures.doctorName||'';
-      $('doctorSignTime').value=state.signatures.doctorSignedAt||'';
-      $('witnessName').value=state.signatures.witnessName||'';
-      $('witnessTime').value=state.signatures.witnessSignedAt||'';
     }
     function planDates(){
       const issued=new Date(state.meta.issuedAt||Date.now());
@@ -539,39 +520,24 @@
       const finder=(r,c)=>((r<2&&c<2)||(r<2&&c>4)||(r>4&&c<2));
       $('docCode').innerHTML=bits.map((bit,i)=>`<i class="${bit||finder(Math.floor(i/7),i%7)?'on':''}"></i>`).join('');
     }
-    function phaseForTooth(tooth){
-      let found=0;
-      state.phases.forEach((phase,index)=>phase.items.forEach(item=>{if(item.teeth.includes(String(tooth))&&!found)found=index+1}));
-      return found;
-    }
-    function renderToothMap(){
-      const upper=[18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
-      const lower=[48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
-      const markup=teeth=>teeth.map(tooth=>{const phase=phaseForTooth(tooth),klass=phase===1?'phase-1':phase===2?'phase-2':phase>2?'phase-more':'';return`<button type="button" class="tooth ${klass}" data-tooth="${tooth}" aria-label="السن ${tooth}">${tooth}</button>`}).join('');
-      $('upperJaw').innerHTML=markup(upper);$('lowerJaw').innerHTML=markup(lower);
-    }
     function itemTotals(item){
-      const before=toCents(item.unitPriceBefore),after=item.type==='included'?0:toCents(item.unitPriceAfter),qty=Math.max(1,Number(item.qty||1));
-      return{known:before!==null||after!==null,before:before===null?null:before*qty,after:after===null?null:after*qty};
+      const after=item.type==='included'?0:toCents(item.unitPriceAfter),qty=Math.max(1,Number(item.qty||1));
+      return{known:after!==null,before:null,after:after===null?null:after*qty};
     }
     function totals(){
       let before=0,after=0,hasBefore=false,hasAfter=false;
       state.phases.forEach(phase=>phase.items.forEach(item=>{const t=itemTotals(item);if(t.before!==null){before+=t.before;hasBefore=true}if(t.after!==null){after+=t.after;hasAfter=true}}));
       const known=hasBefore||hasAfter;
-      const mode=state.financial.vatMode==='auto'?(state.patient.nationality==='saudi'?'borne_by_state':'standard_15'):state.financial.vatMode;
+      const mode=state.financial.vatMode==='auto'?'borne_by_state':state.financial.vatMode;
       const vat=known&&mode==='standard_15'?Math.round(after*.15):known?0:null;
       return{known,before:hasBefore?before:null,after:hasAfter?after:null,saving:hasBefore&&hasAfter?before-after:null,vat,net:hasAfter&&vat!==null?after+vat:null,mode};
     }
     function renderFinancials(){
       const total=totals();
-      $('grandBefore').textContent=formatMoney(total.before);
       $('grandAfter').textContent=formatMoney(total.after);
-      $('discountTotal').textContent=formatMoney(total.saving);
       $('vatAmount').textContent=formatMoney(total.vat);
       $('netPayable').textContent=formatMoney(total.net);
       $('vatLabel').textContent=total.mode==='standard_15'?'ضريبة القيمة المضافة 15%':total.mode==='exempt'?'ضريبة القيمة المضافة: معفى':'ضريبة القيمة المضافة: تتحمّلها الدولة عن المواطن';
-      const pct=total.saving!==null&&total.before?Math.round(total.saving/total.before*100):null;
-      $('savingBox').textContent=total.saving===null?'وفّرت: —':`وفّرت: ${formatMoney(total.saving)}${pct!==null?` (${pct}%)`:''}`;
     }
     function phaseTotals(phase){
       let before=0,after=0,hasBefore=false,hasAfter=false;
@@ -583,20 +549,22 @@
         const total=phaseTotals(phase);
         const rows=phase.items.map((item,iIndex)=>{
           const total=itemTotals(item),active=activeItem.phase===pIndex&&activeItem.item===iIndex;
+          const procedureOptions=PROCEDURES.map(([value,label])=>`<option value="${escapeAttr(value)}" ${item.service===value?'selected':''}>${escapeHtml(label)}</option>`).join('');
+          const variant=item.service==='تركيب سيراميك فينير'?`<select class="line-input variant-select" data-field="variant"><option value="">اختر النوع</option><option value="with-prep" ${item.variant==='with-prep'?'selected':''}>بتحضير</option><option value="without-prep" ${item.variant==='without-prep'?'selected':''}>بدون تحضير</option></select>`:'<span class="item-note">—</span>';
+          const custom=item.service==='إجراء آخر'?`<input class="line-input custom-procedure" data-field="customService" value="${escapeAttr(item.customService||'')}" placeholder="اكتب الإجراء">`:'';
           return`<tr data-item-row="${pIndex}:${iIndex}" style="${active?'box-shadow:inset -3px 0 0 var(--teal)':''}">
-            <td><input class="line-input" data-field="service" value="${escapeAttr(item.service)}" placeholder="اسم الإجراء"></td>
-            <td><input class="line-input" data-field="teeth" value="${escapeAttr(item.teeth.join('، '))}" placeholder="اختر من الخريطة"></td>
-            <td class="num"><input class="line-input qty" data-field="qty" type="number" min="1" max="99" value="${Number(item.qty||1)}"></td>
-            <td class="money"><input class="line-input money" data-field="unitPriceBefore" inputmode="decimal" value="${escapeAttr(item.unitPriceBefore)}" placeholder="فارغ"></td>
-            <td class="money"><input class="line-input money" data-field="unitPriceAfter" inputmode="decimal" value="${escapeAttr(item.unitPriceAfter)}" placeholder="${item.type==='included'?'مشمولة':'فارغ'}" ${item.type==='included'?'disabled':''}></td>
-            <td class="money"><span>${formatMoney(total.after)}</span>${item.type==='included'?`<br><span class="included-chip">مشمولة${item.includedLabel?` — ${escapeHtml(item.includedLabel)}`:''}</span>`:''}</td>
-            <td class="edit-only"><button type="button" class="row-action" data-toggle-included="${pIndex}:${iIndex}" title="تبديل مشمول">${item.type==='included'?'مدفوع':'مشمول'}</button><button type="button" class="row-action" data-delete-item="${pIndex}:${iIndex}" title="حذف">×</button></td>
+            <td><select class="line-input procedure-select" data-field="service">${procedureOptions}</select>${custom}</td>
+            <td>${variant}</td>
+            <td class="num"><input class="line-input qty" data-field="qty" type="number" min="1" max="99" value="${Number(item.qty||1)}" aria-label="عدد الأسنان"></td>
+            <td class="money"><input class="line-input money" data-field="unitPriceAfter" inputmode="decimal" value="${escapeAttr(item.unitPriceAfter)}" placeholder="${item.type==='included'?'مجاني':'فارغ'}" ${item.type==='included'?'disabled':''}></td>
+            <td class="money"><span>${formatMoney(total.after)}</span>${item.type==='included'?`<br><span class="included-chip">مجاني${item.includedLabel?` — ${escapeHtml(item.includedLabel)}`:''}</span>`:''}</td>
+            <td class="edit-only"><button type="button" class="row-action" data-toggle-included="${pIndex}:${iIndex}" title="تبديل مجاني">${item.type==='included'?'مدفوع':'مجاني'}</button><button type="button" class="row-action" data-delete-item="${pIndex}:${iIndex}" title="حذف">×</button></td>
           </tr>`}).join('');
         return`<div class="phase-block" data-phase="${pIndex}">
           <div class="phase-head"><div class="phase-name"><span class="phase-index">${pIndex+1}</span><input data-phase-title="${pIndex}" value="${escapeAttr(phase.title)}"></div><div class="phase-actions edit-only"><button type="button" data-delete-phase="${pIndex}" ${state.phases.length===1?'disabled':''}>حذف المرحلة</button></div></div>
-          <table><thead><tr><th style="width:20%">الخدمة</th><th style="width:14%">الأسنان FDI</th><th class="num" style="width:8%">العدد</th><th class="money" style="width:15%">قبل الخصم</th><th class="money" style="width:15%">بعد الخصم</th><th class="money" style="width:18%">الإجمالي</th><th class="edit-only" style="width:10%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
+          <table><thead><tr><th style="width:29%">الإجراء</th><th style="width:17%">الخيار</th><th class="num" style="width:12%">عدد الأسنان</th><th class="money" style="width:16%">سعر الوحدة</th><th class="money" style="width:16%">الإجمالي</th><th class="edit-only" style="width:10%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
           <button type="button" class="add-item edit-only" data-add-item="${pIndex}">＋ إضافة إجراء</button>
-          <div class="phase-total"><span>قبل الخصم: <b>${formatMoney(total.before)}</b></span><span>بعد الخصم: <b>${formatMoney(total.after)}</b></span></div>
+          <div class="phase-total"><span>إجمالي المرحلة: <b>${formatMoney(total.after)}</b></span></div>
         </div>`}).join('');
       $('heroPhaseCount').textContent=String(state.phases.length);
     }
@@ -604,19 +572,15 @@
     function escapeAttr(value){return escapeHtml(value)}
     function missingFields(){
       const missing=[];
-      if((state.patient.fullName||'').trim().split(/\s+/).filter(Boolean).length<3)missing.push('الاسم الكامل (3 مقاطع)');
+      if(!(state.patient.fullName||'').trim())missing.push('اسم المريض');
       if(!(state.patient.fileNo||'').trim())missing.push('رقم الملف');
-      if(!/^[12]\d{9}$/.test(state.patient.nationalId||''))missing.push('رقم الهوية/الإقامة');
       if(!/^05\d{8}$/.test(state.patient.mobile||''))missing.push('رقم الجوال');
-      if(!(state.doctor.name||'').trim())missing.push('اسم الطبيب');
-      if(!(state.doctor.scfhsNo||'').trim())missing.push('رقم تصنيف الطبيب');
-      if(!state.phases.some(phase=>phase.items.some(item=>(item.service||'').trim())))missing.push('إجراء علاجي واحد');
-      if(Number(state.patient.age||0)>0&&Number(state.patient.age)<18&&!(state.signatures.signerName||'').trim())missing.push('اسم الوصي');
+      if(!state.phases.some(phase=>phase.items.some(item=>(item.service||'').trim()&&(item.service!=='إجراء آخر'||(item.customService||'').trim()))))missing.push('إجراء علاجي واحد');
       return missing;
     }
     function renderProgress(){
       collectHeaderFields();
-      const missing=missingFields(),total=7,done=Math.max(0,total-missing.length),pct=Math.round(done/total*100);
+      const missing=missingFields(),total=4,done=Math.max(0,total-missing.length),pct=Math.round(done/total*100);
       $('progressBar').style.width=`${pct}%`;
       $('progressText').textContent=missing.length?`تبقى ${missing.length} حقول إلزامية قبل الطباعة.`:'الخطة جاهزة للمراجعة والطباعة.';
       $('heroMissing').textContent=missing.length?String(missing.length):'مكتمل';
@@ -626,7 +590,7 @@
       return missing;
     }
     function render(){
-      renderDocMeta();renderPhases();renderToothMap();renderFinancials();renderProgress();
+      renderDocMeta();renderPhases();renderFinancials();renderProgress();
     }
     function markDirty(){
       collectHeaderFields();state.meta.status='draft';
@@ -655,25 +619,21 @@
       const [pIndex,iIndex]=row.dataset.itemRow.split(':').map(Number),item=state.phases[pIndex]?.items[iIndex];if(!item)return;
       activeItem={phase:pIndex,item:iIndex};
       const field=input.dataset.field;
-      if(field==='teeth')item.teeth=input.value.split(/[,\s،]+/).map(v=>v.replace(/\D/g,'')).filter(v=>/^[1-4][1-8]$/.test(v));
-      else if(field==='qty')item.qty=Math.max(1,Math.min(99,Number(input.value||1)));
+      if(field==='qty')item.qty=Math.max(1,Math.min(99,Number(input.value||1)));
       else item[field]=input.value;
+      if(field==='service'){
+        if(item.service!=='تركيب سيراميك فينير')item.variant='';
+        if(item.service!=='إجراء آخر')item.customService='';
+      }
       markDirty();
       if(rerender)renderPhases();
-      if(field==='teeth')renderToothMap();
       renderFinancials();
-    }
-    function toggleTooth(tooth){
-      const item=state.phases[activeItem.phase]?.items[activeItem.item];if(!item){toast('اختر إجراءً أولًا');return}
-      const value=String(tooth),index=item.teeth.indexOf(value);
-      if(index>=0)item.teeth.splice(index,1);else item.teeth.push(value);
-      item.teeth.sort();markDirty();renderPhases();renderToothMap();
     }
     function addPhase(){state.phases.push(blankPhase(state.phases.length));activeItem={phase:state.phases.length-1,item:0};markDirty();render()}
     function addItem(pIndex){state.phases[pIndex].items.push(blankItem());activeItem={phase:pIndex,item:state.phases[pIndex].items.length-1};markDirty();render()}
     function deleteItem(pIndex,iIndex){const phase=state.phases[pIndex];if(phase.items.length===1){phase.items[0]=blankItem()}else phase.items.splice(iIndex,1);activeItem={phase:pIndex,item:0};markDirty();render()}
     function deletePhase(pIndex){if(state.phases.length===1)return;state.phases.splice(pIndex,1);state.phases.forEach((phase,index)=>phase.index=index);activeItem={phase:0,item:0};markDirty();render()}
-    function toggleIncluded(pIndex,iIndex){const item=state.phases[pIndex].items[iIndex];item.type=item.type==='included'?'billable':'included';if(item.type==='included'){item.unitPriceAfter='';item.includedLabel=item.includedLabel||'إجراء آخر'}markDirty();render()}
+    function toggleIncluded(pIndex,iIndex){const item=state.phases[pIndex].items[iIndex];item.type=item.type==='included'?'billable':'included';if(item.type==='included'){item.unitPriceAfter='';item.includedLabel='بدون تكلفة'}markDirty();render()}
     function togglePreview(){
       collectHeaderFields();document.body.classList.toggle('preview-mode');
       const preview=document.body.classList.contains('preview-mode');
@@ -712,6 +672,7 @@
       document.querySelectorAll('[data-scroll]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})));
       $('backBtn').addEventListener('click',()=>location.href=source.returnUrl||`./?view=admin${appointmentDate?`&date=${encodeURIComponent(appointmentDate)}`:''}`);
       $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',()=>savePlan(false));$('previewBtn').addEventListener('click',togglePreview);
+      $('sidePreviewBtn').addEventListener('click',togglePreview);
       $('printBtn').addEventListener('click',()=>printPlan(false));$('printCopiesBtn').addEventListener('click',()=>printPlan(true));
       document.addEventListener('input',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,false)});
       document.addEventListener('change',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,true)});
@@ -724,7 +685,6 @@
         if(included){const [p,i]=included.dataset.toggleIncluded.split(':').map(Number);toggleIncluded(p,i)}
       });
       $('phasesContainer').addEventListener('input',event=>{if(event.target.dataset.phaseTitle!==undefined){state.phases[Number(event.target.dataset.phaseTitle)].title=event.target.value;markDirty()}});
-      $('toothSection').addEventListener('click',event=>{const button=event.target.closest('[data-tooth]');if(button)toggleTooth(button.dataset.tooth)});
       $('digitalSignToggle').addEventListener('change',()=>{$('signatureCanvasWrap').classList.toggle('active',$('digitalSignToggle').checked);$('paperSignatureLine').style.display=$('digitalSignToggle').checked?'none':'block'});
       $('importJsonBtn').addEventListener('click',()=>{try{state=normalizeState(JSON.parse($('jsonInput').value));hydrateFields();render();markDirty();toast('تم تحليل البيانات')}catch{toast('تعذر تحليل JSON','تأكد من صحة التنسيق.')}});
       window.addEventListener('afterprint',()=>{$('duplicatePrint').innerHTML='';doublePrint=false});

@@ -54,8 +54,8 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 .form-mode{display:inline-flex;align-items:center;min-height:34px;padding:6px 11px;border-radius:999px;background:#eaf6ef;color:#176344;border:1px solid #c8e3d3;font-weight:900;white-space:nowrap}
 .quick-add.editing{border-top-color:var(--orange);box-shadow:0 14px 36px rgba(228,122,35,.14)}
 .quick-add.editing .form-mode{background:#fff1df;color:#9c4f11;border-color:#f1c894}
-.quick-add-grid{display:grid;grid-template-columns:1.15fr .9fr .72fr .72fr 1.4fr .95fr;gap:9px;align-items:end}
-.quick-add.editing .quick-add-grid{grid-template-columns:1.05fr .78fr .92fr .68fr .68fr 1.25fr .9fr}
+.quick-add-grid{display:grid;grid-template-columns:1.1fr .75fr .95fr .72fr .72fr 1.25fr .9fr;gap:9px;align-items:end}
+.quick-add.editing .quick-add-grid{grid-template-columns:1fr .72fr .88fr .88fr .65fr .65fr 1.15fr .82fr}
 .appointment-date-field[hidden]{display:none!important}
 .appointment-date-field input{font-weight:800;color:var(--navy)}
 .quick-add-grid label{display:block;margin:0 0 5px;color:var(--muted);font-size:12px;font-weight:900}
@@ -190,6 +190,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   <div class="quick-add-grid">
     <div><label for="fName">الاسم الأول</label><input id="fName" autocomplete="off" placeholder="اسم المريض"></div>
     <div><label for="fFile">رقم الملف</label><input id="fFile" inputmode="numeric" autocomplete="off" placeholder="رقم الملف"></div>
+    <div><label for="fPhone">رقم الجوال</label><input id="fPhone" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="05xxxxxxxx"></div>
     <div id="appointmentDateField" class="appointment-date-field" hidden><label id="appointmentDateLabel" for="fDate">تاريخ الموعد</label><input id="fDate" type="date"></div>
     <div><label for="fStart">وقت البداية</label><input id="fStart" type="time"></div>
     <div><label for="fEnd">وقت النهاية</label><input id="fEnd" type="time"></div>
@@ -967,6 +968,7 @@ function resetPatientForm(focusName=false){
   $('fDate').value=selectedDate||today();
   $('fName').value='';
   $('fFile').value='';
+  $('fPhone').value='';
   $('fStart').value=suggested.start;
   $('fEnd').value=suggested.end;
   $('fProcedure').value='';
@@ -991,6 +993,7 @@ function openPatient(id=null){
   $('fDate').value=selectedDate||today();
   $('fName').value=p.name||'';
   $('fFile').value=p.file||'';
+  $('fPhone').value=p.phone||'';
   $('fStart').value=p.start||'08:00';
   $('fEnd').value=p.end||'08:30';
   $('fProcedure').value=p.procedure||'';
@@ -1149,6 +1152,7 @@ async function savePatient(){
     id:editingId||(crypto.randomUUID?.()||`patient-${Date.now()}-${Math.random().toString(36).slice(2)}`),
     name:firstName(rawName),
     file:$('fFile').value.trim(),
+    phone:$('fPhone').value.replace(/[^\d+]/g,'').slice(0,20),
     start,
     end,
     procedure:$('fProcedure').value.trim(),
@@ -1171,7 +1175,7 @@ async function savePatient(){
 }
 function parseBulk(text){return String(text).split(/\r?\n/).map((line,i)=>{const p=line.split(/[,،	]/).map(x=>x.trim());if(p.length<4)return null;return{id:Date.now()+i,name:firstName(p[0]),file:p[1]||'',start:p[2],end:p[3],procedure:p.slice(4).join(' ')||'',status:'waiting'}}).filter(p=>p&&p.name&&/^\d{2}:\d{2}$/.test(p.start)&&/^\d{2}:\d{2}$/.test(p.end)&&mins(p.end)>mins(p.start))}
 function applyBulk(){const rows=parseBulk($('bulkText').value);if(!rows.length){toast('تعذر الحفظ','لم يتم العثور على صفوف صحيحة');return}mutate(()=>patients=rows);closeModal('bulkModal');toast('تم تحديث القائمة',`تم حفظ ${rows.length} مريض`)}
-function exportCsv(){const rows=[['الاسم','رقم الملف','البداية','النهاية','الإجراء','الحالة'],...patients.map(p=>[p.name,p.file,p.start,p.end,p.procedure,STATUS[p.status]])];const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`bestcare_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href)}
+function exportCsv(){const rows=[['الاسم','رقم الملف','رقم الجوال','البداية','النهاية','الإجراء','الحالة'],...patients.map(p=>[p.name,p.file,p.phone||'',p.start,p.end,p.procedure,STATUS[p.status]])];const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`bestcare_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href)}
 function detectCsvDelimiter(text){
   const firstLine=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).find(line=>line.trim())||'';
   const counts={',':0,';':0,'\t':0};
@@ -1251,6 +1255,7 @@ function parsePatientCsv(text){
   const columns={
     name:findCsvColumn(headers,['الاسم','اسم المريض','المريض','patient','patient name','patientname']),
     file:findCsvColumn(headers,['رقم الملف','رقم ملف','الملف','file','file number','filenumber','file.n','filen','م.أساسي (File.N)']),
+    phone:findCsvColumn(headers,['رقم الجوال','الجوال','رقم الهاتف','الهاتف','mobile','phone','mobile number','phone number']),
     start:findCsvColumn(headers,['البداية','وقت البداية','وقت البدء','وقت الموعد','time','start','start time','appointment time']),
     end:findCsvColumn(headers,['النهاية','وقت النهاية','وقت الانتهاء','end','end time']),
     procedure:findCsvColumn(headers,['الإجراء','الإجراء العلاجي','نوع الزيارة','نوع الموعد','procedure','visit type','appointment type']),
@@ -1264,7 +1269,7 @@ function parsePatientCsv(text){
     const appointmentDate=columns.date>=0?normalizeCsvDate(cells[columns.date]):'';
     if(appointmentDate)dates.add(appointmentDate);
     const rawName=String(cells[columns.name]||'').trim();
-    return{id:Date.now()+index,name:rawName?firstName(rawName):'',file:columns.file>=0?String(cells[columns.file]||'').trim():'',start,end,procedure:columns.procedure>=0?String(cells[columns.procedure]||'').trim():'',status:'waiting'};
+    return{id:Date.now()+index,name:rawName?firstName(rawName):'',file:columns.file>=0?String(cells[columns.file]||'').trim():'',phone:columns.phone>=0?String(cells[columns.phone]||'').replace(/[^\d+]/g,'').slice(0,20):'',start,end,procedure:columns.procedure>=0?String(cells[columns.procedure]||'').trim():'',status:'waiting'};
   }).filter(patient=>patient.name&&patient.start&&patient.end&&mins(patient.end)>mins(patient.start));
   return{rows,date:dates.size===1?[...dates][0]:'',reason:rows.length?'':'rows'};
 }
@@ -1451,9 +1456,10 @@ function applyLang(){
   setText('.upcoming-head h2',tr('upcomingPatients'));
   setText('.upcoming-head small',tr('upcomingHint'));
   setText('.quick-add-head p',tr('formIntro'));
-  setTexts('.quick-add-grid label',[tr('firstName'),tr('fileNumber'),tr('appointmentDate'),tr('startTime'),tr('endTime'),tr('procedure'),tr('status')]);
+  setTexts('.quick-add-grid label',[tr('firstName'),tr('fileNumber'),lang==='en'?'Phone number':'رقم الجوال',tr('appointmentDate'),tr('startTime'),tr('endTime'),tr('procedure'),tr('status')]);
   $('fName').placeholder=tr('namePlaceholder');
   $('fFile').placeholder=tr('filePlaceholder');
+  $('fPhone').placeholder=lang==='en'?'05xxxxxxxx':'05xxxxxxxx';
   $('fProcedure').placeholder=tr('procedurePlaceholder');
   setText('#resetPatientBtn',tr('resetFields'));
   setText('#cancelEditBtn',tr('cancelEdit'));
