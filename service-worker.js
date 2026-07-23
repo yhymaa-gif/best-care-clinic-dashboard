@@ -1,10 +1,12 @@
-const CACHE_NAME='bestcare-auth-session-v2-20260723';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260724';
 const APP_SHELL=[
   './',
   './index.html',
+  './treatment-plan.html',
   './offline.html',
   './manifest.webmanifest',
   './best-care-logo.png',
+  './assets/treatment-plan-hero-v1.webp',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/icon-maskable-512.png',
@@ -40,14 +42,15 @@ self.addEventListener('fetch',event=>{
   }
 
   if(request.mode==='navigate'){
+    const shellPage=url.pathname.endsWith('/treatment-plan.html')?'./treatment-plan.html':'./index.html';
     event.respondWith(
       fetch(request)
         .then(response=>{
           const copy=response.clone();
-          caches.open(CACHE_NAME).then(cache=>cache.put('./index.html',copy));
+          caches.open(CACHE_NAME).then(cache=>cache.put(shellPage,copy));
           return response;
         })
-        .catch(()=>caches.match('./index.html').then(response=>response||caches.match('./offline.html')))
+        .catch(()=>caches.match(shellPage).then(response=>response||caches.match('./offline.html')))
     );
     return;
   }
