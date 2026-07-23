@@ -79,6 +79,8 @@
     .clinic-general{display:grid;gap:8px;padding:10px 12px;border:1px solid #d9e6e1;border-radius:14px;background:#f7fbf9}.clinic-general strong{font-size:13px;color:var(--ink)}
     .procedure-select,.variant-select{width:100%;min-height:34px;border:0;border-bottom:1px solid #a8bdb5;background:transparent;color:var(--ink);font:inherit;font-weight:700}
     .custom-procedure{margin-top:5px}.item-note{display:block;margin-top:4px;color:var(--ink-2);font-size:7.2pt;line-height:1.4}
+    .qty-stepper{display:inline-grid;grid-template-columns:30px 38px 30px;align-items:center;justify-content:center;gap:3px;padding:3px;border:1px solid #c9ddd5;border-radius:12px;background:#f5fbf8;direction:ltr}.qty-stepper button{width:30px;height:30px;padding:0;border:0;border-radius:9px;background:#e1f1ea;color:#176847;font-size:20px;font-weight:900;cursor:pointer}.qty-stepper button:hover{background:#cce8da;transform:translateY(-1px)}.qty-stepper output{font-weight:900;font-size:12px;color:var(--ink);text-align:center}
+    .fixed-diagnosis{display:grid;gap:3mm;padding:3.5mm;border:1px solid #d7e7e0;border-radius:3mm;background:linear-gradient(135deg,#f4fbf7,#fff)}.fixed-diagnosis article{padding-inline-start:3mm;border-inline-start:3px solid var(--teal)}.fixed-diagnosis h3{margin:0 0 1mm;color:var(--teal);font-size:9pt}.fixed-diagnosis p{margin:0;color:var(--ink-2);font-size:8pt;line-height:1.85}
     .signature-row.simple{grid-template-columns:1fr 1fr}.clinic-approval{display:grid;align-content:center;text-align:center}.clinic-approval strong{color:var(--teal);font-size:10pt}
     .diagnosis-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:4mm}
     .tooth-map{border:1px solid var(--rule);border-radius:3mm;padding:3mm;text-align:center}
@@ -103,7 +105,7 @@
     .phase-total{display:flex;justify-content:flex-end;gap:14px;padding:2mm 3mm;background:var(--teal-tint);font-size:8pt}.phase-total b{font-variant-numeric:tabular-nums}
     .add-item{margin:2mm 3mm;border:1px dashed #9fc9c2;background:#fff;color:var(--teal-dark);border-radius:8px;padding:6px 10px;font-size:8pt;font-weight:750}
     body.preview-mode .edit-only{display:none!important}body.preview-mode .line-input{border-bottom-color:transparent}
-    .financial-layout{display:grid;grid-template-columns:5fr 7fr;gap:4mm}.financial-summary,.clinical-summary{border:1px solid var(--rule);border-radius:3mm;padding:3mm;break-inside:avoid}
+    .financial-layout{display:grid;grid-template-columns:1fr;gap:4mm}.financial-summary,.clinical-summary{border:1px solid var(--rule);border-radius:3mm;padding:3mm;break-inside:avoid}
     .money-row{display:flex;justify-content:space-between;gap:12px;padding:1.5mm 0;border-bottom:.4pt solid var(--rule);font-size:8.5pt}.money-row:last-child{border-bottom:0}.money-row strong{direction:ltr;font-variant-numeric:tabular-nums}
     .money-row.net{margin-top:1mm;padding:2mm;background:var(--teal-tint);border-radius:2mm;border:0;font-size:10pt}.saving-box{margin-top:2mm;border:1px solid var(--teal);border-radius:2mm;padding:2mm;text-align:center;color:var(--teal-dark);font-weight:900}
     .clinical-summary textarea{min-height:16mm}
@@ -167,7 +169,7 @@
       <div class="hero-copy">
         <span class="hero-eyebrow">✦ ملف علاجي ومالي موحّد</span>
         <h1 id="heroTitle">الخطة العلاجية وعرض التكلفة التقديري</h1>
-        <p>راجع بيانات المريض، رتّب مراحل العلاج، واختر الإجراءات وعدد الأسنان والتكلفة ثم عاين الورقة قبل الطباعة.</p>
+        <p>راجع بيانات المريض، رتّب مراحل العلاج، واختر الإجراءات والعدد والتكلفة ثم عاين الورقة قبل الطباعة.</p>
         <div class="hero-metrics">
           <div class="metric"><strong id="heroPatient">مريض جديد</strong><span>المريض</span></div>
           <div class="metric"><strong id="heroPhaseCount">1</strong><span>مراحل العلاج</span></div>
@@ -186,7 +188,7 @@
           <div class="section-nav entry-flow">
             <button type="button" data-scroll="patientSection"><b>1</b><span>👤 بيانات المريض</span></button>
             <button type="button" data-scroll="phasesSection"><b>2</b><span>▦ مراحل العلاج</span></button>
-            <button type="button" data-scroll="phasesSection"><b>3</b><span>🦷 الإجراءات وعدد الأسنان</span></button>
+            <button type="button" data-scroll="phasesSection"><b>3</b><span>🦷 الإجراءات والعدد</span></button>
             <button type="button" data-scroll="financeSection"><b>4</b><span>﷼ التكلفة والملخص</span></button>
             <button id="sidePreviewBtn" type="button"><b>5</b><span>👁 المعاينة والطباعة</span></button>
           </div>
@@ -194,7 +196,7 @@
         <section class="panel-card">
           <h2>طريقة الإدخال</h2>
           <div class="tip"><b>1</b><span>راجع بيانات المريض المسحوبة تلقائيًا من قائمة المواعيد.</span></div>
-          <div class="tip" style="margin-top:8px"><b>2</b><span>اختر الإجراء وحدد عدد الأسنان، ثم اكتب سعر الوحدة عند الحاجة.</span></div>
+          <div class="tip" style="margin-top:8px"><b>2</b><span>اختر الإجراء وعدّل العدد بأزرار الناقص والزائد، ثم اكتب سعر الوحدة عند الحاجة.</span></div>
           <div class="tip" style="margin-top:8px"><b>3</b><span>عاين الورقة العامة ثم احفظها أو اطبعها PDF.</span></div>
         </section>
         <details class="panel-card json-panel">
@@ -249,8 +251,17 @@
           <section class="section diagnosis-grid">
             <div class="info-card">
               <span class="section-kicker">CLINICAL SUMMARY</span>
-              <h2 class="section-title">التشخيص والملاحظات السريرية</h2>
-              <textarea id="diagnosis" class="edit-field" aria-label="الملخص التشخيصي"></textarea>
+              <h2 class="section-title">التشخيص والإجراءات التشخيصية</h2>
+              <div class="fixed-diagnosis">
+                <article>
+                  <h3>التشخيص والخطة العلاجية</h3>
+                  <p>توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.</p>
+                </article>
+                <article>
+                  <h3>الإجراءات التشخيصية</h3>
+                  <p>تم استكمال الإجراءات التشخيصية اللازمة للحالة، ومراجعة النتائج والملاحظات السريرية، وشرح التشخيص والخطة العلاجية المقترحة للمريض بصورة واضحة.</p>
+                </article>
+              </div>
             </div>
             <div class="info-card">
               <span class="section-kicker">IMAGING</span>
@@ -280,13 +291,6 @@
                   <option value="exempt">معفى</option>
                 </select>
               </label>
-            </div>
-            <div class="clinical-summary">
-              <span class="section-kicker">OPTIONS & RISKS</span>
-              <h2 class="section-title">البدائل العلاجية والمخاطر</h2>
-              <label class="field">البدائل التي نوقشت<textarea id="alternatives" class="edit-field"></textarea></label>
-              <label class="field">عواقب عدم العلاج<textarea id="noTreatment" class="edit-field"></textarea></label>
-              <label class="field">المخاطر المحتملة<textarea id="risks" class="edit-field"></textarea></label>
             </div>
           </section>
 
@@ -380,6 +384,8 @@
     };
     const PROCEDURES=[
       ['', 'اختر الإجراء'],
+      ['حشوة تجميلية', 'حشوة تجميلية'],
+      ['حشوة تجميلية بعد علاج العصب', 'حشوة تجميلية بعد علاج العصب'],
       ['علاج عصب', 'علاج عصب'],
       ['إعادة علاج عصب', 'إعادة علاج عصب'],
       ['إزالة وتد', 'إزالة وتد'],
@@ -391,8 +397,14 @@
       ['تركيبة زراعة', 'تركيبة زراعة'],
       ['زراعة - الجزء الجراحي', 'زراعة — الجزء الجراحي'],
       ['خلع الأسنان', 'خلع الأسنان'],
+      ['تركيب مؤقت', 'تركيب مؤقت'],
+      ['تصميم ابتسامة', 'تصميم ابتسامة'],
+      ['تحليل ابتسامة', 'تحليل ابتسامة'],
+      ['تنظيف أسنان عادي', 'تنظيف أسنان عادي'],
+      ['تنظيف أسنان GBT', 'تنظيف أسنان GBT'],
       ['إجراء آخر', 'إجراء آخر']
     ];
+    const DEFAULT_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة. تم استكمال الإجراءات التشخيصية اللازمة للحالة، ومراجعة النتائج والملاحظات السريرية، وشرح التشخيص والخطة العلاجية المقترحة للمريض بصورة واضحة.';
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
@@ -400,7 +412,7 @@
       clinic:{nameAr:'عيادات أفضل عناية للأسنان',nameEn:'Best Care Dental Clinics',mohLicense:'',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
-      clinical:{diagnosis:'',radiographs:'',notes:''},
+      clinical:{diagnosis:DEFAULT_DIAGNOSIS,radiographs:'',notes:''},
       phases:[blankPhase(0)],
       alternatives:'',noTreatment:'',risks:'',
       financial:{vatMode:'auto',paymentPlan:[]},
@@ -470,11 +482,8 @@
       state.patient.fileNo=$('patientFile').value.trim();
       state.patient.mobile=$('patientMobile').value.replace(/\D/g,'').slice(0,10);
       state.meta.issuedAt=$('visitDate').value?new Date($('visitDate').value).toISOString():state.meta.issuedAt;
-      state.clinical.diagnosis=$('diagnosis').value.trim();
+      state.clinical.diagnosis=DEFAULT_DIAGNOSIS;
       state.clinical.radiographs=$('radiographs').value.trim();
-      state.alternatives=$('alternatives').value.trim();
-      state.noTreatment=$('noTreatment').value.trim();
-      state.risks=$('risks').value.trim();
       state.financial.vatMode=$('vatMode').value;
       state.consent.photoConsent=$('photoConsent').checked;
       state.signatures.signerName=$('signerName').value.trim();
@@ -486,11 +495,8 @@
       $('patientFile').value=state.patient.fileNo||'';
       $('patientMobile').value=state.patient.mobile||'';
       $('visitDate').value=state.meta.issuedAt?new Date(new Date(state.meta.issuedAt)-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16):nowLocal();
-      $('diagnosis').value=state.clinical.diagnosis||'';
+      state.clinical.diagnosis=DEFAULT_DIAGNOSIS;
       $('radiographs').value=Array.isArray(state.clinical.radiographs)?state.clinical.radiographs.join('، '):(state.clinical.radiographs||'');
-      $('alternatives').value=Array.isArray(state.alternatives)?state.alternatives.map(v=>`${v.option||''}${v.note?` — ${v.note}`:''}`).join('\n'):(state.alternatives||'');
-      $('noTreatment').value=state.noTreatment||'';
-      $('risks').value=Array.isArray(state.risks)?state.risks.join('\n'):(state.risks||'');
       $('vatMode').value=state.financial.vatMode||'auto';
       $('photoConsent').checked=Boolean(state.consent.photoConsent);
       $('signerName').value=state.signatures.signerName||'';
@@ -555,14 +561,14 @@
           return`<tr data-item-row="${pIndex}:${iIndex}" style="${active?'box-shadow:inset -3px 0 0 var(--teal)':''}">
             <td><select class="line-input procedure-select" data-field="service">${procedureOptions}</select>${custom}</td>
             <td>${variant}</td>
-            <td class="num"><input class="line-input qty" data-field="qty" type="number" min="1" max="99" value="${Number(item.qty||1)}" aria-label="عدد الأسنان"></td>
+            <td class="num"><div class="qty-stepper" aria-label="عدد الإجراءات"><button type="button" data-qty-action="decrease" aria-label="إنقاص العدد">−</button><output>${Number(item.qty||1)}</output><button type="button" data-qty-action="increase" aria-label="زيادة العدد">+</button></div></td>
             <td class="money"><input class="line-input money" data-field="unitPriceAfter" inputmode="decimal" value="${escapeAttr(item.unitPriceAfter)}" placeholder="${item.type==='included'?'مجاني':'فارغ'}" ${item.type==='included'?'disabled':''}></td>
             <td class="money"><span>${formatMoney(total.after)}</span>${item.type==='included'?`<br><span class="included-chip">مجاني${item.includedLabel?` — ${escapeHtml(item.includedLabel)}`:''}</span>`:''}</td>
             <td class="edit-only"><button type="button" class="row-action" data-toggle-included="${pIndex}:${iIndex}" title="تبديل مجاني">${item.type==='included'?'مدفوع':'مجاني'}</button><button type="button" class="row-action" data-delete-item="${pIndex}:${iIndex}" title="حذف">×</button></td>
           </tr>`}).join('');
         return`<div class="phase-block" data-phase="${pIndex}">
           <div class="phase-head"><div class="phase-name"><span class="phase-index">${pIndex+1}</span><input data-phase-title="${pIndex}" value="${escapeAttr(phase.title)}"></div><div class="phase-actions edit-only"><button type="button" data-delete-phase="${pIndex}" ${state.phases.length===1?'disabled':''}>حذف المرحلة</button></div></div>
-          <table><thead><tr><th style="width:29%">الإجراء</th><th style="width:17%">الخيار</th><th class="num" style="width:12%">عدد الأسنان</th><th class="money" style="width:16%">سعر الوحدة</th><th class="money" style="width:16%">الإجمالي</th><th class="edit-only" style="width:10%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
+          <table><thead><tr><th style="width:29%">الإجراء</th><th style="width:17%">الخيار</th><th class="num" style="width:12%">العدد</th><th class="money" style="width:16%">سعر الوحدة</th><th class="money" style="width:16%">الإجمالي</th><th class="edit-only" style="width:10%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
           <button type="button" class="add-item edit-only" data-add-item="${pIndex}">＋ إضافة إجراء</button>
           <div class="phase-total"><span>إجمالي المرحلة: <b>${formatMoney(total.after)}</b></span></div>
         </div>`}).join('');
@@ -678,7 +684,12 @@
       document.addEventListener('change',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,true)});
       $('phasesContainer').addEventListener('focusin',event=>{const row=event.target.closest('[data-item-row]');if(row){const [phase,item]=row.dataset.itemRow.split(':').map(Number);activeItem={phase,item};document.querySelectorAll('[data-item-row]').forEach(itemRow=>itemRow.style.boxShadow=itemRow===row?'inset -3px 0 0 var(--teal)':'')}});
       $('phasesContainer').addEventListener('click',event=>{
-        const add=event.target.closest('[data-add-item]'),delItem=event.target.closest('[data-delete-item]'),delPhase=event.target.closest('[data-delete-phase]'),included=event.target.closest('[data-toggle-included]');
+        const add=event.target.closest('[data-add-item]'),delItem=event.target.closest('[data-delete-item]'),delPhase=event.target.closest('[data-delete-phase]'),included=event.target.closest('[data-toggle-included]'),qtyButton=event.target.closest('[data-qty-action]');
+        if(qtyButton){
+          const row=qtyButton.closest('[data-item-row]');
+          if(row){const [p,i]=row.dataset.itemRow.split(':').map(Number),item=state.phases[p]?.items[i];if(item){const delta=qtyButton.dataset.qtyAction==='increase'?1:-1;item.qty=Math.max(1,Math.min(99,Number(item.qty||1)+delta));activeItem={phase:p,item:i};markDirty();render()}}
+          return;
+        }
         if(add)addItem(Number(add.dataset.addItem));
         if(delItem){const [p,i]=delItem.dataset.deleteItem.split(':').map(Number);deleteItem(p,i)}
         if(delPhase)deletePhase(Number(delPhase.dataset.deletePhase));
