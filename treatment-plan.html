@@ -1011,6 +1011,20 @@
       }).catch(error=>{html2CanvasLoader=null;throw error});
       return html2CanvasLoader;
     }
+    function safeShareFileToken(value,fallback){
+      const token=String(value||'')
+        .normalize('NFKD')
+        .replace(/[^\x20-\x7E]/g,'')
+        .replace(/[^A-Za-z0-9._-]+/g,'-')
+        .replace(/^[._-]+|[._-]+$/g,'')
+        .slice(0,48);
+      return token||fallback;
+    }
+    function shareFileBaseName(){
+      const plan=safeShareFileToken(state.meta.planNo,'Plan');
+      const file=safeShareFileToken(state.patient.fileNo,'Patient');
+      return `BestCare-TreatmentPlan-Draft-${plan}-${file}`;
+    }
     async function renderShareAssets(){
       const {body,css,rowCount,phaseCount}=shareSheetParts();
       const renderCanvas=await loadHtml2Canvas();
@@ -1026,7 +1040,7 @@
         const canvas=await renderCanvas(sheet,{backgroundColor:'#eef6f2',scale:1.25,useCORS:true,logging:false,width:1240,height:1754,imageTimeout:12000});
         const jpeg=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.97));if(!jpeg)throw new Error('تعذر إنشاء صورة الخطة');
         const pdf=pdfFromJpeg(new Uint8Array(await jpeg.arrayBuffer()),canvas.width,canvas.height);
-        const base=`خطة-${state.patient.fileNo||state.meta.planNo}-مسودة`;
+        const base=shareFileBaseName();
         return{
           pdf:new File([pdf],`${base}.pdf`,{type:'application/pdf'}),
           image:new File([jpeg],`${base}.jpg`,{type:'image/jpeg'})
