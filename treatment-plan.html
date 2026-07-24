@@ -88,7 +88,7 @@
     .clinic-general{display:grid;gap:8px;padding:10px 12px;border:1px solid #d9e6e1;border-radius:14px;background:#f7fbf9}.clinic-general strong{font-size:13px;color:var(--ink)}
     .procedure-select,.variant-select{width:100%;min-height:34px;border:0;border-bottom:1px solid #a8bdb5;background:transparent;color:var(--ink);font:inherit;font-weight:700}
     .custom-procedure{margin-top:5px}.item-note{display:block;margin-top:4px;color:var(--ink-2);font-size:7.2pt;line-height:1.4}
-    .qty-stepper{display:inline-grid;grid-template-columns:30px 38px 30px;align-items:center;justify-content:center;gap:3px;padding:3px;border:1px solid #c9ddd5;border-radius:12px;background:#f5fbf8;direction:ltr}.qty-stepper button{width:30px;height:30px;padding:0;border:0;border-radius:9px;background:#e1f1ea;color:#176847;font-size:20px;font-weight:900;cursor:pointer}.qty-stepper button:hover{background:#cce8da;transform:translateY(-1px)}.qty-stepper output{font-weight:900;font-size:12px;color:var(--ink);text-align:center}
+    .qty-stepper{display:inline-grid;grid-template-columns:28px 32px 28px;align-items:center;justify-content:center;gap:2px;padding:3px;border:1px solid #c9ddd5;border-radius:12px;background:#f5fbf8;direction:ltr}.qty-stepper button{width:28px;height:30px;padding:0;border:0;border-radius:9px;background:#e1f1ea;color:#176847;font-size:20px;font-weight:900;cursor:pointer}.qty-stepper button:hover{background:#cce8da;transform:translateY(-1px)}.qty-stepper output{font-weight:900;font-size:12px;color:var(--ink);text-align:center}
     .fixed-diagnosis{display:grid;gap:3mm;padding:3.5mm;border:1px solid #d7e7e0;border-radius:3mm;background:linear-gradient(135deg,#f4fbf7,#fff)}.fixed-diagnosis article{padding-inline-start:3mm;border-inline-start:3px solid var(--teal)}.fixed-diagnosis h3{margin:0 0 1mm;color:var(--teal);font-size:9pt}.fixed-diagnosis p{margin:0;color:var(--ink-2);font-size:8pt;line-height:1.85}
     .signature-row.simple{grid-template-columns:1fr 1fr}.clinic-approval{display:grid;align-content:center;text-align:center}.clinic-approval strong{color:var(--teal);font-size:10pt}
     .diagnosis-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:4mm}
@@ -601,7 +601,7 @@
           </tr>`}).join('');
         return`<div class="phase-block" data-phase="${pIndex}">
           <div class="phase-head"><div class="phase-name"><span class="phase-index">${pIndex+1}</span><input data-phase-title="${pIndex}" value="${escapeAttr(phase.title)}"></div><div class="phase-actions edit-only"><button type="button" data-delete-phase="${pIndex}" ${state.phases.length===1?'disabled':''}>حذف المرحلة</button></div></div>
-          <table><thead><tr><th style="width:29%">الإجراء</th><th style="width:17%">الخيار</th><th class="num" style="width:12%">العدد</th><th class="money" style="width:16%">سعر الوحدة</th><th class="money" style="width:16%">الإجمالي</th><th class="edit-only" style="width:10%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
+          <table><thead><tr><th style="width:27%">الإجراء</th><th style="width:15%">الخيار</th><th class="num" style="width:16%">العدد</th><th class="money" style="width:16%">سعر الوحدة</th><th class="money" style="width:16%">الإجمالي</th><th class="edit-only" style="width:10%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
           <button type="button" class="add-item edit-only" data-add-item="${pIndex}">＋ إضافة إجراء</button>
           <div class="phase-total"><span>إجمالي المرحلة: <b>${formatMoney(total.after)}</b></span></div>
         </div>`}).join('');
