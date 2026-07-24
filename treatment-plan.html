@@ -639,7 +639,8 @@
       state.financial.vatMode=$('vatMode').value;
       state.financial.vatConfirmed=$('vatConfirmed').checked;
       state.consent.photoConsent=$('photoConsent').checked;
-      state.signatures.signerName=$('signerName').value.trim();
+      state.signatures.signerName=$('signerName').value.trim()||state.patient.fullName;
+      if(!$('signerName').value.trim())$('signerName').value=state.signatures.signerName;
     }
     function hydrateFields(){
       $('patientName').value=state.patient.fullName||'';
@@ -652,7 +653,8 @@
       $('vatConfirmed').checked=Boolean(state.financial.vatConfirmed);
       $('vatControl').classList.toggle('confirmed',$('vatConfirmed').checked);
       $('photoConsent').checked=Boolean(state.consent.photoConsent);
-      $('signerName').value=state.signatures.signerName||'';
+      state.signatures.signerName=(state.signatures.signerName||'').trim()||state.patient.fullName||'';
+      $('signerName').value=state.signatures.signerName;
     }
     function planDates(){
       const issued=new Date(state.meta.issuedAt||Date.now());
@@ -1228,6 +1230,11 @@
       $('printBtn').addEventListener('click',printPlan);
       $('vatMode').addEventListener('change',()=>{$('vatConfirmed').checked=false;$('vatControl').classList.remove('confirmed');state.financial.vatConfirmed=false;markDirty();toast('يلزم تأكيد الضريبة','غيّرت وضع الضريبة؛ راجع أهلية المريض ثم فعّل مربع التأكيد.')});
       $('vatConfirmed').addEventListener('change',()=>{$('vatControl').classList.toggle('confirmed',$('vatConfirmed').checked);state.financial.vatConfirmed=$('vatConfirmed').checked;markDirty()});
+      $('patientName').addEventListener('input',()=>{
+        const previousName=(state.patient.fullName||'').trim();
+        const signerValue=$('signerName').value.trim();
+        if(!signerValue||signerValue===previousName)$('signerName').value=$('patientName').value.trim();
+      });
       document.addEventListener('input',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,false)});
       document.addEventListener('change',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,true)});
       $('phasesContainer').addEventListener('focusin',event=>{const row=event.target.closest('[data-item-row]');if(row){const [phase,item]=row.dataset.itemRow.split(':').map(Number);activeItem={phase,item};document.querySelectorAll('[data-item-row]').forEach(itemRow=>itemRow.style.boxShadow=itemRow===row?'inset -3px 0 0 var(--teal)':'')}});
