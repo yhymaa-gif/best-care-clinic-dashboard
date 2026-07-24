@@ -12,7 +12,7 @@
       choose:'Choose an appointment image or drop it here',ready:'Image ready — start extraction',loading:'Loading the local reader…',recognizing:'Reading the appointment table…',parsing:'Organizing patients and times…',done:'Extraction complete',badFile:'Choose a JPG, PNG, or WEBP image',tooLarge:'The image is larger than 20 MB',noRows:'No complete rows were detected. Try a clearer image or edit the draft manually.',needImage:'Choose an appointment image first',mergeNone:'No valid selected rows to merge',merged:'Image list merged',mergedDetail:n=>`${n.added} patients added; ${n.skipped} duplicate rows skipped`,download:'CSV file prepared',failed:'Image reading failed',engineFailed:'The image reader could not start on this device. Connect once and retry.',review:'Review yellow or red rows, then merge them into today’s list.',row:'Row',high:'High confidence',medium:'Review',low:'Correction needed',unnamed:'Unknown'}
   };
 
-  let api=null;
+  let api=null,initialized=false;
   const lang=()=>api?.getLang?.()==='en'?'en':'ar';
   const t=(key,...args)=>{
     const value=text[lang()][key]??text.ar[key]??key;
@@ -422,7 +422,8 @@
 
   function init(options){
     api=options;
-    $('imageOcrBtn')?.addEventListener('click',open);
+    if(initialized)return;
+    initialized=true;
     $('chooseOcrImageBtn')?.addEventListener('click',()=>$('imageOcrInput').click());
     $('imageOcrInput')?.addEventListener('change',event=>event.target.files?.[0]&&selectFile(event.target.files[0]));
     $('runOcrBtn')?.addEventListener('click',run);
@@ -440,5 +441,5 @@
     setBusy(false);
   }
 
-  window.BestCareOCR={init,version:'7.3.3'};
+  window.BestCareOCR={init,open,version:'7.3.4'};
 })();

@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260724f';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260724h';
 const APP_SHELL=[
   './',
   './index.html',
@@ -63,4 +63,32 @@ self.addEventListener('fetch',event=>{
       }))
     );
   }
+});
+
+self.addEventListener('push',event=>{
+  let payload={};
+  try{payload=event.data?.json?.()||{}}catch{payload={title:'تنبيه من أفضل عناية',body:event.data?.text?.()||''}}
+  const title=payload.title||'تنبيه من أفضل عناية';
+  const options={
+    body:payload.body||'يوجد تحديث جديد داخل لوحة المتابعة.',
+    icon:'./assets/icons/icon-192.png',
+    badge:'./assets/icons/icon-192.png',
+    tag:payload.tag||`bestcare-${payload.type||'update'}`,
+    renotify:false,
+    vibrate:[160,70,180],
+    data:{url:payload.url||'./'}
+  };
+  event.waitUntil(self.registration.showNotification(title,options));
+});
+
+self.addEventListener('notificationclick',event=>{
+  event.notification.close();
+  const target=new URL(event.notification.data?.url||'./',self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients=>{
+      const existing=clients.find(client=>client.url.startsWith(self.location.origin));
+      if(existing){existing.navigate(target);return existing.focus()}
+      return self.clients.openWindow(target);
+    })
+  );
 });

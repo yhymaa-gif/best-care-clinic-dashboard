@@ -33,8 +33,10 @@
     .topbar-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topbar .brand{display:flex;align-items:center;gap:10px;font-weight:900}.topbar .brand img{width:36px;height:36px;object-fit:contain}
     .status-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9ddd6;border-radius:999px;padding:7px 11px;background:#fff;color:var(--ink-2);font-size:12px;font-weight:800}
     .status-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#d2a52b}.status-pill.saved::before{background:#2c9a66}
-    .workflow-pill{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:#eef3f1;color:#49675d;font-size:12px;font-weight:900}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.approved{background:#dff3e8;color:#176445}.workflow-pill.rejected{background:#fde8e8;color:#a32e35}
-    #sendAdminBtn{background:#315f85;color:#fff;border-color:#315f85}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b}#rejectPlanBtn{background:#a9363e;color:#fff;border-color:#a9363e}#whatsappPlanBtn{background:#b58a1f;color:#fff;border-color:#b58a1f}
+    .workflow-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:#eaf1f6;color:#42677f;font-size:12px;font-weight:900}.workflow-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.approved{background:#dff3e8;color:#176445}.workflow-pill.rejected{background:#fde8e8;color:#a32e35}
+    .workflow-track{display:flex;align-items:center;justify-content:center;gap:0;padding:11px 18px;background:#fff;border-bottom:1px solid var(--rule)}.workflow-step{position:relative;display:flex;align-items:center;gap:8px;min-width:155px;color:#8a9a94;font-size:11px;font-weight:900}.workflow-step:not(:last-child)::after{content:"";width:38px;height:2px;margin-inline:9px;background:#dce6e1}.workflow-step i{display:grid;place-items:center;width:28px;height:28px;border:1px solid #d2dfd9;border-radius:50%;background:#f8fbf9;font-style:normal}.workflow-step.done{color:#277655}.workflow-step.done i{background:#dff3e8;border-color:#9dceb1}.workflow-step.active{color:#8b6208}.workflow-step.active i{background:#fff1cc;border-color:#e2c16a;box-shadow:0 0 0 4px rgba(226,193,106,.18)}.workflow-step.rejected{color:#a32e35}.workflow-step.rejected i{background:#fde8e8;border-color:#e2a7ab}
+    #sendAdminBtn{background:#315f85;color:#fff;border-color:#315f85;box-shadow:0 7px 17px rgba(49,95,133,.2)}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b;box-shadow:0 7px 17px rgba(22,112,75,.2)}#rejectPlanBtn{background:#a9363e;color:#fff;border-color:#a9363e}.share-draft-buttons{display:inline-flex;gap:5px;padding:4px;border:1px solid #e4cf8f;border-radius:14px;background:#fff9e9}.share-draft-buttons[hidden]{display:none}.share-draft-buttons button{padding:8px 11px;background:#b58a1f;color:#fff;border-color:#b58a1f}.share-draft-buttons #whatsappImageBtn{background:#fff;color:#80600e}
+    @media(max-width:820px){.workflow-track{justify-content:flex-start;overflow-x:auto}.workflow-step{min-width:max-content}.share-draft-buttons{width:100%}.share-draft-buttons button{flex:1}}
     .draft-stamp{display:none;position:absolute;z-index:12;top:43mm;left:18mm;width:34mm;height:34mm;border:3px double rgba(176,34,45,.62);border-radius:50%;place-items:center;text-align:center;color:rgba(176,34,45,.68);font-size:12pt;font-weight:900;line-height:1.2;transform:rotate(-14deg);letter-spacing:.03em;pointer-events:none}
     body.draft-pdf .draft-stamp{display:grid}body.draft-pdf .paper::before{content:"مسودة للاطلاع";color:rgba(176,34,45,.035)}
     body.draft-pdf .diagnosis-grid,body.draft-pdf .validity-box,body.draft-pdf #consentSection,body.draft-pdf #signatureSection{display:none!important}
@@ -188,7 +190,10 @@
         <button id="compactEntryBtn" class="ghost" type="button">إدخال سريع</button>
         <button id="previewBtn" class="ghost" type="button">معاينة الطباعة</button>
         <button id="saveBtn" class="primary" type="button">حفظ الخطة</button>
-        <button id="whatsappPlanBtn" type="button">مشاركة مسودة PDF</button>
+        <span class="share-draft-buttons" aria-label="مشاركة مسودة الخطة">
+          <button id="whatsappPlanBtn" type="button">واتساب PDF</button>
+          <button id="whatsappImageBtn" type="button">واتساب صورة</button>
+        </span>
         <button id="sendAdminBtn" type="button" hidden>حفظ وإرسال للإدارة</button>
         <button id="approvePlanBtn" type="button" hidden>اعتماد نهائي للطباعة</button>
         <button id="rejectPlanBtn" type="button" hidden>إعادة للعيادة / غير معتمدة</button>
@@ -196,6 +201,11 @@
         <button id="printCopiesBtn" class="ghost" type="button">طباعة نسختين</button>
       </div>
     </nav>
+    <div id="workflowTrack" class="workflow-track no-print" aria-label="حالة اعتماد الخطة">
+      <span class="workflow-step" data-workflow-step="draft"><i>1</i><b>مسودة العيادة</b></span>
+      <span class="workflow-step" data-workflow-step="submitted"><i>2</i><b>مرسلة للإدارة</b></span>
+      <span class="workflow-step" data-workflow-step="approved"><i>3</i><b>معتمدة نهائيًا</b></span>
+    </div>
 
     <section class="workspace-hero no-print" aria-labelledby="heroTitle">
       <div class="hero-copy">
@@ -450,7 +460,7 @@
       signatures:{patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''}
     });
     let state;
-    let cachedSharePdf=null,cachedShareSignature='',html2CanvasLoader=null;
+    let cachedSharePdf=null,cachedShareImage=null,cachedShareSignature='',html2CanvasLoader=null;
     const collapsedPhases=new Set();
 
     function toast(title,message=''){
@@ -672,10 +682,16 @@
       const status=['draft','submitted','approved','rejected'].includes(state.meta.status)?state.meta.status:'draft';
       const labels={draft:'مسودة لدى العيادة',submitted:'بانتظار إكمال الإدارة',approved:'معتمدة نهائيًا',rejected:'غير معتمدة — تحتاج تعديل'};
       $('workflowStatus').textContent=labels[status];$('workflowStatus').className=`workflow-pill ${status}`;
+      const order=['draft','submitted','approved'],position=order.indexOf(status);
+      document.querySelectorAll('[data-workflow-step]').forEach((step,index)=>{
+        step.classList.toggle('done',position>index);
+        step.classList.toggle('active',position===index);
+        step.classList.toggle('rejected',status==='rejected'&&index===0);
+      });
       $('sendAdminBtn').hidden=workflowRole()!=='clinic'||!['draft','rejected'].includes(status);
       $('approvePlanBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
       $('rejectPlanBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
-      $('whatsappPlanBtn').hidden=!state.phases.some(phase=>phase.items.some(item=>item.service));
+      document.querySelector('.share-draft-buttons').hidden=!state.phases.some(phase=>phase.items.some(item=>item.service));
       const locked=workflowRole()==='clinic'&&['submitted','approved'].includes(status);
       document.body.classList.toggle('workflow-locked',locked);
       $('saveBtn').disabled=locked;$('addPhaseBtn').disabled=locked;
@@ -698,8 +714,8 @@
     }
     function markDirty(){
       collectHeaderFields();
-      cachedSharePdf=null;cachedShareSignature='';
-      $('whatsappPlanBtn').textContent='مشاركة مسودة PDF';
+      cachedSharePdf=null;cachedShareImage=null;cachedShareSignature='';
+      $('whatsappPlanBtn').textContent='واتساب PDF';$('whatsappImageBtn').textContent='واتساب صورة';
       if(workflowRole()==='clinic')state.meta.status='draft';
       else if(['approved','rejected'].includes(state.meta.status))state.meta.status='submitted';
       $('paper').classList.remove('approved');
@@ -721,6 +737,13 @@
       $('saveStatus').classList.add('saved');$('saveStatus').textContent='محفوظ ومؤرشف';
       if(!silent)toast('تم حفظ الخطة','يمكنك الرجوع إليها من صف المريض نفسه.');
       return true;
+    }
+    async function saveDraftPlan(){
+      const saved=await savePlan(false);
+      if(saved&&workflowRole()==='clinic'&&state.meta.status==='draft'){
+        await syncPlanStatusToDashboard('draft');
+        toast('حُفظت كمسودة','ظهرت علامة «مسودة خطة» أمام اسم المريض. أرسلها للإدارة عندما تكتمل.');
+      }
     }
     async function syncPlanStatusToDashboard(status){
       if(!patientId||!appointmentDate)return false;
@@ -829,7 +852,7 @@
       }).catch(error=>{html2CanvasLoader=null;throw error});
       return html2CanvasLoader;
     }
-    async function renderSharePdf(){
+    async function renderShareAssets(){
       const {body,css,rowCount,phaseCount}=shareSheetParts();
       const renderCanvas=await loadHtml2Canvas();
       const sheet=document.createElement('div');
@@ -844,47 +867,57 @@
         const canvas=await renderCanvas(sheet,{backgroundColor:'#eef6f2',scale:.75,useCORS:true,logging:false,width:1240,height:1754});
         const jpeg=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.94));if(!jpeg)throw new Error('تعذر إنشاء صورة الخطة');
         const pdf=pdfFromJpeg(new Uint8Array(await jpeg.arrayBuffer()),canvas.width,canvas.height);
-        return new File([pdf],`خطة-${state.patient.fileNo||state.meta.planNo}-مسودة.pdf`,{type:'application/pdf'});
+        const base=`خطة-${state.patient.fileNo||state.meta.planNo}-مسودة`;
+        return{
+          pdf:new File([pdf],`${base}.pdf`,{type:'application/pdf'}),
+          image:new File([jpeg],`${base}.jpg`,{type:'image/jpeg'})
+        };
       }finally{sheet.remove()}
     }
-    async function sendWhatsAppDraft(){
+    function downloadShareFile(file,format){
+      const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+      toast(`تم تنزيل ${format==='pdf'?'ملف PDF':'صورة الخطة'}`,`أرفق ${format==='pdf'?'الملف':'الصورة'} في WhatsApp Web؛ المتصفح على الكمبيوتر لا يسمح بالإرفاق التلقائي.`);
+    }
+    async function sendWhatsAppDraft(format='pdf'){
       collectHeaderFields();
       const items=state.phases.flatMap(phase=>phase.items).filter(item=>item.service);
       if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل المشاركة.');return}
       const signature=JSON.stringify({patient:state.patient,clinical:state.clinical,phases:state.phases,financial:state.financial,meta:{planNo:state.meta.planNo,issuedAt:state.meta.issuedAt,validityDays:state.meta.validityDays}});
       const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      if(mobileDevice&&cachedSharePdf&&cachedShareSignature===signature){
+      const cachedFile=format==='image'?cachedShareImage:cachedSharePdf;
+      const label=format==='image'?'الصورة':'ملف PDF';
+      if(mobileDevice&&cachedFile&&cachedShareSignature===signature){
         try{
-          document.documentElement.dataset.pdfShareState=`sharing:${cachedSharePdf.size}`;
-          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[cachedSharePdf]});
+          document.documentElement.dataset.pdfShareState=`sharing-${format}:${cachedFile.size}`;
+          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[cachedFile]});
           document.documentElement.dataset.pdfShareState='shared';
-          toast('تم فتح المشاركة','اختر واتساب ثم جهة اتصال المريض لإرسال ملف PDF.');
+          toast('تم فتح المشاركة',`اختر واتساب ثم جهة اتصال المريض لإرسال ${label}.`);
         }catch(error){
           document.documentElement.dataset.pdfShareState=error?.name==='AbortError'?'share-cancelled':`error:${error?.message||error?.name||'unknown'}`;
-          if(error?.name!=='AbortError')toast('تعذرت مشاركة ملف PDF',error?.message||'حاول مرة أخرى.');
+          if(error?.name!=='AbortError')toast(`تعذرت مشاركة ${label}`,error?.message||'حاول مرة أخرى.');
         }
         return;
       }
       document.documentElement.dataset.pdfShareState='preparing';
-      toast('جارٍ تجهيز ملف PDF','سيتم إنشاء نسخة A4 من صفحة واحدة مع ختم «مسودة للاطلاع».');
+      toast(`جارٍ تجهيز ${label}`,'سيتم إنشاء نسخة A4 من صفحة واحدة مع ختم «مسودة للاطلاع».');
       try{
-        const file=await renderSharePdf();
-        cachedSharePdf=file;cachedShareSignature=signature;
+        const assets=await renderShareAssets();
+        cachedSharePdf=assets.pdf;cachedShareImage=assets.image;cachedShareSignature=signature;
+        const file=format==='image'?cachedShareImage:cachedSharePdf;
         document.documentElement.dataset.pdfShareState=`generated:${file.size}`;
         let canShareFiles=mobileDevice;
         try{canShareFiles=mobileDevice&&Boolean(navigator.canShare?.({files:[file]}))}catch{canShareFiles=false}
         if(canShareFiles){
-          $('whatsappPlanBtn').textContent='مشاركة PDF عبر واتساب';
+          (format==='image'?$('whatsappImageBtn'):$('whatsappPlanBtn')).textContent=format==='image'?'فتح واتساب بالصورة':'فتح واتساب بـPDF';
           document.documentElement.dataset.pdfShareState=`ready-to-share:${file.size}`;
-          toast('تم تجهيز ملف PDF','اضغط «مشاركة PDF عبر واتساب» مرة أخرى لفتح المشاركة.');
+          toast(`تم تجهيز ${label}`,`اضغط الزر نفسه مرة أخرى لفتح واتساب ومشاركة ${label}.`);
         }else{
-          const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
           document.documentElement.dataset.pdfShareState=`downloaded:${file.size}`;
-          toast('تم تنزيل ملف PDF','أرفق الملف في WhatsApp Web. المتصفح لا يسمح بإرفاقه تلقائيًا على الكمبيوتر.');
+          downloadShareFile(file,format);
         }
       }catch(error){
         document.documentElement.dataset.pdfShareState=`error:${error?.message||error?.name||'unknown'}`;
-        if(error?.name!=='AbortError')toast('تعذرت مشاركة ملف PDF',error?.message||'حاول مرة أخرى.');
+        if(error?.name!=='AbortError')toast(`تعذرت مشاركة ${label}`,error?.message||'حاول مرة أخرى.');
       }
     }
     function updateItemFromInput(input,rerender=false){
@@ -945,7 +978,16 @@
       target.appendChild(clone);
     }
     function printPlan(twoCopies=false){
-      if(state.meta.status!=='approved'){toast('النسخة غير معتمدة','أرسل الخطة للإدارة واعتمد الإجراءات والأسعار قبل الطباعة.');return}
+      if(state.meta.status!=='approved'){
+        const guidance={
+          draft:workflowRole()==='clinic'?'اضغط «حفظ وإرسال للإدارة» أولًا.':'الخطة ما زالت مسودة لدى العيادة ولم تُرسل للإدارة.',
+          submitted:workflowRole()==='admin'?'اضغط «اعتماد نهائي للطباعة» بعد مراجعة الإجراءات والأسعار.':'الخطة لدى الإدارة الآن بانتظار الاعتماد.',
+          rejected:'الخطة تحتاج تعديلًا ثم إعادة إرسالها للإدارة.'
+        };
+        toast('النسخة غير معتمدة',guidance[state.meta.status]||'يجب اعتماد الخطة من الإدارة قبل الطباعة.');
+        $('workflowTrack').scrollIntoView({behavior:'smooth',block:'start'});
+        return;
+      }
       if(!validateBeforePrint())return;
       collectHeaderFields();document.body.classList.add('preview-mode','one-page-print');
       const itemCount=state.phases.reduce((sum,phase)=>sum+phase.items.filter(item=>item.service).length,0);
@@ -968,10 +1010,10 @@
     function bindEvents(){
       document.querySelectorAll('[data-scroll]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})));
       $('backBtn').addEventListener('click',()=>location.href=source.returnUrl||`./?view=admin${appointmentDate?`&date=${encodeURIComponent(appointmentDate)}`:''}`);
-      $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',()=>savePlan(false));$('previewBtn').addEventListener('click',togglePreview);
+      $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',saveDraftPlan);$('previewBtn').addEventListener('click',togglePreview);
       $('compactEntryBtn').addEventListener('click',toggleCompactEntry);
       $('sidePreviewBtn').addEventListener('click',togglePreview);
-      $('sendAdminBtn').addEventListener('click',submitToAdmin);$('approvePlanBtn').addEventListener('click',approvePlan);$('rejectPlanBtn').addEventListener('click',rejectPlan);$('whatsappPlanBtn').addEventListener('click',sendWhatsAppDraft);
+      $('sendAdminBtn').addEventListener('click',submitToAdmin);$('approvePlanBtn').addEventListener('click',approvePlan);$('rejectPlanBtn').addEventListener('click',rejectPlan);$('whatsappPlanBtn').addEventListener('click',()=>sendWhatsAppDraft('pdf'));$('whatsappImageBtn').addEventListener('click',()=>sendWhatsAppDraft('image'));
       $('printBtn').addEventListener('click',()=>printPlan(false));$('printCopiesBtn').addEventListener('click',()=>printPlan(true));
       $('vatMode').addEventListener('change',()=>{$('vatConfirmed').checked=false;$('vatControl').classList.remove('confirmed');state.financial.vatConfirmed=false;markDirty();toast('يلزم تأكيد الضريبة','غيّرت وضع الضريبة؛ راجع أهلية المريض ثم فعّل مربع التأكيد.')});
       $('vatConfirmed').addEventListener('change',()=>{$('vatControl').classList.toggle('confirmed',$('vatConfirmed').checked);state.financial.vatConfirmed=$('vatConfirmed').checked;markDirty()});
