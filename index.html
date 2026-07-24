@@ -374,6 +374,12 @@ async function ensurePushSubscription(){
 }
 function updateNotificationsButton(){
   const button=$('notificationsBtn');if(!button)return;
+  if(IS_DEPLOY_PREVIEW){
+    button.classList.remove('notification-enabled','notification-denied');
+    button.textContent=lang==='en'?'🔕 Preview notifications disabled':'🔕 تنبيهات المعاينة متوقفة';
+    button.title=lang==='en'?'Enable external notifications on the final site only.':'فعّل التنبيهات الخارجية من الرابط النهائي فقط.';
+    return;
+  }
   button.classList.toggle('notification-enabled',systemNotificationsEnabled());
   button.classList.toggle('notification-denied','Notification' in window&&Notification.permission==='denied');
   button.textContent=systemNotificationsEnabled()?(lang==='en'?'🔔 System notifications enabled':'🔔 إشعارات النظام مفعلة'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));

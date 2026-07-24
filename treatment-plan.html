@@ -182,8 +182,8 @@
       <div class="topbar-group">
         <a class="brand" href="./?view=admin"><img src="./best-care-logo.png" alt=""><span>أفضل عناية</span></a>
         <button id="backBtn" class="ghost" type="button">← العودة للداشبورد</button>
-        <span id="saveStatus" class="status-pill">مسودة غير محفوظة</span>
-        <span id="workflowStatus" class="workflow-pill">مسودة لدى العيادة</span>
+        <span id="saveStatus" class="status-pill">جارٍ تحميل الخطة…</span>
+        <span id="workflowStatus" class="workflow-pill">جارٍ تحميل حالة الخطة…</span>
       </div>
       <div class="topbar-group">
         <button id="addPhaseBtn" class="ghost" type="button">＋ إضافة مرحلة</button>
@@ -886,15 +886,20 @@
       const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       const cachedFile=format==='image'?cachedShareImage:cachedSharePdf;
       const label=format==='image'?'الصورة':'ملف PDF';
-      if(mobileDevice&&cachedFile&&cachedShareSignature===signature){
-        try{
-          document.documentElement.dataset.pdfShareState=`sharing-${format}:${cachedFile.size}`;
-          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[cachedFile]});
-          document.documentElement.dataset.pdfShareState='shared';
-          toast('تم فتح المشاركة',`اختر واتساب ثم جهة اتصال المريض لإرسال ${label}.`);
-        }catch(error){
-          document.documentElement.dataset.pdfShareState=error?.name==='AbortError'?'share-cancelled':`error:${error?.message||error?.name||'unknown'}`;
-          if(error?.name!=='AbortError')toast(`تعذرت مشاركة ${label}`,error?.message||'حاول مرة أخرى.');
+      if(cachedFile&&cachedShareSignature===signature){
+        if(mobileDevice){
+          try{
+            document.documentElement.dataset.pdfShareState=`sharing-${format}:${cachedFile.size}`;
+            await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[cachedFile]});
+            document.documentElement.dataset.pdfShareState='shared';
+            toast('تم فتح المشاركة',`اختر واتساب ثم جهة اتصال المريض لإرسال ${label}.`);
+          }catch(error){
+            document.documentElement.dataset.pdfShareState=error?.name==='AbortError'?'share-cancelled':`error:${error?.message||error?.name||'unknown'}`;
+            if(error?.name!=='AbortError')toast(`تعذرت مشاركة ${label}`,error?.message||'حاول مرة أخرى.');
+          }
+        }else{
+          document.documentElement.dataset.pdfShareState=`downloaded-cached:${cachedFile.size}`;
+          downloadShareFile(cachedFile,format);
         }
         return;
       }
@@ -1051,7 +1056,8 @@
     async function init(){
       if(!(await verifyAuth()))return;
       source=sourceFromLocal();
-      const remote=await loadRemote(),local=loadLocalPlan();
+      const local=loadLocalPlan();
+      const [remote]=await Promise.all([loadRemote(),loadProcedureCatalog(false)]);
       state=normalizeState(remote||local||null);
       if(!remote&&!local){
         state.patient.fullName=source.name||'';
@@ -1059,7 +1065,6 @@
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
       }
-      await loadProcedureCatalog(false);
       const compact=localStorage.getItem('bestcare_treatment_compact')!=='0';document.body.classList.toggle('compact-entry',compact);$('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
       hydrateFields();setupSignature();bindEvents();render();
       $('saveStatus').textContent=remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
