@@ -451,6 +451,7 @@
       signatures:{patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''}
     });
     let state;
+    let cachedSharePdf=null,cachedShareSignature='';
     const collapsedPhases=new Set();
 
     function toast(title,message=''){
@@ -698,6 +699,8 @@
     }
     function markDirty(){
       collectHeaderFields();
+      cachedSharePdf=null;cachedShareSignature='';
+      $('whatsappPlanBtn').textContent='مشاركة مسودة PDF';
       if(workflowRole()==='clinic')state.meta.status='draft';
       else if(['approved','rejected'].includes(state.meta.status))state.meta.status='submitted';
       $('paper').classList.remove('approved');
@@ -836,17 +839,32 @@
       collectHeaderFields();
       const items=state.phases.flatMap(phase=>phase.items).filter(item=>item.service);
       if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل المشاركة.');return}
+      const signature=JSON.stringify({patient:state.patient,clinical:state.clinical,phases:state.phases,financial:state.financial,meta:{planNo:state.meta.planNo,issuedAt:state.meta.issuedAt,validityDays:state.meta.validityDays}});
+      const mobileDevice=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if(mobileDevice&&cachedSharePdf&&cachedShareSignature===signature){
+        try{
+          document.documentElement.dataset.pdfShareState=`sharing:${cachedSharePdf.size}`;
+          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[cachedSharePdf]});
+          document.documentElement.dataset.pdfShareState='shared';
+          toast('تم فتح المشاركة','اختر واتساب ثم جهة اتصال المريض لإرسال ملف PDF.');
+        }catch(error){
+          document.documentElement.dataset.pdfShareState=error?.name==='AbortError'?'share-cancelled':`error:${error?.message||error?.name||'unknown'}`;
+          if(error?.name!=='AbortError')toast('تعذرت مشاركة ملف PDF',error?.message||'حاول مرة أخرى.');
+        }
+        return;
+      }
       document.documentElement.dataset.pdfShareState='preparing';
       toast('جارٍ تجهيز ملف PDF','سيتم إنشاء نسخة A4 من صفحة واحدة مع ختم «مسودة للاطلاع».');
       try{
         const file=await renderSharePdf();
+        cachedSharePdf=file;cachedShareSignature=signature;
         document.documentElement.dataset.pdfShareState=`generated:${file.size}`;
-        let canShareFiles=false;
-        try{canShareFiles=Boolean(navigator.canShare?.({files:[file]}))}catch{}
+        let canShareFiles=mobileDevice;
+        try{canShareFiles=mobileDevice&&Boolean(navigator.canShare?.({files:[file]}))}catch{canShareFiles=false}
         if(canShareFiles){
-          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[file]});
-          document.documentElement.dataset.pdfShareState='shared';
-          toast('تم فتح المشاركة','اختر واتساب ثم جهة اتصال المريض لإرسال ملف PDF.');
+          $('whatsappPlanBtn').textContent='مشاركة PDF عبر واتساب';
+          document.documentElement.dataset.pdfShareState=`ready-to-share:${file.size}`;
+          toast('تم تجهيز ملف PDF','اضغط «مشاركة PDF عبر واتساب» مرة أخرى لفتح المشاركة.');
         }else{
           const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
           document.documentElement.dataset.pdfShareState=`downloaded:${file.size}`;
