@@ -5,7 +5,7 @@ const headers = {
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store, no-cache, must-revalidate',
   'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET,PUT,OPTIONS',
+  'access-control-allow-methods': 'GET,POST,PUT,OPTIONS',
   'access-control-allow-headers': 'content-type,accept'
 };
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -56,6 +56,7 @@ export default async request => {
   const key = 'registry/global';
 
   if (request.method === 'GET') {
+    if (user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
     const data = await store.get(key, { type: 'json', consistency: 'strong' });
     return reply({
       clinicId,
@@ -63,6 +64,32 @@ export default async request => {
       aliases: data?.aliases || {},
       revision: Number(data?.revision || 0),
       updatedAt: Number(data?.updatedAt || 0)
+    });
+  }
+
+  if (request.method === 'POST') {
+    let body;
+    try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
+    const requestedKeys = [...new Set((Array.isArray(body?.keys) ? body.keys : [])
+      .map(value => cleanText(value, 180))
+      .filter(value => /^(file|phone|name):/.test(value))
+      .slice(0, 500))];
+    if (!requestedKeys.length) return reply({ clinicId, records: {}, aliases: {}, revision: 0, updatedAt: 0 });
+    const data = await store.get(key, { type: 'json', consistency: 'strong' }) || {};
+    const records = {};
+    const aliases = {};
+    requestedKeys.forEach(alias => {
+      const canonical = data.aliases?.[alias];
+      if (!canonical || !data.records?.[canonical]) return;
+      aliases[alias] = canonical;
+      records[canonical] = data.records[canonical];
+    });
+    return reply({
+      clinicId,
+      records,
+      aliases,
+      revision: Number(data.revision || 0),
+      updatedAt: Number(data.updatedAt || 0)
     });
   }
 

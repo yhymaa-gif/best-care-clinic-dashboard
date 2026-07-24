@@ -711,7 +711,14 @@ async function refreshTreatmentPlanRegistry(force=false){
   if(!authReady)return false;
   if(!force&&Date.now()-Number(treatmentPlanRegistry.lastFetchedAt||0)<15000)return false;
   try{
-    const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);
+    const keys=[...new Set(patients.flatMap(planRegistryIdentityKeys))];
+    if(!keys.length){
+      treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:Date.now()};
+      return true;
+    }
+    const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{
+      method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({keys})
+    });
     const data=await response.json();
     if(!response.ok)throw new Error(data.error||'تعذر تحميل سجل الخطط');
     treatmentPlanRegistry={
@@ -1249,6 +1256,7 @@ async function savePatient(){
     patients.sort((a,b)=>a.start.localeCompare(b.start));
     applyAutomaticStatusAlert(item,item.status);
   });
+  void refreshTreatmentPlanRegistry(true);
   patientFormSavedFeedback(wasEditing,item);
   resetPatientForm(false);
 }
