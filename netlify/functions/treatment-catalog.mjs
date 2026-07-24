@@ -33,7 +33,7 @@ const DEFAULT_ITEMS = [
   ['cleaning-standard', 'تنظيف أسنان عادي'],
   ['cleaning-gbt', 'تنظيف أسنان GBT'],
   ['other', 'إجراء آخر']
-].map(([id, name]) => ({ id, name, price: '' }));
+].map(([id, name]) => ({ id, name, beforePrice: '', afterPrice: '' }));
 
 async function authUser(request) {
   if (process.env.AUTH_ENABLED !== 'true') return { role: 'admin' };
@@ -55,10 +55,12 @@ async function authUser(request) {
 
 const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map((item, index) => {
   const id = cleanText(item?.id, 50).toLowerCase().replace(/[^a-z0-9_-]/g, '') || `custom-${index + 1}`;
-  const price = item?.price === '' || item?.price === null || item?.price === undefined
+  const cleanPrice = value => value === '' || value === null || value === undefined
     ? ''
-    : Math.min(10_000_000, Math.max(0, Number(item.price) || 0));
-  return { id, name: cleanText(item?.name, 120), price };
+    : Math.min(10_000_000, Math.max(0, Number(value) || 0));
+  const beforePrice = cleanPrice(item?.beforePrice);
+  const afterPrice = cleanPrice(item?.afterPrice ?? item?.price);
+  return { id, name: cleanText(item?.name, 120), beforePrice, afterPrice };
 }).filter(item => item.name);
 
 export default async request => {

@@ -43,6 +43,8 @@ const cleanItem = item => ({
   code: cleanText(item?.code, 50),
   service: cleanText(item?.service, 160),
   priceSource: item?.priceSource === 'manual' ? 'manual' : item?.priceSource === 'catalog' ? 'catalog' : '',
+  beforePriceSource: item?.beforePriceSource === 'manual' ? 'manual' : item?.beforePriceSource === 'catalog' ? 'catalog' : '',
+  afterPriceSource: item?.afterPriceSource === 'manual' ? 'manual' : item?.afterPriceSource === 'catalog' ? 'catalog' : '',
   variant: ['with-prep', 'without-prep'].includes(item?.variant) ? item.variant : '',
   customService: cleanText(item?.customService, 160),
   teeth: (Array.isArray(item?.teeth) ? item.teeth : []).map(String).filter(value => /^[1-4][1-8]$/.test(value)).slice(0, 32),
@@ -79,7 +81,6 @@ const cleanPlan = plan => ({
   clinic: {
     nameAr: cleanText(plan?.clinic?.nameAr, 100),
     nameEn: cleanText(plan?.clinic?.nameEn, 100),
-    mohLicense: cleanText(plan?.clinic?.mohLicense, 50),
     city: cleanText(plan?.clinic?.city, 80),
     address: cleanText(plan?.clinic?.address, 180),
     phone: cleanText(plan?.clinic?.phone, 30)
@@ -112,7 +113,8 @@ const cleanPlan = plan => ({
   noTreatment: cleanText(plan?.noTreatment, 1800),
   risks: Array.isArray(plan?.risks) ? plan.risks.slice(0, 30).map(value => cleanText(value, 180)) : cleanText(plan?.risks, 2500),
   financial: {
-    vatMode: ['auto', 'borne_by_state', 'standard_15', 'exempt'].includes(plan?.financial?.vatMode) ? plan.financial.vatMode : 'auto',
+    vatMode: ['borne_by_state', 'standard_15', 'exempt'].includes(plan?.financial?.vatMode) ? plan.financial.vatMode : 'borne_by_state',
+    vatConfirmed: Boolean(plan?.financial?.vatConfirmed),
     paymentPlan: (Array.isArray(plan?.financial?.paymentPlan) ? plan.financial.paymentPlan : []).slice(0, 20).map(value => ({
       label: cleanText(value?.label, 160),
       amount: cleanNumber(value?.amount)
