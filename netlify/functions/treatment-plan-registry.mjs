@@ -92,7 +92,7 @@ export default async request => {
   if (request.method === 'PUT') {
     let body;
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
-    const status = ['submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(body?.status) ? body.status : '';
+    const status = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(body?.status) ? body.status : '';
     if (!status) return reply({ error: 'Invalid status' }, 400);
     if (['patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(status) && user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
     const keys = identityKeys(body?.patient);
