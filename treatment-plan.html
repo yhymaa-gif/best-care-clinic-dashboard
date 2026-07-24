@@ -27,6 +27,7 @@
     .auth-card h1{margin:0 0 8px;font-size:24px}.auth-card p{margin:0 0 20px;color:var(--ink-2)}
     .primary,.ghost,.danger,.icon-button{border:1px solid var(--rule);border-radius:12px;padding:10px 15px;background:#fff;font-weight:750;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}
     .primary{background:var(--ink);border-color:var(--ink);color:#fff}.primary:hover{background:#173f36;box-shadow:0 8px 20px rgba(38,70,83,.18)}
+    #saveBtn.revision-submit{background:linear-gradient(135deg,#315f85,#1d6f61);border-color:#315f85;box-shadow:0 9px 22px rgba(49,95,133,.25);animation:revisionSubmitGlow 2.5s ease-in-out infinite}@keyframes revisionSubmitGlow{50%{box-shadow:0 11px 27px rgba(29,111,97,.38);transform:translateY(-1px)}}
     .ghost:hover,.icon-button:hover{background:var(--teal-tint);border-color:#acd4ce}.danger{color:#a84432;background:#fff9f7;border-color:#f2cbc1}
     button:active{transform:scale(.98)}button:disabled{cursor:not-allowed;opacity:.5;transform:none}
     .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 18px;background:rgba(250,252,251,.96);border-bottom:1px solid var(--rule);backdrop-filter:blur(15px)}
@@ -291,10 +292,10 @@
           <header class="document-header">
             <div id="docCode" class="doc-code" role="img" aria-label="رمز المستند"></div>
             <div class="clinic-title">
-              <strong>عيادات أفضل عناية للأسنان</strong>
+              <strong>عيادات أفضل عناية الاستشارية للأسنان</strong>
               <span>Best Care Dental Clinics — أبها</span>
             </div>
-            <img class="doc-logo" src="./best-care-logo.png" alt="شعار عيادات أفضل عناية">
+            <img class="doc-logo" src="./best-care-logo.png" alt="شعار عيادات أفضل عناية الاستشارية للأسنان">
           </header>
           <div class="teal-rule"></div>
           <h1 class="doc-title">خطة علاجية وعرض تكلفة تقديري — وإقرار موافقة مستنيرة</h1>
@@ -320,7 +321,7 @@
               <h2 class="section-title">بيانات العيادة والزيارة</h2>
               <div class="field-grid">
                 <label class="field wide">التاريخ والوقت<input id="visitDate" class="edit-field" type="datetime-local"></label>
-                <div class="field wide clinic-general"><span>اسم المنشأة</span><strong>عيادات أفضل عناية للأسنان</strong><small>Best Care Dental Clinics</small></div>
+                <div class="field wide clinic-general"><span>اسم المنشأة</span><strong>عيادات أفضل عناية الاستشارية للأسنان</strong><small>Best Care Dental Clinics</small></div>
               </div>
             </div>
           </section>
@@ -430,8 +431,8 @@
                   <span class="signature-mark">✓</span>
                   <div><h4>اعتماد العيادة</h4><small>يُستكمل بعد موافقة المريض والاعتماد النهائي</small></div>
                 </div>
-                <div class="clinic-seal" role="img" aria-label="ختم معتمد من عيادات أفضل عناية">
-                  <span>عيادات أفضل عناية للأسنان</span>
+                <div class="clinic-seal" role="img" aria-label="ختم معتمد من عيادات أفضل عناية الاستشارية للأسنان">
+                  <span>عيادات أفضل عناية الاستشارية للأسنان</span>
                   <b>معتمد</b>
                   <small>BEST CARE</small>
                 </div>
@@ -517,7 +518,7 @@
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
       meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''},
-      clinic:{nameAr:'عيادات أفضل عناية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
+      clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
       clinical:{diagnosis:DEFAULT_DIAGNOSIS,radiographs:'',notes:''},
@@ -763,7 +764,7 @@
         step.classList.toggle('active',position===index);
         step.classList.toggle('rejected',status==='rejected'&&index===0);
       });
-      const needsDoctorApproval=['draft','rejected'].includes(status);
+      const needsDoctorApproval=status==='draft';
       const doctorHandoffVisible=workflowRole()==='clinic'&&needsDoctorApproval;
       $('doctorHandoffCard').hidden=!doctorHandoffVisible;
       $('sendAdminBtn').disabled=!doctorHandoffVisible||!$('doctorApprovalCheck').checked;
@@ -777,6 +778,10 @@
       const locked=workflowRole()==='clinic'&&['submitted','patient_accepted','approved','approved_signed'].includes(status);
       document.body.classList.toggle('workflow-locked',locked);
       $('paper').classList.toggle('approved',['approved','approved_signed'].includes(status));
+      const isReturnedRevision=workflowRole()==='clinic'&&status==='rejected';
+      $('saveBtn').textContent=isReturnedRevision?'حفظ التعديلات وإرسالها للإدارة':'حفظ الخطة';
+      $('saveBtn').title=isReturnedRevision?'تُحفظ تعديلات الطبيب وتُعاد الخطة معتمدة إلى الإدارة مباشرة':'حفظ الخطة';
+      $('saveBtn').classList.toggle('revision-submit',isReturnedRevision);
       $('saveBtn').disabled=locked;$('addPhaseBtn').disabled=locked;
       $('printBtn').title=['approved','approved_signed'].includes(status)?'طباعة النسخة النهائية المعتمدة':'الطباعة متاحة بعد اعتماد الإدارة وموافقة المريض';
     }
@@ -799,9 +804,11 @@
       cachedSharePdf=null;cachedShareImage=null;cachedShareSignature='';
       resetShareButtonLabels();
       if(workflowRole()==='clinic'){
-        state.meta.status='draft';
-        $('doctorApprovalCheck').checked=false;
-        $('doctorHandoffCard').classList.remove('confirmed');
+        if(state.meta.status!=='rejected'){
+          state.meta.status='draft';
+          $('doctorApprovalCheck').checked=false;
+          $('doctorHandoffCard').classList.remove('confirmed');
+        }
       }
       else if(['patient_accepted','approved','approved_signed','rejected'].includes(state.meta.status)){
         state.meta.status='submitted';state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';
@@ -827,6 +834,10 @@
       return true;
     }
     async function saveDraftPlan(){
+      if(workflowRole()==='clinic'&&state.meta.status==='rejected'){
+        await resubmitRevisedPlan();
+        return;
+      }
       const saved=await savePlan(false);
       if(saved&&workflowRole()==='clinic'&&state.meta.status==='draft'){
         await syncPlanStatusToDashboard('draft');
@@ -862,8 +873,42 @@
         return response.ok;
       }catch{return false}
     }
+    async function resubmitRevisedPlan(){
+      if(workflowRole()!=='clinic'||state.meta.status!=='rejected')return false;
+      collectHeaderFields();
+      const missing=missingFields();
+      if(missing.length){
+        toast('تعذر إعادة الإرسال',`أكمل: ${missing.join('، ')}`);
+        renderProgress();
+        return false;
+      }
+      const previousMeta={...state.meta};
+      const approvalTime=Date.now();
+      state.meta.status='submitted';
+      state.meta.doctorApprovedAt=approvalTime;
+      state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';
+      state.meta.submittedAt=approvalTime;
+      state.meta.patientAcceptedAt=0;
+      state.meta.patientAcceptedBy='';
+      state.meta.approvedAt=0;
+      state.meta.approvedBy='';
+      state.meta.rejectedAt=0;
+      state.meta.rejectedBy='';
+      state.meta.rejectionReason='';
+      state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
+      const saved=await savePlan(true);
+      if(!saved){
+        state.meta=previousMeta;
+        render();
+        return false;
+      }
+      await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);
+      render();
+      toast('تم اعتماد التعديل وإعادته للإدارة','حُفظت تعديلات الطبيب وأُرسلت الخطة إلى الإدارة مباشرة دون طلب تأكيد اعتماد جديد.');
+      return true;
+    }
     async function submitToAdmin(){
-      if(workflowRole()!=='clinic'||!['draft','rejected'].includes(state.meta.status))return;
+      if(workflowRole()!=='clinic'||state.meta.status!=='draft')return;
       if(!$('doctorApprovalCheck').checked){
         toast('يلزم اعتماد الطبيب','فعّل مربع التأكيد بأنك راجعت المسودة واعتمدتها قبل إرسالها إلى الإدارة.');
         $('doctorHandoffCard').scrollIntoView({behavior:'smooth',block:'center'});
@@ -924,14 +969,14 @@
       const phaseHtml=phases.map((phase,index)=>`<section class="sp-phase"><h3><b>${index+1}</b>${escapeHtml(phase.title)}</h3><table><thead><tr><th>الإجراء</th><th>العدد</th><th>قبل الخصم</th><th>بعد الخصم</th></tr></thead><tbody>${phase.items.map(item=>`<tr><td>${escapeHtml(item.name)}</td><td>${item.qty}</td><td>${escapeHtml(item.before)}</td><td>${escapeHtml(item.after)}</td></tr>`).join('')}</tbody></table></section>`).join('');
       const body=`<div class="share-plan" dir="rtl">
         <div class="sp-stamp">مسودة<br/>للاطلاع</div>
-        <header><div class="sp-mark">BC</div><div><h1>عيادات أفضل عناية للأسنان</h1><p>خطة علاجية وعرض تكلفة تقديري</p></div><div class="sp-meta">رقم الخطة: ${escapeHtml(state.meta.planNo)}<br/>${dateFormatter.format(dates.issued)}</div></header>
+        <header><div class="sp-mark">BC</div><div><h1>عيادات أفضل عناية الاستشارية للأسنان</h1><p>خطة علاجية وعرض تكلفة تقديري</p></div><div class="sp-meta">رقم الخطة: ${escapeHtml(state.meta.planNo)}<br/>${dateFormatter.format(dates.issued)}</div></header>
         <div class="sp-patient"><span><b>المريض</b>${escapeHtml(state.patient.fullName||'—')}</span><span><b>رقم الملف</b>${escapeHtml(state.patient.fileNo||'—')}</span><span><b>الجوال</b>${escapeHtml(state.patient.mobile||'—')}</span></div>
         <section class="sp-clinical"><h2>التشخيص والفحوصات</h2><p>${escapeHtml(DEFAULT_DIAGNOSIS)}</p><p><b>الإجراءات التشخيصية:</b> تم استكمال الإجراءات التشخيصية اللازمة للحالة ومراجعة النتائج، وقد تم أخذ كل ما يلزم منها وشرح التشخيص والخطة العلاجية المقترحة للمريض بصورة واضحة.</p>${state.clinical.radiographs?`<p><b>الفحوصات والصور:</b> ${escapeHtml(state.clinical.radiographs)}</p>`:''}</section>
         <main>${phaseHtml}</main>
         <section class="sp-finance"><span><b>قبل الخصم</b>${formatMoney(total.before)}</span><span><b>قيمة الخصم</b>${formatMoney(total.saving)}</span><span><b>بعد الخصم</b>${formatMoney(total.after)}</span><span class="net"><b>الصافي المستحق</b>${formatMoney(total.net)}</span></section>
         <section class="sp-terms"><b>تنبيه مهم:</b> هذه مسودة للاطلاع وليست فاتورة أو اعتمادًا نهائيًا. النسخة النهائية المعتمدة تصدر من إدارة العيادة. العرض ساري ${Number(state.meta.validityDays||15)} يومًا، وقد تتغير المراحل أو المدة بحسب المستجدات السريرية. أي إجراء غير مدرج يوثّق ويسعّر بصورة مستقلة بعد موافقة المريض.</section>
         <section class="sp-consent"><b>إقرار مختصر:</b> تم شرح طبيعة الإجراءات وأهدافها والفوائد والمخاطر والبدائل، وأُتيحت للمريض فرصة طرح الأسئلة. تختلف الاستجابة للعلاج ولا يمكن ضمان نتيجة نهائية، ويلزم الالتزام بالتعليمات والمراجعات الدورية.</section>
-        <footer><span>بيانات صحية شخصية — تعامل بسرية</span><span>عيادات أفضل عناية للأسنان · أبها</span></footer>
+        <footer><span>بيانات صحية شخصية — تعامل بسرية</span><span>عيادات أفضل عناية الاستشارية للأسنان · أبها</span></footer>
       </div>`;
       const css=`*{box-sizing:border-box}.share-plan{position:relative;width:1120px;padding:38px 46px 34px;background:#fff;color:#203a31;font-family:Tahoma,Arial,sans-serif}.share-plan header{display:grid;grid-template-columns:84px 1fr auto;gap:18px;align-items:center;border-bottom:6px solid #287b5a;padding-bottom:16px}.sp-mark{display:grid;place-items:center;width:76px;height:76px;border-radius:22px;background:#236746;color:#fff;font-size:30px;font-weight:900}.share-plan h1{margin:0;color:#1f6547;font-size:31px}.share-plan header p{margin:5px 0 0;color:#6a7e75;font-size:17px}.sp-meta{text-align:left;direction:rtl;font-size:14px;line-height:1.8;color:#596f66}.sp-patient{display:grid;grid-template-columns:2fr 1fr 1.2fr;gap:10px;margin:16px 0}.sp-patient span,.sp-finance span{padding:11px 13px;border:1px solid #cfe0d8;border-radius:12px;background:#f7fbf9;font-size:16px}.sp-patient b,.sp-finance b{display:block;margin-bottom:4px;color:#527064;font-size:12px}.sp-clinical,.sp-terms,.sp-consent{margin-top:11px;padding:12px 14px;border:1px solid #d4e3dc;border-radius:12px;background:#fbfdfc}.sp-clinical h2{margin:0 0 6px;color:#21684a;font-size:18px}.sp-clinical p,.sp-terms,.sp-consent{margin:4px 0;font-size:13px;line-height:1.65}.sp-phase{margin-top:12px;border:1px solid #bfd7cc;border-radius:12px;overflow:hidden}.sp-phase h3{display:flex;align-items:center;gap:9px;margin:0;padding:9px 12px;background:#eaf5f0;color:#235f48;font-size:16px}.sp-phase h3 b{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#2b8060;color:#fff}.sp-phase table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}.sp-phase th,.sp-phase td{padding:7px 9px;border-bottom:1px solid #e1ebe6;text-align:right}.sp-phase th{background:#f7faf8;color:#47665a}.sp-phase th:first-child{width:48%}.sp-finance{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px}.sp-finance .net{background:#dff2e8;border-color:#78b697;color:#164f38}.sp-terms{border-color:#edcf83;background:#fff9e7;color:#634b13}.sp-consent{background:#f4f8f6}.share-plan footer{display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:2px solid #d4e3dc;color:#697d75;font-size:11px}.sp-stamp{position:absolute;z-index:4;top:120px;left:55px;display:grid;place-items:center;width:138px;height:138px;border:9px double rgba(174,35,46,.58);border-radius:50%;color:rgba(174,35,46,.68);font-size:25px;font-weight:900;line-height:1.2;text-align:center;transform:rotate(-14deg)}`;
       return{body,css,rowCount:phases.reduce((sum,phase)=>sum+phase.items.length,0),phaseCount:phases.length};
@@ -1013,7 +1058,7 @@
       try{
         if(navigator.canShare?.({files:[preparedShareFile]})){
           document.documentElement.dataset.pdfShareState=`sharing-${preparedShareFormat}:${preparedShareFile.size}`;
-          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[preparedShareFile]});
+          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية الاستشارية للأسنان',files:[preparedShareFile]});
           document.documentElement.dataset.pdfShareState='shared';closeShareReady();
           toast('تم فتح المشاركة','اختر واتساب ثم جهة اتصال المريض.');
         }else{
