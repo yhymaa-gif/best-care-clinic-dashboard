@@ -162,16 +162,18 @@
     .copy-badge{display:inline-block;padding:1mm 2mm;border:1px solid var(--rule);border-radius:99px;color:var(--ink);font-weight:750}
     .print-only{display:none}
     .floating-plan-actions{position:fixed;left:16px;bottom:16px;z-index:90;display:grid;gap:9px;justify-items:start}
-    .floating-plan-action{position:relative;display:grid;place-items:center;width:54px;height:54px;padding:0;border:1px solid transparent;border-radius:18px;color:#fff;font-weight:900;box-shadow:0 14px 34px rgba(21,56,45,.22);transition:transform .2s ease,box-shadow .2s ease,opacity .2s ease}
+    .floating-plan-action{position:relative;display:grid;place-items:center;width:56px;height:56px;padding:0;border:1px solid transparent;border-radius:50%;color:#fff;font-weight:900;box-shadow:0 14px 34px rgba(21,56,45,.22);transition:transform .2s ease,box-shadow .2s ease,opacity .2s ease}
     .floating-plan-action:hover{transform:translateY(-3px);box-shadow:0 18px 42px rgba(21,56,45,.28)}
-    .floating-plan-action .action-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:rgba(255,255,255,.18);font-size:19px}
+    .floating-plan-action .action-icon{position:relative;z-index:1;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.14);font-size:19px}
     .floating-plan-action .action-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     .floating-plan-action::after{content:attr(aria-label);position:absolute;left:calc(100% + 9px);bottom:7px;width:max-content;max-width:220px;padding:7px 10px;border-radius:9px;background:#173d31;color:#fff;font-size:11px;line-height:1.4;opacity:0;pointer-events:none;transform:translateX(-4px);transition:.18s ease}
     .floating-plan-action:hover::after,.floating-plan-action:focus-visible::after{opacity:1;transform:translateX(0)}
-    .floating-plan-action.whatsapp{background:linear-gradient(135deg,#18a75c,#08783f);border-color:#08783f}
+    .floating-plan-action.whatsapp{background:linear-gradient(135deg,#25d366,#08783f);border-color:#08783f}
+    .floating-plan-action.whatsapp::before{content:"";position:absolute;inset:-5px;border:2px solid rgba(37,211,102,.36);border-radius:50%;animation:chat-pulse 2.2s ease-out infinite}
     .floating-plan-action.pdf{background:linear-gradient(135deg,#315f85,#244c6c);border-color:#244c6c}
     .floating-plan-action[hidden]{display:none}
     .floating-plan-action:disabled{display:none}
+    @keyframes chat-pulse{0%{transform:scale(.82);opacity:.7}72%,100%{transform:scale(1.22);opacity:0}}
     .empty-state{padding:9mm;text-align:center;color:var(--ink-2)}
     .missing-banner{display:none;margin-bottom:3mm;padding:2mm 3mm;border:1px solid #efc3b8;background:#fff7f4;color:#9b4937;border-radius:3mm;font-size:8pt}.missing-banner.show{display:block}
     .toast-wrap{position:fixed;left:18px;bottom:18px;z-index:200;display:grid;gap:8px}.toast{max-width:330px;padding:12px 15px;border-radius:14px;background:var(--ink);color:#fff;box-shadow:0 15px 40px rgba(24,50,46,.24);animation:toast-in .25s ease}
