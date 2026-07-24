@@ -121,7 +121,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 .plan-row-btn{display:inline-flex!important;align-items:center;gap:5px;border-color:#9bcac2!important;background:#edf8f5!important;color:#1d6f63!important;font-weight:900}.plan-row-btn::before{content:"✦";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:#2a9d8f;color:#fff}.plan-row-btn:hover{background:#dff2ee!important;box-shadow:0 8px 18px rgba(42,157,143,.18)!important}
 @media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:minmax(0,1fr) 142px}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.payment-free{grid-column:1/-1}.completion-choice-grid{grid-template-columns:1fr}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 .auth-methods{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.auth-methods label{display:flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #d5e8df;border-radius:10px;background:#f8fcfa;font-size:13px}.auth-methods input{accent-color:#1d8059}.auth-card #authEmailLabel[hidden],.auth-card #authPhoneLabel[hidden]{display:none}
-.catalog-modal-card{width:min(900px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 145px 145px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-head{display:block}}
+.catalog-modal-card{width:min(900px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 145px 145px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}.catalog-warning{padding:9px 11px;border-radius:11px;background:#fff7dc!important;color:#785b0b!important}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-head{display:block}}
 .view-clinic #treatmentCatalogBtn{display:none}
 .clinic-only{display:none}
 body.view-clinic .clinic-only{display:block}
@@ -162,6 +162,23 @@ body.view-clinic .current-card{border-color:#b5d3e5;box-shadow:0 18px 40px rgba(
 body.view-clinic .current-card.stage-idle{background:linear-gradient(145deg,#f3faff,#eaf4fa)}
 body.view-clinic .upcoming-panel{border-color:#c4dbe9;background:linear-gradient(160deg,#fbfdff,#edf6fb)}
 body.view-clinic .sync-badge.live{background:#e5f2fa;border-color:#a8c9dd;color:#315f85}
+body.view-clinic .stats{gap:7px;margin:8px 0}
+body.view-clinic .stats .stat{min-height:66px;padding:8px 10px;border-top-width:3px;border-radius:13px;grid-template-columns:minmax(0,1fr) 32px;column-gap:6px}
+body.view-clinic .stats .stat small{font-size:10px}
+body.view-clinic .stats .stat strong{margin-top:1px;font-size:21px}
+body.view-clinic .stats .stat-icon{width:32px;height:32px;border-radius:10px;font-size:16px}
+body.view-clinic.screen-mode .header,
+body.view-clinic.screen-mode .view-switch,
+body.view-clinic.screen-mode .view-identity,
+body.view-clinic.screen-mode .stats,
+body.view-clinic.screen-mode #doctorWorkspace,
+body.view-clinic.screen-mode #adminWorkspace,
+body.view-clinic.screen-mode .app-footer{display:none!important}
+body.view-clinic.screen-mode .alert-row.show{display:flex!important;margin:4px 0 8px}
+body.view-clinic.screen-mode #flowStage{margin:0;min-height:calc(100vh - 20px)}
+body.view-clinic.screen-mode .focus-grid{min-height:calc(100vh - 28px)}
+body.view-clinic.screen-mode .current-card{min-height:calc(100vh - 44px)}
+body.view-clinic.screen-mode .queue-card .treatment-plan-badge{box-shadow:0 0 0 2px rgba(255,255,255,.55)}
 body.view-admin{background:radial-gradient(circle at 90% 0,#e8f6ef 0,transparent 34%),linear-gradient(180deg,#f8fcfa,#eef6f2)}
 body.view-admin header{border-top-color:#176344;box-shadow:0 14px 35px rgba(23,99,68,.1)}
 body.view-admin #pageTitle{color:#174f3a}
@@ -534,21 +551,55 @@ function switchClinic(clinicId){
   location.href=`${location.pathname}?${params.toString()}`;
 }
 let treatmentCatalog=[];
+const DEFAULT_TREATMENT_CATALOG=[
+  ['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
+  ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
+  ['remove-post','إزالة وتد'],['place-post','تركيب وتد'],['remove-crown','إزالة تاج'],
+  ['recement-crown','إعادة تثبيت تاج'],['ceramic-crown','تركيب سيراميك تاج'],
+  ['ceramic-veneer','تركيب سيراميك فينير'],['implant-crown','تركيبة زراعة'],
+  ['implant-surgery','زراعة — الجزء الجراحي'],['extraction','خلع الأسنان'],
+  ['temporary','تركيب مؤقت'],['smile-design','تصميم ابتسامة'],
+  ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
+  ['cleaning-gbt','تنظيف أسنان GBT'],['other','إجراء آخر']
+].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
+const treatmentCatalogLocalKey=()=>`bestcare_treatment_catalog_${ACTIVE_CLINIC_ID}`;
+function localTreatmentCatalog(){
+  try{
+    const items=JSON.parse(localStorage.getItem(treatmentCatalogLocalKey())||'null');
+    return Array.isArray(items)&&items.length?items.map(item=>({...item})):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
+  }catch{return DEFAULT_TREATMENT_CATALOG.map(item=>({...item}))}
+}
 const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function renderTreatmentCatalog(){
   const list=$('treatmentCatalogList');
   list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="قبل الخصم" aria-label="السعر قبل الخصم"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="بعد الخصم" aria-label="السعر بعد الخصم"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
 }
 async function openTreatmentCatalog(){
-  els.settingsMenu.classList.remove('open');$('treatmentCatalogError').textContent='جارٍ تحميل القائمة…';openModal('treatmentCatalogModal');
-  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');treatmentCatalog=Array.isArray(data.items)?data.items.map(item=>({...item})):[];$('treatmentCatalogError').textContent='';renderTreatmentCatalog()}catch(error){$('treatmentCatalogError').textContent=error.message}
+  els.settingsMenu.classList.remove('open');
+  treatmentCatalog=localTreatmentCatalog();
+  $('treatmentCatalogError').textContent='جارٍ مزامنة القائمة المركزية…';
+  renderTreatmentCatalog();
+  openModal('treatmentCatalogModal');
+  try{
+    const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');
+    treatmentCatalog=Array.isArray(data.items)&&data.items.length?data.items.map(item=>({...item})):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
+    localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));
+    $('treatmentCatalogError').textContent='';$('treatmentCatalogError').classList.remove('catalog-warning');
+    renderTreatmentCatalog();
+  }catch(error){
+    $('treatmentCatalogError').textContent='تم فتح قائمة الإجراءات المتاحة ويمكنك المتابعة؛ ستُعاد محاولة المزامنة المركزية عند الحفظ.';$('treatmentCatalogError').classList.add('catalog-warning');
+    console.warn('Treatment catalog fallback used',error);
+  }
 }
 function collectTreatmentCatalog(){
   document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);delete item.price});
 }
 async function saveTreatmentCatalog(){
-  collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').textContent='جارٍ الحفظ…';
-  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');treatmentCatalog=data.items||items;$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والأسعار','ستظهر تلقائيًا داخل الخطط العلاجية لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent=error.message}
+  collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').classList.remove('catalog-warning');$('treatmentCatalogError').textContent='جارٍ الحفظ…';
+  localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(items));
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');treatmentCatalog=data.items||items;localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والأسعار','حُفظت القائمة مركزيًا وستظهر تلقائيًا داخل الخطط العلاجية لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent='حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
 }
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
 function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(Date.now()-authLastActivity>=3*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}if(Date.now()-authKeepAliveAt>10*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
