@@ -36,8 +36,9 @@
     .workflow-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:#eaf1f6;color:#42677f;font-size:12px;font-weight:900}.workflow-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.patient_accepted{background:#e8efff;color:#315f98}.workflow-pill.approved,.workflow-pill.approved_signed{background:#dff3e8;color:#176445}.workflow-pill.rejected{background:#fde8e8;color:#a32e35}
     .workflow-track{display:flex;align-items:center;justify-content:center;gap:0;padding:11px 18px;background:#fff;border-bottom:1px solid var(--rule)}.workflow-step{position:relative;display:flex;align-items:center;gap:8px;min-width:155px;color:#8a9a94;font-size:11px;font-weight:900}.workflow-step:not(:last-child)::after{content:"";width:38px;height:2px;margin-inline:9px;background:#dce6e1}.workflow-step i{display:grid;place-items:center;width:28px;height:28px;border:1px solid #d2dfd9;border-radius:50%;background:#f8fbf9;font-style:normal}.workflow-step.done{color:#277655}.workflow-step.done i{background:#dff3e8;border-color:#9dceb1}.workflow-step.active{color:#8b6208}.workflow-step.active i{background:#fff1cc;border-color:#e2c16a;box-shadow:0 0 0 4px rgba(226,193,106,.18)}.workflow-step.rejected{color:#a32e35}.workflow-step.rejected i{background:#fde8e8;border-color:#e2a7ab}
     #sendAdminBtn{background:linear-gradient(135deg,#315f85,#244c6c);color:#fff;border-color:#315f85;box-shadow:0 9px 22px rgba(49,95,133,.26);font-weight:900}#sendAdminBtn:not([hidden]){animation:doctorApprovalGlow 2.4s ease-in-out infinite}@keyframes doctorApprovalGlow{50%{box-shadow:0 10px 28px rgba(49,95,133,.42);transform:translateY(-1px)}}#patientAcceptedBtn{background:linear-gradient(135deg,#3b73b5,#2b5588);color:#fff;border:1px solid #315f98;border-radius:12px;padding:10px 15px;box-shadow:0 8px 20px rgba(49,95,152,.22);font-weight:900}#patientAcceptedBtn:not([hidden]){animation:doctorApprovalGlow 2.4s ease-in-out infinite}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b;box-shadow:0 7px 17px rgba(22,112,75,.2)}#rejectPlanBtn{background:#a9363e;color:#fff;border-color:#a9363e}.share-draft-buttons{display:inline-flex;align-items:center;padding:4px;border:1px solid #93d7b0;border-radius:14px;background:#ecfbf2}.share-draft-buttons[hidden]{display:none}.share-draft-buttons #whatsappPlanBtn{position:relative;display:inline-flex;align-items:center;gap:9px;overflow:visible;padding:8px 13px;background:linear-gradient(135deg,#12a45b,#08783f);color:#fff;border-color:#078047;box-shadow:0 8px 22px rgba(13,159,85,.27);font-weight:900}.whatsapp-draft-icon{position:relative;display:grid;place-items:center;width:28px;height:28px;border:2px solid rgba(255,255,255,.94);border-radius:50%;background:#14ad60;box-shadow:0 0 0 4px rgba(255,255,255,.12);animation:whatsappSwing 2.1s ease-in-out infinite;transform-origin:50% 10%}.whatsapp-draft-icon svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}@keyframes whatsappSwing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg) scale(1.05)}}#whatsappPlanBtn:hover .whatsapp-draft-icon{animation-duration:.9s}
+    .doctor-handoff[hidden]{display:none}.doctor-handoff{display:grid;grid-template-columns:auto minmax(220px,1fr) minmax(270px,1.2fr) auto;align-items:center;gap:14px;width:min(1180px,calc(100% - 30px));margin:14px auto 0;padding:15px 17px;border:1px solid #a9c9df;border-radius:18px;background:linear-gradient(135deg,#f7fbff,#eaf4fb);box-shadow:0 12px 30px rgba(41,95,135,.11)}.doctor-handoff-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(145deg,#315f85,#244c6c);color:#fff;font-size:22px;box-shadow:0 8px 19px rgba(49,95,133,.2)}.doctor-handoff-copy strong,.doctor-handoff-copy small{display:block}.doctor-handoff-copy strong{color:#244c6c;font-size:15px}.doctor-handoff-copy small{margin-top:4px;color:#5b7485;font-size:12px;line-height:1.5}.doctor-confirmation{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;border:1px solid #c6d9e6;border-radius:13px;background:#fff;color:#315f85;font-size:12px;font-weight:900;line-height:1.5;cursor:pointer}.doctor-confirmation input{flex:0 0 auto;width:21px;height:21px;margin-top:1px;accent-color:#315f85}.doctor-handoff.confirmed{border-color:#4a9573;background:linear-gradient(135deg,#f4fcf7,#e4f5eb)}.doctor-handoff.confirmed .doctor-handoff-icon{background:linear-gradient(145deg,#26835b,#176442)}.doctor-handoff #sendAdminBtn{min-height:48px;padding-inline:18px;white-space:nowrap}
     .share-ready-modal[hidden],.share-image-preview[hidden],.share-pdf-preview[hidden]{display:none}.share-ready-modal{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:18px;background:rgba(20,43,38,.64);backdrop-filter:blur(7px)}.share-ready-card{position:relative;width:min(620px,100%);max-height:94vh;overflow:auto;padding:22px;background:#fff;border:1px solid #cfe0d8;border-radius:24px;box-shadow:0 28px 80px rgba(14,42,35,.3)}.share-ready-close{position:absolute;top:12px;left:12px;display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid #d8e4df;border-radius:50%;background:#fff;font-size:22px}.share-ready-head{display:flex;align-items:center;gap:13px;padding-inline-end:42px}.share-ready-icon{display:grid;place-items:center;flex:0 0 52px;height:52px;border-radius:16px;background:#fff4ce;font-size:26px}.share-ready-head h2{margin:0 0 3px;font-size:21px}.share-ready-head p{margin:0;color:var(--ink-2);font-size:13px}.share-image-preview{display:block;width:100%;max-height:58vh;object-fit:contain;margin:17px 0;border:1px solid #d7e3de;border-radius:16px;background:#eef6f2}.share-pdf-preview{display:grid;place-items:center;min-height:180px;margin:17px 0;border:1px solid #e4cf8f;border-radius:16px;background:#fff9e9;color:#8a6312;font-size:50px;font-weight:900}.share-ready-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px}.share-ready-actions .share-action{background:#157347;border-color:#157347;color:#fff;box-shadow:0 8px 22px rgba(21,115,71,.2)}
-    @media(max-width:820px){.workflow-track{justify-content:flex-start;overflow-x:auto}.workflow-step{min-width:max-content}.share-draft-buttons{width:100%}.share-draft-buttons button{flex:1}.share-ready-card{padding:18px 14px}.share-ready-actions{grid-template-columns:1fr}.share-image-preview{max-height:55vh}}
+    @media(max-width:820px){.workflow-track{justify-content:flex-start;overflow-x:auto}.workflow-step{min-width:max-content}.doctor-handoff{grid-template-columns:48px 1fr}.doctor-confirmation,#sendAdminBtn{grid-column:1/-1}.doctor-handoff #sendAdminBtn{width:100%}.share-draft-buttons{width:100%}.share-draft-buttons button{flex:1}.share-ready-card{padding:18px 14px}.share-ready-actions{grid-template-columns:1fr}.share-image-preview{max-height:55vh}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
     .draft-stamp{display:none;position:absolute;z-index:12;top:43mm;left:18mm;width:34mm;height:34mm;border:3px double rgba(176,34,45,.62);border-radius:50%;place-items:center;text-align:center;color:rgba(176,34,45,.68);font-size:12pt;font-weight:900;line-height:1.2;transform:rotate(-14deg);letter-spacing:.03em;pointer-events:none}
     body.draft-pdf .draft-stamp{display:grid}body.draft-pdf .paper::before{content:"مسودة للاطلاع";color:rgba(176,34,45,.035)}
@@ -212,7 +213,6 @@
             <span>مشاركة PDF عبر واتساب</span>
           </button>
         </span>
-        <button id="sendAdminBtn" type="button" hidden>✓ اعتماد الطبيب وإرسال للإدارة</button>
         <button id="patientAcceptedBtn" type="button" hidden>✓ تأكيد موافقة وتوقيع المريض</button>
         <button id="approvePlanBtn" type="button" hidden>اعتماد نهائي للخطة الموقعة</button>
         <button id="rejectPlanBtn" type="button" hidden>إعادة للعيادة / غير معتمدة</button>
@@ -220,11 +220,23 @@
       </div>
     </nav>
     <div id="workflowTrack" class="workflow-track no-print" role="group" aria-label="حالة اعتماد الخطة">
-      <span class="workflow-step" data-workflow-step="draft"><i>1</i><b>مسودة العيادة</b></span>
-      <span class="workflow-step" data-workflow-step="submitted"><i>2</i><b>مرسلة للإدارة</b></span>
-      <span class="workflow-step" data-workflow-step="patient_accepted"><i>3</i><b>وافق ووقّع</b></span>
-      <span class="workflow-step" data-workflow-step="approved_signed"><i>4</i><b>معتمدة وموقعة</b></span>
+      <span class="workflow-step" data-workflow-step="draft"><i>1</i><b>إعداد المسودة</b></span>
+      <span class="workflow-step" data-workflow-step="submitted"><i>2</i><b>اعتماد الطبيب</b></span>
+      <span class="workflow-step" data-workflow-step="patient_accepted"><i>3</i><b>موافقة المريض</b></span>
+      <span class="workflow-step" data-workflow-step="approved_signed"><i>4</i><b>الاعتماد النهائي</b></span>
     </div>
+    <section id="doctorHandoffCard" class="doctor-handoff no-print" hidden aria-labelledby="doctorHandoffTitle">
+      <span class="doctor-handoff-icon" aria-hidden="true">✓</span>
+      <div class="doctor-handoff-copy">
+        <strong id="doctorHandoffTitle">اعتماد المسودة من الطبيب</strong>
+        <small>أكمل بيانات الخطة، ثم أكد مراجعتك قبل إرسالها إلى الإدارة لاستكمال الأسعار وموافقة المريض.</small>
+      </div>
+      <label class="doctor-confirmation">
+        <input id="doctorApprovalCheck" type="checkbox">
+        <span>أؤكد أن بيانات المسودة اكتملت وراجعتها واعتمدتها كطبيب لإرسالها إلى الإدارة.</span>
+      </label>
+      <button id="sendAdminBtn" type="button" disabled>اعتماد الطبيب وإرسال للإدارة</button>
+    </section>
 
     <section class="workspace-hero no-print" aria-labelledby="heroTitle">
       <div class="hero-copy">
@@ -738,7 +750,7 @@
     function workflowRole(){return viewMode==='clinic'?'clinic':'admin'}
     function renderWorkflow(){
       const status=['draft','submitted','patient_accepted','approved','approved_signed','rejected'].includes(state.meta.status)?state.meta.status:'draft';
-      const labels={draft:'مسودة لدى العيادة',submitted:'بانتظار إرسال المسودة وموافقة المريض',patient_accepted:'المريض وافق ووقّع — بانتظار اعتماد الإدارة',approved:'معتمدة نهائيًا',approved_signed:'خطة معتمدة وموقعة',rejected:'غير معتمدة — تحتاج تعديل'};
+      const labels={draft:'مسودة غير معتمدة لدى الطبيب',submitted:'اعتمدها الطبيب — بانتظار استكمال الإدارة',patient_accepted:'المريض وافق ووقّع — بانتظار الاعتماد النهائي',approved:'معتمدة نهائيًا',approved_signed:'خطة معتمدة وموقعة',rejected:'أعادتها الإدارة — تحتاج تعديل الطبيب'};
       $('workflowStatus').textContent=labels[status];$('workflowStatus').className=`workflow-pill ${status}`;
       const progressStatus=status==='approved'?'approved_signed':status;
       const order=['draft','submitted','patient_accepted','approved_signed'],position=order.indexOf(progressStatus);
@@ -747,7 +759,9 @@
         step.classList.toggle('active',position===index);
         step.classList.toggle('rejected',status==='rejected'&&index===0);
       });
-      $('sendAdminBtn').hidden=workflowRole()!=='clinic'||!['draft','rejected'].includes(status);
+      const doctorHandoffVisible=workflowRole()==='clinic'&&['draft','rejected'].includes(status);
+      $('doctorHandoffCard').hidden=!doctorHandoffVisible;
+      $('sendAdminBtn').disabled=!doctorHandoffVisible||!$('doctorApprovalCheck').checked;
       $('patientAcceptedBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
       $('approvePlanBtn').hidden=workflowRole()!=='admin'||status!=='patient_accepted';
       $('rejectPlanBtn').hidden=workflowRole()!=='admin'||!['submitted','patient_accepted'].includes(status);
@@ -776,7 +790,11 @@
       collectHeaderFields();
       cachedSharePdf=null;cachedShareImage=null;cachedShareSignature='';
       resetShareButtonLabels();
-      if(workflowRole()==='clinic')state.meta.status='draft';
+      if(workflowRole()==='clinic'){
+        state.meta.status='draft';
+        $('doctorApprovalCheck').checked=false;
+        $('doctorHandoffCard').classList.remove('confirmed');
+      }
       else if(['patient_accepted','approved','approved_signed','rejected'].includes(state.meta.status)){
         state.meta.status='submitted';state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';
       }
@@ -837,12 +855,18 @@
       }catch{return false}
     }
     async function submitToAdmin(){
+      if(workflowRole()!=='clinic'||!['draft','rejected'].includes(state.meta.status))return;
+      if(!$('doctorApprovalCheck').checked){
+        toast('يلزم اعتماد الطبيب','فعّل مربع التأكيد بأنك راجعت المسودة واعتمدتها قبل إرسالها إلى الإدارة.');
+        $('doctorHandoffCard').scrollIntoView({behavior:'smooth',block:'center'});
+        return;
+      }
       collectHeaderFields();const missing=missingFields();
       if(missing.length){toast('تعذر الإرسال',`أكمل: ${missing.join('، ')}`);renderProgress();return}
       const approvalTime=Date.now();
       state.meta.status='submitted';state.meta.doctorApprovedAt=approvalTime;state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';state.meta.submittedAt=approvalTime;state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
       const saved=await savePlan(true);if(!saved){state.meta.status='draft';render();return}
-      await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);render();toast('اعتمد الطبيب الخطة وأُرسلت للإدارة','ستظهر في قائمة الإدارة وجميع مواعيد المريض القادمة بحالة «خطة مرسلة».');
+      await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);render();toast('تم اعتماد المسودة وإرسالها','اعتمد الطبيب المسودة، وأصبحت الآن لدى الإدارة لاستكمال الإجراءات.');
     }
     async function confirmPatientAcceptance(){
       if(workflowRole()!=='admin'||state.meta.status!=='submitted')return;
@@ -1132,6 +1156,11 @@
       $('compactEntryBtn').addEventListener('click',toggleCompactEntry);
       $('sidePreviewBtn').addEventListener('click',togglePreview);
       $('sendAdminBtn').addEventListener('click',submitToAdmin);$('patientAcceptedBtn').addEventListener('click',confirmPatientAcceptance);$('approvePlanBtn').addEventListener('click',approvePlan);$('rejectPlanBtn').addEventListener('click',rejectPlan);$('whatsappPlanBtn').addEventListener('click',()=>sendWhatsAppDraft('pdf'));
+      $('doctorApprovalCheck').addEventListener('change',()=>{
+        const confirmed=$('doctorApprovalCheck').checked;
+        $('doctorHandoffCard').classList.toggle('confirmed',confirmed);
+        $('sendAdminBtn').disabled=!confirmed;
+      });
       $('closeShareReadyBtn').addEventListener('click',closeShareReady);$('shareReadyModal').addEventListener('click',event=>{if(event.target===$('shareReadyModal'))closeShareReady()});$('sharePreparedBtn').addEventListener('click',sharePreparedDraft);$('downloadPreparedBtn').addEventListener('click',()=>preparedShareFile&&downloadShareFile(preparedShareFile,preparedShareFormat));
       $('printBtn').addEventListener('click',printPlan);
       $('vatMode').addEventListener('change',()=>{$('vatConfirmed').checked=false;$('vatControl').classList.remove('confirmed');state.financial.vatConfirmed=false;markDirty();toast('يلزم تأكيد الضريبة','غيّرت وضع الضريبة؛ راجع أهلية المريض ثم فعّل مربع التأكيد.')});

@@ -13,8 +13,6 @@ const store = getStore({ name: 'clinic-treatment-plan-registry', consistency: 's
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
-const normalizeName = value => cleanText(value, 120).normalize('NFKC').toLowerCase()
-  .replace(/[\u064B-\u065F\u0670]/g, '').replace(/\s+/g, ' ');
 const normalizePhone = value => {
   const digits = cleanText(value, 20).replace(/\D/g, '');
   if (/^9665\d{8}$/.test(digits)) return `0${digits.slice(3)}`;
@@ -24,11 +22,9 @@ const normalizePhone = value => {
 const identityKeys = patient => {
   const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/\s+/g, '');
   const mobile = normalizePhone(patient?.mobile ?? patient?.phone);
-  const name = normalizeName(patient?.fullName ?? patient?.name);
   return [...new Set([
     file ? `file:${file}` : '',
-    mobile ? `phone:${mobile}` : '',
-    name ? `name:${name}` : ''
+    mobile ? `phone:${mobile}` : ''
   ].filter(Boolean))];
 };
 
@@ -72,7 +68,7 @@ export default async request => {
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
     const requestedKeys = [...new Set((Array.isArray(body?.keys) ? body.keys : [])
       .map(value => cleanText(value, 180))
-      .filter(value => /^(file|phone|name):/.test(value))
+      .filter(value => /^(file|phone):/.test(value))
       .slice(0, 500))];
     if (!requestedKeys.length) return reply({ clinicId, records: {}, aliases: {}, revision: 0, updatedAt: 0 });
     const data = await store.get(key, { type: 'json', consistency: 'strong' }) || {};
