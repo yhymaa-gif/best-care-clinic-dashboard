@@ -261,7 +261,7 @@ const API='/.netlify/functions/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
 const PUSH_API='/.netlify/functions/push-subscription';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.16-plan-registry-one-page-share';
+const DASHBOARD_BUILD='7.17-print-stamp-notification-toggle';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -382,7 +382,8 @@ function updateNotificationsButton(){
   }
   button.classList.toggle('notification-enabled',systemNotificationsEnabled());
   button.classList.toggle('notification-denied','Notification' in window&&Notification.permission==='denied');
-  button.textContent=systemNotificationsEnabled()?(lang==='en'?'🔔 System notifications enabled':'🔔 إشعارات النظام مفعلة'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
+  button.textContent=systemNotificationsEnabled()?(lang==='en'?'🔕 Disable system notifications':'🔕 إيقاف إشعارات النظام'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
+  button.title=systemNotificationsEnabled()?(lang==='en'?'Stop Best Care alerts on this device.':'إيقاف تنبيهات أفضل عناية على هذا الجهاز.'):(lang==='en'?'Enable Best Care alerts on this device.':'تفعيل تنبيهات أفضل عناية على هذا الجهاز.');
 }
 async function requestSystemNotifications(){
   if(IS_DEPLOY_PREVIEW){
@@ -404,6 +405,28 @@ async function requestSystemNotifications(){
     updateNotificationsButton();
     toast(lang==='en'?'Notifications not enabled':'لم يتم تفعيل الإشعارات',lang==='en'?'Allow notifications from the browser or device settings.':'اسمح بالإشعارات من إعدادات المتصفح أو الجهاز.');
   }
+}
+async function disableSystemNotifications(){
+  const wasEnabled=localStorage.getItem('bestcare_system_notifications')==='enabled';
+  try{
+    if('serviceWorker' in navigator&&'PushManager' in window){
+      const registration=await navigator.serviceWorker.ready;
+      const subscription=await registration.pushManager.getSubscription();
+      if(subscription){
+        const endpoint=subscription.endpoint;
+        await subscription.unsubscribe();
+        await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint})}).catch(()=>{});
+      }
+    }
+  }catch(error){console.warn('Push unsubscribe failed',error)}
+  localStorage.removeItem('bestcare_push_registered');
+  localStorage.removeItem('bestcare_system_notifications');
+  updateNotificationsButton();
+  if(wasEnabled)toast(lang==='en'?'Notifications disabled':'تم إيقاف الإشعارات',lang==='en'?'Best Care alerts have been stopped on this device.':'توقفت تنبيهات أفضل عناية على هذا الجهاز.');
+}
+async function toggleSystemNotifications(){
+  if(localStorage.getItem('bestcare_system_notifications')==='enabled')await disableSystemNotifications();
+  else await requestSystemNotifications();
 }
 async function showSystemNotification(event){
   if(!event||!systemNotificationsEnabled())return;
@@ -1697,7 +1720,7 @@ $('imageOcrBtn').addEventListener('click',openOcrImporter);
 $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
-$('notificationsBtn').addEventListener('click',requestSystemNotifications);
+$('notificationsBtn').addEventListener('click',toggleSystemNotifications);
 $('treatmentCatalogBtn').addEventListener('click',openTreatmentCatalog);
 $('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();treatmentCatalog.push({id:`custom-${Date.now()}`,name:'',beforePrice:'',afterPrice:''});renderTreatmentCatalog();$('treatmentCatalogList').lastElementChild?.querySelector('[data-catalog-name]')?.focus()});
 $('treatmentCatalogList').addEventListener('click',event=>{const button=event.target.closest('[data-catalog-delete]');if(!button)return;collectTreatmentCatalog();treatmentCatalog.splice(Number(button.dataset.catalogDelete),1);renderTreatmentCatalog()});
