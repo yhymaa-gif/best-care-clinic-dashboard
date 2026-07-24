@@ -390,6 +390,7 @@
   </main>
   <div id="toastWrap" class="toast-wrap no-print" aria-live="polite"></div>
 
+  <script src="./assets/vendor/html2canvas.min.js"></script>
   <script>
   (() => {
     'use strict';
@@ -815,18 +816,21 @@
     }
     async function renderSharePdf(){
       const {body,css,rowCount,phaseCount}=shareSheetParts();
-      const measure=document.createElement('div');measure.style.cssText='position:fixed;right:-20000px;top:0;width:1120px;visibility:hidden;z-index:-1';measure.innerHTML=`<style>${css}</style>${body}`;document.body.appendChild(measure);
-      const naturalHeight=Math.max(1,measure.querySelector('.share-plan').scrollHeight);measure.remove();
-      const availableHeight=1640,scale=Math.min(1,availableHeight/naturalHeight);
-      const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1754"><rect width="1240" height="1754" fill="#eef6f2"/><foreignObject x="60" y="50" width="1120" height="1654"><div xmlns="http://www.w3.org/1999/xhtml" style="width:1120px;transform:scale(${scale});transform-origin:top center">${`<style>${css}</style>${body}`}</div></foreignObject></svg>`;
-      const svgUrl=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+      if(typeof html2canvas!=='function')throw new Error('تعذر تحميل أداة إنشاء PDF');
+      const sheet=document.createElement('div');
+      sheet.style.cssText='position:fixed;right:-20000px;top:0;width:1240px;height:1754px;padding:50px 60px;background:#eef6f2;overflow:hidden;z-index:-1;pointer-events:none';
+      sheet.innerHTML=`<style>${css}</style><div class="share-scale" style="width:1120px;transform-origin:top center">${body}</div>`;
+      document.body.appendChild(sheet);
       try{
-        const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('تعذر رسم صفحة الخطة'));img.src=svgUrl});
-        const canvas=document.createElement('canvas');canvas.width=1240;canvas.height=1754;const context=canvas.getContext('2d');context.fillStyle='#eef6f2';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0);
+        const naturalHeight=Math.max(1,sheet.querySelector('.share-plan').scrollHeight);
+        const scale=Math.min(1,1640/naturalHeight);
+        sheet.querySelector('.share-scale').style.transform=`scale(${scale})`;
+        await document.fonts?.ready;
+        const canvas=await html2canvas(sheet,{backgroundColor:'#eef6f2',scale:1,useCORS:true,logging:false,width:1240,height:1754});
         const jpeg=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.94));if(!jpeg)throw new Error('تعذر إنشاء صورة الخطة');
         const pdf=pdfFromJpeg(new Uint8Array(await jpeg.arrayBuffer()),canvas.width,canvas.height);
         return new File([pdf],`خطة-${state.patient.fileNo||state.meta.planNo}-مسودة.pdf`,{type:'application/pdf'});
-      }finally{URL.revokeObjectURL(svgUrl)}
+      }finally{sheet.remove()}
     }
     async function sendWhatsAppDraft(){
       collectHeaderFields();
