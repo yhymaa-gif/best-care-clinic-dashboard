@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -54,8 +54,8 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 .form-mode{display:inline-flex;align-items:center;min-height:34px;padding:6px 11px;border-radius:999px;background:#eaf6ef;color:#176344;border:1px solid #c8e3d3;font-weight:900;white-space:nowrap}
 .quick-add.editing{border-top-color:var(--orange);box-shadow:0 14px 36px rgba(228,122,35,.14)}
 .quick-add.editing .form-mode{background:#fff1df;color:#9c4f11;border-color:#f1c894}
-.quick-add-grid{display:grid;grid-template-columns:1.15fr .9fr .72fr .72fr 1.4fr .95fr;gap:9px;align-items:end}
-.quick-add.editing .quick-add-grid{grid-template-columns:1.05fr .78fr .92fr .68fr .68fr 1.25fr .9fr}
+.quick-add-grid{display:grid;grid-template-columns:1.1fr .75fr .95fr .72fr .72fr 1.25fr .9fr;gap:9px;align-items:end}
+.quick-add.editing .quick-add-grid{grid-template-columns:1fr .72fr .88fr .88fr .65fr .65fr 1.15fr .82fr}
 .appointment-date-field[hidden]{display:none!important}
 .appointment-date-field input{font-weight:800;color:var(--navy)}
 .quick-add-grid label{display:block;margin:0 0 5px;color:var(--muted);font-size:12px;font-weight:900}
@@ -77,6 +77,7 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 .timeline-chip strong,.timeline-chip small{display:block}.timeline-chip strong{font-size:13px}.timeline-chip small{margin-top:3px;color:var(--muted);font-size:11px}.timeline-chip.is-current{background:#fff;border-color:#63b188;box-shadow:0 7px 18px rgba(25,111,76,.16);transform:translateY(-2px)}.timeline-chip.is-done{opacity:.55}.timeline-chip.is-cancel{opacity:.42;text-decoration:line-through}
 .timer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:16px}.timer-box{padding:12px 14px;border-radius:15px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.82)}.timer-box small{display:block;color:#48665a;font-weight:900}.timer-box strong{display:block;margin-top:5px;font-size:clamp(25px,3vw,42px);direction:ltr;color:#164f3b}.timer-box.actual strong{color:#215a70}.actual-hint{font-size:11px;color:var(--muted);margin-top:3px}
 .patient-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.patient-actions button{background:rgba(255,255,255,.78);border-color:rgba(36,91,69,.18);backdrop-filter:blur(5px)}.patient-actions .finish{background:#164f3b;color:#fff;border-color:#164f3b}
+.plan-status-badge{display:inline-flex;align-items:center;gap:5px;margin-inline-start:7px;padding:5px 9px;border-radius:999px;border:1px solid transparent;font-size:10px;font-weight:950;line-height:1.2;vertical-align:middle;white-space:nowrap;box-shadow:0 3px 9px rgba(33,76,59,.08)}.plan-status-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px rgba(255,255,255,.7)}.plan-status-draft{background:#edf3f8;border-color:#bfd0de;color:#42677f}.plan-status-submitted{background:#fff4d8;border-color:#efd089;color:#8a5a00}.plan-status-approved{background:#e2f5ea;border-color:#acd8bd;color:#176445}.plan-status-rejected{background:#fde8e9;border-color:#edb6ba;color:#a32e35}.queue-name .plan-status-badge{font-size:9px;padding:3px 6px}.current-plan-mark{display:inline-flex;margin-inline-start:8px}
 .upcoming-panel{padding:18px;overflow:hidden}.upcoming-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}.upcoming-head h2{font-size:19px;margin:0;color:var(--navy)}.upcoming-head small{color:var(--muted)}.upcoming-stack{display:grid;gap:10px;align-content:start;max-height:min(640px,calc(100vh - 250px));overflow-y:auto;padding-inline-end:5px;scrollbar-width:thin;scrollbar-color:rgba(31,96,72,.24) transparent}.upcoming-stack::-webkit-scrollbar{width:6px}.upcoming-stack::-webkit-scrollbar-thumb{background:rgba(31,96,72,.24);border-radius:999px}
 .queue-card{--queue-height:150px;--queue-indent:8%;--queue-font:27px;--queue-padding:16px;--queue-progress:0%;position:relative;overflow:hidden;border-radius:17px;border:1px solid #cee1d8;padding:var(--queue-padding);min-height:var(--queue-height);margin-inline-start:var(--queue-indent);transition:transform .48s cubic-bezier(.2,.8,.2,1),min-height .48s ease,margin .48s ease,padding .48s ease,box-shadow .48s ease,background .48s ease;background:linear-gradient(135deg,#e5f6ed,#fff 67%,#d1ebdf);animation:queueEnter .45s ease both}.queue-card::after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;left:-52px;bottom:-70px;background:rgba(255,255,255,.48)}
 .queue-card.queue-1{box-shadow:0 15px 34px rgba(32,124,86,.16)}.queue-card.proximity-far{background:linear-gradient(135deg,#edf5f1,#fff 65%,#dcebe4);border-color:#d6e5de}.queue-card.proximity-soon{background:linear-gradient(135deg,#e6f5d5,#fff 63%,#cae7a7);border-color:#bedb9d}.queue-card.proximity-near{background:linear-gradient(135deg,#fff1bd,#fff 62%,#f0d36f);border-color:#dfc04f;box-shadow:0 15px 34px rgba(202,159,35,.18)}.queue-card.proximity-now{background:linear-gradient(135deg,#ffd9b3,#fff5e8 62%,#f7ae64);border-color:#e68b35;box-shadow:0 17px 38px rgba(217,112,29,.22)}.queue-card.status-asks-delay{background:linear-gradient(135deg,#fff0b8,#fff9e9 62%,#f3ca58);border-color:#d8a91f}.queue-card.status-asks-delay .queue-position::before{content:"؟ ";font-size:18px;color:#9f6e00}
@@ -112,14 +113,17 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 #patientRows tr{transition:background .25s ease,box-shadow .25s ease}#patientRows tr.row-status-waiting{background:transparent}#patientRows tr.row-status-arrived{background:#dcf7ea}#patientRows tr.row-status-early_arrival{background:#e3f0ff}#patientRows tr.row-status-active{background:#dceff5}#patientRows tr.row-status-done{background:#dcf4e3}#patientRows tr.row-status-late{background:#fff0df}#patientRows tr.row-status-cancel{background:#fde1e5}#patientRows tr.row-status-left{background:#ecefed;color:#66716c}#patientRows tr.row-status-asks_delay{background:#fff6cc}#patientRows tr:hover{box-shadow:inset 4px 0 0 rgba(24,100,70,.22);filter:saturate(1.05)}#patientRows tr td:first-child{border-inline-start:5px solid transparent}#patientRows tr.row-status-arrived td:first-child{border-color:#2aa878}#patientRows tr.row-status-early_arrival td:first-child{border-color:#4b94d6}#patientRows tr.row-status-active td:first-child{border-color:#3c9dbc}#patientRows tr.row-status-done td:first-child{border-color:#31a35a}#patientRows tr.row-status-late td:first-child{border-color:#e4892e}#patientRows tr.row-status-cancel td:first-child{border-color:#d94759}#patientRows tr.row-status-left td:first-child{border-color:#7f8d87}#patientRows tr.row-status-asks_delay td:first-child{border-color:#caa21b}.status-select{font-weight:900;border-width:1px;background:rgba(255,255,255,.72)}
 .payment-panel{padding:20px;margin-bottom:10px;border-color:#9dd9b7;background:linear-gradient(135deg,#eaf9f0,#fff)}.payment-panel-head{display:flex;align-items:center;justify-content:space-between;gap:18px}.payment-panel-head h2{margin:3px 0 5px;color:#14583b}.payment-panel-head p{margin:0;color:var(--muted)}.payment-kicker{font-size:11px;font-weight:900;color:#28835d}.payment-panel-head>strong{display:grid;place-items:center;width:52px;height:52px;border-radius:16px;background:#1a885a;color:#fff;font-size:24px}.payment-queue{display:grid;gap:9px;margin-top:16px}.payment-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px;padding:14px 16px;border:1px solid #a9ddbe;border-radius:14px;background:#fff;box-shadow:0 8px 20px rgba(25,112,75,.08)}.payment-item.acknowledged{opacity:.66;background:#f2f7f4}.payment-item strong,.payment-item small{display:block}.payment-item strong{color:#14603f}.payment-item small{margin-top:4px;color:var(--muted)}.payment-item button{background:#1a885a;color:#fff;border-color:#1a885a}.payment-empty{padding:25px;text-align:center;color:var(--muted)}.payment-modal-card{max-width:520px}.payment-check{display:flex;align-items:center;gap:12px;margin:18px 0;padding:15px;border:1px solid #b8ddc8;border-radius:14px;background:#eff9f3;cursor:pointer}.payment-check input{width:21px;height:21px}.payment-check strong,.payment-check small{display:block}.payment-check small{margin-top:3px;color:var(--muted)}.payment-action-field{margin:14px 0}.payment-action-field label{display:block;margin-bottom:7px;font-weight:900}.payment-action-field input{width:100%}
 .payment-item p{margin:5px 0;color:#245d47;font-weight:800}.payment-item.received{border-color:#e3ba55;background:#fffaf0}.payment-item.completed{border-color:#42aa70;background:#eaf9f0}.payment-done{color:#1a885a;font-weight:900}.payment-received{color:#9a6d08;font-weight:900}.payment-actions-inline{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.payment-row-badge{display:flex;width:max-content;align-items:center;gap:4px;margin-top:6px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;white-space:nowrap}.payment-row-badge.requested{background:#fff0c9;color:#8b6200}.payment-row-badge.received{background:#e9f1ff;color:#28659b}.payment-row-badge.completed{background:#d9f5e4;color:#147744;box-shadow:0 0 0 1px #79c99a}.role-modal-card{max-width:760px;text-align:center}.role-modal-card>p{margin:5px auto 20px;max-width:590px;color:var(--muted)}.role-options{display:grid;grid-template-columns:1fr 1fr;gap:14px}.role-option{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center;padding:20px;text-align:start;border:1px solid #b9d7c8;border-radius:18px;background:linear-gradient(145deg,#fff,#f2f9f5);color:var(--navy);box-shadow:0 12px 28px rgba(23,79,58,.08)}.role-option:hover{transform:translateY(-2px);border-color:#4d9b78}.role-option .role-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:17px;background:#174f3a;color:#fff;font-size:27px}.role-option strong,.role-option small{display:block}.role-option strong{font-size:17px}.role-option small{margin-top:5px;color:var(--muted);line-height:1.55}.role-note{margin-top:16px!important;font-size:12px}.queue-card.status-arrived{border-color:#33b484;background:linear-gradient(145deg,#e4faef,#c8f2df)}.queue-card.status-early-arrival{border-color:#599fde;background:linear-gradient(145deg,#ebf5ff,#d9eaff)}.current-visual-icon.arrival-pulse{background:#1fa874;color:#fff;animation:arrivalIconPulse 1.15s ease-in-out infinite}@keyframes arrivalIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(31,168,116,.42)}50%{transform:scale(1.12);box-shadow:0 0 0 13px rgba(31,168,116,0)}}
-.payment-modal-card{width:min(760px,100%)}.payment-action-field{margin-top:14px;padding:14px;border:1px solid #c5dfd0;border-radius:16px;background:#f7fbf9}.payment-action-field>label{margin-bottom:11px;color:#175f42}.payment-procedure-list{display:grid;gap:8px}.payment-procedure-row{display:grid;grid-template-columns:minmax(0,1fr) 90px 92px;align-items:center;gap:9px;padding:10px 11px;border:1px solid #d4e6dc;border-radius:12px;background:#fff}.payment-procedure-name,.payment-free{display:flex;align-items:center;gap:8px;font-weight:900}.payment-procedure-name input,.payment-free input{width:18px;height:18px;flex:0 0 18px}.payment-quantity{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:5px}.payment-quantity small{color:var(--muted);font-weight:900}.payment-quantity input{width:58px;min-height:36px;padding:6px;text-align:center}.payment-free{justify-content:center;padding:7px;border-radius:9px;background:#eef8f2;color:#176643}.payment-other-row{grid-template-columns:auto minmax(120px,1fr) 90px 92px}.payment-other-row .payment-other-input{width:100%;min-height:38px}.payment-discount-field{display:grid;gap:6px;margin-top:11px}.payment-discount-field label{color:#5c4a12;font-size:12px;font-weight:900}.payment-discount-field input{width:100%;background:#fffdf3;border-color:#ead99d}.payment-items-summary{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.payment-item-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:#e5f4eb;color:#176441;font-size:11px;font-weight:900}.payment-item-chip.free{background:#fff3c9;color:#876000}.payment-discount-note{color:#936b00!important}.notification-enabled{color:#176441!important;background:#e3f5eb!important}.notification-enabled::after{content:" ✓"}.notification-denied{color:#a32f42!important;background:#fdebed!important}
+.payment-modal-card{width:min(820px,100%)}.payment-action-field{margin-top:14px;padding:14px;border:1px solid #c5dfd0;border-radius:16px;background:#f7fbf9}.payment-action-field>label{margin-bottom:11px;color:#175f42}.payment-procedure-list{display:grid;gap:8px}.payment-procedure-row{display:grid;grid-template-columns:minmax(0,1fr) 142px 92px;align-items:center;gap:9px;padding:10px 11px;border:1px solid #d4e6dc;border-radius:12px;background:#fff}.payment-procedure-name,.payment-free{display:flex;align-items:center;gap:8px;font-weight:900}.payment-procedure-name input,.payment-free input{width:18px;height:18px;flex:0 0 18px}.payment-quantity{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:7px}.payment-quantity small{color:var(--muted);font-weight:900}.payment-stepper{display:grid;grid-template-columns:38px 48px 38px;align-items:center;direction:ltr;border:1px solid #b9d6c7;border-radius:11px;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(26,97,66,.08)}.payment-stepper button{display:grid;place-items:center;width:38px;height:38px;padding:0;border:0;border-radius:0;background:#e7f5ed;color:#176443;font-size:22px;font-weight:950;line-height:1}.payment-stepper button:hover{background:#cfeadb}.payment-stepper input{width:48px!important;min-height:38px!important;padding:5px!important;border:0!important;border-inline:1px solid #d6e7de!important;border-radius:0!important;text-align:center;font-weight:950;color:#163f31;background:#fff;pointer-events:none}.payment-free{justify-content:center;padding:7px;border-radius:9px;background:#eef8f2;color:#176643}.payment-other-row{grid-template-columns:auto minmax(120px,1fr) 142px 92px}.payment-other-row .payment-other-input{width:100%;min-height:38px}.payment-discount-field{display:grid;gap:6px;margin-top:11px}.payment-discount-field label{color:#5c4a12;font-size:12px;font-weight:900}.payment-discount-field input{width:100%;background:#fffdf3;border-color:#ead99d}.payment-items-summary{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.payment-item-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:#e5f4eb;color:#176441;font-size:11px;font-weight:900}.payment-item-chip.free{background:#fff3c9;color:#876000}.payment-discount-note{color:#936b00!important}.notification-enabled{color:#176441!important;background:#e3f5eb!important}.notification-enabled::after{content:" ✓"}.notification-denied{color:#a32f42!important;background:#fdebed!important}
 .review-modal-card{max-width:620px}.review-modal-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}.review-modal-head>span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#dcf7e9;color:#128451;font-size:24px}.review-modal-head h3,.review-modal-head p{margin:0}.review-modal-head p{margin-top:4px;color:var(--muted);font-size:12px}.review-field{display:grid;gap:6px;margin:13px 0}.review-field label{font-size:12px;font-weight:900;color:#325c4b}.review-field input,.review-field textarea{width:100%}.review-field textarea{min-height:150px;line-height:1.8}.review-link-preview{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#f0f8f4;color:#266049;font-size:11px}.review-link-preview a{color:#147b50;font-weight:900}.review-send{background:#16a563;color:#fff;border-color:#16a563}.review-send:hover{background:#0e8d52;color:#fff}.review-row-btn{position:relative;isolation:isolate;display:inline-flex!important;align-items:center;gap:7px;overflow:visible!important;padding:6px 11px!important;border-color:#d9b13f!important;background:linear-gradient(135deg,#fffdf4,#fff0ac)!important;color:#6e5200!important;box-shadow:0 0 0 1px rgba(222,179,54,.24),0 0 15px rgba(226,185,62,.38)!important;animation:reviewGoldGlow 1.9s ease-in-out infinite}.review-row-btn:hover{transform:translateY(-1px) scale(1.04);background:linear-gradient(135deg,#fff9dc,#ffe582)!important;box-shadow:0 0 0 2px rgba(222,179,54,.28),0 0 25px rgba(226,185,62,.58)!important}.whatsapp-gold-mark{position:relative;z-index:1;display:grid;place-items:center;width:25px;height:25px;transform-origin:50% 12%;color:#d6a514;filter:drop-shadow(0 0 5px rgba(231,192,71,.78));animation:reviewSwing 1.35s ease-in-out infinite}.whatsapp-gold-mark svg{display:block;width:25px;height:25px;fill:currentColor}.review-row-btn .review-star{position:absolute;z-index:3;color:#ffd53e;font-size:11px;line-height:1;pointer-events:none;text-shadow:0 0 5px #fff,0 0 10px #ffd940;animation:reviewStar 1.7s ease-in-out infinite}.review-row-btn .star-one{inset-inline-start:1px;top:-9px}.review-row-btn .star-two{inset-inline-start:22px;top:-12px;animation-delay:.5s}.review-row-btn .star-three{inset-inline-start:42px;top:-7px;animation-delay:1s}@keyframes reviewGoldGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}@keyframes reviewSwing{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}@keyframes reviewStar{0%,100%{opacity:.2;transform:translateY(2px) scale(.6) rotate(0deg)}45%{opacity:1;transform:translateY(-3px) scale(1.4) rotate(145deg)}70%{opacity:.7;transform:translateY(-1px) scale(.95) rotate(230deg)}}@media(prefers-reduced-motion:reduce){.review-row-btn,.whatsapp-gold-mark,.review-row-btn .review-star{animation:none}}
-@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:1fr 1fr}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
+.plan-row-btn{display:inline-flex!important;align-items:center;gap:5px;border-color:#9bcac2!important;background:#edf8f5!important;color:#1d6f63!important;font-weight:900}.plan-row-btn::before{content:"✦";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:#2a9d8f;color:#fff}.plan-row-btn:hover{background:#dff2ee!important;box-shadow:0 8px 18px rgba(42,157,143,.18)!important}
+@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:minmax(0,1fr) 142px}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.payment-free{grid-column:1/-1}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 .auth-methods{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.auth-methods label{display:flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #d5e8df;border-radius:10px;background:#f8fcfa;font-size:13px}.auth-methods input{accent-color:#1d8059}.auth-card #authEmailLabel[hidden],.auth-card #authPhoneLabel[hidden]{display:none}
+.catalog-modal-card{width:min(900px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 145px 145px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-head{display:block}}
+.view-clinic #treatmentCatalogBtn{display:none}
 </style>
 </head>
 <body class="auth-checking">
-<div id="authGate" aria-live="polite"><div class="auth-card"><div class="auth-brand"><span class="auth-brand-mark">BC</span><div><h2>تسجيل الدخول</h2><p>أدخل اسم المستخدم وكلمة المرور للوصول الآمن إلى لوحة أفضل عناية.</p></div></div><div id="authRequestStep"><label>اسم المستخدم<input id="authUsername" autocomplete="username" maxlength="48" value="bestcare"></label><label>كلمة المرور<input id="authPassword" type="password" autocomplete="current-password" placeholder="أدخل كلمة المرور"></label><button id="authRequestBtn" class="primary" type="button">دخول</button></div><div id="authVerifyStep" hidden><input id="authCode" type="hidden"><button id="authVerifyBtn" type="button" hidden></button><button id="authBackBtn" type="button" hidden></button></div><p id="authError" class="auth-error"></p></div></div>
+<div id="authGate" aria-live="polite"><div class="auth-card"><div class="auth-brand"><span class="auth-brand-mark">BC</span><div><h2>تسجيل الدخول</h2><p>أدخل اسم المستخدم وكلمة المرور للوصول الآمن إلى لوحة أفضل عناية.</p></div></div><div id="authRequestStep"><label>اسم المستخدم<input id="authUsername" type="text" autocomplete="username" maxlength="48" value="bestcare"></label><label>كلمة المرور<input id="authPassword" type="password" autocomplete="current-password" placeholder="أدخل كلمة المرور"></label><button id="authRequestBtn" class="primary" type="button">دخول</button></div><div id="authVerifyStep" hidden><input id="authCode" type="hidden"><button id="authVerifyBtn" type="button" hidden></button><button id="authBackBtn" type="button" hidden></button></div><p id="authError" class="auth-error"></p></div></div>
 <div class="app">
 <header class="card header">
   <div>
@@ -127,20 +131,21 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
     <div class="toolbar hide-screen">
       <input id="datePicker" type="date" aria-label="التاريخ">
       <button id="syncBadge" class="sync-badge connecting" type="button">جارٍ الاتصال</button>
-      <button id="bulkBtn" class="primary">تحديث قائمة اليوم</button>
-      <button id="addBtn">إضافة مريض</button>
-      <button id="screenBtn" class="dark">وضع الشاشة</button>
+      <button id="bulkBtn" class="primary" type="button">تحديث قائمة اليوم</button>
+      <button id="addBtn" type="button">إضافة مريض</button>
+      <button id="screenBtn" class="dark" type="button">وضع الشاشة</button>
       <button id="installBtn" type="button" hidden>تثبيت التطبيق</button>
-      <button id="langBtn">English</button>
-      <div class="settings"><button id="settingsBtn">الإعدادات ▾</button><div id="settingsMenu" class="settings-menu">
-        <button id="iosInstallGuideBtn">📱 تثبيت التطبيق على iPhone</button>
-        <button id="imageOcrBtn">📷 قراءة صورة المواعيد</button><input id="imageOcrInput" type="file" accept="image/jpeg,image/png,image/webp,image/bmp" hidden>
-        <button id="importBtn">📥 استيراد CSV / Excel</button><input id="csvInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
-        <button id="exportBtn">📤 تصدير CSV</button>
+      <button id="langBtn" type="button">English</button>
+      <div class="settings"><button id="settingsBtn" type="button">الإعدادات ▾</button><div id="settingsMenu" class="settings-menu">
+        <button id="iosInstallGuideBtn" type="button">📱 تثبيت التطبيق على iPhone</button>
+        <button id="imageOcrBtn" type="button">📷 قراءة صورة المواعيد</button><input id="imageOcrInput" type="file" accept="image/jpeg,image/png,image/webp,image/bmp" hidden>
+        <button id="importBtn" type="button">📥 استيراد CSV / Excel</button><input id="csvInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
+        <button id="exportBtn" type="button">📤 تصدير CSV</button>
         <button id="notificationsBtn" type="button">🔔 تفعيل إشعارات النظام</button>
+        <button id="treatmentCatalogBtn" type="button">🧾 إجراءات وأسعار الخطط العلاجية</button>
         <button id="usersBtn" type="button">👤 إدارة مستخدمي النظام</button>
-        <button id="syncTestBtn">🧪 اختبار المزامنة</button>
-        <button id="clearBtn" class="danger">🗑 مسح قائمة اليوم</button>
+        <button id="syncTestBtn" type="button">🧪 اختبار المزامنة</button>
+        <button id="clearBtn" class="danger" type="button">🗑 مسح قائمة اليوم</button>
       </div></div>
     </div>
   </div>
@@ -162,7 +167,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   <div id="currentCard" class="card current-card stage-idle">
     <div class="current-card-head"><span id="currentLabel" class="label">المريض الحالي</span><span id="currentVisualIcon" class="current-visual-icon" aria-hidden="true">○</span></div>
     <div id="currentName" class="patient-name">لا يوجد الآن</div>
-    <div id="timeline" class="timeline-strip" aria-label="الخط الزمني للمرضى"></div>
+    <section id="timeline" class="timeline-strip" aria-label="الخط الزمني للمرضى"></section>
     <div id="currentMeta" class="patient-meta">—</div>
     <div id="currentStatusNotice" class="current-status-notice"><span class="status-notice-icon">⌛</span><div><strong id="currentStatusTitle">بانتظار بدء العلاج</strong><small id="currentStatusText">سيبدأ العداد عند وصول المريض</small></div><b id="waitingTimer">--:--:--</b></div>
     <div class="timer-grid">
@@ -187,12 +192,13 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
     <span id="patientFormMode" class="form-mode">إضافة</span>
   </div>
   <div class="quick-add-grid">
-    <div><label for="fName">الاسم الأول</label><input id="fName" autocomplete="off" placeholder="اسم المريض"></div>
-    <div><label for="fFile">رقم الملف</label><input id="fFile" inputmode="numeric" autocomplete="off" placeholder="رقم الملف"></div>
+    <div><label for="fName">الاسم الأول</label><input id="fName" type="text" autocomplete="off" placeholder="اسم المريض"></div>
+    <div><label for="fFile">رقم الملف</label><input id="fFile" type="text" inputmode="numeric" autocomplete="off" placeholder="رقم الملف"></div>
+    <div><label for="fPhone">رقم الجوال</label><input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="05xxxxxxxx"></div>
     <div id="appointmentDateField" class="appointment-date-field" hidden><label id="appointmentDateLabel" for="fDate">تاريخ الموعد</label><input id="fDate" type="date"></div>
     <div><label for="fStart">وقت البداية</label><input id="fStart" type="time"></div>
     <div><label for="fEnd">وقت النهاية</label><input id="fEnd" type="time"></div>
-    <div class="procedure-field"><label for="fProcedure">الإجراء العلاجي</label><input id="fProcedure" autocomplete="off" placeholder="مثال: مراجعة، كشف جديد"></div>
+    <div class="procedure-field"><label for="fProcedure">الإجراء العلاجي</label><input id="fProcedure" type="text" autocomplete="off" placeholder="مثال: مراجعة، كشف جديد"></div>
     <div><label for="fStatus">الحالة</label><select id="fStatus"><option value="waiting">بانتظار الموعد</option><option value="active">قيد العلاج</option><option value="done">مكتمل</option><option value="late">متأخر</option><option value="cancel">ملغي</option></select></div>
   </div>
   <div class="quick-add-actions">
@@ -203,32 +209,33 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 </details>
 
 <section id="adminWorkspace" class="main main-clean admin-only">
-  <details class="card collapsible" open><summary>قائمة المرضى اليومية</summary><div class="section-head"><div id="statusLegend" class="status-legend"></div><div class="filters hide-screen"><input id="searchInput" placeholder="بحث بالاسم أو رقم الملف"><select id="filterStatus"><option value="">كل الحالات</option></select></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>الحالة</th><th class="hide-screen">إجراء</th></tr></thead><tbody id="patientRows"></tbody></table></div></details>
+  <details class="card collapsible" open><summary>قائمة المرضى اليومية</summary><div class="section-head"><div id="statusLegend" class="status-legend"></div><div class="filters hide-screen"><input id="searchInput" type="search" placeholder="بحث بالاسم أو رقم الملف"><select id="filterStatus"><option value="">كل الحالات</option></select></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>الحالة</th><th class="hide-screen">إجراء</th></tr></thead><tbody id="patientRows"></tbody></table></div></details>
   <textarea id="notes" hidden aria-hidden="true"></textarea>
 </section>
 <footer class="app-footer"><span class="footer-mark" aria-hidden="true">BC</span><span id="developerRights">جميع الحقوق محفوظة — تطوير يحيى هادي</span></footer>
 </div>
-<button id="exitScreenBtn" class="exit-full">⤢ إلغاء ملء الشاشة</button>
+<button id="exitScreenBtn" class="exit-full" type="button">⤢ إلغاء ملء الشاشة</button>
 <input id="hiddenCsv" type="file" hidden>
-<div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary">حفظ القائمة</button></div></div></div>
+<div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button type="button" data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary" type="button">حفظ القائمة</button></div></div></div>
 <div id="alertModal" class="modal"><div class="modal-card alert-modal-card" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle"><div class="alert-modal-head"><h3 id="alertModalTitle">🔔 إرسال تنبيه تعديل</h3><p>اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.</p></div><div class="alert-modal-body"><label for="alertMessageInput">رسالة التنبيه</label><textarea id="alertMessageInput" maxlength="220" placeholder="مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة"></textarea><div class="alert-preview"><span aria-hidden="true">💡</span><span>يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.</span></div></div><div class="modal-actions"><button type="button" data-close="alertModal">إغلاق</button><button id="clearAlertBtn" type="button" class="danger alert-clear" hidden>إلغاء التنبيه الحالي</button><button id="sendAlertBtn" type="button" class="alert-send">نشر التنبيه</button></div></div></div>
-<div id="usersModal" class="modal"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="usersModalTitle"><h3 id="usersModalTitle">إضافة مستخدم للنظام</h3><p>يتم الدخول باسم المستخدم ورقم الجوال عبر رمز تحقق لمرة واحدة.</p><div class="grid"><label>اسم المستخدم<input id="newUsername" autocomplete="off" maxlength="48"></label><label>الاسم الظاهر<input id="newDisplayName" autocomplete="off" maxlength="80"></label><label>رقم الجوال<input id="newPhone" inputmode="tel" placeholder="05xxxxxxxx"></label><label>الدور<select id="newRole"><option value="clinic">العيادة</option><option value="admin">الإدارة</option></select></label><label class="full">رقم العيادة (اختياري)<input id="newClinicId" placeholder="clinic-1"></label></div><p id="usersError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="usersModal">إلغاء</button><button id="saveUserBtn" type="button" class="primary">حفظ المستخدم</button></div></div></div>
-<div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle"><h3 id="paymentModalTitle">إكمال العلاج وإجراء الدفع</h3><p id="paymentPatientText">اختر ما إذا كان المريض يحتاج إجراءً للدفع.</p><label class="payment-check"><input id="paymentRequiredCheck" type="checkbox"><span><strong>يوجد أمر دفع</strong><small>اختر الإجراءات والعدد، وحدد المجاني أو الخصم إن وجد</small></span></label><div id="paymentActionField" class="payment-action-field" hidden><label id="paymentItemsLabel">إجراءات أمر الدفع</label><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" maxlength="100" placeholder="اكتب الإجراء الآخر"><label class="payment-quantity"><small>العدد</small><input id="paymentOtherQuantity" type="number" min="1" max="99" value="1"></label><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div><div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج</button></div></div></div>
-<div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
+<div id="usersModal" class="modal"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="usersModalTitle"><h3 id="usersModalTitle">إضافة مستخدم للنظام</h3><p>يتم الدخول باسم المستخدم ورقم الجوال عبر رمز تحقق لمرة واحدة.</p><div class="grid"><label>اسم المستخدم<input id="newUsername" type="text" autocomplete="off" maxlength="48"></label><label>الاسم الظاهر<input id="newDisplayName" type="text" autocomplete="off" maxlength="80"></label><label>رقم الجوال<input id="newPhone" type="tel" inputmode="tel" placeholder="05xxxxxxxx"></label><label>الدور<select id="newRole"><option value="clinic">العيادة</option><option value="admin">الإدارة</option></select></label><label class="full">رقم العيادة (اختياري)<input id="newClinicId" type="text" placeholder="clinic-1"></label></div><p id="usersError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="usersModal">إلغاء</button><button id="saveUserBtn" type="button" class="primary">حفظ المستخدم</button></div></div></div>
+<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">إجراءات وأسعار الخطط العلاجية</h3><p>عدّل الاسم والسعر قبل الخصم وبعده مرة واحدة؛ ستظهر القيم تلقائيًا في خطط هذه العيادة.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">الأسعار اختيارية. أي سعر تعدّله الإدارة يدويًا داخل خطة محددة يبقى محفوظًا ولا يستبدله الكتالوج.</div><div class="catalog-columns"><span>اسم الإجراء</span><span>قبل الخصم</span><span>بعد الخصم</span><span></span></div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث الخطط</button></div></div></div>
+<div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle"><h3 id="paymentModalTitle">إكمال العلاج وإجراء الدفع</h3><p id="paymentPatientText">اختر ما إذا كان المريض يحتاج إجراءً للدفع.</p><label class="payment-check"><input id="paymentRequiredCheck" type="checkbox"><span><strong>يوجد أمر دفع</strong><small>اختر الإجراءات والعدد، وحدد المجاني أو الخصم إن وجد</small></span></label><div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div><div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج</button></div></div></div>
+<div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
 <div id="roleModal" class="modal role-modal"><div class="modal-card role-modal-card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle"><h3 id="roleModalTitle">حدد مهمتك لفتح الصفحة المناسبة</h3><p id="roleModalHelp">يمكنك تغيير المهمة في أي وقت من الشريط العلوي.</p><div class="role-options"><button type="button" class="role-option" data-role-view="admin"><span class="role-icon">🗓️</span><span><strong id="adminRoleTitle">تنسيق المواعيد والإدارة</strong><small id="adminRoleHelp">إضافة وتعديل المرضى، متابعة التنبيهات، واستلام وتنفيذ طلبات الدفع.</small></span></button><button type="button" class="role-option" data-role-view="clinic"><span class="role-icon">🦷</span><span><strong id="clinicRoleTitle">شاشة العيادة والطبيب</strong><small id="clinicRoleHelp">استدعاء المرضى، بدء وإنهاء العلاج، ومتابعة الوقت والحالات.</small></span></button></div><p id="rolePrivacyNote" class="role-note">كلتا الصفحتين تستخدمان القائمة نفسها والمزامنة المباشرة.</p></div></div>
 <div id="ocrModal" class="modal ocr-modal"><div class="modal-card ocr-modal-card" role="dialog" aria-modal="true" aria-labelledby="ocrModalTitle">
   <div class="ocr-modal-head"><div><h3 id="ocrModalTitle">📷 تحويل صورة المواعيد إلى قائمة مرضى</h3><p id="ocrModalHelp">تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.</p></div><span id="ocrPrivacy" class="ocr-privacy">🔒 معالجة محلية — لا تُرفع الصورة</span></div>
   <div class="ocr-modal-body">
     <div id="ocrDrop" class="ocr-drop"><button id="chooseOcrImageBtn" type="button">اختيار صورة من الجهاز</button><strong id="ocrDropText">أو اسحب صورة جدول المواعيد هنا</strong><small id="ocrDropHint">JPG أو PNG أو WEBP — حتى 20 MB</small></div>
     <div class="ocr-preview-wrap">
-      <div class="ocr-preview-panel"><div class="ocr-preview-viewport"><img id="ocrPreview" alt="معاينة صورة المواعيد" hidden><canvas id="ocrCanvas" hidden></canvas></div><div id="ocrFileName" class="ocr-file-name">لم يتم اختيار صورة</div><button id="rotateOcrBtn" type="button" disabled>↻ تدوير الصورة 90°</button></div>
+      <div class="ocr-preview-panel"><div class="ocr-preview-viewport"><img id="ocrPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==" alt="معاينة صورة المواعيد" hidden><canvas id="ocrCanvas" hidden></canvas></div><div id="ocrFileName" class="ocr-file-name">لم يتم اختيار صورة</div><button id="rotateOcrBtn" type="button" disabled>↻ تدوير الصورة 90°</button></div>
       <div id="ocrProgress" class="ocr-progress" hidden><div class="ocr-progress-copy"><span id="ocrSpinner" class="ocr-spinner" hidden></span><span id="ocrProgressText">جاهز للاستخراج</span></div><div class="ocr-progress-track"><div id="ocrProgressBar" class="ocr-progress-bar"></div></div><p id="ocrReviewHint">اختر صورة واضحة يظهر فيها الجدول كاملًا.</p></div>
     </div>
     <div id="ocrResults" class="ocr-review" hidden><div class="ocr-review-head"><h4 id="ocrReviewTitle">مسودة المراجعة</h4><small id="ocrReviewCaption">يمكنك تعديل أي خانة قبل الدمج</small></div><div class="ocr-table-wrap"><table class="ocr-table"><thead><tr><th>✓</th><th>#</th><th id="ocrThName">الاسم الأول</th><th id="ocrThFile">رقم الملف</th><th id="ocrThStart">البداية</th><th id="ocrThEnd">النهاية</th><th id="ocrThProcedure">الإجراء</th><th id="ocrThConfidence">دقة القراءة</th><th></th></tr></thead><tbody id="ocrRows"></tbody></table></div></div>
   </div>
   <div class="modal-actions ocr-actions"><button type="button" data-close="ocrModal">إغلاق</button><button id="runOcrBtn" type="button" disabled>بدء الاستخراج</button><button id="downloadOcrCsvBtn" type="button" disabled>تنزيل CSV</button><button id="mergeOcrBtn" type="button" class="primary" disabled>دمج في قائمة اليوم</button></div>
 </div></div>
-<div id="iosInstallModal" class="modal" aria-hidden="true"><div class="modal-card ios-install-card" role="dialog" aria-modal="true" aria-labelledby="iosInstallTitle">
+<div id="iosInstallModal" class="modal"><div class="modal-card ios-install-card" role="dialog" aria-modal="true" aria-labelledby="iosInstallTitle">
   <div class="ios-install-head">
     <div class="ios-install-title-row"><span class="ios-device-icon" aria-hidden="true"></span><div><h3 id="iosInstallTitle">تثبيت التطبيق على iPhone</h3><p id="iosInstallHelp">أربع خطوات بسيطة من متصفح Safari — دون متجر التطبيقات.</p></div></div>
     <button type="button" class="ios-close" data-close="iosInstallModal" aria-label="إغلاق">×</button>
@@ -246,16 +253,15 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
   <div class="modal-actions"><button id="iosInstallCloseBtn" type="button" data-close="iosInstallModal">تم، فهمت الخطوات</button></div>
 </div></div>
 <div id="toastWrap" class="toast-wrap"></div>
-<script src="./assets/vendor/xlsx.full.min.js?v=7.9"></script>
-<script src="./ocr-import-v7-3-1.js"></script>
 <script>
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
+const PLAN_REGISTRY_API='/api/treatment-plan-registry';
 const PUSH_API='/.netlify/functions/push-subscription';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.13-true-web-push-pwa';
+const DASHBOARD_BUILD='7.16-plan-registry-one-page-share';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -277,8 +283,10 @@ const IOS_INSTALL_COPY={
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:0};
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
+const ACTIVE_CLINIC_ID=/^clinic-([1-9]|1[0-5])$/.test(new URLSearchParams(location.search).get('clinic')||'')?new URLSearchParams(location.search).get('clinic'):'clinic-1';
 const NEED_ROLE_CHOICE=!['admin','clinic'].includes(REQUESTED_VIEW);
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email';
@@ -292,6 +300,23 @@ async function initAuth(){document.body.classList.add('auth-checking');document.
 async function requestAuthOtp(){const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
 async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
 function openUsersModal(){openModal('usersModal');$('usersError').textContent=''}
+let treatmentCatalog=[];
+const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function renderTreatmentCatalog(){
+  const list=$('treatmentCatalogList');
+  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="قبل الخصم" aria-label="السعر قبل الخصم"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="بعد الخصم" aria-label="السعر بعد الخصم"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
+}
+async function openTreatmentCatalog(){
+  els.settingsMenu.classList.remove('open');$('treatmentCatalogError').textContent='جارٍ تحميل القائمة…';openModal('treatmentCatalogModal');
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');treatmentCatalog=Array.isArray(data.items)?data.items.map(item=>({...item})):[];$('treatmentCatalogError').textContent='';renderTreatmentCatalog()}catch(error){$('treatmentCatalogError').textContent=error.message}
+}
+function collectTreatmentCatalog(){
+  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);delete item.price});
+}
+async function saveTreatmentCatalog(){
+  collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').textContent='جارٍ الحفظ…';
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');treatmentCatalog=data.items||items;$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والأسعار','ستظهر تلقائيًا داخل الخطط العلاجية لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent=error.message}
+}
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
 function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(Date.now()-authLastActivity>=3*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}if(Date.now()-authKeepAliveAt>10*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
 const statusText=status=>(lang==='en'?EN[status]:STATUS[status])||status;
@@ -311,7 +336,8 @@ let sync={
   localVersion:0,
   localUpdatedAt:0
 };
-const localKey=d=>`bestcare_dashboard_v4_${d}`;
+const localKey=d=>`bestcare_dashboard_v4_${ACTIVE_CLINIC_ID}_${d}`;
+const stateUrl=(date,nonce=false)=>`${API}?date=${encodeURIComponent(date)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}${nonce?`&_=${Date.now()}`:''}`;
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
 const firstName=v=>String(v||'مريض').trim().split(/\s+/)[0];
 const mins=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+m};
@@ -319,15 +345,16 @@ const timeDate=t=>{const d=/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)?new Date(`${
 const fmtMs=ms=>{const sign=ms<0?'-':'';ms=Math.abs(ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return sign+[h,m,s].map(v=>String(v).padStart(2,'0')).join(':')};
 function toast(title,msg){const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${escapeHtml(title)}</strong><div>${escapeHtml(msg)}</div>`;$('toastWrap').appendChild(el);setTimeout(()=>el.remove(),4200)}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function openModal(id){$(id)?.classList.add('open')}
-function closeModal(id){$(id)?.classList.remove('open')}
+function openModal(id){const modal=$(id);if(!modal)return;modal.classList.add('open');modal.removeAttribute('aria-hidden')}
+function closeModal(id){const modal=$(id);if(!modal)return;modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
 function setBadge(mode,text,detail=''){
   els.syncBadge.className='sync-badge '+mode;
   els.syncBadge.textContent=text;
   els.syncBadge.title=`${detail||text} | build ${DASHBOARD_BUILD}`;
   els.syncBadge.dataset.build=DASHBOARD_BUILD;
 }
-function systemNotificationsEnabled(){return 'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('bestcare_system_notifications')==='enabled'}
+const IS_DEPLOY_PREVIEW=/^deploy-preview-\d+--/i.test(location.hostname);
+function systemNotificationsEnabled(){return !IS_DEPLOY_PREVIEW&&'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('bestcare_system_notifications')==='enabled'}
 function urlBase64ToUint8Array(value){
   const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)));
@@ -347,11 +374,21 @@ async function ensurePushSubscription(){
 }
 function updateNotificationsButton(){
   const button=$('notificationsBtn');if(!button)return;
+  if(IS_DEPLOY_PREVIEW){
+    button.classList.remove('notification-enabled','notification-denied');
+    button.textContent=lang==='en'?'🔕 Preview notifications disabled':'🔕 تنبيهات المعاينة متوقفة';
+    button.title=lang==='en'?'Enable external notifications on the final site only.':'فعّل التنبيهات الخارجية من الرابط النهائي فقط.';
+    return;
+  }
   button.classList.toggle('notification-enabled',systemNotificationsEnabled());
   button.classList.toggle('notification-denied','Notification' in window&&Notification.permission==='denied');
   button.textContent=systemNotificationsEnabled()?(lang==='en'?'🔔 System notifications enabled':'🔔 إشعارات النظام مفعلة'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
 }
 async function requestSystemNotifications(){
+  if(IS_DEPLOY_PREVIEW){
+    toast(lang==='en'?'Preview notifications are disabled':'التنبيهات الخارجية متوقفة في المعاينة',lang==='en'?'Test the interface here; enable notifications only on the final site.':'اختبر الواجهة هنا، وفعّل إشعارات النظام من الرابط النهائي فقط لمنع تصنيفها كإزعاج.');
+    return;
+  }
   if(!('Notification' in window)){toast(lang==='en'?'Notifications unavailable':'الإشعارات غير متاحة',lang==='en'?'This browser does not support system notifications.':'هذا المتصفح لا يدعم إشعارات النظام.');return}
   if(Notification.permission==='denied'){
     toast(lang==='en'?'Notifications are blocked':'الإشعارات محظورة',lang==='en'?'Open site settings, allow Notifications, then reload the app.':'افتح إعدادات الموقع من رمز القفل بجانب الرابط، اختر الإشعارات: سماح، ثم أعد فتح التطبيق.');return;
@@ -360,7 +397,7 @@ async function requestSystemNotifications(){
   if(permission==='granted'){
     localStorage.setItem('bestcare_system_notifications','enabled');
     updateNotificationsButton();
-    try{await ensurePushSubscription();showSystemNotification({type:'patient',title:lang==='en'?'Best Care push notifications enabled':'تم تفعيل تنبيهات أفضل عناية الخارجية',body:lang==='en'?'Updates will arrive even when the app is closed.':'ستصل تحديثات المراجعين والفواتير حتى عند إغلاق التطبيق.'})}
+    try{await ensurePushSubscription();showSystemNotification({source:'manual-test',type:'patient',title:lang==='en'?'Best Care push notifications enabled':'تم تفعيل تنبيهات أفضل عناية الخارجية',body:lang==='en'?'Updates will arrive even when the app is closed.':'ستصل تحديثات المراجعين والفواتير حتى عند إغلاق التطبيق.'})}
     catch(error){console.warn('Push subscription failed',error);toast('تعذر ربط التنبيه الخارجي','تحقق من الاتصال ثم اضغط زر التفعيل مرة أخرى.')}
   }else{
     localStorage.removeItem('bestcare_system_notifications');
@@ -370,8 +407,9 @@ async function requestSystemNotifications(){
 }
 async function showSystemNotification(event){
   if(!event||!systemNotificationsEnabled())return;
+  if(localStorage.getItem('bestcare_push_registered')==='enabled'&&event.source!=='manual-test')return;
   if(event.type==='payment'&&VIEW_MODE!=='admin')return;
-  const options={body:event.body||'',icon:'./assets/icons/icon-192.png',badge:'./assets/icons/icon-192.png',tag:event.tag||`bestcare-${event.type||'update'}`,renotify:true,vibrate:[180,80,180,80,260],data:{url:viewUrl(event.type==='payment'?'admin':VIEW_MODE)}};
+  const options={body:event.body||'',icon:'./assets/icons/icon-192.png',badge:'./assets/icons/icon-192.png',tag:event.tag||`bestcare-${event.type||'update'}`,renotify:false,vibrate:[160,70,180],data:{url:viewUrl(event.type==='payment'?'admin':VIEW_MODE)}};
   try{
     if('serviceWorker' in navigator){const registration=await navigator.serviceWorker.ready;await registration.showNotification(event.title,options)}
     else new Notification(event.title,options);
@@ -440,7 +478,7 @@ async function pushState(){
   const snapshot=serialize();
   setBadge('saving',lang==='en'?'Saving automatically…':'جارٍ الحفظ تلقائيًا…');
   try{
-    const res=await request(`${API}?date=${encodeURIComponent(sentDate)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});
+    const res=await request(stateUrl(sentDate),{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==sentDate)return false;
@@ -486,7 +524,7 @@ async function pullState(force=false){
   const dateAtStart=selectedDate;
   if(!sync.ready)setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ الاتصال تلقائيًا…');
   try{
-    const res=await request(`${API}?date=${encodeURIComponent(dateAtStart)}&_=${Date.now()}`);
+    const res=await request(stateUrl(dateAtStart,true));
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==dateAtStart)return false;
@@ -541,6 +579,7 @@ async function runAutomaticSync(){
     }else{
       await pullState(false);
     }
+    await refreshTreatmentPlanRegistry(false);
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
@@ -647,6 +686,73 @@ async function copyReviewMessage(){
   const message=$('reviewMessageInput').value.trim();if(!message)return;
   try{await navigator.clipboard.writeText(message);toast(lang==='en'?'Message copied':'تم نسخ الرسالة',lang==='en'?'Paste it into WhatsApp.':'يمكنك لصقها الآن في واتساب.')}catch{toast(lang==='en'?'Copy failed':'تعذر النسخ',lang==='en'?'Select and copy the message manually.':'حدد الرسالة وانسخها يدويًا.')}
 }
+async function disablePreviewPushSubscription(){
+  if(!IS_DEPLOY_PREVIEW||!('serviceWorker' in navigator))return;
+  try{
+    const registration=await navigator.serviceWorker.ready,subscription=await registration.pushManager?.getSubscription?.();
+    if(subscription){
+      const endpoint=subscription.endpoint;
+      await subscription.unsubscribe();
+      await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint})}).catch(()=>{});
+    }
+    localStorage.removeItem('bestcare_push_registered');
+    localStorage.removeItem('bestcare_system_notifications');
+  }catch(error){console.warn('Preview push cleanup failed',error)}
+}
+function planRegistryPhone(value){
+  const digits=String(value||'').replace(/\D/g,'');
+  if(/^9665\d{8}$/.test(digits))return`0${digits.slice(3)}`;
+  if(/^5\d{8}$/.test(digits))return`0${digits}`;
+  return digits;
+}
+function planRegistryIdentityKeys(patient={}){
+  const file=String(patient.file??patient.fileNo??'').trim().toUpperCase().replace(/\s+/g,'');
+  const phone=planRegistryPhone(patient.phone??patient.mobile);
+  const name=String(patient.name??patient.fullName??'').normalize('NFKC').toLowerCase().replace(/[\u064B-\u065F\u0670]/g,'').trim().replace(/\s+/g,' ');
+  return [...new Set([file?`file:${file}`:'',phone?`phone:${phone}`:'',name?`name:${name}`:''].filter(Boolean))];
+}
+function treatmentPlanRecord(patient){
+  for(const key of planRegistryIdentityKeys(patient)){
+    const canonical=treatmentPlanRegistry.aliases?.[key];
+    if(canonical&&treatmentPlanRegistry.records?.[canonical])return treatmentPlanRegistry.records[canonical];
+  }
+  return null;
+}
+function effectiveTreatmentPlanStatus(patient){
+  return String(treatmentPlanRecord(patient)?.status||patient?.treatmentPlanStatus||'');
+}
+function treatmentPlanBadgeMarkup(patient){
+  const record=treatmentPlanRecord(patient),status=String(record?.status||patient?.treatmentPlanStatus||'');
+  if(!['draft','submitted','approved','rejected'].includes(status))return'';
+  const labels=lang==='en'
+    ?{draft:'Plan draft',submitted:'Sent to admin',approved:'Plan approved',rejected:'Needs revision'}
+    :{draft:'مسودة خطة',submitted:'مرسلة للإدارة',approved:'خطة معتمدة',rejected:'تحتاج تعديل'};
+  const detail=status==='rejected'&&record?.rejectionReason?` — ${record.rejectionReason}`:'';
+  return`<span class="plan-status-badge plan-status-${status}" title="${escapeHtml(labels[status]+detail)}">${escapeHtml(labels[status])}</span>`;
+}
+async function refreshTreatmentPlanRegistry(force=false){
+  if(!authReady)return false;
+  if(!force&&Date.now()-Number(treatmentPlanRegistry.lastFetchedAt||0)<15000)return false;
+  try{
+    const keys=[...new Set(patients.flatMap(planRegistryIdentityKeys))];
+    if(!keys.length){
+      treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:Date.now()};
+      return true;
+    }
+    const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{
+      method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({keys})
+    });
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'تعذر تحميل سجل الخطط');
+    treatmentPlanRegistry={
+      records:data.records&&typeof data.records==='object'?data.records:{},
+      aliases:data.aliases&&typeof data.aliases==='object'?data.aliases:{},
+      revision:Number(data.revision||0),updatedAt:Number(data.updatedAt||0),lastFetchedAt:Date.now()
+    };
+    render();
+    return true;
+  }catch(error){console.warn('Treatment plan registry unavailable',error);return false}
+}
 function renderTable(){
   const activeStatusSelect=document.activeElement?.classList?.contains('status-select');
   if(activeStatusSelect)return;
@@ -660,7 +766,7 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p);return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><strong>${escapeHtml(firstName(p.name))}</strong>${paymentBadgeMarkup(p)}</td>
+        <td><strong>${escapeHtml(firstName(p.name))}</strong>${treatmentPlanBadgeMarkup(p)}${paymentBadgeMarkup(p)}</td>
         <td>${escapeHtml(p.file)}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -673,16 +779,30 @@ function renderTable(){
         <td class="hide-screen">
           <div class="row-actions">
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
+            <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>
             <button class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
         </td>
       </tr>`}).join('')
     : `<tr><td colspan="8" class="empty">${escapeHtml(tr('noAppointments'))}</td></tr>`;
-  $('statusLegend').innerHTML=Object.keys(STATUS).map(key=>`<span class="legend-chip legend-${key}">${escapeHtml(statusText(key))}</span>`).join('');
+  $('statusLegend').innerHTML=
+    Object.keys(STATUS).map(key=>`<span class="legend-chip legend-${key}">${escapeHtml(statusText(key))}</span>`).join('')+
+    `<span aria-hidden="true">│</span>${['draft','submitted','approved','rejected'].map(status=>treatmentPlanBadgeMarkup({treatmentPlanStatus:status})).join('')}`;
 }
 
 function patientById(id){return patients.find(p=>String(p.id)===String(id))||null}
+function treatmentPlanButtonText(patient){
+  const status=effectiveTreatmentPlanStatus(patient);
+  if(lang==='en')return status==='approved'?'Plan: approved':status==='submitted'?'Plan: awaiting admin completion':status==='rejected'?'Plan: not approved':status==='draft'?'Plan: draft':'Treatment plan';
+  return status==='approved'?'الخطة: معتمدة':status==='submitted'?'الخطة: بانتظار إكمال الإدارة':status==='rejected'?'الخطة: غير معتمدة':status==='draft'?'الخطة: مسودة':'خطة علاجية';
+}
+function openTreatmentPlan(id){
+  const patient=patientById(id);if(!patient)return;
+  const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),procedure:String(patient.procedure||''),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
+  localStorage.setItem(`bestcare_treatment_source_${patient.id}`,JSON.stringify(source));
+  location.href=`./treatment-plan.html?patientId=${encodeURIComponent(patient.id)}&date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&view=${encodeURIComponent(VIEW_MODE)}`;
+}
 function announcePatient(p,repeated=false){
   if(!p)return;
   const message=lang==='en'?`${repeated?'Recall':'Calling'} patient ${firstName(p.name)}`:`${repeated?'إعادة استدعاء':'استدعاء'} المريض ${firstName(p.name)}`;
@@ -712,7 +832,11 @@ function startActualTreatment(id){
 }
 function renderPaymentProcedureOptions(){
   const list=$('paymentProcedureList');if(!list)return;
-  list.innerHTML=PAYMENT_PROCEDURES.map(item=>`<div class="payment-procedure-row" data-payment-row="${item.id}"><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${item.id}"><span>${escapeHtml(lang==='en'?item.en:item.ar)}</span></label><label class="payment-quantity"><small>${lang==='en'?'Qty':'العدد'}</small><input type="number" min="1" max="99" value="1" data-payment-quantity="${item.id}"></label><label class="payment-free"><input type="checkbox" data-payment-free="${item.id}"><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`).join('');
+  list.innerHTML=PAYMENT_PROCEDURES.map(item=>`<div class="payment-procedure-row" data-payment-row="${item.id}"><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${item.id}"><span>${escapeHtml(lang==='en'?item.en:item.ar)}</span></label><div class="payment-quantity"><small>${lang==='en'?'Qty':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${item.id}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="1" data-payment-quantity="${item.id}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${item.id}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${item.id}"><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`).join('');
+}
+function changePaymentQuantity(input,delta){
+  if(!input)return;
+  input.value=String(Math.max(1,Math.min(99,Number(input.value||1)+delta)));
 }
 function resetPaymentProcedureEditor(){
   renderPaymentProcedureOptions();
@@ -791,7 +915,7 @@ function queueCardMarkup(p,index){
   const lastCall=called&&p.lastCalledAt?` · ${tr('lastCall')} ${new Date(Number(p.lastCalledAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
   return `<article class="queue-card rank-${position} queue-${position}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
     <div class="queue-card-top"><div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div><span class="queue-orbit" aria-hidden="true">#${position+1}</span></div>
-    <div class="queue-name">${escapeHtml(firstName(p.name))}</div>
+    <div class="queue-name">${escapeHtml(firstName(p.name))}${treatmentPlanBadgeMarkup(p)}</div>
     <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
     <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
     <span class="queue-proximity-meter" aria-hidden="true"><i></i></span>
@@ -869,7 +993,7 @@ function renderLive(updateStructure=true){
   $('currentVisualIcon').textContent=activelyTreating?'●':['arrived','early_arrival'].includes(leadStatus)?'✓':lead?'➜':'○';
   $('currentVisualIcon').classList.toggle('arrival-pulse',['arrived','early_arrival'].includes(leadStatus));
   $('currentLabel').textContent=activelyTreating?tr('currentPatient'):['arrived','early_arrival'].includes(leadStatus)?statusText(leadStatus):tr('nextToCall');
-  $('currentName').textContent=lead?firstName(lead.name):tr('noCurrent');
+  $('currentName').innerHTML=lead?`${escapeHtml(firstName(lead.name))}<span class="current-plan-mark">${treatmentPlanBadgeMarkup(lead)}</span>`:escapeHtml(tr('noCurrent'));
   $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.start}–${lead.end} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
   $('currentCountdown').textContent=lead?fmtMs((activelyTreating?timeDate(lead.end):timeDate(lead.start))-new Date()):'--:--:--';
   $('actualTimer').textContent=lead?.actualStartedAt?fmtMs(Date.now()-Number(lead.actualStartedAt)):'--:--:--';
@@ -895,7 +1019,7 @@ function renderLive(updateStructure=true){
   if(updateStructure){
     renderCompactTimeline(lead);
     renderUpcoming(lead);
-    $('currentActions').innerHTML=lead?`<button type="button" data-call-id="${escapeHtml(lead.id)}">${escapeHtml(Number(lead.callCount||0)>0?tr('recall'):tr('callPatient'))}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${escapeHtml(lead.actualStartedAt?tr('actualRunning'):tr('startActual'))}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">${escapeHtml(tr('finishPatient'))}</button>`:''}`:'';
+    $('currentActions').innerHTML=lead?`<button type="button" data-call-id="${escapeHtml(lead.id)}">${escapeHtml(Number(lead.callCount||0)>0?tr('recall'):tr('callPatient'))}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${escapeHtml(lead.actualStartedAt?tr('actualRunning'):tr('startActual'))}</button><button type="button" data-plan-id="${escapeHtml(lead.id)}">${escapeHtml(treatmentPlanButtonText(lead))}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">${escapeHtml(tr('finishPatient'))}</button>`:''}`:'';
     renderAlertUI();
   }
 }
@@ -959,6 +1083,7 @@ function resetPatientForm(focusName=false){
   $('fDate').value=selectedDate||today();
   $('fName').value='';
   $('fFile').value='';
+  $('fPhone').value='';
   $('fStart').value=suggested.start;
   $('fEnd').value=suggested.end;
   $('fProcedure').value='';
@@ -983,6 +1108,7 @@ function openPatient(id=null){
   $('fDate').value=selectedDate||today();
   $('fName').value=p.name||'';
   $('fFile').value=p.file||'';
+  $('fPhone').value=p.phone||'';
   $('fStart').value=p.start||'08:00';
   $('fEnd').value=p.end||'08:30';
   $('fProcedure').value=p.procedure||'';
@@ -1024,7 +1150,7 @@ async function movePatientToDate(item,targetDate){
   try{
     if(sync.dirty&&!(await pushState()))throw new Error(tr('sourceSaveFailed'));
 
-    const targetResponse=await request(`${API}?date=${encodeURIComponent(targetDate)}&_=${Date.now()}`);
+    const targetResponse=await request(stateUrl(targetDate,true));
     if(!targetResponse.ok)throw new Error(`${tr('targetLoadFailed')} (HTTP ${targetResponse.status})`);
     const targetData=await targetResponse.json();
     const targetPatients=(Array.isArray(targetData.patients)?targetData.patients:[])
@@ -1067,7 +1193,7 @@ async function movePatientToDate(item,targetDate){
     };
     let savedTarget;
     try{
-      const targetSave=await request(`${API}?date=${encodeURIComponent(targetDate)}`,{
+      const targetSave=await request(stateUrl(targetDate),{
         method:'PUT',
         headers:{'content-type':'application/json'},
         body:JSON.stringify(targetSnapshot)
@@ -1076,7 +1202,7 @@ async function movePatientToDate(item,targetDate){
       savedTarget=await targetSave.json();
     }catch(saveError){
       try{
-        const verification=await request(`${API}?date=${encodeURIComponent(targetDate)}&_=${Date.now()}`);
+        const verification=await request(stateUrl(targetDate,true));
         if(!verification.ok)throw saveError;
         const verifiedData=await verification.json();
         const patientExists=Array.isArray(verifiedData.patients)&&verifiedData.patients.some(patient=>String(patient.id)===String(item.id));
@@ -1141,6 +1267,7 @@ async function savePatient(){
     id:editingId||(crypto.randomUUID?.()||`patient-${Date.now()}-${Math.random().toString(36).slice(2)}`),
     name:firstName(rawName),
     file:$('fFile').value.trim(),
+    phone:$('fPhone').value.replace(/[^\d+]/g,'').slice(0,20),
     start,
     end,
     procedure:$('fProcedure').value.trim(),
@@ -1158,12 +1285,13 @@ async function savePatient(){
     patients.sort((a,b)=>a.start.localeCompare(b.start));
     applyAutomaticStatusAlert(item,item.status);
   });
+  void refreshTreatmentPlanRegistry(true);
   patientFormSavedFeedback(wasEditing,item);
   resetPatientForm(false);
 }
 function parseBulk(text){return String(text).split(/\r?\n/).map((line,i)=>{const p=line.split(/[,،	]/).map(x=>x.trim());if(p.length<4)return null;return{id:Date.now()+i,name:firstName(p[0]),file:p[1]||'',start:p[2],end:p[3],procedure:p.slice(4).join(' ')||'',status:'waiting'}}).filter(p=>p&&p.name&&/^\d{2}:\d{2}$/.test(p.start)&&/^\d{2}:\d{2}$/.test(p.end)&&mins(p.end)>mins(p.start))}
 function applyBulk(){const rows=parseBulk($('bulkText').value);if(!rows.length){toast('تعذر الحفظ','لم يتم العثور على صفوف صحيحة');return}mutate(()=>patients=rows);closeModal('bulkModal');toast('تم تحديث القائمة',`تم حفظ ${rows.length} مريض`)}
-function exportCsv(){const rows=[['الاسم','رقم الملف','البداية','النهاية','الإجراء','الحالة'],...patients.map(p=>[p.name,p.file,p.start,p.end,p.procedure,STATUS[p.status]])];const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`bestcare_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href)}
+function exportCsv(){const rows=[['الاسم','رقم الملف','رقم الجوال','البداية','النهاية','الإجراء','الحالة'],...patients.map(p=>[p.name,p.file,p.phone||'',p.start,p.end,p.procedure,STATUS[p.status]])];const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`bestcare_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href)}
 function detectCsvDelimiter(text){
   const firstLine=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).find(line=>line.trim())||'';
   const counts={',':0,';':0,'\t':0};
@@ -1243,6 +1371,7 @@ function parsePatientCsv(text){
   const columns={
     name:findCsvColumn(headers,['الاسم','اسم المريض','المريض','patient','patient name','patientname']),
     file:findCsvColumn(headers,['رقم الملف','رقم ملف','الملف','file','file number','filenumber','file.n','filen','م.أساسي (File.N)']),
+    phone:findCsvColumn(headers,['رقم الجوال','الجوال','رقم الهاتف','الهاتف','mobile','phone','mobile number','phone number']),
     start:findCsvColumn(headers,['البداية','وقت البداية','وقت البدء','وقت الموعد','time','start','start time','appointment time']),
     end:findCsvColumn(headers,['النهاية','وقت النهاية','وقت الانتهاء','end','end time']),
     procedure:findCsvColumn(headers,['الإجراء','الإجراء العلاجي','نوع الزيارة','نوع الموعد','procedure','visit type','appointment type']),
@@ -1256,7 +1385,7 @@ function parsePatientCsv(text){
     const appointmentDate=columns.date>=0?normalizeCsvDate(cells[columns.date]):'';
     if(appointmentDate)dates.add(appointmentDate);
     const rawName=String(cells[columns.name]||'').trim();
-    return{id:Date.now()+index,name:rawName?firstName(rawName):'',file:columns.file>=0?String(cells[columns.file]||'').trim():'',start,end,procedure:columns.procedure>=0?String(cells[columns.procedure]||'').trim():'',status:'waiting'};
+    return{id:Date.now()+index,name:rawName?firstName(rawName):'',file:columns.file>=0?String(cells[columns.file]||'').trim():'',phone:columns.phone>=0?String(cells[columns.phone]||'').replace(/[^\d+]/g,'').slice(0,20):'',start,end,procedure:columns.procedure>=0?String(cells[columns.procedure]||'').trim():'',status:'waiting'};
   }).filter(patient=>patient.name&&patient.start&&patient.end&&mins(patient.end)>mins(patient.start));
   return{rows,date:dates.size===1?[...dates][0]:'',reason:rows.length?'':'rows'};
 }
@@ -1271,12 +1400,36 @@ async function acceptPatientImport(parsed){
   toast(lang==='en'?'Import complete':'تم الاستيراد',lang==='en'?`${parsed.rows.length} patients imported${dateMessage}`:`تم استيراد ${parsed.rows.length} مريض${dateMessage}`);
   els.csvInput.value='';
 }
-function importPatientFile(file){
+const optionalScriptLoads=new Map();
+function loadOptionalScript(src,ready){
+  if(ready())return Promise.resolve();
+  if(optionalScriptLoads.has(src))return optionalScriptLoads.get(src);
+  const pending=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src=src;script.async=true;
+    script.onload=()=>ready()?resolve():reject(new Error(`تعذر تشغيل ${src}`));
+    script.onerror=()=>reject(new Error(`تعذر تحميل ${src}`));
+    document.head.appendChild(script);
+  }).catch(error=>{optionalScriptLoads.delete(src);throw error});
+  optionalScriptLoads.set(src,pending);
+  return pending;
+}
+const ensureExcelReader=()=>loadOptionalScript('./assets/vendor/xlsx.full.min.js?v=7.9',()=>Boolean(window.XLSX));
+const ocrApiOptions=()=>({escapeHtml,toast,openModal,closeModal,getLang:()=>lang,getDate:()=>selectedDate,mergeRows:mergeOcrRows});
+async function openOcrImporter(){
+  els.settingsMenu.classList.remove('open');
+  try{
+    await loadOptionalScript('./ocr-import-v7-3-1.js?v=7.9',()=>Boolean(window.BestCareOCR));
+    window.BestCareOCR.init(ocrApiOptions());
+    window.BestCareOCR.open();
+  }catch(error){toast(lang==='en'?'Image reader unavailable':'تعذر تشغيل قارئ الصور',String(error.message||error))}
+}
+async function importPatientFile(file){
   const extension=String(file.name||'').split('.').pop().toLowerCase();
   const reader=new FileReader();
   reader.onerror=()=>toast(lang==='en'?'Import failed':'تعذر الاستيراد',lang==='en'?'The file could not be read.':'تعذرت قراءة الملف.');
   if(['xlsx','xls'].includes(extension)){
-    if(!window.XLSX){toast(lang==='en'?'Excel reader unavailable':'قارئ Excel غير متاح',lang==='en'?'Check the internet connection and try again.':'تحقق من الاتصال بالإنترنت ثم أعد المحاولة.');return}
+    try{await ensureExcelReader()}catch(error){toast(lang==='en'?'Excel reader unavailable':'قارئ Excel غير متاح',lang==='en'?'Check the connection and try again.':String(error.message||error));els.csvInput.value='';return}
     reader.onload=()=>{
       try{
         const workbook=window.XLSX.read(reader.result,{type:'array'});
@@ -1340,7 +1493,7 @@ function clearAlert(){
   closeModal('alertModal');
   toast('تم إلغاء التنبيه','أزيل التنبيه من الشاشات المتصلة');
 }
-async function setDate(date){if(sync.dirty)await pushState();selectedDate=date||today();sync.revision=0;sync.updatedAt=0;sync.ready=false;sync.dirty=false;sync.localVersion=0;applyViewMode();loadLocal(selectedDate);await pullState(true)}
+async function setDate(date){if(sync.dirty)await pushState();selectedDate=date||today();sync.revision=0;sync.updatedAt=0;sync.ready=false;sync.dirty=false;sync.localVersion=0;applyViewMode();loadLocal(selectedDate);await pullState(true);await refreshTreatmentPlanRegistry(true)}
 function enterScreen(){
   document.body.classList.add('screen-mode');
   document.documentElement.requestFullscreen?.().catch(()=>{});
@@ -1443,9 +1596,10 @@ function applyLang(){
   setText('.upcoming-head h2',tr('upcomingPatients'));
   setText('.upcoming-head small',tr('upcomingHint'));
   setText('.quick-add-head p',tr('formIntro'));
-  setTexts('.quick-add-grid label',[tr('firstName'),tr('fileNumber'),tr('appointmentDate'),tr('startTime'),tr('endTime'),tr('procedure'),tr('status')]);
+  setTexts('.quick-add-grid label',[tr('firstName'),tr('fileNumber'),lang==='en'?'Phone number':'رقم الجوال',tr('appointmentDate'),tr('startTime'),tr('endTime'),tr('procedure'),tr('status')]);
   $('fName').placeholder=tr('namePlaceholder');
   $('fFile').placeholder=tr('filePlaceholder');
+  $('fPhone').placeholder=lang==='en'?'05xxxxxxxx':'05xxxxxxxx';
   $('fProcedure').placeholder=tr('procedurePlaceholder');
   setText('#resetPatientBtn',tr('resetFields'));
   setText('#cancelEditBtn',tr('cancelEdit'));
@@ -1539,10 +1693,15 @@ $('patientFormCard').addEventListener('keydown',event=>{if(event.key==='Enter'&&
 $('applyBulkBtn').addEventListener('click',applyBulk);
 $('settingsBtn').addEventListener('click',event=>{event.stopPropagation();els.settingsMenu.classList.toggle('open')});
 document.addEventListener('click',()=>els.settingsMenu.classList.remove('open'));
+$('imageOcrBtn').addEventListener('click',openOcrImporter);
 $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
 $('notificationsBtn').addEventListener('click',requestSystemNotifications);
+$('treatmentCatalogBtn').addEventListener('click',openTreatmentCatalog);
+$('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();treatmentCatalog.push({id:`custom-${Date.now()}`,name:'',beforePrice:'',afterPrice:''});renderTreatmentCatalog();$('treatmentCatalogList').lastElementChild?.querySelector('[data-catalog-name]')?.focus()});
+$('treatmentCatalogList').addEventListener('click',event=>{const button=event.target.closest('[data-catalog-delete]');if(!button)return;collectTreatmentCatalog();treatmentCatalog.splice(Number(button.dataset.catalogDelete),1);renderTreatmentCatalog()});
+$('saveTreatmentCatalogBtn').addEventListener('click',saveTreatmentCatalog);
 $('syncTestBtn').addEventListener('click',syncTest);
 $('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
 $('alertBtn').addEventListener('click',openAlertComposer);
@@ -1586,8 +1745,9 @@ els.patientRows.addEventListener('change',event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
-  const review=event.target.closest('[data-review-id]')?.dataset.reviewId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
   if(review)openReviewComposer(review);
+  if(plan)openTreatmentPlan(plan);
   if(edit)openPatient(edit);
   if(del&&confirm('حذف هذا المريض؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
 });
@@ -1595,6 +1755,17 @@ document.querySelectorAll('[data-close]').forEach(button=>button.addEventListene
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal&&modal.id!=='roleModal')closeModal(modal.id)}));
 $('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions()});
 $('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[type="number"],input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true});
+$('paymentProcedureList').addEventListener('click',event=>{
+  const button=event.target.closest('[data-payment-step]');if(!button)return;
+  const row=button.closest('[data-payment-row]'),input=row?.querySelector('[data-payment-quantity]');
+  changePaymentQuantity(input,button.dataset.paymentStep==='increase'?1:-1);
+  if(row?.querySelector('[data-payment-select]'))row.querySelector('[data-payment-select]').checked=true;
+});
+$('paymentModal').addEventListener('click',event=>{
+  const button=event.target.closest('[data-payment-other-step]');if(!button)return;
+  changePaymentQuantity($('paymentOtherQuantity'),button.dataset.paymentOtherStep==='increase'?1:-1);
+  $('paymentOtherCheck').checked=true;
+});
 $('paymentOtherInput').addEventListener('input',()=>{if($('paymentOtherInput').value.trim())$('paymentOtherCheck').checked=true});
 [$('paymentOtherQuantity'),$('paymentOtherFree')].forEach(input=>input.addEventListener('change',()=>{$('paymentOtherCheck').checked=true}));
 $('confirmCompletionBtn').addEventListener('click',confirmPatientCompletion);
@@ -1619,15 +1790,6 @@ $('roleModal').addEventListener('click',event=>{
   const mode=event.target.closest('[data-role-view]')?.dataset.roleView;if(!mode)return;
   location.href=viewUrl(mode);
 });
-window.BestCareOCR?.init({
-  escapeHtml,
-  toast,
-  openModal,
-  closeModal,
-  getLang:()=>lang,
-  getDate:()=>selectedDate,
-  mergeRows:mergeOcrRows
-});
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;if(!isStandalone())$('installBtn').hidden=false});
 window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true;toast('تم التثبيت','أصبح Best Care Flow متاحًا كتطبيق على الجهاز')});
 selectedDate=new URLSearchParams(location.search).get('date')||today();
@@ -1642,6 +1804,7 @@ if(NEED_ROLE_CHOICE)openModal('roleModal');
 updateClock();
 setInterval(updateClock,1000);
 registerPwa();
+disablePreviewPushSubscription();
 
 })();
 </script>

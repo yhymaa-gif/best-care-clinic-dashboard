@@ -43,7 +43,8 @@ export async function sendPushNotifications(event,{excludeClientId=''}={}){
     const detail=record.showPatientDetails&&event.patientName?` ${event.patientName}${event.patientFile?` — ملف ${event.patientFile}`:''}.`:'';
     const payload={title:`${event.title}${clinicLabel}`,body:`${event.body}${detail}`,type:event.type||'patient',tag:event.tag||`bestcare-${event.type||'update'}`,url:`/?view=${event.type==='payment'?'admin':record.role}&clinic=${record.clinicId}`};
     try{
-      await webpush.sendNotification(record.subscription,JSON.stringify(payload),{TTL:300,urgency:'high'});
+      const topic=crypto.createHash('sha256').update(String(payload.tag)).digest('base64url').slice(0,24);
+      await webpush.sendNotification(record.subscription,JSON.stringify(payload),{TTL:180,urgency:'normal',topic});
       sent+=1;
     }catch(error){
       if(error?.statusCode===404||error?.statusCode===410)await pushStore.delete(entry.key);

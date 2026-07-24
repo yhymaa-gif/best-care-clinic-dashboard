@@ -31,6 +31,21 @@
   to = "/.netlify/functions/clinics"
   status = 200
 
+[[redirects]]
+  from = "/api/treatment-plan"
+  to = "/.netlify/functions/treatment-plan"
+  status = 200
+
+[[redirects]]
+  from = "/api/treatment-catalog"
+  to = "/.netlify/functions/treatment-catalog"
+  status = 200
+
+[[redirects]]
+  from = "/api/treatment-plan-registry"
+  to = "/.netlify/functions/treatment-plan-registry"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

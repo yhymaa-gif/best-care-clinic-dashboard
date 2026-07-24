@@ -39,7 +39,9 @@ const cleanPatient=p=>({
  paymentDiscount:String(p?.paymentDiscount||'').slice(0,120),
  paymentRequestedAt:Number(p?.paymentRequestedAt||0),
  paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0),
- paymentCompletedAt:Number(p?.paymentCompletedAt||0)
+ paymentCompletedAt:Number(p?.paymentCompletedAt||0),
+ treatmentPlanStatus:['draft','submitted','approved','rejected'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
+ treatmentPlanUpdatedAt:Number(p?.treatmentPlanUpdatedAt||0)
 });
 const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
  const oldMap=new Map(before.map(patient=>[String(patient.id),patient])),events=[];
@@ -50,6 +52,10 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
   if(Number(patient.paymentRequestedAt||0)>Number(old.paymentRequestedAt||0))events.push(decorate({type:'payment',title:'أمر دفع جديد',body:'يوجد أمر دفع جديد بانتظار الإدارة.',tag:`payment-request-${patient.id}`},patient));
   else if(Number(patient.paymentAcknowledgedAt||0)>Number(old.paymentAcknowledgedAt||0))events.push(decorate({type:'payment',title:'تم استلام أمر الدفع',body:'أكدت الإدارة استلام طلب الدفع.',tag:`payment-ack-${patient.id}`},patient));
   else if(Number(patient.paymentCompletedAt||0)>Number(old.paymentCompletedAt||0))events.push(decorate({type:'payment',title:'تم تنفيذ الدفع',body:'اكتمل تنفيذ أحد أوامر الدفع.',tag:`payment-done-${patient.id}`},patient));
+  else if(String(patient.treatmentPlanStatus||'')!==String(old.treatmentPlanStatus||'')){
+   const approved=patient.treatmentPlanStatus==='approved',rejected=patient.treatmentPlanStatus==='rejected';
+   events.push(decorate({type:'patient',title:approved?'تم اعتماد الخطة العلاجية':rejected?'لم تُعتمد الخطة العلاجية':'خطة علاجية بانتظار الإدارة',body:approved?'اعتمدت الإدارة الإجراءات والأسعار النهائية.':rejected?'أعادت الإدارة الخطة إلى العيادة للتعديل.':'أرسلت العيادة خطة علاجية للمراجعة والتسعير.',tag:`treatment-plan-${patient.id}`},patient));
+  }
   else if(String(patient.status||'')!==String(old.status||''))events.push(decorate({type:'patient',title:'تحديث حالة مريض',body:'تم تحديث حالة أحد مرضى اليوم.',tag:`patient-${patient.id}`},patient));
  }
  if(!events.length&&nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))events.push(decorate({type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:'تنبيه جديد من أفضل عناية',body:'يوجد تحديث جديد داخل لوحة المتابعة.',tag:`alert-${nextAlert.kind||'update'}`},after.find(patient=>String(nextAlert.message||'').includes(String(patient.name||'')))||{}));
