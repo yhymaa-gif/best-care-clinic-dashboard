@@ -33,8 +33,8 @@
     .topbar-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topbar .brand{display:flex;align-items:center;gap:10px;font-weight:900}.topbar .brand img{width:36px;height:36px;object-fit:contain}
     .status-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9ddd6;border-radius:999px;padding:7px 11px;background:#fff;color:var(--ink-2);font-size:12px;font-weight:800}
     .status-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#d2a52b}.status-pill.saved::before{background:#2c9a66}
-    .workflow-pill{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:#eef3f1;color:#49675d;font-size:12px;font-weight:900}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.approved{background:#dff3e8;color:#176445}
-    #sendAdminBtn{background:#315f85;color:#fff;border-color:#315f85}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b}#whatsappPlanBtn{background:#b58a1f;color:#fff;border-color:#b58a1f}
+    .workflow-pill{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:#eef3f1;color:#49675d;font-size:12px;font-weight:900}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.approved{background:#dff3e8;color:#176445}.workflow-pill.rejected{background:#fde8e8;color:#a32e35}
+    #sendAdminBtn{background:#315f85;color:#fff;border-color:#315f85}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b}#rejectPlanBtn{background:#a9363e;color:#fff;border-color:#a9363e}#whatsappPlanBtn{background:#b58a1f;color:#fff;border-color:#b58a1f}
     .draft-stamp{display:none;position:absolute;z-index:12;top:43mm;left:18mm;width:34mm;height:34mm;border:3px double rgba(176,34,45,.62);border-radius:50%;place-items:center;text-align:center;color:rgba(176,34,45,.68);font-size:12pt;font-weight:900;line-height:1.2;transform:rotate(-14deg);letter-spacing:.03em;pointer-events:none}
     body.draft-pdf .draft-stamp{display:grid}body.draft-pdf .paper::before{content:"مسودة للاطلاع";color:rgba(176,34,45,.035)}
     body.draft-pdf .diagnosis-grid,body.draft-pdf .validity-box,body.draft-pdf #consentSection,body.draft-pdf #signatureSection{display:none!important}
@@ -141,7 +141,7 @@
     @media(max-width:1050px){.workspace{grid-template-columns:1fr}.editor-panel{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}.paper-wrap{overflow:auto;padding-bottom:10px}}
     @media(max-width:700px){.topbar{align-items:flex-start}.topbar,.topbar-group{gap:6px}.topbar .brand span{display:none}.topbar button{padding:8px 10px;font-size:12px}.workspace{width:100%;margin-top:12px}.editor-panel{grid-template-columns:1fr;padding:0 12px}.workspace-hero{min-height:180px}.hero-copy{width:calc(100% - 26px)}.hero-metrics{display:grid;grid-template-columns:1fr 1fr}.paper{transform-origin:top right}.paper-wrap{padding-inline:10px}.two-col,.diagnosis-grid,.financial-layout{grid-template-columns:1fr}.consent-list{columns:1}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-    @page{size:A4 portrait;margin:12mm 14mm 16mm}
+    @page{size:A4 portrait;margin:5mm}
     @media print{
       html,body{background:#fff!important}.no-print,.topbar,.editor-panel,.workspace-hero,.toast-wrap,.phase-actions,.add-item,.row-action{display:none!important}
       *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -150,6 +150,18 @@
       thead{display:table-header-group}tfoot{display:table-footer-group}.consent-list li{orphans:3;widows:3;break-inside:avoid}h2,h3{break-after:avoid}
       .document-footer{position:fixed;inset-inline:0;bottom:-10mm}.edit-field,.line-input{background:transparent!important;border-color:transparent!important}
       .duplicate-print{display:block;break-before:page}.duplicate-print .document-footer{position:absolute;inset-inline:14mm;bottom:5mm}
+      body.one-page-print .paper{width:200mm;min-height:282mm;max-height:282mm;padding:5mm 7mm 8mm;overflow:hidden}
+      body.one-page-print .document-header{min-height:13mm;padding-bottom:2mm}body.one-page-print .doc-logo{width:15mm;height:15mm}body.one-page-print .doc-title{margin:2mm 0 1mm;font-size:12pt}
+      body.one-page-print .section{margin-top:2.2mm}body.one-page-print .info-card,body.one-page-print .financial-summary{padding:2mm}body.one-page-print .field-grid{gap:1.2mm 2mm}
+      body.one-page-print .fixed-diagnosis{padding:2mm}body.one-page-print .fixed-diagnosis p{font-size:6.7pt;line-height:1.45}body.one-page-print .diagnosis-grid{gap:2mm}
+      body.one-page-print .phase-block{margin-top:2mm}body.one-page-print .phase-head{padding:1.2mm 2mm}body.one-page-print th,body.one-page-print td{padding:2.5px 4px;font-size:6.8pt}
+      body.one-page-print .phase-total{padding:1mm 2mm;font-size:6.5pt}body.one-page-print .money-row{padding:.8mm 0;font-size:7pt}body.one-page-print .money-row.net{padding:1mm;font-size:8pt}
+      body.one-page-print .validity-box{margin-top:2mm;padding:2mm}body.one-page-print .validity-box ul{margin:1mm 0 0;font-size:6.3pt;line-height:1.35}
+      body.one-page-print .consent-list{columns:3;column-gap:4mm;font-size:5.8pt;line-height:1.3}body.one-page-print .consent-list li{margin-bottom:.6mm}
+      body.one-page-print .photo-consent{margin-top:1mm;padding:1mm;font-size:5.8pt}body.one-page-print .signature-row{gap:3mm}body.one-page-print .signature-box{min-height:16mm;padding-top:1mm}
+      body.one-page-print .document-footer{position:absolute;inset-inline:7mm;bottom:2mm;font-size:5.5pt}
+      body.print-dense .fixed-diagnosis p{font-size:6pt}body.print-dense th,body.print-dense td{font-size:6pt;padding:2px 3px}body.print-dense .consent-list{font-size:5.1pt;line-height:1.2}
+      body.print-ultra .diagnosis-grid{grid-template-columns:1fr 1fr}body.print-ultra .fixed-diagnosis p{font-size:5.3pt}body.print-ultra th,body.print-ultra td{font-size:5.3pt;padding:1.5px 2px}body.print-ultra .consent-list{font-size:4.7pt;line-height:1.1}body.print-ultra .signature-box{min-height:12mm}
     }
   </style>
 </head>
@@ -176,9 +188,10 @@
         <button id="compactEntryBtn" class="ghost" type="button">إدخال سريع</button>
         <button id="previewBtn" class="ghost" type="button">معاينة الطباعة</button>
         <button id="saveBtn" class="primary" type="button">حفظ الخطة</button>
-        <button id="whatsappPlanBtn" type="button">مسودة PDF للمشاركة</button>
+        <button id="whatsappPlanBtn" type="button">مشاركة المسودة كصورة</button>
         <button id="sendAdminBtn" type="button" hidden>حفظ وإرسال للإدارة</button>
         <button id="approvePlanBtn" type="button" hidden>اعتماد نهائي للطباعة</button>
+        <button id="rejectPlanBtn" type="button" hidden>إعادة للعيادة / غير معتمدة</button>
         <button id="printBtn" class="ghost" type="button">طباعة / PDF</button>
         <button id="printCopiesBtn" class="ghost" type="button">طباعة نسختين</button>
       </div>
@@ -425,7 +438,7 @@
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',submittedAt:0,approvedAt:0,approvedBy:''},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',submittedAt:0,approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''},
       clinic:{nameAr:'عيادات أفضل عناية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -655,13 +668,14 @@
     }
     function workflowRole(){return viewMode==='clinic'?'clinic':'admin'}
     function renderWorkflow(){
-      const status=['draft','submitted','approved'].includes(state.meta.status)?state.meta.status:'draft';
-      const labels={draft:'مسودة لدى العيادة',submitted:'بانتظار إكمال الإدارة',approved:'معتمدة نهائيًا'};
+      const status=['draft','submitted','approved','rejected'].includes(state.meta.status)?state.meta.status:'draft';
+      const labels={draft:'مسودة لدى العيادة',submitted:'بانتظار إكمال الإدارة',approved:'معتمدة نهائيًا',rejected:'غير معتمدة — تحتاج تعديل'};
       $('workflowStatus').textContent=labels[status];$('workflowStatus').className=`workflow-pill ${status}`;
-      $('sendAdminBtn').hidden=workflowRole()!=='clinic'||status!=='draft';
+      $('sendAdminBtn').hidden=workflowRole()!=='clinic'||!['draft','rejected'].includes(status);
       $('approvePlanBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
+      $('rejectPlanBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
       $('whatsappPlanBtn').hidden=!state.phases.some(phase=>phase.items.some(item=>item.service));
-      const locked=workflowRole()==='clinic'&&status!=='draft';
+      const locked=workflowRole()==='clinic'&&['submitted','approved'].includes(status);
       document.body.classList.toggle('workflow-locked',locked);
       $('saveBtn').disabled=locked;$('addPhaseBtn').disabled=locked;
       $('printBtn').title=status==='approved'?'طباعة النسخة النهائية المعتمدة':'الطباعة متاحة بعد اعتماد الإدارة';
@@ -684,7 +698,7 @@
     function markDirty(){
       collectHeaderFields();
       if(workflowRole()==='clinic')state.meta.status='draft';
-      else if(state.meta.status==='approved')state.meta.status='submitted';
+      else if(['approved','rejected'].includes(state.meta.status))state.meta.status='submitted';
       $('paper').classList.remove('approved');
       $('saveStatus').classList.remove('saved');$('saveStatus').textContent='تعديلات غير محفوظة';
       localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
@@ -718,38 +732,101 @@
         return saved.ok;
       }catch{return false}
     }
+    async function syncPlanRegistry(status,rejectionReason=''){
+      try{
+        const response=await fetch(`/api/treatment-plan-registry?clinic=${encodeURIComponent(clinicId)}`,{
+          method:'PUT',credentials:'include',headers:{'content-type':'application/json'},
+          body:JSON.stringify({
+            patient:state.patient,status,rejectionReason,
+            planNo:state.meta.planNo,sourcePatientId:patientId,sourceDate:appointmentDate
+          })
+        });
+        return response.ok;
+      }catch{return false}
+    }
     async function submitToAdmin(){
       collectHeaderFields();const missing=missingFields();
       if(missing.length){toast('تعذر الإرسال',`أكمل: ${missing.join('، ')}`);renderProgress();return}
-      state.meta.status='submitted';state.meta.submittedAt=Date.now();state.meta.approvedAt=0;state.meta.approvedBy='';
+      state.meta.status='submitted';state.meta.submittedAt=Date.now();state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
       const saved=await savePlan(true);if(!saved){state.meta.status='draft';render();return}
-      await syncPlanStatusToDashboard('submitted');render();toast('حُفظت وأُرسلت الخطة للإدارة','ستظهر في قائمة الإدارة بحالة «بانتظار الإكمال» لتعديل الإجراءات والأسعار ثم اعتمادها وإرسالها.');
+      await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);render();toast('حُفظت وأُرسلت الخطة للإدارة','ستظهر في قائمة الإدارة وجميع مواعيد المريض القادمة بحالة «خطة مرسلة».');
     }
     async function approvePlan(){
       collectHeaderFields();const missing=approvalMissing();
       if(missing.length){toast('لا يمكن الاعتماد',`أكمل: ${missing.join('، ')}`);renderProgress();return}
       state.meta.status='approved';state.meta.approvedAt=Date.now();state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
       const saved=await savePlan(true);if(!saved){state.meta.status='submitted';render();return}
-      await syncPlanStatusToDashboard('approved');$('paper').classList.add('approved');render();toast('تم الاعتماد النهائي','أصبحت النسخة جاهزة للطباعة من الإدارة.');
+      await Promise.all([syncPlanStatusToDashboard('approved'),syncPlanRegistry('approved')]);$('paper').classList.add('approved');render();toast('تم الاعتماد النهائي','ستظهر علامة «خطة معتمدة» بجانب المريض في جميع مواعيده القادمة.');
+    }
+    async function rejectPlan(){
+      if(workflowRole()!=='admin'||state.meta.status!=='submitted')return;
+      const reason=prompt('اكتب سبب عدم اعتماد الخطة أو التعديل المطلوب:','تحتاج الخطة إلى مراجعة الإجراءات أو الأسعار.');
+      if(reason===null)return;
+      state.meta.status='rejected';state.meta.rejectedAt=Date.now();state.meta.rejectedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.rejectionReason=String(reason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500);state.meta.approvedAt=0;state.meta.approvedBy='';
+      const saved=await savePlan(true);if(!saved){state.meta.status='submitted';render();return}
+      await Promise.all([syncPlanStatusToDashboard('rejected'),syncPlanRegistry('rejected',state.meta.rejectionReason)]);
+      render();toast('أُعيدت الخطة إلى العيادة','ستظهر علامة «خطة غير معتمدة» بجانب المريض حتى يتم تعديلها وإرسالها مجددًا.');
     }
     function displayProcedure(item){
       const base=item.code==='other'?(item.customService||item.service||'إجراء آخر'):(item.service||'إجراء');
       if(item.code==='ceramic-veneer')return`${base} — ${item.variant==='without-prep'?'بدون تحضير':'بتحضير'}`;
       return base;
     }
-    function sendWhatsAppDraft(){
+    function shareSheetParts(){
+      collectHeaderFields();
+      const phases=state.phases.map((phase,index)=>({
+        title:phase.title||`المرحلة ${index+1}`,
+        items:phase.items.filter(item=>item.service).map(item=>({
+          name:displayProcedure(item),qty:Math.max(1,Number(item.qty||1)),
+          before:item.type==='included'?'مجاني':formatMoney(itemTotals(item).before),
+          after:item.type==='included'?'مجاني':formatMoney(itemTotals(item).after)
+        }))
+      })).filter(phase=>phase.items.length);
+      const total=totals(),dates=planDates();
+      const phaseHtml=phases.map((phase,index)=>`<section class="sp-phase"><h3><b>${index+1}</b>${escapeHtml(phase.title)}</h3><table><thead><tr><th>الإجراء</th><th>العدد</th><th>قبل الخصم</th><th>بعد الخصم</th></tr></thead><tbody>${phase.items.map(item=>`<tr><td>${escapeHtml(item.name)}</td><td>${item.qty}</td><td>${escapeHtml(item.before)}</td><td>${escapeHtml(item.after)}</td></tr>`).join('')}</tbody></table></section>`).join('');
+      const body=`<div class="share-plan" dir="rtl">
+        <div class="sp-stamp">مسودة<br>للاطلاع</div>
+        <header><div class="sp-mark">BC</div><div><h1>عيادات أفضل عناية للأسنان</h1><p>خطة علاجية وعرض تكلفة تقديري</p></div><div class="sp-meta">رقم الخطة: ${escapeHtml(state.meta.planNo)}<br>${dateFormatter.format(dates.issued)}</div></header>
+        <div class="sp-patient"><span><b>المريض</b>${escapeHtml(state.patient.fullName||'—')}</span><span><b>رقم الملف</b>${escapeHtml(state.patient.fileNo||'—')}</span><span><b>الجوال</b>${escapeHtml(state.patient.mobile||'—')}</span></div>
+        <section class="sp-clinical"><h2>التشخيص والفحوصات</h2><p>${escapeHtml(DEFAULT_DIAGNOSIS)}</p><p><b>الإجراءات التشخيصية:</b> تم استكمال الإجراءات التشخيصية اللازمة للحالة ومراجعة النتائج، وقد تم أخذ كل ما يلزم منها وشرح التشخيص والخطة العلاجية المقترحة للمريض بصورة واضحة.</p>${state.clinical.radiographs?`<p><b>الفحوصات والصور:</b> ${escapeHtml(state.clinical.radiographs)}</p>`:''}</section>
+        <main>${phaseHtml}</main>
+        <section class="sp-finance"><span><b>قبل الخصم</b>${formatMoney(total.before)}</span><span><b>قيمة الخصم</b>${formatMoney(total.saving)}</span><span><b>بعد الخصم</b>${formatMoney(total.after)}</span><span class="net"><b>الصافي المستحق</b>${formatMoney(total.net)}</span></section>
+        <section class="sp-terms"><b>تنبيه مهم:</b> هذه مسودة للاطلاع وليست فاتورة أو اعتمادًا نهائيًا. النسخة النهائية المعتمدة تصدر من إدارة العيادة. العرض ساري ${Number(state.meta.validityDays||15)} يومًا، وقد تتغير المراحل أو المدة بحسب المستجدات السريرية. أي إجراء غير مدرج يوثّق ويسعّر بصورة مستقلة بعد موافقة المريض.</section>
+        <section class="sp-consent"><b>إقرار مختصر:</b> تم شرح طبيعة الإجراءات وأهدافها والفوائد والمخاطر والبدائل، وأُتيحت للمريض فرصة طرح الأسئلة. تختلف الاستجابة للعلاج ولا يمكن ضمان نتيجة نهائية، ويلزم الالتزام بالتعليمات والمراجعات الدورية.</section>
+        <footer><span>بيانات صحية شخصية — تعامل بسرية</span><span>عيادات أفضل عناية للأسنان · أبها</span></footer>
+      </div>`;
+      const css=`*{box-sizing:border-box}.share-plan{position:relative;width:1120px;padding:38px 46px 34px;background:#fff;color:#203a31;font-family:Tahoma,Arial,sans-serif}.share-plan header{display:grid;grid-template-columns:84px 1fr auto;gap:18px;align-items:center;border-bottom:6px solid #287b5a;padding-bottom:16px}.sp-mark{display:grid;place-items:center;width:76px;height:76px;border-radius:22px;background:#236746;color:#fff;font-size:30px;font-weight:900}.share-plan h1{margin:0;color:#1f6547;font-size:31px}.share-plan header p{margin:5px 0 0;color:#6a7e75;font-size:17px}.sp-meta{text-align:left;direction:rtl;font-size:14px;line-height:1.8;color:#596f66}.sp-patient{display:grid;grid-template-columns:2fr 1fr 1.2fr;gap:10px;margin:16px 0}.sp-patient span,.sp-finance span{padding:11px 13px;border:1px solid #cfe0d8;border-radius:12px;background:#f7fbf9;font-size:16px}.sp-patient b,.sp-finance b{display:block;margin-bottom:4px;color:#527064;font-size:12px}.sp-clinical,.sp-terms,.sp-consent{margin-top:11px;padding:12px 14px;border:1px solid #d4e3dc;border-radius:12px;background:#fbfdfc}.sp-clinical h2{margin:0 0 6px;color:#21684a;font-size:18px}.sp-clinical p,.sp-terms,.sp-consent{margin:4px 0;font-size:13px;line-height:1.65}.sp-phase{margin-top:12px;border:1px solid #bfd7cc;border-radius:12px;overflow:hidden}.sp-phase h3{display:flex;align-items:center;gap:9px;margin:0;padding:9px 12px;background:#eaf5f0;color:#235f48;font-size:16px}.sp-phase h3 b{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#2b8060;color:#fff}.sp-phase table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}.sp-phase th,.sp-phase td{padding:7px 9px;border-bottom:1px solid #e1ebe6;text-align:right}.sp-phase th{background:#f7faf8;color:#47665a}.sp-phase th:first-child{width:48%}.sp-finance{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:14px}.sp-finance .net{background:#dff2e8;border-color:#78b697;color:#164f38}.sp-terms{border-color:#edcf83;background:#fff9e7;color:#634b13}.sp-consent{background:#f4f8f6}.share-plan footer{display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:2px solid #d4e3dc;color:#697d75;font-size:11px}.sp-stamp{position:absolute;z-index:4;top:120px;left:55px;display:grid;place-items:center;width:138px;height:138px;border:9px double rgba(174,35,46,.58);border-radius:50%;color:rgba(174,35,46,.68);font-size:25px;font-weight:900;line-height:1.2;text-align:center;transform:rotate(-14deg)}`;
+      return{body,css,rowCount:phases.reduce((sum,phase)=>sum+phase.items.length,0),phaseCount:phases.length};
+    }
+    async function renderShareImage(){
+      const {body,css,rowCount,phaseCount}=shareSheetParts();
+      const measure=document.createElement('div');measure.style.cssText='position:fixed;right:-20000px;top:0;width:1120px;visibility:hidden;z-index:-1';measure.innerHTML=`<style>${css}</style>${body}`;document.body.appendChild(measure);
+      const naturalHeight=Math.max(1,measure.querySelector('.share-plan').scrollHeight);measure.remove();
+      const availableHeight=1640,scale=Math.min(1,availableHeight/naturalHeight);
+      const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1754"><rect width="1240" height="1754" fill="#eef6f2"/><foreignObject x="60" y="50" width="1120" height="1654"><div xmlns="http://www.w3.org/1999/xhtml" style="width:1120px;transform:scale(${scale});transform-origin:top center">${`<style>${css}</style>${body}`}</div></foreignObject></svg>`;
+      const svgUrl=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+      try{
+        const image=await new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src=svgUrl});
+        const canvas=document.createElement('canvas');canvas.width=1240;canvas.height=1754;const context=canvas.getContext('2d');context.fillStyle='#eef6f2';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0);
+        const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png',.94));if(!blob)throw new Error('تعذر إنشاء الصورة');
+        return new File([blob],`خطة-${state.patient.fileNo||state.meta.planNo}-مسودة.png`,{type:'image/png'});
+      }finally{URL.revokeObjectURL(svgUrl)}
+    }
+    async function sendWhatsAppDraft(){
       collectHeaderFields();
       const items=state.phases.flatMap(phase=>phase.items).filter(item=>item.service);
-      if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل الإرسال.');return}
-      const wasPreview=document.body.classList.contains('preview-mode');
-      collapsedPhases.clear();
-      document.body.classList.add('preview-mode','draft-pdf');
-      $('paper').classList.remove('approved');
-      document.querySelectorAll('.copy-badge').forEach(node=>node.textContent='نسخة المريض — مسودة للاطلاع');
-      renderPhases();
-      toast('مسودة PDF جاهزة','اختر «حفظ بصيغة PDF» من نافذة الطباعة، ثم أرفق الملف في واتساب. النسخة النهائية المعتمدة تبقى للطباعة من الإدارة.');
-      window.__draftPreviewWasOpen=wasPreview;
-      setTimeout(()=>window.print(),160);
+      if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل المشاركة.');return}
+      toast('جارٍ تجهيز الصورة','سيتم إنشاء نسخة A4 من صفحة واحدة مع ختم «مسودة للاطلاع».');
+      try{
+        const file=await renderShareImage();
+        if(navigator.canShare?.({files:[file]})){
+          await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[file]});
+          toast('تم فتح المشاركة','اختر واتساب ثم جهة اتصال المريض.');
+        }else{
+          const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+          toast('تم تنزيل صورة الخطة','أرفق الصورة في WhatsApp Web. المتصفح لا يسمح بإرفاقها تلقائيًا على الكمبيوتر.');
+        }
+      }catch(error){if(error?.name!=='AbortError')toast('تعذرت مشاركة الصورة',error?.message||'حاول مرة أخرى.')}
     }
     function updateItemFromInput(input,rerender=false){
       const row=input.closest('[data-item-row]');if(!row)return;
@@ -811,7 +888,10 @@
     function printPlan(twoCopies=false){
       if(state.meta.status!=='approved'){toast('النسخة غير معتمدة','أرسل الخطة للإدارة واعتمد الإجراءات والأسعار قبل الطباعة.');return}
       if(!validateBeforePrint())return;
-      collectHeaderFields();document.body.classList.add('preview-mode');
+      collectHeaderFields();document.body.classList.add('preview-mode','one-page-print');
+      const itemCount=state.phases.reduce((sum,phase)=>sum+phase.items.filter(item=>item.service).length,0);
+      document.body.classList.toggle('print-dense',itemCount>8);
+      document.body.classList.toggle('print-ultra',itemCount>15);
       doublePrint=twoCopies;if(twoCopies)prepareDuplicate();else $('duplicatePrint').innerHTML='';
       $('paper').classList.add('approved');savePlan(true);
       setTimeout(()=>window.print(),80);
@@ -832,7 +912,7 @@
       $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',()=>savePlan(false));$('previewBtn').addEventListener('click',togglePreview);
       $('compactEntryBtn').addEventListener('click',toggleCompactEntry);
       $('sidePreviewBtn').addEventListener('click',togglePreview);
-      $('sendAdminBtn').addEventListener('click',submitToAdmin);$('approvePlanBtn').addEventListener('click',approvePlan);$('whatsappPlanBtn').addEventListener('click',sendWhatsAppDraft);
+      $('sendAdminBtn').addEventListener('click',submitToAdmin);$('approvePlanBtn').addEventListener('click',approvePlan);$('rejectPlanBtn').addEventListener('click',rejectPlan);$('whatsappPlanBtn').addEventListener('click',sendWhatsAppDraft);
       $('printBtn').addEventListener('click',()=>printPlan(false));$('printCopiesBtn').addEventListener('click',()=>printPlan(true));
       $('vatMode').addEventListener('change',()=>{$('vatConfirmed').checked=false;$('vatControl').classList.remove('confirmed');state.financial.vatConfirmed=false;markDirty();toast('يلزم تأكيد الضريبة','غيّرت وضع الضريبة؛ راجع أهلية المريض ثم فعّل مربع التأكيد.')});
       $('vatConfirmed').addEventListener('change',()=>{$('vatControl').classList.toggle('confirmed',$('vatConfirmed').checked);state.financial.vatConfirmed=$('vatConfirmed').checked;markDirty()});
@@ -857,6 +937,7 @@
       $('importJsonBtn').addEventListener('click',()=>{try{state=normalizeState(JSON.parse($('jsonInput').value));hydrateFields();render();markDirty();toast('تم تحليل البيانات')}catch{toast('تعذر تحليل JSON','تأكد من صحة التنسيق.')}});
       window.addEventListener('afterprint',()=>{
         $('duplicatePrint').innerHTML='';doublePrint=false;
+        document.body.classList.remove('one-page-print','print-dense','print-ultra');
         if(document.body.classList.contains('draft-pdf')){
           document.body.classList.remove('draft-pdf');
           if(!window.__draftPreviewWasOpen)document.body.classList.remove('preview-mode');
@@ -882,6 +963,7 @@
       hydrateFields();setupSignature();bindEvents();render();
       $('saveStatus').textContent=remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote));
+      if(state.meta.status==='submitted'||(currentUser?.role==='admin'&&['approved','rejected'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
       setInterval(()=>loadProcedureCatalog(true),5000);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));
     }

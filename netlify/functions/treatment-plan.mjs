@@ -73,10 +73,13 @@ const cleanPlan = plan => ({
     validityDays: Math.max(1, Math.min(90, Number(plan?.meta?.validityDays || 15))),
     copyType: plan?.meta?.copyType === 'file' ? 'file' : 'patient',
     revision: Math.max(1, Number(plan?.meta?.revision || 1)),
-    status: ['draft', 'submitted', 'approved'].includes(plan?.meta?.status) ? plan.meta.status : 'draft',
+    status: ['draft', 'submitted', 'approved', 'rejected'].includes(plan?.meta?.status) ? plan.meta.status : 'draft',
     submittedAt: cleanNumber(plan?.meta?.submittedAt, 0, Number.MAX_SAFE_INTEGER),
     approvedAt: cleanNumber(plan?.meta?.approvedAt, 0, Number.MAX_SAFE_INTEGER),
-    approvedBy: cleanText(plan?.meta?.approvedBy, 120)
+    approvedBy: cleanText(plan?.meta?.approvedBy, 120),
+    rejectedAt: cleanNumber(plan?.meta?.rejectedAt, 0, Number.MAX_SAFE_INTEGER),
+    rejectedBy: cleanText(plan?.meta?.rejectedBy, 120),
+    rejectionReason: cleanText(plan?.meta?.rejectionReason, 500)
   },
   clinic: {
     nameAr: cleanText(plan?.clinic?.nameAr, 100),

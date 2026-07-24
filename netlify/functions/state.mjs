@@ -40,7 +40,7 @@ const cleanPatient=p=>({
  paymentRequestedAt:Number(p?.paymentRequestedAt||0),
  paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0),
  paymentCompletedAt:Number(p?.paymentCompletedAt||0),
- treatmentPlanStatus:['draft','submitted','approved'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
+ treatmentPlanStatus:['draft','submitted','approved','rejected'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
  treatmentPlanUpdatedAt:Number(p?.treatmentPlanUpdatedAt||0)
 });
 const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
@@ -53,8 +53,8 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
   else if(Number(patient.paymentAcknowledgedAt||0)>Number(old.paymentAcknowledgedAt||0))events.push(decorate({type:'payment',title:'تم استلام أمر الدفع',body:'أكدت الإدارة استلام طلب الدفع.',tag:`payment-ack-${patient.id}`},patient));
   else if(Number(patient.paymentCompletedAt||0)>Number(old.paymentCompletedAt||0))events.push(decorate({type:'payment',title:'تم تنفيذ الدفع',body:'اكتمل تنفيذ أحد أوامر الدفع.',tag:`payment-done-${patient.id}`},patient));
   else if(String(patient.treatmentPlanStatus||'')!==String(old.treatmentPlanStatus||'')){
-   const approved=patient.treatmentPlanStatus==='approved';
-   events.push(decorate({type:'patient',title:approved?'تم اعتماد الخطة العلاجية':'خطة علاجية بانتظار الإدارة',body:approved?'اعتمدت الإدارة الإجراءات والأسعار النهائية.':'أرسلت العيادة خطة علاجية للمراجعة والتسعير.',tag:`treatment-plan-${patient.id}`},patient));
+   const approved=patient.treatmentPlanStatus==='approved',rejected=patient.treatmentPlanStatus==='rejected';
+   events.push(decorate({type:'patient',title:approved?'تم اعتماد الخطة العلاجية':rejected?'لم تُعتمد الخطة العلاجية':'خطة علاجية بانتظار الإدارة',body:approved?'اعتمدت الإدارة الإجراءات والأسعار النهائية.':rejected?'أعادت الإدارة الخطة إلى العيادة للتعديل.':'أرسلت العيادة خطة علاجية للمراجعة والتسعير.',tag:`treatment-plan-${patient.id}`},patient));
   }
   else if(String(patient.status||'')!==String(old.status||''))events.push(decorate({type:'patient',title:'تحديث حالة مريض',body:'تم تحديث حالة أحد مرضى اليوم.',tag:`patient-${patient.id}`},patient));
  }

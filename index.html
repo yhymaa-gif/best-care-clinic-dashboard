@@ -77,6 +77,7 @@ body.lang-en{direction:ltr}body.lang-en th,body.lang-en td,body.lang-en .setting
 .timeline-chip strong,.timeline-chip small{display:block}.timeline-chip strong{font-size:13px}.timeline-chip small{margin-top:3px;color:var(--muted);font-size:11px}.timeline-chip.is-current{background:#fff;border-color:#63b188;box-shadow:0 7px 18px rgba(25,111,76,.16);transform:translateY(-2px)}.timeline-chip.is-done{opacity:.55}.timeline-chip.is-cancel{opacity:.42;text-decoration:line-through}
 .timer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:16px}.timer-box{padding:12px 14px;border-radius:15px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.82)}.timer-box small{display:block;color:#48665a;font-weight:900}.timer-box strong{display:block;margin-top:5px;font-size:clamp(25px,3vw,42px);direction:ltr;color:#164f3b}.timer-box.actual strong{color:#215a70}.actual-hint{font-size:11px;color:var(--muted);margin-top:3px}
 .patient-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.patient-actions button{background:rgba(255,255,255,.78);border-color:rgba(36,91,69,.18);backdrop-filter:blur(5px)}.patient-actions .finish{background:#164f3b;color:#fff;border-color:#164f3b}
+.plan-status-badge{display:inline-flex;align-items:center;gap:5px;margin-inline-start:7px;padding:4px 8px;border-radius:999px;border:1px solid transparent;font-size:10px;font-weight:950;line-height:1.2;vertical-align:middle;white-space:nowrap}.plan-status-badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}.plan-status-submitted{background:#fff4d8;border-color:#efd089;color:#8a5a00}.plan-status-approved{background:#e2f5ea;border-color:#acd8bd;color:#176445}.plan-status-rejected{background:#fde8e9;border-color:#edb6ba;color:#a32e35}.queue-name .plan-status-badge{font-size:9px;padding:3px 6px}.current-plan-mark{display:inline-flex;margin-inline-start:8px}
 .upcoming-panel{padding:18px;overflow:hidden}.upcoming-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}.upcoming-head h2{font-size:19px;margin:0;color:var(--navy)}.upcoming-head small{color:var(--muted)}.upcoming-stack{display:grid;gap:10px;align-content:start;max-height:min(640px,calc(100vh - 250px));overflow-y:auto;padding-inline-end:5px;scrollbar-width:thin;scrollbar-color:rgba(31,96,72,.24) transparent}.upcoming-stack::-webkit-scrollbar{width:6px}.upcoming-stack::-webkit-scrollbar-thumb{background:rgba(31,96,72,.24);border-radius:999px}
 .queue-card{--queue-height:150px;--queue-indent:8%;--queue-font:27px;--queue-padding:16px;--queue-progress:0%;position:relative;overflow:hidden;border-radius:17px;border:1px solid #cee1d8;padding:var(--queue-padding);min-height:var(--queue-height);margin-inline-start:var(--queue-indent);transition:transform .48s cubic-bezier(.2,.8,.2,1),min-height .48s ease,margin .48s ease,padding .48s ease,box-shadow .48s ease,background .48s ease;background:linear-gradient(135deg,#e5f6ed,#fff 67%,#d1ebdf);animation:queueEnter .45s ease both}.queue-card::after{content:"";position:absolute;width:130px;height:130px;border-radius:50%;left:-52px;bottom:-70px;background:rgba(255,255,255,.48)}
 .queue-card.queue-1{box-shadow:0 15px 34px rgba(32,124,86,.16)}.queue-card.proximity-far{background:linear-gradient(135deg,#edf5f1,#fff 65%,#dcebe4);border-color:#d6e5de}.queue-card.proximity-soon{background:linear-gradient(135deg,#e6f5d5,#fff 63%,#cae7a7);border-color:#bedb9d}.queue-card.proximity-near{background:linear-gradient(135deg,#fff1bd,#fff 62%,#f0d36f);border-color:#dfc04f;box-shadow:0 15px 34px rgba(202,159,35,.18)}.queue-card.proximity-now{background:linear-gradient(135deg,#ffd9b3,#fff5e8 62%,#f7ae64);border-color:#e68b35;box-shadow:0 17px 38px rgba(217,112,29,.22)}.queue-card.status-asks-delay{background:linear-gradient(135deg,#fff0b8,#fff9e9 62%,#f3ca58);border-color:#d8a91f}.queue-card.status-asks-delay .queue-position::before{content:"؟ ";font-size:18px;color:#9f6e00}
@@ -259,9 +260,10 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 'use strict';
 const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
+const PLAN_REGISTRY_API='/api/treatment-plan-registry';
 const PUSH_API='/.netlify/functions/push-subscription';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.15-treatment-plan-pricing-phases';
+const DASHBOARD_BUILD='7.16-plan-registry-one-page-share';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -283,6 +285,7 @@ const IOS_INSTALL_COPY={
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:0};
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
 const ACTIVE_CLINIC_ID=/^clinic-([1-9]|1[0-5])$/.test(new URLSearchParams(location.search).get('clinic')||'')?new URLSearchParams(location.search).get('clinic'):'clinic-1';
@@ -566,6 +569,7 @@ async function runAutomaticSync(){
     }else{
       await pullState(false);
     }
+    await refreshTreatmentPlanRegistry(false);
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
@@ -672,6 +676,53 @@ async function copyReviewMessage(){
   const message=$('reviewMessageInput').value.trim();if(!message)return;
   try{await navigator.clipboard.writeText(message);toast(lang==='en'?'Message copied':'تم نسخ الرسالة',lang==='en'?'Paste it into WhatsApp.':'يمكنك لصقها الآن في واتساب.')}catch{toast(lang==='en'?'Copy failed':'تعذر النسخ',lang==='en'?'Select and copy the message manually.':'حدد الرسالة وانسخها يدويًا.')}
 }
+function planRegistryPhone(value){
+  const digits=String(value||'').replace(/\D/g,'');
+  if(/^9665\d{8}$/.test(digits))return`0${digits.slice(3)}`;
+  if(/^5\d{8}$/.test(digits))return`0${digits}`;
+  return digits;
+}
+function planRegistryIdentityKeys(patient={}){
+  const file=String(patient.file??patient.fileNo??'').trim().toUpperCase().replace(/\s+/g,'');
+  const phone=planRegistryPhone(patient.phone??patient.mobile);
+  const name=String(patient.name??patient.fullName??'').normalize('NFKC').toLowerCase().replace(/[\u064B-\u065F\u0670]/g,'').trim().replace(/\s+/g,' ');
+  return [...new Set([file?`file:${file}`:'',phone?`phone:${phone}`:'',name?`name:${name}`:''].filter(Boolean))];
+}
+function treatmentPlanRecord(patient){
+  for(const key of planRegistryIdentityKeys(patient)){
+    const canonical=treatmentPlanRegistry.aliases?.[key];
+    if(canonical&&treatmentPlanRegistry.records?.[canonical])return treatmentPlanRegistry.records[canonical];
+  }
+  return null;
+}
+function effectiveTreatmentPlanStatus(patient){
+  return String(treatmentPlanRecord(patient)?.status||patient?.treatmentPlanStatus||'');
+}
+function treatmentPlanBadgeMarkup(patient){
+  const record=treatmentPlanRecord(patient),status=String(record?.status||patient?.treatmentPlanStatus||'');
+  if(!['submitted','approved','rejected'].includes(status))return'';
+  const labels=lang==='en'
+    ?{submitted:'Plan sent',approved:'Plan approved',rejected:'Plan not approved'}
+    :{submitted:'خطة مرسلة',approved:'خطة معتمدة',rejected:'خطة غير معتمدة'};
+  const detail=status==='rejected'&&record?.rejectionReason?` — ${record.rejectionReason}`:'';
+  return`<span class="plan-status-badge plan-status-${status}" title="${escapeHtml(labels[status]+detail)}">${escapeHtml(labels[status])}</span>`;
+}
+async function refreshTreatmentPlanRegistry(force=false){
+  if(!authReady)return false;
+  if(!force&&Date.now()-Number(treatmentPlanRegistry.lastFetchedAt||0)<15000)return false;
+  try{
+    const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);
+    const data=await response.json();
+    if(!response.ok)throw new Error(data.error||'تعذر تحميل سجل الخطط');
+    treatmentPlanRegistry={
+      records:data.records&&typeof data.records==='object'?data.records:{},
+      aliases:data.aliases&&typeof data.aliases==='object'?data.aliases:{},
+      revision:Number(data.revision||0),updatedAt:Number(data.updatedAt||0),lastFetchedAt:Date.now()
+    };
+    render();
+    return true;
+  }catch(error){console.warn('Treatment plan registry unavailable',error);return false}
+}
 function renderTable(){
   const activeStatusSelect=document.activeElement?.classList?.contains('status-select');
   if(activeStatusSelect)return;
@@ -685,7 +736,7 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p);return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><strong>${escapeHtml(firstName(p.name))}</strong>${paymentBadgeMarkup(p)}</td>
+        <td><strong>${escapeHtml(firstName(p.name))}</strong>${treatmentPlanBadgeMarkup(p)}${paymentBadgeMarkup(p)}</td>
         <td>${escapeHtml(p.file)}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -710,9 +761,9 @@ function renderTable(){
 
 function patientById(id){return patients.find(p=>String(p.id)===String(id))||null}
 function treatmentPlanButtonText(patient){
-  const status=String(patient?.treatmentPlanStatus||'');
-  if(lang==='en')return status==='approved'?'Plan: approved':status==='submitted'?'Plan: awaiting admin completion':status==='draft'?'Plan: draft':'Treatment plan';
-  return status==='approved'?'الخطة: معتمدة':status==='submitted'?'الخطة: بانتظار إكمال الإدارة':status==='draft'?'الخطة: مسودة':'خطة علاجية';
+  const status=effectiveTreatmentPlanStatus(patient);
+  if(lang==='en')return status==='approved'?'Plan: approved':status==='submitted'?'Plan: awaiting admin completion':status==='rejected'?'Plan: not approved':status==='draft'?'Plan: draft':'Treatment plan';
+  return status==='approved'?'الخطة: معتمدة':status==='submitted'?'الخطة: بانتظار إكمال الإدارة':status==='rejected'?'الخطة: غير معتمدة':status==='draft'?'الخطة: مسودة':'خطة علاجية';
 }
 function openTreatmentPlan(id){
   const patient=patientById(id);if(!patient)return;
@@ -828,7 +879,7 @@ function queueCardMarkup(p,index){
   const lastCall=called&&p.lastCalledAt?` · ${tr('lastCall')} ${new Date(Number(p.lastCalledAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
   return `<article class="queue-card rank-${position} queue-${position}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
     <div class="queue-card-top"><div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div><span class="queue-orbit" aria-hidden="true">#${position+1}</span></div>
-    <div class="queue-name">${escapeHtml(firstName(p.name))}</div>
+    <div class="queue-name">${escapeHtml(firstName(p.name))}${treatmentPlanBadgeMarkup(p)}</div>
     <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
     <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
     <span class="queue-proximity-meter" aria-hidden="true"><i></i></span>
@@ -906,7 +957,7 @@ function renderLive(updateStructure=true){
   $('currentVisualIcon').textContent=activelyTreating?'●':['arrived','early_arrival'].includes(leadStatus)?'✓':lead?'➜':'○';
   $('currentVisualIcon').classList.toggle('arrival-pulse',['arrived','early_arrival'].includes(leadStatus));
   $('currentLabel').textContent=activelyTreating?tr('currentPatient'):['arrived','early_arrival'].includes(leadStatus)?statusText(leadStatus):tr('nextToCall');
-  $('currentName').textContent=lead?firstName(lead.name):tr('noCurrent');
+  $('currentName').innerHTML=lead?`${escapeHtml(firstName(lead.name))}<span class="current-plan-mark">${treatmentPlanBadgeMarkup(lead)}</span>`:escapeHtml(tr('noCurrent'));
   $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.start}–${lead.end} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
   $('currentCountdown').textContent=lead?fmtMs((activelyTreating?timeDate(lead.end):timeDate(lead.start))-new Date()):'--:--:--';
   $('actualTimer').textContent=lead?.actualStartedAt?fmtMs(Date.now()-Number(lead.actualStartedAt)):'--:--:--';
@@ -1381,7 +1432,7 @@ function clearAlert(){
   closeModal('alertModal');
   toast('تم إلغاء التنبيه','أزيل التنبيه من الشاشات المتصلة');
 }
-async function setDate(date){if(sync.dirty)await pushState();selectedDate=date||today();sync.revision=0;sync.updatedAt=0;sync.ready=false;sync.dirty=false;sync.localVersion=0;applyViewMode();loadLocal(selectedDate);await pullState(true)}
+async function setDate(date){if(sync.dirty)await pushState();selectedDate=date||today();sync.revision=0;sync.updatedAt=0;sync.ready=false;sync.dirty=false;sync.localVersion=0;applyViewMode();loadLocal(selectedDate);await pullState(true);await refreshTreatmentPlanRegistry(true)}
 function enterScreen(){
   document.body.classList.add('screen-mode');
   document.documentElement.requestFullscreen?.().catch(()=>{});
