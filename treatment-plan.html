@@ -161,10 +161,13 @@
     .document-footer{position:static;margin-top:auto;padding-top:2mm;border-top:.4pt solid var(--rule);display:grid;grid-template-columns:1.5fr 1fr auto;gap:4mm;align-items:end;color:var(--ink-2);font-size:6.8pt}
     .copy-badge{display:inline-block;padding:1mm 2mm;border:1px solid var(--rule);border-radius:99px;color:var(--ink);font-weight:750}
     .print-only{display:none}
-    .floating-plan-actions{position:fixed;left:18px;bottom:18px;z-index:90;display:grid;gap:9px;justify-items:start}
-    .floating-plan-action{display:inline-flex;align-items:center;gap:10px;min-height:50px;padding:8px 14px 8px 9px;border:1px solid transparent;border-radius:18px;color:#fff;font-weight:900;box-shadow:0 14px 34px rgba(21,56,45,.22);transition:transform .2s ease,box-shadow .2s ease,opacity .2s ease}
+    .floating-plan-actions{position:fixed;left:16px;bottom:16px;z-index:90;display:grid;gap:9px;justify-items:start}
+    .floating-plan-action{position:relative;display:grid;place-items:center;width:54px;height:54px;padding:0;border:1px solid transparent;border-radius:18px;color:#fff;font-weight:900;box-shadow:0 14px 34px rgba(21,56,45,.22);transition:transform .2s ease,box-shadow .2s ease,opacity .2s ease}
     .floating-plan-action:hover{transform:translateY(-3px);box-shadow:0 18px 42px rgba(21,56,45,.28)}
-    .floating-plan-action .action-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:rgba(255,255,255,.18);font-size:19px}
+    .floating-plan-action .action-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:rgba(255,255,255,.18);font-size:19px}
+    .floating-plan-action .action-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .floating-plan-action::after{content:attr(aria-label);position:absolute;left:calc(100% + 9px);bottom:7px;width:max-content;max-width:220px;padding:7px 10px;border-radius:9px;background:#173d31;color:#fff;font-size:11px;line-height:1.4;opacity:0;pointer-events:none;transform:translateX(-4px);transition:.18s ease}
+    .floating-plan-action:hover::after,.floating-plan-action:focus-visible::after{opacity:1;transform:translateX(0)}
     .floating-plan-action.whatsapp{background:linear-gradient(135deg,#18a75c,#08783f);border-color:#08783f}
     .floating-plan-action.pdf{background:linear-gradient(135deg,#315f85,#244c6c);border-color:#244c6c}
     .floating-plan-action[hidden]{display:none}
@@ -470,11 +473,11 @@
     </div>
   </main>
   <aside class="floating-plan-actions no-print" aria-label="إجراءات الخطة السريعة">
-    <button id="floatingWhatsappBtn" class="floating-plan-action whatsapp" type="button" hidden aria-label="مشاركة الخطة PDF عبر واتساب">
+    <button id="floatingWhatsappBtn" class="floating-plan-action whatsapp" type="button" hidden aria-label="مشاركة الخطة PDF عبر واتساب" title="مشاركة الخطة PDF عبر واتساب">
       <span class="action-icon" aria-hidden="true">◉</span>
       <span id="floatingWhatsappLabel" class="action-label">واتساب PDF</span>
     </button>
-    <button id="floatingPdfBtn" class="floating-plan-action pdf" type="button" aria-label="طباعة الخطة أو حفظها PDF">
+    <button id="floatingPdfBtn" class="floating-plan-action pdf" type="button" aria-label="طباعة الخطة أو حفظها PDF" title="طباعة الخطة أو حفظها PDF">
       <span class="action-icon" aria-hidden="true">PDF</span>
       <span class="action-label">طباعة PDF</span>
     </button>
@@ -578,6 +581,7 @@
       $('whatsappPlanBtn').setAttribute('aria-label',finalPlan?'تجهيز الخطة النهائية PDF ومشاركتها عبر واتساب':'تجهيز مسودة PDF ومشاركتها عبر واتساب');
       $('floatingWhatsappLabel').textContent=finalPlan?'واتساب الخطة النهائية':'واتساب المسودة';
       $('floatingWhatsappBtn').setAttribute('aria-label',finalPlan?'مشاركة الخطة النهائية PDF عبر واتساب':'مشاركة مسودة الخطة PDF عبر واتساب');
+      $('floatingWhatsappBtn').title=$('floatingWhatsappBtn').getAttribute('aria-label');
       const group=document.querySelector('.share-draft-buttons');
       if(group)group.setAttribute('aria-label',finalPlan?'مشاركة الخطة النهائية عبر واتساب':'مشاركة مسودة الخطة عبر واتساب');
     }
