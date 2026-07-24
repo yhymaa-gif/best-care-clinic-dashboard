@@ -1,9 +1,8 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260724e';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260724f';
 const APP_SHELL=[
   './',
   './index.html',
   './treatment-plan.html',
-  './assets/vendor/html2canvas.min.js',
   './offline.html',
   './manifest.webmanifest',
   './best-care-logo.png',
