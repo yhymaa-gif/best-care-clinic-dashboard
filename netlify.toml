@@ -36,6 +36,11 @@
   to = "/.netlify/functions/treatment-plan"
   status = 200
 
+[[redirects]]
+  from = "/api/treatment-catalog"
+  to = "/.netlify/functions/treatment-catalog"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

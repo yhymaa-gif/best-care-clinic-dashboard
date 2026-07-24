@@ -33,6 +33,9 @@
     .topbar-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topbar .brand{display:flex;align-items:center;gap:10px;font-weight:900}.topbar .brand img{width:36px;height:36px;object-fit:contain}
     .status-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9ddd6;border-radius:999px;padding:7px 11px;background:#fff;color:var(--ink-2);font-size:12px;font-weight:800}
     .status-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#d2a52b}.status-pill.saved::before{background:#2c9a66}
+    .workflow-pill{display:inline-flex;align-items:center;padding:7px 11px;border-radius:999px;background:#eef3f1;color:#49675d;font-size:12px;font-weight:900}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.approved{background:#dff3e8;color:#176445}
+    #sendAdminBtn{background:#315f85;color:#fff;border-color:#315f85}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b}#whatsappPlanBtn{background:#b58a1f;color:#fff;border-color:#b58a1f}
+    body.workflow-locked .paper input,body.workflow-locked .paper textarea,body.workflow-locked .paper select,body.workflow-locked .paper button,body.workflow-locked #addPhaseBtn,body.workflow-locked #saveBtn{pointer-events:none;opacity:.68}
     .workspace-hero{position:relative;isolation:isolate;min-height:210px;display:grid;align-items:center;overflow:hidden;background:#f7f4ed url("./assets/treatment-plan-hero-v1.webp") center/cover no-repeat;border-bottom:1px solid #d9e3de}
     .workspace-hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(247,244,237,.06),rgba(247,244,237,.78) 55%,rgba(247,244,237,.98))}
     .hero-copy{width:min(1220px,calc(100% - 36px));margin:auto;padding:34px 0}.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--teal-dark);font-size:12px;font-weight:900;letter-spacing:.04em}
@@ -76,6 +79,12 @@
     body.preview-mode .workspace{display:block;width:min(210mm,calc(100% - 28px));margin-top:18px}
     .entry-flow{display:grid;gap:8px}.entry-flow button{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:9px;text-align:start}
     .entry-flow button b{display:grid;place-items:center;width:32px;height:32px;border-radius:11px;background:#e3f3ef;color:#1d756b;font-size:15px}
+    .entry-flow button{border:1px solid transparent;transition:.2s ease}.entry-flow button:hover{border-color:#b9ddd3;transform:translateX(-3px)}.entry-flow button span{font-size:13px}
+    #compactEntryBtn{background:#f2eafc;border-color:#ddc9f2;color:#64418d}#compactEntryBtn::before{content:"✦";margin-inline-end:6px}
+    body.compact-entry:not(.preview-mode) .diagnosis-grid,body.compact-entry:not(.preview-mode) .validity-box,body.compact-entry:not(.preview-mode) #consentSection,body.compact-entry:not(.preview-mode) #signatureSection{display:none}
+    body.compact-entry:not(.preview-mode) .paper{min-height:auto;padding-bottom:14mm;border-radius:20px}
+    body.compact-entry:not(.preview-mode) .document-footer{position:static;margin-top:6mm}
+    body.compact-entry:not(.preview-mode) #patientSection .info-card,body.compact-entry:not(.preview-mode) #phasesSection,body.compact-entry:not(.preview-mode) #financeSection{box-shadow:0 8px 24px rgba(38,70,83,.055)}
     .clinic-general{display:grid;gap:8px;padding:10px 12px;border:1px solid #d9e6e1;border-radius:14px;background:#f7fbf9}.clinic-general strong{font-size:13px;color:var(--ink)}
     .procedure-select,.variant-select{width:100%;min-height:34px;border:0;border-bottom:1px solid #a8bdb5;background:transparent;color:var(--ink);font:inherit;font-weight:700}
     .custom-procedure{margin-top:5px}.item-note{display:block;margin-top:4px;color:var(--ink-2);font-size:7.2pt;line-height:1.4}
@@ -155,11 +164,16 @@
         <a class="brand" href="./?view=admin"><img src="./best-care-logo.png" alt=""><span>أفضل عناية</span></a>
         <button id="backBtn" class="ghost" type="button">← العودة للداشبورد</button>
         <span id="saveStatus" class="status-pill">مسودة غير محفوظة</span>
+        <span id="workflowStatus" class="workflow-pill">مسودة لدى العيادة</span>
       </div>
       <div class="topbar-group">
         <button id="addPhaseBtn" class="ghost" type="button">＋ إضافة مرحلة</button>
+        <button id="compactEntryBtn" class="ghost" type="button">إدخال سريع</button>
         <button id="previewBtn" class="ghost" type="button">معاينة الطباعة</button>
         <button id="saveBtn" class="primary" type="button">حفظ الخطة</button>
+        <button id="whatsappPlanBtn" type="button">إرسال مسودة واتساب</button>
+        <button id="sendAdminBtn" type="button" hidden>إرسال للإدارة</button>
+        <button id="approvePlanBtn" type="button" hidden>اعتماد نهائي للطباعة</button>
         <button id="printBtn" class="ghost" type="button">طباعة / PDF</button>
         <button id="printCopiesBtn" class="ghost" type="button">طباعة نسختين</button>
       </div>
@@ -322,7 +336,7 @@
             <label class="photo-consent"><input id="photoConsent" type="checkbox"> أوافق اختياريًا على استخدام الصور الطبية لأغراض علمية وتعليمية بعد إخفاء الهوية. هذه الموافقة مستقلة وليست شرطًا للعلاج.</label>
           </section>
 
-          <section class="section">
+          <section id="signatureSection" class="section">
             <span class="section-kicker">SIGNATURES</span>
             <h2 class="section-title">التواقيع والاعتماد</h2>
             <div class="signature-row simple">
@@ -360,6 +374,7 @@
     const patientId=params.get('patientId')||'';
     const appointmentDate=params.get('date')||'';
     const clinicId=/^clinic-(?:[1-9]|1[0-5])$/.test(params.get('clinic')||'')?params.get('clinic'):'clinic-1';
+    const viewMode=params.get('view')==='clinic'?'clinic':'admin';
     const SOURCE_KEY=`bestcare_treatment_source_${patientId}`;
     const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}`;
     const PLAN_API='/api/treatment-plan';
@@ -371,6 +386,7 @@
     let saveTimer=0;
     let doublePrint=false;
     let source={};
+    let currentUser={role:viewMode};
 
     const nowLocal=()=>{
       const d=new Date(),offset=d.getTimezoneOffset()*60000;
@@ -382,33 +398,23 @@
       localStorage.setItem(key,String(next));
       return `TP-${year}-${String(next).padStart(6,'0')}`;
     };
-    const PROCEDURES=[
-      ['', 'اختر الإجراء'],
-      ['حشوة تجميلية', 'حشوة تجميلية'],
-      ['حشوة تجميلية بعد علاج العصب', 'حشوة تجميلية بعد علاج العصب'],
-      ['علاج عصب', 'علاج عصب'],
-      ['إعادة علاج عصب', 'إعادة علاج عصب'],
-      ['إزالة وتد', 'إزالة وتد'],
-      ['تركيب وتد', 'تركيب وتد'],
-      ['إزالة تاج', 'إزالة تاج'],
-      ['إعادة تثبيت تاج', 'إعادة تثبيت تاج'],
-      ['تركيب سيراميك تاج', 'تركيب سيراميك تاج'],
-      ['تركيب سيراميك فينير', 'تركيب سيراميك فينير'],
-      ['تركيبة زراعة', 'تركيبة زراعة'],
-      ['زراعة - الجزء الجراحي', 'زراعة — الجزء الجراحي'],
-      ['خلع الأسنان', 'خلع الأسنان'],
-      ['تركيب مؤقت', 'تركيب مؤقت'],
-      ['تصميم ابتسامة', 'تصميم ابتسامة'],
-      ['تحليل ابتسامة', 'تحليل ابتسامة'],
-      ['تنظيف أسنان عادي', 'تنظيف أسنان عادي'],
-      ['تنظيف أسنان GBT', 'تنظيف أسنان GBT'],
-      ['إجراء آخر', 'إجراء آخر']
-    ];
+    const DEFAULT_PROCEDURES=[
+      ['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
+      ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
+      ['remove-post','إزالة وتد'],['place-post','تركيب وتد'],['remove-crown','إزالة تاج'],
+      ['recement-crown','إعادة تثبيت تاج'],['ceramic-crown','تركيب سيراميك تاج'],
+      ['ceramic-veneer','تركيب سيراميك فينير'],['implant-crown','تركيبة زراعة'],
+      ['implant-surgery','زراعة — الجزء الجراحي'],['extraction','خلع الأسنان'],
+      ['temporary','تركيب مؤقت'],['smile-design','تصميم ابتسامة'],
+      ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
+      ['cleaning-gbt','تنظيف أسنان GBT'],['other','إجراء آخر']
+    ].map(([id,name])=>({id,name,price:''}));
+    let procedureCatalog=DEFAULT_PROCEDURES.map(item=>({...item}));
     const DEFAULT_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة. تم استكمال الإجراءات التشخيصية اللازمة للحالة، ومراجعة النتائج والملاحظات السريرية، وشرح التشخيص والخطة العلاجية المقترحة للمريض بصورة واضحة.';
-    const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',type:'billable',includedLabel:''});
+    const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft'},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',submittedAt:0,approvedAt:0,approvedBy:''},
       clinic:{nameAr:'عيادات أفضل عناية للأسنان',nameEn:'Best Care Dental Clinics',mohLicense:'',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -457,6 +463,7 @@
         if(!response.ok)throw new Error();
         const data=await response.json();
         if(!data.authenticated)throw new Error();
+        currentUser=data.user||{role:viewMode};
         document.body.classList.remove('auth-checking','auth-locked');
         return true;
       }catch{
@@ -474,6 +481,32 @@
         const data=await response.json();
         return data.exists?data.plan:null;
       }catch{return null}
+    }
+    async function loadProcedureCatalog(rerender=false){
+      try{
+        const response=await fetch(`/api/treatment-catalog?clinic=${encodeURIComponent(clinicId)}`,{credentials:'include',cache:'no-store'});
+        if(!response.ok)return false;
+        const data=await response.json(),items=Array.isArray(data.items)&&data.items.length?data.items:DEFAULT_PROCEDURES;
+        const changed=JSON.stringify(items)!==JSON.stringify(procedureCatalog);
+        procedureCatalog=items.map(item=>({id:safeText(item.id,50),name:safeText(item.name,120),price:item.price===''?'':Number(item.price)})).filter(item=>item.id&&item.name);
+        let planChanged=false;
+        if(state){
+          state.phases.forEach(phase=>phase.items.forEach(item=>{
+            let entry=procedureCatalog.find(option=>option.id===item.code);
+            if(!entry&&item.service)entry=procedureCatalog.find(option=>option.name===item.service);
+            if(!entry)return;
+            if(item.code!==entry.id){item.code=entry.id;planChanged=true}
+            if(item.service!==entry.name){item.service=entry.name;planChanged=true}
+            if(state.meta.status!=='approved'&&item.priceSource!=='manual'){
+              const price=entry.price,source=entry.price===''?'':'catalog';
+              if(item.unitPriceAfter!==price){item.unitPriceAfter=price;planChanged=true}
+              if(item.priceSource!==source){item.priceSource=source;planChanged=true}
+            }
+          }));
+        }
+        if(changed&&rerender&&state){render();if(planChanged){localStorage.setItem(LOCAL_KEY,JSON.stringify(state));await savePlan(true)}}
+        return changed;
+      }catch{return false}
     }
     function loadLocalPlan(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'null')}catch{return null}}
     function collectHeaderFields(){
@@ -555,11 +588,11 @@
         const total=phaseTotals(phase);
         const rows=phase.items.map((item,iIndex)=>{
           const total=itemTotals(item),active=activeItem.phase===pIndex&&activeItem.item===iIndex;
-          const procedureOptions=PROCEDURES.map(([value,label])=>`<option value="${escapeAttr(value)}" ${item.service===value?'selected':''}>${escapeHtml(label)}</option>`).join('');
-          const variant=item.service==='تركيب سيراميك فينير'?`<select class="line-input variant-select" data-field="variant"><option value="">اختر النوع</option><option value="with-prep" ${item.variant==='with-prep'?'selected':''}>بتحضير</option><option value="without-prep" ${item.variant==='without-prep'?'selected':''}>بدون تحضير</option></select>`:'<span class="item-note">—</span>';
-          const custom=item.service==='إجراء آخر'?`<input class="line-input custom-procedure" data-field="customService" value="${escapeAttr(item.customService||'')}" placeholder="اكتب الإجراء">`:'';
+          const procedureOptions=`<option value="">اختر الإجراء</option>`+procedureCatalog.map(option=>`<option value="${escapeAttr(option.id)}" ${(item.code===option.id||(!item.code&&item.service===option.name))?'selected':''}>${escapeHtml(option.name)}</option>`).join('');
+          const variant=item.code==='ceramic-veneer'?`<select class="line-input variant-select" data-field="variant"><option value="">اختر النوع</option><option value="with-prep" ${item.variant==='with-prep'?'selected':''}>بتحضير</option><option value="without-prep" ${item.variant==='without-prep'?'selected':''}>بدون تحضير</option></select>`:'<span class="item-note">—</span>';
+          const custom=item.code==='other'?`<input class="line-input custom-procedure" data-field="customService" value="${escapeAttr(item.customService||'')}" placeholder="اكتب الإجراء">`:'';
           return`<tr data-item-row="${pIndex}:${iIndex}" style="${active?'box-shadow:inset -3px 0 0 var(--teal)':''}">
-            <td><select class="line-input procedure-select" data-field="service">${procedureOptions}</select>${custom}</td>
+            <td><select class="line-input procedure-select" data-field="procedureCode">${procedureOptions}</select>${custom}</td>
             <td>${variant}</td>
             <td class="num"><div class="qty-stepper" aria-label="عدد الإجراءات"><button type="button" data-qty-action="decrease" aria-label="إنقاص العدد">−</button><output>${Number(item.qty||1)}</output><button type="button" data-qty-action="increase" aria-label="زيادة العدد">+</button></div></td>
             <td class="money"><input class="line-input money" data-field="unitPriceAfter" inputmode="decimal" value="${escapeAttr(item.unitPriceAfter)}" placeholder="${item.type==='included'?'مجاني':'فارغ'}" ${item.type==='included'?'disabled':''}></td>
@@ -581,8 +614,28 @@
       if(!(state.patient.fullName||'').trim())missing.push('اسم المريض');
       if(!(state.patient.fileNo||'').trim())missing.push('رقم الملف');
       if(!/^05\d{8}$/.test(state.patient.mobile||''))missing.push('رقم الجوال');
-      if(!state.phases.some(phase=>phase.items.some(item=>(item.service||'').trim()&&(item.service!=='إجراء آخر'||(item.customService||'').trim()))))missing.push('إجراء علاجي واحد');
+      if(!state.phases.some(phase=>phase.items.some(item=>(item.service||'').trim()&&(item.code!=='other'||(item.customService||'').trim()))))missing.push('إجراء علاجي واحد');
+      if(state.phases.some(phase=>phase.items.some(item=>item.code==='ceramic-veneer'&&!item.variant)))missing.push('نوع الفينير');
       return missing;
+    }
+    function approvalMissing(){
+      const missing=missingFields();
+      if(state.phases.some(phase=>phase.items.some(item=>item.service&&item.type!=='included'&&toCents(item.unitPriceAfter)===null)))missing.push('سعر كل إجراء مدفوع');
+      return [...new Set(missing)];
+    }
+    function workflowRole(){return viewMode==='clinic'?'clinic':'admin'}
+    function renderWorkflow(){
+      const status=['draft','submitted','approved'].includes(state.meta.status)?state.meta.status:'draft';
+      const labels={draft:'مسودة لدى العيادة',submitted:'بانتظار مراجعة الإدارة',approved:'معتمدة نهائيًا'};
+      $('workflowStatus').textContent=labels[status];$('workflowStatus').className=`workflow-pill ${status}`;
+      $('sendAdminBtn').hidden=workflowRole()!=='clinic'||status!=='draft';
+      $('approvePlanBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
+      $('whatsappPlanBtn').hidden=!state.phases.some(phase=>phase.items.some(item=>item.service));
+      const locked=workflowRole()==='clinic'&&status!=='draft';
+      document.body.classList.toggle('workflow-locked',locked);
+      $('saveBtn').disabled=locked;$('addPhaseBtn').disabled=locked;
+      $('printBtn').title=status==='approved'?'طباعة النسخة النهائية المعتمدة':'الطباعة متاحة بعد اعتماد الإدارة';
+      $('printCopiesBtn').title=$('printBtn').title;
     }
     function renderProgress(){
       collectHeaderFields();
@@ -596,15 +649,17 @@
       return missing;
     }
     function render(){
-      renderDocMeta();renderPhases();renderFinancials();renderProgress();
+      renderDocMeta();renderPhases();renderFinancials();renderProgress();renderWorkflow();
     }
     function markDirty(){
-      collectHeaderFields();state.meta.status='draft';
+      collectHeaderFields();
+      if(workflowRole()==='clinic')state.meta.status='draft';
+      else if(state.meta.status==='approved')state.meta.status='submitted';
       $('paper').classList.remove('approved');
       $('saveStatus').classList.remove('saved');$('saveStatus').textContent='تعديلات غير محفوظة';
       localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
       clearTimeout(saveTimer);saveTimer=setTimeout(()=>savePlan(true),900);
-      renderDocMeta();renderFinancials();renderProgress();
+      renderDocMeta();renderFinancials();renderProgress();renderWorkflow();
     }
     async function savePlan(silent=false){
       collectHeaderFields();
@@ -620,16 +675,80 @@
       if(!silent)toast('تم حفظ الخطة','يمكنك الرجوع إليها من صف المريض نفسه.');
       return true;
     }
+    async function syncPlanStatusToDashboard(status){
+      if(!patientId||!appointmentDate)return false;
+      try{
+        const url=`/api/state?date=${encodeURIComponent(appointmentDate)}&clinic=${encodeURIComponent(clinicId)}`;
+        const response=await fetch(url,{credentials:'include',cache:'no-store'});if(!response.ok)throw new Error();
+        const day=await response.json();if(!day.exists)return false;
+        let found=false;
+        const patients=(day.patients||[]).map(patient=>String(patient.id)===String(patientId)?(found=true,{...patient,treatmentPlanStatus:status,treatmentPlanUpdatedAt:Date.now()}):patient);
+        if(!found)return false;
+        const saved=await fetch(url,{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({clinic:day.clinic||{},patients,notes:day.notes||'',updateAlert:day.updateAlert||{},clientId:`treatment-plan-${Date.now()}`})});
+        return saved.ok;
+      }catch{return false}
+    }
+    async function submitToAdmin(){
+      collectHeaderFields();const missing=missingFields();
+      if(missing.length){toast('تعذر الإرسال',`أكمل: ${missing.join('، ')}`);renderProgress();return}
+      state.meta.status='submitted';state.meta.submittedAt=Date.now();state.meta.approvedAt=0;state.meta.approvedBy='';
+      const saved=await savePlan(true);if(!saved){state.meta.status='draft';render();return}
+      await syncPlanStatusToDashboard('submitted');render();toast('أُرسلت الخطة للإدارة','يمكن للإدارة الآن تعديل الإجراءات والأسعار ثم اعتماد النسخة النهائية.');
+    }
+    async function approvePlan(){
+      collectHeaderFields();const missing=approvalMissing();
+      if(missing.length){toast('لا يمكن الاعتماد',`أكمل: ${missing.join('، ')}`);renderProgress();return}
+      state.meta.status='approved';state.meta.approvedAt=Date.now();state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
+      const saved=await savePlan(true);if(!saved){state.meta.status='submitted';render();return}
+      await syncPlanStatusToDashboard('approved');$('paper').classList.add('approved');render();toast('تم الاعتماد النهائي','أصبحت النسخة جاهزة للطباعة من الإدارة.');
+    }
+    function displayProcedure(item){
+      const base=item.code==='other'?(item.customService||item.service||'إجراء آخر'):(item.service||'إجراء');
+      if(item.code==='ceramic-veneer')return`${base} — ${item.variant==='without-prep'?'بدون تحضير':'بتحضير'}`;
+      return base;
+    }
+    function sendWhatsAppDraft(){
+      collectHeaderFields();
+      const items=state.phases.flatMap(phase=>phase.items).filter(item=>item.service);
+      if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل الإرسال.');return}
+      let phone=String(state.patient.mobile||'').replace(/\D/g,'');
+      if(phone.startsWith('05'))phone=`966${phone.slice(1)}`;else if(phone.startsWith('5'))phone=`966${phone}`;
+      if(!/^9665\d{8}$/.test(phone)){toast('رقم الجوال غير صحيح','اكتب رقم المريض بصيغة 05xxxxxxxx.');return}
+      const lines=items.map((item,index)=>{
+        const amount=item.type==='included'?'مجاني':toCents(item.unitPriceAfter)===null?'السعر قيد المراجعة':formatMoney(itemTotals(item).after);
+        return`${index+1}. ${displayProcedure(item)} — العدد ${Number(item.qty||1)} — ${amount}`;
+      });
+      const total=totals();
+      const message=[
+        `مرحبًا ${state.patient.fullName||''}،`,
+        'نرفق لك مسودة الخطة العلاجية للاطلاع والمراجعة:',
+        '',
+        ...lines,
+        '',
+        `الإجمالي التقديري الحالي: ${formatMoney(total.net)}`,
+        '',
+        'تنبيه: هذه مسودة أولية للاطلاع فقط، وليست اعتمادًا نهائيًا أو فاتورة. قد تُعدّل الإجراءات أو الأسعار بعد مراجعة الإدارة، وتصدر النسخة النهائية المعتمدة مطبوعة من العيادة.',
+        '',
+        'عيادات أفضل عناية للأسنان'
+      ].join('\n');
+      window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`,'_blank','noopener');
+    }
     function updateItemFromInput(input,rerender=false){
       const row=input.closest('[data-item-row]');if(!row)return;
       const [pIndex,iIndex]=row.dataset.itemRow.split(':').map(Number),item=state.phases[pIndex]?.items[iIndex];if(!item)return;
       activeItem={phase:pIndex,item:iIndex};
       const field=input.dataset.field;
       if(field==='qty')item.qty=Math.max(1,Math.min(99,Number(input.value||1)));
-      else item[field]=input.value;
-      if(field==='service'){
-        if(item.service!=='تركيب سيراميك فينير')item.variant='';
-        if(item.service!=='إجراء آخر')item.customService='';
+      else if(field==='procedureCode'){
+        const entry=procedureCatalog.find(option=>option.id===input.value);
+        item.code=entry?.id||'';item.service=entry?.name||'';item.unitPriceAfter=entry?.price??'';item.priceSource=entry&&entry.price!==''?'catalog':'';
+      }else{
+        item[field]=input.value;
+        if(field==='unitPriceAfter')item.priceSource='manual';
+      }
+      if(field==='procedureCode'){
+        if(item.code!=='ceramic-veneer')item.variant='';
+        if(item.code!=='other')item.customService='';
       }
       markDirty();
       if(rerender)renderPhases();
@@ -646,6 +765,11 @@
       $('previewBtn').textContent=preview?'عودة للتحرير':'معاينة الطباعة';
       render();
     }
+    function toggleCompactEntry(){
+      const compact=document.body.classList.toggle('compact-entry');
+      localStorage.setItem('bestcare_treatment_compact',compact?'1':'0');
+      $('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
+    }
     function validateBeforePrint(){
       collectHeaderFields();const missing=missingFields();renderProgress();
       if(missing.length){toast('الخطة غير مكتملة',`تبقى: ${missing.join('، ')}`);$('missingBanner').scrollIntoView({behavior:'smooth',block:'center'});return false}
@@ -658,10 +782,11 @@
       target.appendChild(clone);
     }
     function printPlan(twoCopies=false){
+      if(state.meta.status!=='approved'){toast('النسخة غير معتمدة','أرسل الخطة للإدارة واعتمد الإجراءات والأسعار قبل الطباعة.');return}
       if(!validateBeforePrint())return;
       collectHeaderFields();document.body.classList.add('preview-mode');
       doublePrint=twoCopies;if(twoCopies)prepareDuplicate();else $('duplicatePrint').innerHTML='';
-      state.meta.status='approved';$('paper').classList.add('approved');savePlan(true);
+      $('paper').classList.add('approved');savePlan(true);
       setTimeout(()=>window.print(),80);
     }
     function setupSignature(){
@@ -678,7 +803,9 @@
       document.querySelectorAll('[data-scroll]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})));
       $('backBtn').addEventListener('click',()=>location.href=source.returnUrl||`./?view=admin${appointmentDate?`&date=${encodeURIComponent(appointmentDate)}`:''}`);
       $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',()=>savePlan(false));$('previewBtn').addEventListener('click',togglePreview);
+      $('compactEntryBtn').addEventListener('click',toggleCompactEntry);
       $('sidePreviewBtn').addEventListener('click',togglePreview);
+      $('sendAdminBtn').addEventListener('click',submitToAdmin);$('approvePlanBtn').addEventListener('click',approvePlan);$('whatsappPlanBtn').addEventListener('click',sendWhatsAppDraft);
       $('printBtn').addEventListener('click',()=>printPlan(false));$('printCopiesBtn').addEventListener('click',()=>printPlan(true));
       document.addEventListener('input',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,false)});
       document.addEventListener('change',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,true)});
@@ -712,9 +839,13 @@
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
       }
+      await loadProcedureCatalog(false);
+      const compact=localStorage.getItem('bestcare_treatment_compact')!=='0';document.body.classList.toggle('compact-entry',compact);$('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
       hydrateFields();setupSignature();bindEvents();render();
       $('saveStatus').textContent=remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote));
+      setInterval(()=>loadProcedureCatalog(true),5000);
+      window.addEventListener('focus',()=>loadProcedureCatalog(true));
     }
     init();
   })();

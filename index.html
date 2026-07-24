@@ -117,6 +117,8 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 .plan-row-btn{display:inline-flex!important;align-items:center;gap:5px;border-color:#9bcac2!important;background:#edf8f5!important;color:#1d6f63!important;font-weight:900}.plan-row-btn::before{content:"✦";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:#2a9d8f;color:#fff}.plan-row-btn:hover{background:#dff2ee!important;box-shadow:0 8px 18px rgba(42,157,143,.18)!important}
 @media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:1fr 1fr}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.role-options{grid-template-columns:1fr}.role-option{padding:15px}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 .auth-methods{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.auth-methods label{display:flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #d5e8df;border-radius:10px;background:#f8fcfa;font-size:13px}.auth-methods input{accent-color:#1d8059}.auth-card #authEmailLabel[hidden],.auth-card #authPhoneLabel[hidden]{display:none}
+.catalog-modal-card{width:min(760px,94vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row{display:grid;grid-template-columns:minmax(210px,1fr) 155px 42px;gap:9px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}@media(max-width:620px){.catalog-row{grid-template-columns:1fr 110px 40px}.catalog-head{display:block}}
+.view-clinic #treatmentCatalogBtn{display:none}
 </style>
 </head>
 <body class="auth-checking">
@@ -139,6 +141,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
         <button id="importBtn">📥 استيراد CSV / Excel</button><input id="csvInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
         <button id="exportBtn">📤 تصدير CSV</button>
         <button id="notificationsBtn" type="button">🔔 تفعيل إشعارات النظام</button>
+        <button id="treatmentCatalogBtn" type="button">🧾 إجراءات وأسعار الخطط العلاجية</button>
         <button id="usersBtn" type="button">👤 إدارة مستخدمي النظام</button>
         <button id="syncTestBtn">🧪 اختبار المزامنة</button>
         <button id="clearBtn" class="danger">🗑 مسح قائمة اليوم</button>
@@ -215,6 +218,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 <div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary">حفظ القائمة</button></div></div></div>
 <div id="alertModal" class="modal"><div class="modal-card alert-modal-card" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle"><div class="alert-modal-head"><h3 id="alertModalTitle">🔔 إرسال تنبيه تعديل</h3><p>اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.</p></div><div class="alert-modal-body"><label for="alertMessageInput">رسالة التنبيه</label><textarea id="alertMessageInput" maxlength="220" placeholder="مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة"></textarea><div class="alert-preview"><span aria-hidden="true">💡</span><span>يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.</span></div></div><div class="modal-actions"><button type="button" data-close="alertModal">إغلاق</button><button id="clearAlertBtn" type="button" class="danger alert-clear" hidden>إلغاء التنبيه الحالي</button><button id="sendAlertBtn" type="button" class="alert-send">نشر التنبيه</button></div></div></div>
 <div id="usersModal" class="modal"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="usersModalTitle"><h3 id="usersModalTitle">إضافة مستخدم للنظام</h3><p>يتم الدخول باسم المستخدم ورقم الجوال عبر رمز تحقق لمرة واحدة.</p><div class="grid"><label>اسم المستخدم<input id="newUsername" autocomplete="off" maxlength="48"></label><label>الاسم الظاهر<input id="newDisplayName" autocomplete="off" maxlength="80"></label><label>رقم الجوال<input id="newPhone" inputmode="tel" placeholder="05xxxxxxxx"></label><label>الدور<select id="newRole"><option value="clinic">العيادة</option><option value="admin">الإدارة</option></select></label><label class="full">رقم العيادة (اختياري)<input id="newClinicId" placeholder="clinic-1"></label></div><p id="usersError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="usersModal">إلغاء</button><button id="saveUserBtn" type="button" class="primary">حفظ المستخدم</button></div></div></div>
+<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">إجراءات وأسعار الخطط العلاجية</h3><p>عدّل الاسم أو السعر مرة واحدة؛ ستظهر التغييرات تلقائيًا في خطط هذه العيادة.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">الأسعار اختيارية. السعر اليدوي الذي تعدله الإدارة داخل خطة محددة لن يُستبدل تلقائيًا.</div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث الخطط</button></div></div></div>
 <div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle"><h3 id="paymentModalTitle">إكمال العلاج وإجراء الدفع</h3><p id="paymentPatientText">اختر ما إذا كان المريض يحتاج إجراءً للدفع.</p><label class="payment-check"><input id="paymentRequiredCheck" type="checkbox"><span><strong>يوجد أمر دفع</strong><small>اختر الإجراءات والعدد، وحدد المجاني أو الخصم إن وجد</small></span></label><div id="paymentActionField" class="payment-action-field" hidden><label id="paymentItemsLabel">إجراءات أمر الدفع</label><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" maxlength="100" placeholder="اكتب الإجراء الآخر"><label class="payment-quantity"><small>العدد</small><input id="paymentOtherQuantity" type="number" min="1" max="99" value="1"></label><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div><div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج</button></div></div></div>
 <div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
 <div id="roleModal" class="modal role-modal"><div class="modal-card role-modal-card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle"><h3 id="roleModalTitle">حدد مهمتك لفتح الصفحة المناسبة</h3><p id="roleModalHelp">يمكنك تغيير المهمة في أي وقت من الشريط العلوي.</p><div class="role-options"><button type="button" class="role-option" data-role-view="admin"><span class="role-icon">🗓️</span><span><strong id="adminRoleTitle">تنسيق المواعيد والإدارة</strong><small id="adminRoleHelp">إضافة وتعديل المرضى، متابعة التنبيهات، واستلام وتنفيذ طلبات الدفع.</small></span></button><button type="button" class="role-option" data-role-view="clinic"><span class="role-icon">🦷</span><span><strong id="clinicRoleTitle">شاشة العيادة والطبيب</strong><small id="clinicRoleHelp">استدعاء المرضى، بدء وإنهاء العلاج، ومتابعة الوقت والحالات.</small></span></button></div><p id="rolePrivacyNote" class="role-note">كلتا الصفحتين تستخدمان القائمة نفسها والمزامنة المباشرة.</p></div></div>
@@ -257,7 +261,7 @@ const $=id=>document.getElementById(id);
 const API='/.netlify/functions/state';
 const PUSH_API='/.netlify/functions/push-subscription';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.13-true-web-push-pwa';
+const DASHBOARD_BUILD='7.14-treatment-catalog-workflow';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -281,6 +285,7 @@ const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('se
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
+const ACTIVE_CLINIC_ID=/^clinic-([1-9]|1[0-5])$/.test(new URLSearchParams(location.search).get('clinic')||'')?new URLSearchParams(location.search).get('clinic'):'clinic-1';
 const NEED_ROLE_CHOICE=!['admin','clinic'].includes(REQUESTED_VIEW);
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email';
@@ -294,6 +299,23 @@ async function initAuth(){document.body.classList.add('auth-checking');document.
 async function requestAuthOtp(){const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
 async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
 function openUsersModal(){openModal('usersModal');$('usersError').textContent=''}
+let treatmentCatalog=[];
+const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function renderTreatmentCatalog(){
+  const list=$('treatmentCatalogList');
+  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.price)}" placeholder="السعر (اختياري)" aria-label="السعر"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
+}
+async function openTreatmentCatalog(){
+  els.settingsMenu.classList.remove('open');$('treatmentCatalogError').textContent='جارٍ تحميل القائمة…';openModal('treatmentCatalogModal');
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');treatmentCatalog=Array.isArray(data.items)?data.items.map(item=>({...item})):[];$('treatmentCatalogError').textContent='';renderTreatmentCatalog()}catch(error){$('treatmentCatalogError').textContent=error.message}
+}
+function collectTreatmentCatalog(){
+  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const price=row.querySelector('[data-catalog-price]').value;item.price=price===''?'':Number(price)});
+}
+async function saveTreatmentCatalog(){
+  collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').textContent='جارٍ الحفظ…';
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');treatmentCatalog=data.items||items;$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والأسعار','ستظهر تلقائيًا داخل الخطط العلاجية لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent=error.message}
+}
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
 function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(Date.now()-authLastActivity>=3*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}if(Date.now()-authKeepAliveAt>10*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
 const statusText=status=>(lang==='en'?EN[status]:STATUS[status])||status;
@@ -313,7 +335,8 @@ let sync={
   localVersion:0,
   localUpdatedAt:0
 };
-const localKey=d=>`bestcare_dashboard_v4_${d}`;
+const localKey=d=>`bestcare_dashboard_v4_${ACTIVE_CLINIC_ID}_${d}`;
+const stateUrl=(date,nonce=false)=>`${API}?date=${encodeURIComponent(date)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}${nonce?`&_=${Date.now()}`:''}`;
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
 const firstName=v=>String(v||'مريض').trim().split(/\s+/)[0];
 const mins=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+m};
@@ -442,7 +465,7 @@ async function pushState(){
   const snapshot=serialize();
   setBadge('saving',lang==='en'?'Saving automatically…':'جارٍ الحفظ تلقائيًا…');
   try{
-    const res=await request(`${API}?date=${encodeURIComponent(sentDate)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});
+    const res=await request(stateUrl(sentDate),{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==sentDate)return false;
@@ -488,7 +511,7 @@ async function pullState(force=false){
   const dateAtStart=selectedDate;
   if(!sync.ready)setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ الاتصال تلقائيًا…');
   try{
-    const res=await request(`${API}?date=${encodeURIComponent(dateAtStart)}&_=${Date.now()}`);
+    const res=await request(stateUrl(dateAtStart,true));
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==dateAtStart)return false;
@@ -675,7 +698,7 @@ function renderTable(){
         <td class="hide-screen">
           <div class="row-actions">
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
-            <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${lang==='en'?'Treatment plan':'خطة علاجية'}</button>
+            <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>
             <button class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
@@ -686,11 +709,16 @@ function renderTable(){
 }
 
 function patientById(id){return patients.find(p=>String(p.id)===String(id))||null}
+function treatmentPlanButtonText(patient){
+  const status=String(patient?.treatmentPlanStatus||'');
+  if(lang==='en')return status==='approved'?'Plan: approved':status==='submitted'?'Plan: awaiting admin':status==='draft'?'Plan: draft':'Treatment plan';
+  return status==='approved'?'الخطة: معتمدة':status==='submitted'?'الخطة: بانتظار الإدارة':status==='draft'?'الخطة: مسودة':'خطة علاجية';
+}
 function openTreatmentPlan(id){
   const patient=patientById(id);if(!patient)return;
-  const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),procedure:String(patient.procedure||''),date:selectedDate,start:String(patient.start||''),returnUrl:location.href};
+  const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),procedure:String(patient.procedure||''),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
   localStorage.setItem(`bestcare_treatment_source_${patient.id}`,JSON.stringify(source));
-  location.href=`./treatment-plan.html?patientId=${encodeURIComponent(patient.id)}&date=${encodeURIComponent(selectedDate)}`;
+  location.href=`./treatment-plan.html?patientId=${encodeURIComponent(patient.id)}&date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&view=${encodeURIComponent(VIEW_MODE)}`;
 }
 function announcePatient(p,repeated=false){
   if(!p)return;
@@ -904,7 +932,7 @@ function renderLive(updateStructure=true){
   if(updateStructure){
     renderCompactTimeline(lead);
     renderUpcoming(lead);
-    $('currentActions').innerHTML=lead?`<button type="button" data-call-id="${escapeHtml(lead.id)}">${escapeHtml(Number(lead.callCount||0)>0?tr('recall'):tr('callPatient'))}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${escapeHtml(lead.actualStartedAt?tr('actualRunning'):tr('startActual'))}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">${escapeHtml(tr('finishPatient'))}</button>`:''}`:'';
+    $('currentActions').innerHTML=lead?`<button type="button" data-call-id="${escapeHtml(lead.id)}">${escapeHtml(Number(lead.callCount||0)>0?tr('recall'):tr('callPatient'))}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${escapeHtml(lead.actualStartedAt?tr('actualRunning'):tr('startActual'))}</button><button type="button" data-plan-id="${escapeHtml(lead.id)}">${escapeHtml(treatmentPlanButtonText(lead))}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">${escapeHtml(tr('finishPatient'))}</button>`:''}`:'';
     renderAlertUI();
   }
 }
@@ -1035,7 +1063,7 @@ async function movePatientToDate(item,targetDate){
   try{
     if(sync.dirty&&!(await pushState()))throw new Error(tr('sourceSaveFailed'));
 
-    const targetResponse=await request(`${API}?date=${encodeURIComponent(targetDate)}&_=${Date.now()}`);
+    const targetResponse=await request(stateUrl(targetDate,true));
     if(!targetResponse.ok)throw new Error(`${tr('targetLoadFailed')} (HTTP ${targetResponse.status})`);
     const targetData=await targetResponse.json();
     const targetPatients=(Array.isArray(targetData.patients)?targetData.patients:[])
@@ -1078,7 +1106,7 @@ async function movePatientToDate(item,targetDate){
     };
     let savedTarget;
     try{
-      const targetSave=await request(`${API}?date=${encodeURIComponent(targetDate)}`,{
+      const targetSave=await request(stateUrl(targetDate),{
         method:'PUT',
         headers:{'content-type':'application/json'},
         body:JSON.stringify(targetSnapshot)
@@ -1087,7 +1115,7 @@ async function movePatientToDate(item,targetDate){
       savedTarget=await targetSave.json();
     }catch(saveError){
       try{
-        const verification=await request(`${API}?date=${encodeURIComponent(targetDate)}&_=${Date.now()}`);
+        const verification=await request(stateUrl(targetDate,true));
         if(!verification.ok)throw saveError;
         const verifiedData=await verification.json();
         const patientExists=Array.isArray(verifiedData.patients)&&verifiedData.patients.some(patient=>String(patient.id)===String(item.id));
@@ -1557,6 +1585,10 @@ $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
 $('notificationsBtn').addEventListener('click',requestSystemNotifications);
+$('treatmentCatalogBtn').addEventListener('click',openTreatmentCatalog);
+$('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();treatmentCatalog.push({id:`custom-${Date.now()}`,name:'',price:''});renderTreatmentCatalog();$('treatmentCatalogList').lastElementChild?.querySelector('[data-catalog-name]')?.focus()});
+$('treatmentCatalogList').addEventListener('click',event=>{const button=event.target.closest('[data-catalog-delete]');if(!button)return;collectTreatmentCatalog();treatmentCatalog.splice(Number(button.dataset.catalogDelete),1);renderTreatmentCatalog()});
+$('saveTreatmentCatalogBtn').addEventListener('click',saveTreatmentCatalog);
 $('syncTestBtn').addEventListener('click',syncTest);
 $('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
 $('alertBtn').addEventListener('click',openAlertComposer);
