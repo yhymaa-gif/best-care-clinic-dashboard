@@ -96,9 +96,9 @@ export default async request => {
   if (request.method === 'PUT') {
     let body;
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
-    const status = ['submitted', 'approved', 'rejected'].includes(body?.status) ? body.status : '';
+    const status = ['submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(body?.status) ? body.status : '';
     if (!status) return reply({ error: 'Invalid status' }, 400);
-    if (['approved', 'rejected'].includes(status) && user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
+    if (['patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(status) && user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
     const keys = identityKeys(body?.patient);
     if (!keys.length) return reply({ error: 'Patient identity required' }, 400);
 
@@ -117,6 +117,10 @@ export default async request => {
       planNo: cleanText(body?.planNo, 40),
       sourcePatientId: cleanText(body?.sourcePatientId, 100),
       sourceDate: cleanText(body?.sourceDate, 10),
+      patientAcceptedAt: Number(body?.patientAcceptedAt || 0),
+      patientAcceptedBy: cleanText(body?.patientAcceptedBy, 120),
+      approvedAt: Number(body?.approvedAt || 0),
+      approvedBy: cleanText(body?.approvedBy, 120),
       updatedAt: Date.now(),
       updatedBy: cleanText(user.displayName || user.username, 120)
     };

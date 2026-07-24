@@ -33,9 +33,9 @@
     .topbar-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topbar .brand{display:flex;align-items:center;gap:10px;font-weight:900}.topbar .brand img{width:36px;height:36px;object-fit:contain}
     .status-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9ddd6;border-radius:999px;padding:7px 11px;background:#fff;color:var(--ink-2);font-size:12px;font-weight:800}
     .status-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#d2a52b}.status-pill.saved::before{background:#2c9a66}
-    .workflow-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:#eaf1f6;color:#42677f;font-size:12px;font-weight:900}.workflow-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.approved{background:#dff3e8;color:#176445}.workflow-pill.rejected{background:#fde8e8;color:#a32e35}
+    .workflow-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:#eaf1f6;color:#42677f;font-size:12px;font-weight:900}.workflow-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.patient_accepted{background:#e8efff;color:#315f98}.workflow-pill.approved,.workflow-pill.approved_signed{background:#dff3e8;color:#176445}.workflow-pill.rejected{background:#fde8e8;color:#a32e35}
     .workflow-track{display:flex;align-items:center;justify-content:center;gap:0;padding:11px 18px;background:#fff;border-bottom:1px solid var(--rule)}.workflow-step{position:relative;display:flex;align-items:center;gap:8px;min-width:155px;color:#8a9a94;font-size:11px;font-weight:900}.workflow-step:not(:last-child)::after{content:"";width:38px;height:2px;margin-inline:9px;background:#dce6e1}.workflow-step i{display:grid;place-items:center;width:28px;height:28px;border:1px solid #d2dfd9;border-radius:50%;background:#f8fbf9;font-style:normal}.workflow-step.done{color:#277655}.workflow-step.done i{background:#dff3e8;border-color:#9dceb1}.workflow-step.active{color:#8b6208}.workflow-step.active i{background:#fff1cc;border-color:#e2c16a;box-shadow:0 0 0 4px rgba(226,193,106,.18)}.workflow-step.rejected{color:#a32e35}.workflow-step.rejected i{background:#fde8e8;border-color:#e2a7ab}
-    #sendAdminBtn{background:linear-gradient(135deg,#315f85,#244c6c);color:#fff;border-color:#315f85;box-shadow:0 9px 22px rgba(49,95,133,.26);font-weight:900}#sendAdminBtn:not([hidden]){animation:doctorApprovalGlow 2.4s ease-in-out infinite}@keyframes doctorApprovalGlow{50%{box-shadow:0 10px 28px rgba(49,95,133,.42);transform:translateY(-1px)}}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b;box-shadow:0 7px 17px rgba(22,112,75,.2)}#rejectPlanBtn{background:#a9363e;color:#fff;border-color:#a9363e}.share-draft-buttons{display:inline-flex;align-items:center;gap:5px;padding:4px;border:1px solid #e4cf8f;border-radius:14px;background:#fff9e9}.share-draft-buttons[hidden]{display:none}.share-draft-buttons button{padding:8px 11px;background:#b58a1f;color:#fff;border-color:#b58a1f}.share-draft-buttons #whatsappImageBtn{position:relative;display:inline-flex;align-items:center;gap:8px;overflow:visible;background:linear-gradient(135deg,#0d9f55,#08783f);color:#fff;border-color:#078047;box-shadow:0 8px 22px rgba(13,159,85,.27);font-weight:900}.whatsapp-draft-icon{position:relative;display:grid;place-items:center;width:28px;height:28px;border:2px solid rgba(255,255,255,.94);border-radius:50%;background:#14ad60;box-shadow:0 0 0 4px rgba(255,214,82,.16);animation:whatsappSwing 2.1s ease-in-out infinite;transform-origin:50% 10%}.whatsapp-draft-icon svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.whatsapp-star{position:absolute;color:#ffd85c;filter:drop-shadow(0 0 5px rgba(255,211,76,.95));font-size:12px;line-height:1;animation:whatsappStar 1.8s ease-in-out infinite}.whatsapp-star.s1{top:-8px;right:4px}.whatsapp-star.s2{top:2px;left:-8px;animation-delay:.55s}.whatsapp-star.s3{bottom:-7px;right:-5px;animation-delay:1.05s}@keyframes whatsappSwing{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg) scale(1.06)}}@keyframes whatsappStar{0%,100%{opacity:.35;transform:scale(.72) rotate(0)}50%{opacity:1;transform:scale(1.28) rotate(35deg)}}#whatsappImageBtn:hover .whatsapp-draft-icon{animation-duration:.9s}
+    #sendAdminBtn{background:linear-gradient(135deg,#315f85,#244c6c);color:#fff;border-color:#315f85;box-shadow:0 9px 22px rgba(49,95,133,.26);font-weight:900}#sendAdminBtn:not([hidden]){animation:doctorApprovalGlow 2.4s ease-in-out infinite}@keyframes doctorApprovalGlow{50%{box-shadow:0 10px 28px rgba(49,95,133,.42);transform:translateY(-1px)}}#patientAcceptedBtn{background:linear-gradient(135deg,#3b73b5,#2b5588);color:#fff;border:1px solid #315f98;border-radius:12px;padding:10px 15px;box-shadow:0 8px 20px rgba(49,95,152,.22);font-weight:900}#patientAcceptedBtn:not([hidden]){animation:doctorApprovalGlow 2.4s ease-in-out infinite}#approvePlanBtn{background:#16704b;color:#fff;border-color:#16704b;box-shadow:0 7px 17px rgba(22,112,75,.2)}#rejectPlanBtn{background:#a9363e;color:#fff;border-color:#a9363e}.share-draft-buttons{display:inline-flex;align-items:center;padding:4px;border:1px solid #93d7b0;border-radius:14px;background:#ecfbf2}.share-draft-buttons[hidden]{display:none}.share-draft-buttons #whatsappPlanBtn{position:relative;display:inline-flex;align-items:center;gap:9px;overflow:visible;padding:8px 13px;background:linear-gradient(135deg,#12a45b,#08783f);color:#fff;border-color:#078047;box-shadow:0 8px 22px rgba(13,159,85,.27);font-weight:900}.whatsapp-draft-icon{position:relative;display:grid;place-items:center;width:28px;height:28px;border:2px solid rgba(255,255,255,.94);border-radius:50%;background:#14ad60;box-shadow:0 0 0 4px rgba(255,255,255,.12);animation:whatsappSwing 2.1s ease-in-out infinite;transform-origin:50% 10%}.whatsapp-draft-icon svg{width:17px;height:17px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}@keyframes whatsappSwing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg) scale(1.05)}}#whatsappPlanBtn:hover .whatsapp-draft-icon{animation-duration:.9s}
     .share-ready-modal[hidden],.share-image-preview[hidden],.share-pdf-preview[hidden]{display:none}.share-ready-modal{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:18px;background:rgba(20,43,38,.64);backdrop-filter:blur(7px)}.share-ready-card{position:relative;width:min(620px,100%);max-height:94vh;overflow:auto;padding:22px;background:#fff;border:1px solid #cfe0d8;border-radius:24px;box-shadow:0 28px 80px rgba(14,42,35,.3)}.share-ready-close{position:absolute;top:12px;left:12px;display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid #d8e4df;border-radius:50%;background:#fff;font-size:22px}.share-ready-head{display:flex;align-items:center;gap:13px;padding-inline-end:42px}.share-ready-icon{display:grid;place-items:center;flex:0 0 52px;height:52px;border-radius:16px;background:#fff4ce;font-size:26px}.share-ready-head h2{margin:0 0 3px;font-size:21px}.share-ready-head p{margin:0;color:var(--ink-2);font-size:13px}.share-image-preview{display:block;width:100%;max-height:58vh;object-fit:contain;margin:17px 0;border:1px solid #d7e3de;border-radius:16px;background:#eef6f2}.share-pdf-preview{display:grid;place-items:center;min-height:180px;margin:17px 0;border:1px solid #e4cf8f;border-radius:16px;background:#fff9e9;color:#8a6312;font-size:50px;font-weight:900}.share-ready-actions{display:grid;grid-template-columns:1fr 1.35fr;gap:9px}.share-ready-actions .share-action{background:#157347;border-color:#157347;color:#fff;box-shadow:0 8px 22px rgba(21,115,71,.2)}
     @media(max-width:820px){.workflow-track{justify-content:flex-start;overflow-x:auto}.workflow-step{min-width:max-content}.share-draft-buttons{width:100%}.share-draft-buttons button{flex:1}.share-ready-card{padding:18px 14px}.share-ready-actions{grid-template-columns:1fr}.share-image-preview{max-height:55vh}}
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
@@ -137,7 +137,7 @@
     .signature-tools{display:flex;gap:5px;margin-top:4px}.signature-tools button{font-size:10px;padding:4px 8px}
     .document-footer{position:absolute;inset-inline:14mm;bottom:5mm;padding-top:2mm;border-top:.4pt solid var(--rule);display:grid;grid-template-columns:1.5fr 1fr auto;gap:4mm;align-items:end;color:var(--ink-2);font-size:6.8pt}
     .copy-badge{display:inline-block;padding:1mm 2mm;border:1px solid var(--rule);border-radius:99px;color:var(--ink);font-weight:750}
-    .duplicate-print{display:none}
+    .duplicate-print,.print-only{display:none}
     .empty-state{padding:9mm;text-align:center;color:var(--ink-2)}
     .missing-banner{display:none;margin-bottom:3mm;padding:2mm 3mm;border:1px solid #efc3b8;background:#fff7f4;color:#9b4937;border-radius:3mm;font-size:8pt}.missing-banner.show{display:block}
     .toast-wrap{position:fixed;left:18px;bottom:18px;z-index:200;display:grid;gap:8px}.toast{max-width:330px;padding:12px 15px;border-radius:14px;background:var(--ink);color:#fff;box-shadow:0 15px 40px rgba(24,50,46,.24);animation:toast-in .25s ease}
@@ -149,23 +149,24 @@
     @media print{
       html,body{background:#fff!important}.no-print,.topbar,.editor-panel,.workspace-hero,.toast-wrap,.phase-actions,.add-item,.row-action{display:none!important}
       *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      .workspace{display:block;width:auto;margin:0}.paper-wrap{overflow:visible}.paper{width:auto;min-height:0;margin:0;padding:0;box-shadow:none;overflow:visible}
-      .paper::before{position:fixed}.paper>*{break-inside:auto}.phase-block,.signature-row,.financial-summary,.tooth-map,table tr,.validity-box{break-inside:avoid;page-break-inside:avoid}.phase-content{display:block!important}
+      html,body{width:210mm!important;min-height:0!important;height:auto!important;margin:0!important}.workspace{display:block;width:200mm;height:282mm;margin:0 auto}.paper-wrap{width:200mm;height:282mm;overflow:hidden}.paper{width:var(--print-layout-width,200mm);min-height:0;max-height:none;margin:0;padding:4mm 6mm 8mm;box-shadow:none;overflow:visible;zoom:var(--print-fit-scale,1)}
+      .paper::before{position:absolute}.paper>*{break-inside:auto}.phase-block,.signature-row,.financial-summary,.tooth-map,table tr,.validity-box{break-inside:avoid;page-break-inside:avoid}.phase-content{display:block!important}
       thead{display:table-header-group}tfoot{display:table-footer-group}.consent-list li{orphans:3;widows:3;break-inside:avoid}h2,h3{break-after:avoid}
-      .document-footer{position:fixed;inset-inline:0;bottom:-10mm}.edit-field,.line-input{background:transparent!important;border-color:transparent!important}
+      .document-footer{position:absolute;inset-inline:6mm;bottom:2mm}.edit-field,.line-input{background:transparent!important;border-color:transparent!important}
       .duplicate-print{display:block;break-before:page}.duplicate-print .document-footer{position:absolute;inset-inline:14mm;bottom:5mm}
-      body.one-page-print .paper{width:200mm;min-height:282mm;max-height:282mm;padding:5mm 7mm 8mm;overflow:hidden}
-      body.one-page-print .document-header{min-height:13mm;padding-bottom:2mm}body.one-page-print .doc-logo{width:15mm;height:15mm}body.one-page-print .doc-title{margin:2mm 0 1mm;font-size:12pt}
-      body.one-page-print .section{margin-top:2.2mm}body.one-page-print .info-card,body.one-page-print .financial-summary{padding:2mm}body.one-page-print .field-grid{gap:1.2mm 2mm}
-      body.one-page-print .fixed-diagnosis{padding:2mm}body.one-page-print .fixed-diagnosis p{font-size:6.7pt;line-height:1.45}body.one-page-print .diagnosis-grid{gap:2mm}
-      body.one-page-print .phase-block{margin-top:2mm}body.one-page-print .phase-head{padding:1.2mm 2mm}body.one-page-print th,body.one-page-print td{padding:2.5px 4px;font-size:6.8pt}
-      body.one-page-print .phase-total{padding:1mm 2mm;font-size:6.5pt}body.one-page-print .money-row{padding:.8mm 0;font-size:7pt}body.one-page-print .money-row.net{padding:1mm;font-size:8pt}
-      body.one-page-print .validity-box{margin-top:2mm;padding:2mm}body.one-page-print .validity-box ul{margin:1mm 0 0;font-size:6.3pt;line-height:1.35}
-      body.one-page-print .consent-list{columns:3;column-gap:4mm;font-size:5.8pt;line-height:1.3}body.one-page-print .consent-list li{margin-bottom:.6mm}
-      body.one-page-print .photo-consent{margin-top:1mm;padding:1mm;font-size:5.8pt}body.one-page-print .signature-row{gap:3mm}body.one-page-print .signature-box{min-height:16mm;padding-top:1mm}
-      body.one-page-print .document-footer{position:absolute;inset-inline:7mm;bottom:2mm;font-size:5.5pt}
-      body.print-dense .fixed-diagnosis p{font-size:6pt}body.print-dense th,body.print-dense td{font-size:6pt;padding:2px 3px}body.print-dense .consent-list{font-size:5.1pt;line-height:1.2}
-      body.print-ultra .diagnosis-grid{grid-template-columns:1fr 1fr}body.print-ultra .fixed-diagnosis p{font-size:5.3pt}body.print-ultra th,body.print-ultra td{font-size:5.3pt;padding:1.5px 2px}body.print-ultra .consent-list{font-size:4.7pt;line-height:1.1}body.print-ultra .signature-box{min-height:12mm}
+      body.print-two-copies .workspace,body.print-two-copies .paper-wrap{height:auto;overflow:visible}body.print-two-copies .duplicate-print{height:282mm;overflow:hidden}
+      body.one-page-print .print-only{display:block!important}
+      body.one-page-print .document-header{min-height:11mm;padding-bottom:1.2mm}body.one-page-print .doc-code{width:15mm;height:15mm}body.one-page-print .doc-logo{width:14mm;height:14mm}body.one-page-print .clinic-title strong{font-size:12pt}body.one-page-print .teal-rule{height:1.2mm;margin-bottom:1.5mm}body.one-page-print .doc-title{margin:0 0 1mm;font-size:10.5pt}body.one-page-print .doc-meta{margin:0 0 1.6mm;font-size:6.4pt}
+      body.one-page-print .section{margin-top:1.6mm}body.one-page-print .section-kicker{display:none}body.one-page-print .section-title{margin-bottom:1mm;font-size:8.2pt}body.one-page-print .info-card,body.one-page-print .financial-summary{padding:1.5mm}body.one-page-print .field-grid{gap:.7mm 1.4mm}body.one-page-print label,body.one-page-print .field-label{font-size:6.2pt}body.one-page-print .edit-field{padding:.6mm 1mm;font-size:7.2pt}
+      body.one-page-print #patientSection{grid-template-columns:1.35fr 1fr;gap:1.5mm;margin-top:0}body.one-page-print #patientSection .info-card{padding:1mm 1.4mm;border-radius:1.5mm}body.one-page-print #patientSection .section-title,body.one-page-print #patientSection .section-kicker{display:none}body.one-page-print #patientSection .field-grid{grid-template-columns:1.6fr .7fr 1fr;align-items:end;gap:1mm}body.one-page-print #patientSection .field.wide{grid-column:auto}body.one-page-print #patientSection label{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:1mm;white-space:nowrap}body.one-page-print #patientSection .clinic-general{display:flex;align-items:center;justify-content:center;min-height:7mm;padding:.6mm 1mm;border:0;background:transparent}body.one-page-print #patientSection .clinic-general span,body.one-page-print #patientSection .clinic-general small{display:none}body.one-page-print #patientSection .clinic-general strong{font-size:7pt}
+      body.one-page-print .fixed-diagnosis{padding:1.3mm;gap:1mm}body.one-page-print .fixed-diagnosis h3{display:none}body.one-page-print .fixed-diagnosis p{font-size:5.9pt;line-height:1.32}body.one-page-print .diagnosis-grid{gap:1.5mm;align-items:start}body.one-page-print .diagnosis-grid textarea.edit-field{min-height:4mm;height:4mm;overflow:hidden;padding:.3mm 1mm}
+      body.one-page-print .phase-block{margin-top:1.2mm;border-radius:1.5mm}body.one-page-print .phase-head{padding:.8mm 1.4mm}body.one-page-print .phase-index{width:17px;height:17px;font-size:7pt}body.one-page-print .phase-head input{font-size:7.2pt}body.one-page-print th,body.one-page-print td{padding:1.8px 3px;font-size:6.2pt}body.one-page-print .qty-stepper{display:inline-flex;border:0;background:transparent;padding:0}body.one-page-print .qty-stepper button{display:none}
+      body.one-page-print .phase-total{padding:.6mm 1.5mm;font-size:5.9pt}body.one-page-print .money-row{padding:.5mm 0;font-size:6.3pt}body.one-page-print .money-row.net{padding:.7mm;font-size:7.2pt}
+      body.one-page-print .validity-box{margin-top:1.4mm;padding:1.3mm;font-size:6.3pt}body.one-page-print .validity-box ul{display:none}
+      body.one-page-print #consentSection .consent-list,body.one-page-print #consentSection .photo-consent{display:none!important}body.one-page-print .print-consent-summary{margin:0;padding:1.2mm 1.6mm;border:1px solid var(--rule);border-radius:1.5mm;background:#f7faf8;color:var(--ink-2);font-size:5.8pt;line-height:1.35}
+      body.one-page-print #signatureSection,body.one-page-print .signature-row{break-inside:auto;page-break-inside:auto}body.one-page-print .signature-row{gap:2mm}body.one-page-print .signature-box{min-height:11mm;padding-top:.7mm}body.one-page-print .signature-box h4{margin:0;font-size:6.5pt}body.one-page-print .signature-line{height:6mm}body.one-page-print .signature-meta{margin-top:.4mm}body.one-page-print .document-footer{font-size:5pt;gap:2mm}
+      body.print-dense .fixed-diagnosis p{font-size:5.4pt}body.print-dense th,body.print-dense td{font-size:5.7pt;padding:1.4px 2.5px}
+      body.print-ultra .fixed-diagnosis p{font-size:5pt}body.print-ultra th,body.print-ultra td{font-size:5.1pt;padding:1px 2px}body.print-ultra .signature-box{min-height:9mm}
     }
   </style>
 </head>
@@ -193,17 +194,16 @@
         <button id="previewBtn" class="ghost" type="button">معاينة الطباعة</button>
         <button id="saveBtn" class="primary" type="button">حفظ الخطة</button>
         <span class="share-draft-buttons" role="group" aria-label="مشاركة مسودة الخطة">
-          <button id="whatsappPlanBtn" type="button">واتساب PDF</button>
-          <button id="whatsappImageBtn" type="button" aria-label="تجهيز صورة المسودة ومشاركتها عبر واتساب">
+          <button id="whatsappPlanBtn" type="button" aria-label="تجهيز مسودة PDF ومشاركتها عبر واتساب">
             <span class="whatsapp-draft-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4.1A8 8 0 1 1 20 11.6Z"/><path d="M9 8.5c.4 2.6 2 4.2 4.6 4.8l1.2-1.1 2 .7c.1 1.2-.5 2-1.8 2.1-4.4-.2-7.6-3.4-8-7.8.2-1.2 1-1.7 2.1-1.5l.8 1.8Z"/></svg>
-              <i class="whatsapp-star s1">✦</i><i class="whatsapp-star s2">✦</i><i class="whatsapp-star s3">✦</i>
             </span>
-            <span>صورة المسودة للواتساب</span>
+            <span>مشاركة PDF عبر واتساب</span>
           </button>
         </span>
         <button id="sendAdminBtn" type="button" hidden>✓ اعتماد الطبيب وإرسال للإدارة</button>
-        <button id="approvePlanBtn" type="button" hidden>اعتماد نهائي للطباعة</button>
+        <button id="patientAcceptedBtn" type="button" hidden>✓ تأكيد موافقة وتوقيع المريض</button>
+        <button id="approvePlanBtn" type="button" hidden>اعتماد نهائي للخطة الموقعة</button>
         <button id="rejectPlanBtn" type="button" hidden>إعادة للعيادة / غير معتمدة</button>
         <button id="printBtn" class="ghost" type="button">طباعة / PDF</button>
         <button id="printCopiesBtn" class="ghost" type="button">طباعة نسختين</button>
@@ -212,7 +212,8 @@
     <div id="workflowTrack" class="workflow-track no-print" role="group" aria-label="حالة اعتماد الخطة">
       <span class="workflow-step" data-workflow-step="draft"><i>1</i><b>مسودة العيادة</b></span>
       <span class="workflow-step" data-workflow-step="submitted"><i>2</i><b>مرسلة للإدارة</b></span>
-      <span class="workflow-step" data-workflow-step="approved"><i>3</i><b>معتمدة نهائيًا</b></span>
+      <span class="workflow-step" data-workflow-step="patient_accepted"><i>3</i><b>وافق ووقّع</b></span>
+      <span class="workflow-step" data-workflow-step="approved_signed"><i>4</i><b>معتمدة وموقعة</b></span>
     </div>
 
     <section class="workspace-hero no-print" aria-labelledby="heroTitle">
@@ -363,6 +364,7 @@
           <section id="consentSection" class="section">
             <span class="section-kicker">INFORMED CONSENT</span>
             <h2 class="section-title">إقرار الموافقة المستنيرة</h2>
+            <p class="print-consent-summary print-only">أقر المريض/الوصي بأنه اطّلع على الخطة والإجراءات والتكلفة التقديرية، وتلقى شرحًا واضحًا وأُتيحت له فرصة طرح الأسئلة، ويفهم أن الاستجابة والمدة قد تختلف بحسب المستجدات السريرية.</p>
             <ol class="consent-list">
               <li>أقر بأن الطبيب شرح لي طبيعة الإجراءات المقترحة وأهدافها بلغة واضحة.</li>
               <li>أُتيحت لي فرصة كافية لطرح الأسئلة، وتلقيت إجابات مفهومة عنها.</li>
@@ -474,7 +476,7 @@
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''},
       clinic:{nameAr:'عيادات أفضل عناية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -487,7 +489,7 @@
     });
     let state;
     let cachedSharePdf=null,cachedShareImage=null,cachedShareSignature='',html2CanvasLoader=null;
-    let preparedShareFile=null,preparedShareFormat='image',preparedPreviewUrl='';
+    let preparedShareFile=null,preparedShareFormat='pdf',preparedPreviewUrl='';
     const collapsedPhases=new Set();
 
     function toast(title,message=''){
@@ -497,8 +499,7 @@
       $('toastWrap').appendChild(el);setTimeout(()=>el.remove(),4200);
     }
     function resetShareButtonLabels(){
-      $('whatsappPlanBtn').textContent='📄 تجهيز PDF';
-      $('whatsappImageBtn').innerHTML='<span class="whatsapp-draft-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4.1A8 8 0 1 1 20 11.6Z"/><path d="M9 8.5c.4 2.6 2 4.2 4.6 4.8l1.2-1.1 2 .7c.1 1.2-.5 2-1.8 2.1-4.4-.2-7.6-3.4-8-7.8.2-1.2 1-1.7 2.1-1.5l.8 1.8Z"/></svg><i class="whatsapp-star s1">✦</i><i class="whatsapp-star s2">✦</i><i class="whatsapp-star s3">✦</i></span><span>صورة المسودة للواتساب</span>';
+      $('whatsappPlanBtn').innerHTML='<span class="whatsapp-draft-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4.1A8 8 0 1 1 20 11.6Z"/><path d="M9 8.5c.4 2.6 2 4.2 4.6 4.8l1.2-1.1 2 .7c.1 1.2-.5 2-1.8 2.1-4.4-.2-7.6-3.4-8-7.8.2-1.2 1-1.7 2.1-1.5l.8 1.8Z"/></svg></span><span>مشاركة PDF عبر واتساب</span>';
     }
     function safeText(value,max=500){return String(value??'').slice(0,max)}
     function toCents(value){if(value===''||value===null||value===undefined)return null;const n=Number(value);return Number.isFinite(n)?Math.round(n*100):null}
@@ -568,7 +569,7 @@
             if(!entry)return;
             if(item.code!==entry.id){item.code=entry.id;planChanged=true}
             if(item.service!==entry.name){item.service=entry.name;planChanged=true}
-            if(state.meta.status!=='approved'){
+            if(!['approved','approved_signed'].includes(state.meta.status)){
               const beforeManual=item.beforePriceSource==='manual';
               const afterManual=item.afterPriceSource==='manual'||item.priceSource==='manual';
               if(!beforeManual&&entry.beforePrice!==''){
@@ -714,23 +715,26 @@
     }
     function workflowRole(){return viewMode==='clinic'?'clinic':'admin'}
     function renderWorkflow(){
-      const status=['draft','submitted','approved','rejected'].includes(state.meta.status)?state.meta.status:'draft';
-      const labels={draft:'مسودة لدى العيادة',submitted:'بانتظار إكمال الإدارة',approved:'معتمدة نهائيًا',rejected:'غير معتمدة — تحتاج تعديل'};
+      const status=['draft','submitted','patient_accepted','approved','approved_signed','rejected'].includes(state.meta.status)?state.meta.status:'draft';
+      const labels={draft:'مسودة لدى العيادة',submitted:'بانتظار إرسال المسودة وموافقة المريض',patient_accepted:'المريض وافق ووقّع — بانتظار اعتماد الإدارة',approved:'معتمدة نهائيًا',approved_signed:'خطة معتمدة وموقعة',rejected:'غير معتمدة — تحتاج تعديل'};
       $('workflowStatus').textContent=labels[status];$('workflowStatus').className=`workflow-pill ${status}`;
-      const order=['draft','submitted','approved'],position=order.indexOf(status);
+      const progressStatus=status==='approved'?'approved_signed':status;
+      const order=['draft','submitted','patient_accepted','approved_signed'],position=order.indexOf(progressStatus);
       document.querySelectorAll('[data-workflow-step]').forEach((step,index)=>{
         step.classList.toggle('done',position>index);
         step.classList.toggle('active',position===index);
         step.classList.toggle('rejected',status==='rejected'&&index===0);
       });
-      $('sendAdminBtn').hidden=!['draft','rejected'].includes(status);
-      $('approvePlanBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
-      $('rejectPlanBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
-      document.querySelector('.share-draft-buttons').hidden=!state.phases.some(phase=>phase.items.some(item=>item.service));
-      const locked=workflowRole()==='clinic'&&['submitted','approved'].includes(status);
+      $('sendAdminBtn').hidden=workflowRole()!=='clinic'||!['draft','rejected'].includes(status);
+      $('patientAcceptedBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
+      $('approvePlanBtn').hidden=workflowRole()!=='admin'||status!=='patient_accepted';
+      $('rejectPlanBtn').hidden=workflowRole()!=='admin'||!['submitted','patient_accepted'].includes(status);
+      document.querySelector('.share-draft-buttons').hidden=workflowRole()!=='admin'||!['submitted','patient_accepted'].includes(status)||!state.phases.some(phase=>phase.items.some(item=>item.service));
+      const locked=workflowRole()==='clinic'&&['submitted','patient_accepted','approved','approved_signed'].includes(status);
       document.body.classList.toggle('workflow-locked',locked);
+      $('paper').classList.toggle('approved',['approved','approved_signed'].includes(status));
       $('saveBtn').disabled=locked;$('addPhaseBtn').disabled=locked;
-      $('printBtn').title=status==='approved'?'طباعة النسخة النهائية المعتمدة':'الطباعة متاحة بعد اعتماد الإدارة';
+      $('printBtn').title=['approved','approved_signed'].includes(status)?'طباعة النسخة النهائية المعتمدة':'الطباعة متاحة بعد اعتماد الإدارة وموافقة المريض';
       $('printCopiesBtn').title=$('printBtn').title;
     }
     function renderProgress(){
@@ -752,7 +756,9 @@
       cachedSharePdf=null;cachedShareImage=null;cachedShareSignature='';
       resetShareButtonLabels();
       if(workflowRole()==='clinic')state.meta.status='draft';
-      else if(['approved','rejected'].includes(state.meta.status))state.meta.status='submitted';
+      else if(['patient_accepted','approved','approved_signed','rejected'].includes(state.meta.status)){
+        state.meta.status='submitted';state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';
+      }
       $('paper').classList.remove('approved');
       $('saveStatus').classList.remove('saved');$('saveStatus').textContent='تعديلات غير محفوظة';
       localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
@@ -799,7 +805,11 @@
           method:'PUT',credentials:'include',headers:{'content-type':'application/json'},
           body:JSON.stringify({
             patient:state.patient,status,rejectionReason,
-            planNo:state.meta.planNo,sourcePatientId:patientId,sourceDate:appointmentDate
+            planNo:state.meta.planNo,sourcePatientId:patientId,sourceDate:appointmentDate,
+            patientAcceptedAt:state.meta.patientAcceptedAt||0,
+            patientAcceptedBy:state.meta.patientAcceptedBy||'',
+            approvedAt:state.meta.approvedAt||0,
+            approvedBy:state.meta.approvedBy||''
           })
         });
         return response.ok;
@@ -809,23 +819,36 @@
       collectHeaderFields();const missing=missingFields();
       if(missing.length){toast('تعذر الإرسال',`أكمل: ${missing.join('، ')}`);renderProgress();return}
       const approvalTime=Date.now();
-      state.meta.status='submitted';state.meta.doctorApprovedAt=approvalTime;state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';state.meta.submittedAt=approvalTime;state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
+      state.meta.status='submitted';state.meta.doctorApprovedAt=approvalTime;state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';state.meta.submittedAt=approvalTime;state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
       const saved=await savePlan(true);if(!saved){state.meta.status='draft';render();return}
       await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);render();toast('اعتمد الطبيب الخطة وأُرسلت للإدارة','ستظهر في قائمة الإدارة وجميع مواعيد المريض القادمة بحالة «خطة مرسلة».');
     }
+    async function confirmPatientAcceptance(){
+      if(workflowRole()!=='admin'||state.meta.status!=='submitted')return;
+      collectHeaderFields();const missing=approvalMissing();
+      if(!(state.signatures.signerName||'').trim())missing.push('اسم المريض أو الوصي الموقّع');
+      if(missing.length){toast('تعذر تأكيد موافقة المريض',`أكمل: ${[...new Set(missing)].join('، ')}`);renderProgress();return}
+      if(!confirm('هل تؤكد أن المريض/الوصي اطّلع على مسودة الخطة ووافق عليها ووقّع؟'))return;
+      state.meta.status='patient_accepted';state.meta.patientAcceptedAt=Date.now();state.meta.patientAcceptedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.approvedAt=0;state.meta.approvedBy='';
+      const saved=await savePlan(true);if(!saved){state.meta.status='submitted';state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';render();return}
+      await Promise.all([syncPlanStatusToDashboard('patient_accepted'),syncPlanRegistry('patient_accepted')]);
+      render();toast('تم توثيق موافقة وتوقيع المريض','أصبحت الخطة جاهزة للاعتماد النهائي من الإدارة.');
+    }
     async function approvePlan(){
+      if(workflowRole()!=='admin'||state.meta.status!=='patient_accepted')return;
       collectHeaderFields();const missing=approvalMissing();
       if(missing.length){toast('لا يمكن الاعتماد',`أكمل: ${missing.join('، ')}`);renderProgress();return}
-      state.meta.status='approved';state.meta.approvedAt=Date.now();state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
-      const saved=await savePlan(true);if(!saved){state.meta.status='submitted';render();return}
-      await Promise.all([syncPlanStatusToDashboard('approved'),syncPlanRegistry('approved')]);$('paper').classList.add('approved');render();toast('تم الاعتماد النهائي','ستظهر علامة «خطة معتمدة» بجانب المريض في جميع مواعيده القادمة.');
+      state.meta.status='approved_signed';state.meta.approvedAt=Date.now();state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
+      const saved=await savePlan(true);if(!saved){state.meta.status='patient_accepted';render();return}
+      await Promise.all([syncPlanStatusToDashboard('approved_signed'),syncPlanRegistry('approved_signed')]);$('paper').classList.add('approved');render();toast('تم اعتماد الخطة الموقعة','ستظهر علامة «خطة معتمدة وموقعة» بجانب المريض في جميع مواعيده القادمة.');
     }
     async function rejectPlan(){
-      if(workflowRole()!=='admin'||state.meta.status!=='submitted')return;
+      if(workflowRole()!=='admin'||!['submitted','patient_accepted'].includes(state.meta.status))return;
+      const previousStatus=state.meta.status;
       const reason=prompt('اكتب سبب عدم اعتماد الخطة أو التعديل المطلوب:','تحتاج الخطة إلى مراجعة الإجراءات أو الأسعار.');
       if(reason===null)return;
-      state.meta.status='rejected';state.meta.rejectedAt=Date.now();state.meta.rejectedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.rejectionReason=String(reason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500);state.meta.approvedAt=0;state.meta.approvedBy='';
-      const saved=await savePlan(true);if(!saved){state.meta.status='submitted';render();return}
+      state.meta.status='rejected';state.meta.rejectedAt=Date.now();state.meta.rejectedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.rejectionReason=String(reason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500);state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';
+      const saved=await savePlan(true);if(!saved){state.meta.status=previousStatus;render();return}
       await Promise.all([syncPlanStatusToDashboard('rejected'),syncPlanRegistry('rejected',state.meta.rejectionReason)]);
       render();toast('أُعيدت الخطة إلى العيادة','ستظهر علامة «خطة غير معتمدة» بجانب المريض حتى يتم تعديلها وإرسالها مجددًا.');
     }
@@ -1031,11 +1054,38 @@
       clone.querySelectorAll('.copy-badge').forEach(node=>node.textContent='نسخة الملف');
       target.appendChild(clone);
     }
+    function fitPlanToA4(){
+      if(!document.body.classList.contains('one-page-print'))return 1;
+      const paper=$('paper'),wrap=paper?.parentElement;if(!paper||!wrap)return 1;
+      const available=Math.max(1,wrap.clientHeight||paper.offsetWidth*(282/200));
+      const fitLimit=Math.max(1,available-24);
+      const applyScale=value=>{
+        document.body.style.setProperty('--print-fit-scale',value.toFixed(4));
+        document.body.style.setProperty('--print-layout-width',`${(200/value).toFixed(3)}mm`);
+        void paper.offsetHeight;
+        return paper.getBoundingClientRect().height;
+      };
+      let low=.1,high=1,best=.1,height=applyScale(1);
+      if(height<=fitLimit)best=1;
+      else{
+        for(let index=0;index<12;index+=1){
+          const candidate=(low+high)/2,candidateHeight=applyScale(candidate);
+          if(candidateHeight<=fitLimit){best=candidate;low=candidate}else high=candidate;
+        }
+        height=applyScale(best);
+      }
+      document.documentElement.dataset.printFitScale=best.toFixed(4);
+      document.documentElement.dataset.printNaturalHeight=String(Math.round(height/Math.max(best,.001)));
+      document.documentElement.dataset.printAvailableHeight=String(Math.round(available));
+      document.documentElement.dataset.printRenderedHeight=String(Math.round(height));
+      return best;
+    }
     function printPlan(twoCopies=false){
-      if(state.meta.status!=='approved'){
+      if(!['approved','approved_signed'].includes(state.meta.status)){
         const guidance={
           draft:workflowRole()==='clinic'?'اضغط «حفظ وإرسال للإدارة» أولًا.':'الخطة ما زالت مسودة لدى العيادة ولم تُرسل للإدارة.',
-          submitted:workflowRole()==='admin'?'اضغط «اعتماد نهائي للطباعة» بعد مراجعة الإجراءات والأسعار.':'الخطة لدى الإدارة الآن بانتظار الاعتماد.',
+          submitted:workflowRole()==='admin'?'أرسل مسودة PDF للمريض، ثم اضغط «تأكيد موافقة وتوقيع المريض».':'الخطة لدى الإدارة بانتظار إرسال المسودة وموافقة المريض.',
+          patient_accepted:workflowRole()==='admin'?'اضغط «اعتماد نهائي للخطة الموقعة».':'تم توثيق موافقة المريض والخطة بانتظار اعتماد الإدارة.',
           rejected:'الخطة تحتاج تعديلًا ثم إعادة إرسالها للإدارة.'
         };
         toast('النسخة غير معتمدة',guidance[state.meta.status]||'يجب اعتماد الخطة من الإدارة قبل الطباعة.');
@@ -1047,7 +1097,7 @@
       const itemCount=state.phases.reduce((sum,phase)=>sum+phase.items.filter(item=>item.service).length,0);
       document.body.classList.toggle('print-dense',itemCount>8);
       document.body.classList.toggle('print-ultra',itemCount>15);
-      doublePrint=twoCopies;if(twoCopies)prepareDuplicate();else $('duplicatePrint').innerHTML='';
+      doublePrint=twoCopies;document.body.classList.toggle('print-two-copies',twoCopies);if(twoCopies)prepareDuplicate();else $('duplicatePrint').innerHTML='';
       $('paper').classList.add('approved');savePlan(true);
       setTimeout(()=>window.print(),80);
     }
@@ -1067,7 +1117,7 @@
       $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',saveDraftPlan);$('previewBtn').addEventListener('click',togglePreview);
       $('compactEntryBtn').addEventListener('click',toggleCompactEntry);
       $('sidePreviewBtn').addEventListener('click',togglePreview);
-      $('sendAdminBtn').addEventListener('click',submitToAdmin);$('approvePlanBtn').addEventListener('click',approvePlan);$('rejectPlanBtn').addEventListener('click',rejectPlan);$('whatsappPlanBtn').addEventListener('click',()=>sendWhatsAppDraft('pdf'));$('whatsappImageBtn').addEventListener('click',()=>sendWhatsAppDraft('image'));
+      $('sendAdminBtn').addEventListener('click',submitToAdmin);$('patientAcceptedBtn').addEventListener('click',confirmPatientAcceptance);$('approvePlanBtn').addEventListener('click',approvePlan);$('rejectPlanBtn').addEventListener('click',rejectPlan);$('whatsappPlanBtn').addEventListener('click',()=>sendWhatsAppDraft('pdf'));
       $('closeShareReadyBtn').addEventListener('click',closeShareReady);$('shareReadyModal').addEventListener('click',event=>{if(event.target===$('shareReadyModal'))closeShareReady()});$('sharePreparedBtn').addEventListener('click',sharePreparedDraft);$('downloadPreparedBtn').addEventListener('click',()=>preparedShareFile&&downloadShareFile(preparedShareFile,preparedShareFormat));
       $('printBtn').addEventListener('click',()=>printPlan(false));$('printCopiesBtn').addEventListener('click',()=>printPlan(true));
       $('vatMode').addEventListener('change',()=>{$('vatConfirmed').checked=false;$('vatControl').classList.remove('confirmed');state.financial.vatConfirmed=false;markDirty();toast('يلزم تأكيد الضريبة','غيّرت وضع الضريبة؛ راجع أهلية المريض ثم فعّل مربع التأكيد.')});
@@ -1091,9 +1141,12 @@
       $('phasesContainer').addEventListener('input',event=>{if(event.target.dataset.phaseTitle!==undefined){state.phases[Number(event.target.dataset.phaseTitle)].title=event.target.value;markDirty()}});
       $('digitalSignToggle').addEventListener('change',()=>{$('signatureCanvasWrap').classList.toggle('active',$('digitalSignToggle').checked);$('paperSignatureLine').style.display=$('digitalSignToggle').checked?'none':'block'});
       $('importJsonBtn').addEventListener('click',()=>{try{state=normalizeState(JSON.parse($('jsonInput').value));hydrateFields();render();markDirty();toast('تم تحليل البيانات')}catch{toast('تعذر تحليل JSON','تأكد من صحة التنسيق.')}});
+      window.addEventListener('beforeprint',fitPlanToA4);
       window.addEventListener('afterprint',()=>{
         $('duplicatePrint').innerHTML='';doublePrint=false;
-        document.body.classList.remove('one-page-print','print-dense','print-ultra');
+        document.body.classList.remove('one-page-print','print-dense','print-ultra','print-two-copies');
+        document.body.style.removeProperty('--print-fit-scale');
+        document.body.style.removeProperty('--print-layout-width');
         if(document.body.classList.contains('draft-pdf')){
           document.body.classList.remove('draft-pdf');
           if(!window.__draftPreviewWasOpen)document.body.classList.remove('preview-mode');
@@ -1119,7 +1172,7 @@
       hydrateFields();setupSignature();bindEvents();render();
       $('saveStatus').textContent=remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote));
-      if(state.meta.status==='submitted'||(currentUser?.role==='admin'&&['approved','rejected'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
+      if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
       setInterval(()=>loadProcedureCatalog(true),5000);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));
     }

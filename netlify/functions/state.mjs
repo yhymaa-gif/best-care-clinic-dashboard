@@ -40,7 +40,7 @@ const cleanPatient=p=>({
  paymentRequestedAt:Number(p?.paymentRequestedAt||0),
  paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0),
  paymentCompletedAt:Number(p?.paymentCompletedAt||0),
- treatmentPlanStatus:['draft','submitted','approved','rejected'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
+ treatmentPlanStatus:['draft','submitted','patient_accepted','approved','approved_signed','rejected'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
  treatmentPlanUpdatedAt:Number(p?.treatmentPlanUpdatedAt||0)
 });
 const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
@@ -53,8 +53,15 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
   else if(Number(patient.paymentAcknowledgedAt||0)>Number(old.paymentAcknowledgedAt||0))events.push(decorate({type:'payment',title:'تم استلام أمر الدفع',body:'أكدت الإدارة استلام طلب الدفع.',tag:`payment-ack-${patient.id}`},patient));
   else if(Number(patient.paymentCompletedAt||0)>Number(old.paymentCompletedAt||0))events.push(decorate({type:'payment',title:'تم تنفيذ الدفع',body:'اكتمل تنفيذ أحد أوامر الدفع.',tag:`payment-done-${patient.id}`},patient));
   else if(String(patient.treatmentPlanStatus||'')!==String(old.treatmentPlanStatus||'')){
-   const approved=patient.treatmentPlanStatus==='approved',rejected=patient.treatmentPlanStatus==='rejected';
-   events.push(decorate({type:'patient',title:approved?'تم اعتماد الخطة العلاجية':rejected?'لم تُعتمد الخطة العلاجية':'خطة علاجية بانتظار الإدارة',body:approved?'اعتمدت الإدارة الإجراءات والأسعار النهائية.':rejected?'أعادت الإدارة الخطة إلى العيادة للتعديل.':'أرسلت العيادة خطة علاجية للمراجعة والتسعير.',tag:`treatment-plan-${patient.id}`},patient));
+   const planStatus=patient.treatmentPlanStatus;
+   const statusCopy={
+    submitted:{title:'خطة علاجية بانتظار الإدارة',body:'اعتمد الطبيب الخطة الأولية وأرسلها للإدارة لإكمال الأسعار وإرسال المسودة للمريض.'},
+    patient_accepted:{title:'المريض وافق ووقّع على الخطة',body:'تم توثيق موافقة وتوقيع المريض، والخطة جاهزة للاعتماد النهائي من الإدارة.'},
+    approved:{title:'تم اعتماد الخطة العلاجية',body:'اعتمدت الإدارة الإجراءات والأسعار النهائية.'},
+    approved_signed:{title:'خطة معتمدة وموقعة',body:'اكتملت موافقة وتوقيع المريض واعتماد الإدارة النهائي للخطة.'},
+    rejected:{title:'الخطة العلاجية تحتاج تعديل',body:'أعادت الإدارة الخطة إلى العيادة للمراجعة والتعديل.'}
+   }[planStatus]||{title:'تم تحديث الخطة العلاجية',body:'توجد حالة جديدة للخطة العلاجية.'};
+   events.push(decorate({type:'patient',title:statusCopy.title,body:statusCopy.body,tag:`treatment-plan-${patient.id}`},patient));
   }
   else if(String(patient.status||'')!==String(old.status||''))events.push(decorate({type:'patient',title:'تحديث حالة مريض',body:'تم تحديث حالة أحد مرضى اليوم.',tag:`patient-${patient.id}`},patient));
  }
