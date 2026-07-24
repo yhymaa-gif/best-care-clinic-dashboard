@@ -18,14 +18,16 @@
     <g filter="url(#ink)">
       <circle class="ink" cx="210" cy="210" r="181" stroke-width="9"/>
       <circle class="ink" cx="210" cy="210" r="164" stroke-width="3" stroke-dasharray="3 9"/>
-      <path class="ink" stroke-width="6" d="M180 80c-19 11-27 31-23 52 3 19 14 35 18 58 4 27 14 46 24 46 10 0 6-41 16-41s6 41 16 41c10 0 20-19 24-46 4-23 15-39 18-58 4-21-4-41-23-52-14-8-25 5-35 5s-21-13-35-5z"/>
-      <path class="ink" stroke-width="2.5" d="M171 119c11-17 27-15 41-7m8 0c12-8 25-8 35 2"/>
-      <path class="ink" stroke-width="3" d="M106 316h208"/>
+      <g transform="translate(58 18) scale(.72)">
+        <path class="ink" stroke-width="7" d="M180 80c-19 11-27 31-23 52 3 19 14 35 18 58 4 27 14 46 24 46 10 0 6-41 16-41s6 41 16 41c10 0 20-19 24-46 4-23 15-39 18-58 4-21-4-41-23-52-14-8-25 5-35 5s-21-13-35-5z"/>
+        <path class="ink" stroke-width="3" d="M171 119c11-17 27-15 41-7m8 0c12-8 25-8 35 2"/>
+      </g>
+      <path class="ink" stroke-width="3" d="M106 302h208"/>
       <circle cx="69" cy="210" r="5" fill="#155b96"/>
       <circle cx="351" cy="210" r="5" fill="#155b96"/>
     </g>
-    <text class="text" x="210" y="275" font-size="34" font-weight="800">أفضل عناية</text>
-    <text class="text" x="210" y="303" font-size="19" font-weight="700">عيادات أسنان استشارية</text>
-    <text class="text" x="210" y="344" font-size="19" font-weight="800">قسم الخطط العلاجية</text>
+    <text class="text" x="210" y="245" font-size="33" font-weight="800">أفضل عناية</text>
+    <text class="text" x="210" y="277" font-size="19" font-weight="700">عيادات أسنان استشارية</text>
+    <text class="text" x="210" y="332" font-size="20" font-weight="800">قسم الخطط العلاجية</text>
   </g>
 </svg>
