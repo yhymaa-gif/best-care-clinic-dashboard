@@ -498,9 +498,12 @@
             if(item.code!==entry.id){item.code=entry.id;planChanged=true}
             if(item.service!==entry.name){item.service=entry.name;planChanged=true}
             if(state.meta.status!=='approved'&&item.priceSource!=='manual'){
-              const price=entry.price,source=entry.price===''?'':'catalog';
-              if(item.unitPriceAfter!==price){item.unitPriceAfter=price;planChanged=true}
-              if(item.priceSource!==source){item.priceSource=source;planChanged=true}
+              if(entry.price!==''){
+                if(item.unitPriceAfter!==entry.price){item.unitPriceAfter=entry.price;planChanged=true}
+                if(item.priceSource!=='catalog'){item.priceSource='catalog';planChanged=true}
+              }else if(item.unitPriceAfter!==''){
+                item.priceSource='manual';planChanged=true;
+              }
             }
           }));
         }
