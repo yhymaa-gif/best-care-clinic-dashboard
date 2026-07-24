@@ -170,6 +170,8 @@
     .floating-plan-action::after{content:attr(aria-label);position:absolute;left:calc(100% + 9px);bottom:7px;width:max-content;max-width:220px;padding:7px 10px;border-radius:9px;background:#173d31;color:#fff;font-size:11px;line-height:1.4;opacity:0;pointer-events:none;transform:translateX(-4px);transition:.18s ease}
     .floating-plan-action:hover::after,.floating-plan-action:focus-visible::after{opacity:1;transform:translateX(0)}
     .floating-plan-action.whatsapp{background:linear-gradient(135deg,#25d366,#08783f);border-color:#08783f}
+    .floating-plan-action.whatsapp .action-icon{background:transparent}
+    .floating-plan-action.whatsapp .action-icon svg{width:31px;height:31px;stroke-width:2.15}
     .floating-plan-action.whatsapp::before{content:"";position:absolute;inset:-5px;border:2px solid rgba(37,211,102,.36);border-radius:50%;animation:chat-pulse 2.2s ease-out infinite}
     .floating-plan-action.pdf{background:linear-gradient(135deg,#315f85,#244c6c);border-color:#244c6c}
     .floating-plan-action[hidden]{display:none}
