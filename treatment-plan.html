@@ -836,19 +836,26 @@
       collectHeaderFields();
       const items=state.phases.flatMap(phase=>phase.items).filter(item=>item.service);
       if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل المشاركة.');return}
+      document.documentElement.dataset.pdfShareState='preparing';
       toast('جارٍ تجهيز ملف PDF','سيتم إنشاء نسخة A4 من صفحة واحدة مع ختم «مسودة للاطلاع».');
       try{
         const file=await renderSharePdf();
+        document.documentElement.dataset.pdfShareState=`generated:${file.size}`;
         let canShareFiles=false;
         try{canShareFiles=Boolean(navigator.canShare?.({files:[file]}))}catch{}
         if(canShareFiles){
           await navigator.share({title:'مسودة الخطة العلاجية',text:'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية',files:[file]});
+          document.documentElement.dataset.pdfShareState='shared';
           toast('تم فتح المشاركة','اختر واتساب ثم جهة اتصال المريض لإرسال ملف PDF.');
         }else{
           const url=URL.createObjectURL(file),link=document.createElement('a');link.href=url;link.download=file.name;link.click();setTimeout(()=>URL.revokeObjectURL(url),30000);
+          document.documentElement.dataset.pdfShareState=`downloaded:${file.size}`;
           toast('تم تنزيل ملف PDF','أرفق الملف في WhatsApp Web. المتصفح لا يسمح بإرفاقه تلقائيًا على الكمبيوتر.');
         }
-      }catch(error){if(error?.name!=='AbortError')toast('تعذرت مشاركة ملف PDF',error?.message||'حاول مرة أخرى.')}
+      }catch(error){
+        document.documentElement.dataset.pdfShareState=`error:${error?.message||error?.name||'unknown'}`;
+        if(error?.name!=='AbortError')toast('تعذرت مشاركة ملف PDF',error?.message||'حاول مرة أخرى.');
+      }
     }
     function updateItemFromInput(input,rerender=false){
       const row=input.closest('[data-item-row]');if(!row)return;
