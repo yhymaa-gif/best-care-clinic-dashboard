@@ -160,6 +160,20 @@ body.view-clinic .current-card{border-color:#b5d3e5;box-shadow:0 18px 40px rgba(
 body.view-clinic .current-card.stage-idle{background:linear-gradient(145deg,#f3faff,#eaf4fa)}
 body.view-clinic .upcoming-panel{border-color:#c4dbe9;background:linear-gradient(160deg,#fbfdff,#edf6fb)}
 body.view-clinic .sync-badge.live{background:#e5f2fa;border-color:#a8c9dd;color:#315f85}
+body.view-admin{background:radial-gradient(circle at 90% 0,#e8f6ef 0,transparent 34%),linear-gradient(180deg,#f8fcfa,#eef6f2)}
+body.view-admin header{border-top-color:#176344;box-shadow:0 14px 35px rgba(23,99,68,.1)}
+body.view-admin #pageTitle{color:#174f3a}
+.view-identity{display:grid;grid-template-columns:58px minmax(0,1fr) auto;align-items:center;gap:15px;margin:0 0 12px;padding:15px 18px;border-radius:18px;color:#fff;box-shadow:0 13px 30px rgba(27,72,95,.16)}
+.view-identity-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,.17);font-size:27px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.view-identity-copy small,.view-identity-copy strong,.view-identity-copy span{display:block}
+.view-identity-copy small{margin-bottom:2px;color:rgba(255,255,255,.76);font-size:11px;font-weight:800}
+.view-identity-copy strong{font-size:22px;font-weight:950}
+.view-identity-copy span{margin-top:3px;color:rgba(255,255,255,.82);font-size:12px}
+.view-identity button{border-color:rgba(255,255,255,.5);background:#fff;font-weight:900}
+body.view-clinic .view-identity{background:linear-gradient(135deg,#244f70,#3e7da0)}
+body.view-clinic .view-identity button{color:#315f85}
+body.view-admin .view-identity{background:linear-gradient(135deg,#14543d,#27815d)}
+body.view-admin .view-identity button{color:#176344}
 .role-option.clinic-option{border-color:#bfd6e6;background:linear-gradient(145deg,#fff,#edf7fc)}
 .role-option.clinic-option .role-icon{background:linear-gradient(135deg,#315f85,#4988aa)}
 .role-option.clinic-option:hover{border-color:#5d91b5;box-shadow:0 17px 34px rgba(49,95,133,.16)}
@@ -178,6 +192,11 @@ body.view-clinic .sync-badge.live{background:#e5f2fa;border-color:#a8c9dd;color:
   .doctor-action-queue{padding:10px}
   .doctor-action-item{grid-template-columns:39px 1fr;padding:11px}
   .doctor-action-item button{grid-column:1/-1;width:100%}
+  .view-identity{grid-template-columns:44px 1fr;padding:12px 13px}
+  .view-identity-icon{width:42px;height:42px;font-size:22px}
+  .view-identity-copy strong{font-size:17px}
+  .view-identity-copy span{font-size:10px}
+  .view-identity button{grid-column:1/-1;width:100%;min-height:40px}
 }
 </style>
 </head>
@@ -211,6 +230,15 @@ body.view-clinic .sync-badge.live{background:#e5f2fa;border-color:#a8c9dd;color:
   <div class="header-side"><div id="clock" class="clock">--:--:--</div><div id="dateText" class="date-text">--</div><button id="alertBtn" class="alert-trigger" type="button" aria-haspopup="dialog" aria-controls="alertModal" aria-pressed="false"><span class="alert-icon" aria-hidden="true">🔔</span><span class="alert-copy"><strong>تنبيه تعديل</strong><small id="alertBtnHint">إرسال ملاحظة للطبيب</small></span><span class="alert-state" aria-hidden="true"></span></button></div>
 </header>
 <nav class="view-switch hide-screen" aria-label="نوع الصفحة"><a id="clinicViewLink" href="?view=clinic">🩺 صفحة الطبيب</a><a id="adminViewLink" href="?view=admin">🗓️ صفحة الإدارة</a><button id="roleBtn" type="button">↔ تغيير المهمة</button></nav>
+<section id="viewIdentity" class="view-identity hide-screen" aria-live="polite">
+  <span id="viewIdentityIcon" class="view-identity-icon" aria-hidden="true">🩺</span>
+  <div class="view-identity-copy">
+    <small id="viewIdentityKicker">أنت الآن في</small>
+    <strong id="viewIdentityTitle">صفحة الطبيب</strong>
+    <span id="viewIdentityHelp">اعتمادات الخطط وطلبات الدفع ومتابعة العلاج.</span>
+  </div>
+  <button id="viewIdentityChange" type="button">تغيير المهمة</button>
+</section>
 <div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span></div>
 <div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
 <section id="doctorWorkspace" class="card doctor-workspace clinic-only">
@@ -349,7 +377,7 @@ const API='/.netlify/functions/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
 const PUSH_API='/.netlify/functions/push-subscription';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.20-doctor-admin-workspaces';
+const DASHBOARD_BUILD='7.21-clear-role-identity';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -1737,6 +1765,11 @@ function applyLang(){
   setText('#clinicRoleTitle',lang==='en'?'Doctor and clinic page':'صفحة الطبيب والعيادة');
   setText('#clinicRoleHelp',lang==='en'?'Approve plans, submit payment requests, call patients, and track treatment.':'اعتماد الخطط، رفع طلبات الدفع، واستدعاء المرضى ومتابعة العلاج.');
   setText('#rolePrivacyNote',lang==='en'?'The pages are visually separate and share the same live synchronized list.':'الصفحتان منفصلتان بصريًا وتستخدمان القائمة نفسها والمزامنة المباشرة.');
+  setText('#viewIdentityKicker',lang==='en'?'You are now in':'أنت الآن في');
+  setText('#viewIdentityIcon',VIEW_MODE==='admin'?'🗂️':'🩺');
+  setText('#viewIdentityTitle',VIEW_MODE==='admin'?(lang==='en'?'Administration page':'صفحة الإدارة'):(lang==='en'?'Doctor page':'صفحة الطبيب'));
+  setText('#viewIdentityHelp',VIEW_MODE==='admin'?(lang==='en'?'Appointments, patient lists, payments, and final plan approvals.':'المواعيد وقوائم المرضى والفواتير والاعتماد النهائي للخطط.'):(lang==='en'?'Plan approvals, payment requests, patient calls, and treatment flow.':'اعتمادات الخطط وطلبات الدفع واستدعاء المرضى ومتابعة العلاج.'));
+  setText('#viewIdentityChange',lang==='en'?'Change task':'تغيير المهمة');
   setText('#pageTitle',VIEW_MODE==='admin'?(lang==='en'?'Best Care Administration & Scheduling':'إدارة وتنسيق مواعيد عيادات أفضل عناية الاستشارية للأسنان'):(lang==='en'?'Best Care Doctor Workspace':'صفحة الطبيب — عيادات أفضل عناية الاستشارية للأسنان'));
   setText('#pageSubtitle',VIEW_MODE==='admin'?(lang==='en'?'Patient lists, scheduling, alerts, payments, and final plan approvals':'قوائم المرضى والمواعيد والتنبيهات وإجراءات الدفع واعتماد الخطط'):(lang==='en'?'Plan approvals, payment requests, and today’s clinical flow':'اعتمادات الخطط وطلبات الدفع ومتابعة مرضى اليوم'));
   setText('#doctorWorkspaceTitle',lang==='en'?'Doctor decision center':'مركز قرارات الطبيب');
@@ -1971,6 +2004,7 @@ $('reviewUrlInput').addEventListener('input',()=>{$('reviewLinkPreview').href=$(
 $('copyReviewBtn').addEventListener('click',copyReviewMessage);
 $('sendReviewWhatsappBtn').addEventListener('click',sendReviewWhatsapp);
 $('roleBtn').addEventListener('click',()=>openModal('roleModal'));
+$('viewIdentityChange').addEventListener('click',()=>openModal('roleModal'));
 $('roleModal').addEventListener('click',event=>{
   const mode=event.target.closest('[data-role-view]')?.dataset.roleView;if(!mode)return;
   location.href=viewUrl(mode);
