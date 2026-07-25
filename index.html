@@ -32,6 +32,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1
 .header-side{display:grid;gap:8px;justify-items:end}.clock{font-size:31px;font-weight:900;color:#145e46;direction:ltr}.date-text{font-size:12px;color:var(--muted)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button,.field{border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:#fff;color:var(--text);font-weight:800}button:hover{background:#f3f8f5}button.primary{background:#eaf6ef;color:#176344;border-color:#c8e3d3}button.danger{background:#fdecef;color:#9e2537;border-color:#efc7ce}button.dark{background:#edf2f4;color:#294e60}input,select,textarea{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff;color:var(--text)}
 .sync-badge{display:inline-flex;align-items:center;gap:7px;min-height:41px;border-radius:999px;padding:9px 14px;border:1px solid var(--line);font-weight:900}.sync-badge.connecting,.sync-badge.saving{background:#fff7dd;color:#806019;border-color:#ead999}.sync-badge.synced{background:#e8f7ee;color:#216a47;border-color:#bedfc9}.sync-badge.error{background:#fdebed;color:#a52739;border-color:#edbdc5}.sync-badge::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 15%,transparent)}
+.presence-badge{display:inline-flex;align-items:center;gap:8px;min-height:41px;border-radius:999px;padding:8px 13px;border:1px solid #c7ddd2;background:linear-gradient(135deg,#f9fcfa,#edf7f2);color:#285f49;box-shadow:0 7px 18px rgba(35,91,67,.07);transition:.2s ease}.presence-badge:hover{border-color:#93c5ad;background:#eaf6ef;transform:translateY(-1px)}.presence-badge .presence-dot{width:9px;height:9px;border-radius:50%;background:#a8b7b0;box-shadow:0 0 0 4px rgba(130,153,143,.12)}.presence-badge.online .presence-dot{background:#26a269;box-shadow:0 0 0 4px rgba(38,162,105,.14);animation:presencePulse 2s ease-in-out infinite}.presence-badge strong{min-width:18px;color:#174f3a;font-size:17px;text-align:center}.presence-badge small{color:#597266;font-size:10px;font-weight:900}@keyframes presencePulse{50%{box-shadow:0 0 0 7px rgba(38,162,105,.05)}}.presence-card{width:min(620px,100%);padding:0;overflow:hidden}.presence-head{display:flex;align-items:center;gap:13px;padding:20px 22px;background:linear-gradient(135deg,#185d43,#2e8d67);color:#fff}.presence-head-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.15);font-size:24px}.presence-head h3{margin:0 0 4px}.presence-head p{margin:0;color:#dff4e9;font-size:12px}.presence-body{padding:20px 22px}.presence-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.presence-metric{padding:14px;border:1px solid #d8e8df;border-radius:15px;background:#f9fcfa;text-align:center}.presence-metric strong{display:block;color:#176344;font-size:27px}.presence-metric small{display:block;margin-top:3px;color:#60776c;font-weight:800}.presence-devices{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0 0}.presence-chip{padding:7px 10px;border-radius:999px;background:#eef5f1;color:#456456;font-size:11px;font-weight:900}.presence-clinics{display:grid;gap:7px;margin-top:15px}.presence-clinic-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #e1ebe6;border-radius:12px;background:#fff}.presence-clinic-row strong{color:#176344}.presence-updated{margin:14px 0 0;color:#718279;font-size:11px;text-align:center}@media(max-width:680px){.presence-badge{flex:1;justify-content:center}.presence-summary{grid-template-columns:1fr}.presence-card{border-radius:18px}}
 .settings{position:relative}.settings-menu{position:absolute;top:calc(100% + 8px);left:0;z-index:50;width:250px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px rgba(20,64,47,.18);display:none}.settings-menu.open{display:block}.settings-menu button{width:100%;text-align:right;margin:2px 0;border:0;background:transparent}.settings-menu button:hover{background:#f2f7f4}
 .clinic-context-line{display:flex;align-items:center;gap:7px;margin-top:5px;color:#2d7057;font-size:12px;font-weight:900}.clinic-context-line::before{content:"●";color:#33a474;font-size:9px}.clinic-switcher{display:inline-flex;align-items:center;gap:8px;min-width:245px;padding:7px 11px;border:1px solid #bcd8cb;border-radius:13px;background:#f8fcfa;color:#174f3a;font-size:12px;font-weight:900;box-shadow:0 6px 16px rgba(29,73,55,.06)}.clinic-switcher[hidden]{display:none}.clinic-switcher select{flex:1;min-width:145px;border:0;background:transparent;color:#174f3a;font:inherit;outline:0}.clinic-directory-card{width:min(980px,94vw);max-height:88vh;overflow:auto}.clinic-directory-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:15px;border-bottom:1px solid var(--line)}.clinic-directory-head h3{margin:0 0 5px}.clinic-directory-head p{margin:0;color:var(--muted);line-height:1.7}.clinic-capacity{display:grid;place-items:center;min-width:82px;padding:10px 13px;border-radius:14px;background:#e8f6ef;color:#176344;font-weight:950}.clinic-directory-note{margin:14px 0;padding:12px 14px;border:1px solid #d8e8df;border-radius:13px;background:#f7fbf9;color:#557067;font-size:12px;line-height:1.65}.clinic-directory-list{display:grid;gap:10px;margin-top:12px}.clinic-config-row{display:grid;grid-template-columns:52px minmax(180px,1.3fr) minmax(100px,.55fr) minmax(180px,1fr) auto;gap:10px;align-items:end;padding:13px;border:1px solid #d8e6df;border-radius:15px;background:#fff;box-shadow:0 6px 16px rgba(35,83,62,.05)}.clinic-slot{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#e3f4eb,#f4faf7);color:#176344;font-weight:950}.clinic-config-row label{display:grid;gap:5px;color:#506c61;font-size:11px;font-weight:900}.clinic-config-row input{width:100%;padding:10px 11px;border:1px solid #cddfd6;border-radius:11px;background:#fbfdfc}.clinic-hide-btn{align-self:end;color:#a3343c;border-color:#e2b7bb;background:#fff7f8}.clinic-directory-empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed #bdd5c9;border-radius:14px;background:#fafdfb}.clinic-directory-actions{display:flex;justify-content:space-between;gap:10px;margin-top:16px}.clinic-directory-actions .primary{margin-inline-start:auto}
 @media(max-width:820px){.clinic-switcher{width:100%;min-width:0}.clinic-config-row{grid-template-columns:46px 1fr}.clinic-config-row label{grid-column:2}.clinic-hide-btn{grid-column:1/-1}.clinic-directory-head{align-items:center}.clinic-directory-actions{display:grid;grid-template-columns:1fr}.clinic-directory-actions button{width:100%}.clinic-directory-actions .primary{margin:0}}
@@ -315,6 +316,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
     <div class="toolbar hide-screen">
       <input id="datePicker" type="date" aria-label="التاريخ">
       <button id="syncBadge" class="sync-badge connecting" type="button">جارٍ الاتصال</button>
+      <button id="presenceBadge" class="presence-badge" type="button" aria-haspopup="dialog" aria-controls="presenceModal"><span class="presence-dot" aria-hidden="true"></span><strong id="presenceCount">—</strong><small id="presenceLabel">أجهزة متصلة</small></button>
       <button id="bulkBtn" class="primary" type="button">تحديث قائمة اليوم</button>
       <button id="addBtn" type="button">إضافة مريض</button>
       <button id="screenBtn" class="dark" type="button">وضع الشاشة</button>
@@ -494,6 +496,20 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   </div>
   <div class="modal-actions"><button id="iosInstallCloseBtn" type="button" data-close="iosInstallModal">تم، فهمت الخطوات</button></div>
 </div></div>
+<div id="presenceModal" class="modal"><div class="modal-card presence-card" role="dialog" aria-modal="true" aria-labelledby="presenceModalTitle">
+  <div class="presence-head"><span class="presence-head-icon" aria-hidden="true">◉</span><div><h3 id="presenceModalTitle">الأجهزة المتصلة الآن</h3><p id="presenceModalHelp">يُحدّث العدد تلقائيًا دون التأثير على مزامنة المرضى.</p></div></div>
+  <div class="presence-body">
+    <div class="presence-summary">
+      <div class="presence-metric"><strong id="presenceTotal">0</strong><small id="presenceTotalLabel">إجمالي الأجهزة</small></div>
+      <div class="presence-metric"><strong id="presenceAdmin">0</strong><small id="presenceAdminLabel">صفحة الإدارة</small></div>
+      <div class="presence-metric"><strong id="presenceClinics">0</strong><small id="presenceClinicsLabel">صفحات العيادات</small></div>
+    </div>
+    <div class="presence-devices"><span id="presenceDesktop" class="presence-chip">🖥️ كمبيوتر: 0</span><span id="presenceMobile" class="presence-chip">📱 جوال: 0</span><span id="presenceTablet" class="presence-chip">▣ جهاز لوحي: 0</span></div>
+    <div id="presenceClinicList" class="presence-clinics"></div>
+    <p id="presenceUpdated" class="presence-updated">بانتظار أول تحديث…</p>
+  </div>
+  <div class="modal-actions"><button id="presenceRefreshBtn" type="button">تحديث الآن</button><button id="presenceCloseBtn" type="button" data-close="presenceModal">إغلاق</button></div>
+</div></div>
 <div id="toastWrap" class="toast-wrap"></div>
 <script>
 (()=>{
@@ -502,8 +518,9 @@ const $=id=>document.getElementById(id);
 const API='/api/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
 const PUSH_API='/api/push';
+const PRESENCE_API='/api/presence';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.25-security-ux';
+const DASHBOARD_BUILD='7.26-presence';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -513,6 +530,19 @@ const PAYMENT_PROCEDURES=[
   {id:'removal',ar:'إزالة وتد أو إزالة تركيبة',en:'Post or crown removal'}
 ];
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
+const DEVICE_ID=(()=>{
+  const key='bestcare_device_id_v1';
+  try{
+    let value=localStorage.getItem(key)||'';
+    if(!/^[a-zA-Z0-9_-]{12,120}$/.test(value)){
+      value=(crypto.randomUUID?.()||('device-'+Date.now()+'-'+Math.random().toString(36).slice(2))).replace(/[^a-zA-Z0-9_-]/g,'');
+      localStorage.setItem(key,value);
+    }
+    return value;
+  }catch{
+    return ('device-'+CLIENT_ID).replace(/[^a-zA-Z0-9_-]/g,'');
+  }
+})();
 const STATUS={waiting:'بانتظار الموعد',arrived:'وصل المريض',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
 const EN={waiting:'Waiting',arrived:'Patient arrived',early_arrival:'Early arrival',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
 const PLAN_STATUS_VALUES=['draft','submitted','patient_accepted','approved','approved_signed','rejected'];
@@ -524,8 +554,9 @@ const IOS_INSTALL_COPY={
   ar:{menu:'📱 تثبيت التطبيق على iPhone',title:'تثبيت التطبيق على iPhone',help:'أربع خطوات بسيطة من متصفح Safari — دون متجر التطبيقات.',steps:[['افتح الرابط في Safari','إذا كنت تستخدم Chrome، انسخ الرابط وافتحه في Safari أولًا.'],['اضغط زر المشاركة','اضغط رمز المربع والسهم ↑ أسفل شاشة Safari.'],['اختر «إضافة إلى الشاشة الرئيسية»','مرّر قائمة المشاركة إلى أسفل إذا لم يظهر الخيار مباشرة.'],['اضغط «إضافة»','ستظهر أيقونة Best Care على الشاشة الرئيسية وتفتح كتطبيق مستقل.']],note:'مهم: استخدم Safari للتثبيت. بعد التثبيت افتح التطبيق من الأيقونة الجديدة، وستبقى المزامنة مرتبطة بنفس رابط العيادة.',shareTitle:'مشاركة التطبيق مع جهاز آخر',shareText:'انسخ الرابط وأرسله لمستخدم iPhone، ثم يتبع الخطوات أعلاه.',copy:'نسخ رابط التطبيق',close:'تم، فهمت الخطوات',copiedTitle:'تم نسخ الرابط',copiedText:'أرسله الآن إلى مستخدم iPhone لفتح التطبيق وتثبيته.',alreadyTitle:'التطبيق مثبت',alreadyText:'أنت تستخدم التطبيق الآن من وضع الشاشة المستقلة.'},
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
-const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
+const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
 let doctorAlertPeekTimer=null;
 let lastDoctorFloatingAlertAt=Number(sessionStorage.getItem('bestcare_doctor_alert_seen_at')||0);
 let treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:0};
@@ -567,9 +598,11 @@ function unlockApp(user=null){
   authLastActivity=Date.now();
   authKeepAliveAt=Date.now();
   startAuthIdleProtection();
+  startPresence();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(startSyncAfterAuth);
 }
 function lockApp(message='انتهت الجلسة بسبب الخمول. سجّل الدخول مرة أخرى.'){
+  stopPresence(false);
   authReady=false;
   authUser=null;
   purgeSyncedLocalPatientData();
@@ -620,6 +653,7 @@ function renderClinicSwitcher(){
   }
   if(wrap)wrap.hidden=active.length<=1;
   if($('currentClinicContext'))$('currentClinicContext').textContent=clinicDisplayName(currentClinic);
+  renderPresence();
 }
 function roleClinicOptionLabel(clinic){
   const name=String(clinic?.name||`العيادة ${clinicNumber(clinic?.id)}`).trim();
@@ -813,7 +847,7 @@ async function saveUser(){const body={username:$('newUsername').value.trim(),dis
 async function logoutApp(){
   els.settingsMenu.classList.remove('open');
   if(!confirm(lang==='en'?'Sign out from this device?':'تسجيل الخروج من هذا الجهاز؟'))return;
-  try{await authRequest('?action=logout',{method:'POST'})}catch(error){console.warn('Logout request failed',error)}
+  try{await stopPresence(true);await authRequest('?action=logout',{method:'POST'})}catch(error){console.warn('Logout request failed',error)}
   finally{
     authLastActivity=0;
     lockApp(lang==='en'?'Signed out securely.':'تم تسجيل الخروج بأمان.');
@@ -1035,6 +1069,84 @@ function markDirty(){
   },100);
 }
 async function request(url,options={},timeout=12000){const c=new AbortController();const timer=setTimeout(()=>c.abort(),timeout);try{return await fetch(url,{...options,signal:c.signal,cache:'no-store',headers:{accept:'application/json',...(options.headers||{})}})}finally{clearTimeout(timer)}}
+function presenceCopy(){
+  return lang==='en'
+    ?{devices:'devices online',total:'Total devices',admin:'Administration page',clinics:'Clinic pages',desktop:'Desktop',mobile:'Mobile',tablet:'Tablet',updated:'Last updated',waiting:'Waiting for the first update…',unavailable:'Device count temporarily unavailable'}
+    :{devices:'أجهزة متصلة',total:'إجمالي الأجهزة',admin:'صفحة الإدارة',clinics:'صفحات العيادات',desktop:'كمبيوتر',mobile:'جوال',tablet:'جهاز لوحي',updated:'آخر تحديث',waiting:'بانتظار أول تحديث…',unavailable:'تعذر تحديث عدد الأجهزة مؤقتًا'};
+}
+function renderPresence(){
+  const copy=presenceCopy();
+  $('presenceCount').textContent=presence.updatedAt?String(presence.online):'—';
+  $('presenceLabel').textContent=copy.devices;
+  els.presenceBadge.classList.toggle('online',Boolean(presence.updatedAt&&!presence.error));
+  els.presenceBadge.title=presence.error?copy.unavailable:`${copy.total}: ${presence.online}`;
+  $('presenceTotal').textContent=String(presence.online||0);
+  $('presenceAdmin').textContent=String(presence.administration||0);
+  $('presenceClinics').textContent=String(presence.clinics||0);
+  $('presenceTotalLabel').textContent=copy.total;
+  $('presenceAdminLabel').textContent=copy.admin;
+  $('presenceClinicsLabel').textContent=copy.clinics;
+  $('presenceDesktop').textContent=`🖥️ ${copy.desktop}: ${presence.desktop||0}`;
+  $('presenceMobile').textContent=`📱 ${copy.mobile}: ${presence.mobile||0}`;
+  $('presenceTablet').textContent=`▣ ${copy.tablet}: ${presence.tablet||0}`;
+  const clinicRows=Object.entries(presence.byClinic||{})
+    .filter(([,count])=>Number(count)>0)
+    .sort(([left],[right])=>clinicNumber(left)-clinicNumber(right))
+    .map(([clinicId,count])=>{
+      const clinic=clinicDirectory.find(item=>item.id===clinicId)||defaultClinic(clinicNumber(clinicId));
+      return `<div class="presence-clinic-row"><span>${escapeHtml(clinicDisplayName(clinic,{compact:true}))}</span><strong>${Number(count)}</strong></div>`;
+    }).join('');
+  $('presenceClinicList').innerHTML=clinicRows;
+  $('presenceUpdated').textContent=presence.error
+    ?copy.unavailable
+    :(presence.updatedAt?`${copy.updated}: ${new Date(presence.updatedAt).toLocaleTimeString(lang==='en'?'en-US':'ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`:copy.waiting);
+}
+function schedulePresence(delay=document.hidden?60000:30000){
+  clearTimeout(presence.timer);
+  if(!presence.started||!authReady)return;
+  presence.timer=setTimeout(()=>refreshPresence({silent:true}),delay);
+}
+async function refreshPresence({silent=false}={}){
+  if(!authReady||presence.busy)return;
+  presence.busy=true;
+  try{
+    const response=await request(PRESENCE_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({deviceId:DEVICE_ID,clinicId:ACTIVE_CLINIC_ID,view:VIEW_MODE,standalone:isStandalone()})},8000);
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||`HTTP ${response.status}`);
+    presence={...presence,...data,byClinic:data.byClinic||{},updatedAt:Number(data.updatedAt||Date.now()),error:'',busy:false};
+    renderPresence();
+  }catch(error){
+    presence.error=String(error?.message||error);
+    presence.busy=false;
+    renderPresence();
+    if(!silent)toast(lang==='en'?'Device count unavailable':'تعذر تحديث عدد الأجهزة',lang==='en'?'The app will retry automatically.':'سيعيد التطبيق المحاولة تلقائيًا.');
+  }finally{
+    presence.busy=false;
+    schedulePresence();
+  }
+}
+function startPresence(){
+  if(presence.started)return;
+  presence.started=true;
+  renderPresence();
+  if(!window.__presenceListeners){
+    window.__presenceListeners=true;
+    window.addEventListener('online',()=>refreshPresence({silent:true}));
+    window.addEventListener('focus',()=>refreshPresence({silent:true}));
+    document.addEventListener('visibilitychange',()=>document.hidden?schedulePresence(60000):refreshPresence({silent:true}));
+  }
+  refreshPresence({silent:true});
+}
+async function stopPresence(remove=false){
+  presence.started=false;
+  clearTimeout(presence.timer);
+  presence.timer=null;
+  if(remove&&authReady){
+    try{await request(PRESENCE_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({deviceId:DEVICE_ID})},4000)}catch{}
+  }
+  presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
+  renderPresence();
+}
 async function reconcileRevisionConflict(date,snapshot){
   const latestResponse=await request(stateUrl(date,true));
   if(!latestResponse.ok)throw new Error(`HTTP ${latestResponse.status}`);
@@ -2413,6 +2525,11 @@ function applyLang(){
   $('doctorFloatingAlertBtn').title=lang==='en'?'Doctor alerts and approvals':'تنبيهات واعتمادات الطبيب';
   $('doctorFloatingAlertClose').setAttribute('aria-label',lang==='en'?'Close':'إغلاق');
   $('doctorFloatingPeekClose').setAttribute('aria-label',lang==='en'?'Hide alert':'إخفاء التنبيه');
+  setText('#presenceModalTitle',lang==='en'?'Devices online now':'الأجهزة المتصلة الآن');
+  setText('#presenceModalHelp',lang==='en'?'The count updates automatically without affecting patient synchronization.':'يُحدّث العدد تلقائيًا دون التأثير على مزامنة المرضى.');
+  setText('#presenceRefreshBtn',lang==='en'?'Refresh now':'تحديث الآن');
+  setText('#presenceCloseBtn',lang==='en'?'Close':'إغلاق');
+  renderPresence();
   setText('#doctorApprovalLabel',lang==='en'?'Need your approval':'تحتاج اعتمادك');
   setText('#doctorPaymentLabel',lang==='en'?'Payment requests sent':'طلبات دفع مرسلة');
   setText('#doctorSubmittedLabel',lang==='en'?'Plans with admin':'خطط لدى الإدارة');
@@ -2602,6 +2719,8 @@ els.filter.addEventListener('change',render);
 els.notes.addEventListener('input',()=>{notes=els.notes.value;markDirty()});
 els.datePicker.addEventListener('change',()=>setDate(els.datePicker.value));
 els.syncBadge.addEventListener('click',syncTest);
+els.presenceBadge.addEventListener('click',()=>{openModal('presenceModal');refreshPresence({silent:true})});
+$('presenceRefreshBtn').addEventListener('click',()=>refreshPresence());
 els.patientRows.addEventListener('change',async event=>{
   const planId=event.target.dataset.planStatusId;
   if(planId){
