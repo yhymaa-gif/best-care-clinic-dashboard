@@ -14,6 +14,8 @@
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
 <title>عيادات أفضل عناية الاستشارية للأسنان</title>
 <style>
+@font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype");font-style:normal;font-weight:700;font-display:swap}
 :root{--bg:#f3f7f5;--surface:#fff;--line:#dce7e1;--text:#17352a;--muted:#6c7e76;--green:#248b5d;--yellow:#d9ad29;--orange:#e47a23;--red:#d73547;--navy:#224f62;--shadow:0 12px 34px rgba(29,73,55,.10)}
 #appSplash{position:fixed;inset:0;z-index:3000;display:grid;place-items:center;overflow:hidden;padding:28px;background:radial-gradient(circle at 50% 42%,rgba(196,235,215,.58) 0 16%,rgba(245,250,247,.28) 42%,rgba(244,248,246,0) 100%),linear-gradient(180deg,#fbfdfc,#f1f7f4);color:#173e30;transition:opacity .55s ease,visibility .55s ease}
 #appSplash::before,#appSplash::after{content:"";position:absolute;border-radius:50%;pointer-events:none;filter:blur(1px)}
@@ -23,7 +25,7 @@
 .splash-logo-shell::after{content:"";position:absolute;inset:12px;border:1px solid rgba(197,167,84,.22);border-radius:34px;pointer-events:none}.splash-logo{display:block;width:76%;height:76%;object-fit:contain;filter:drop-shadow(0 12px 16px rgba(20,55,42,.09))}.splash-kicker{margin:0 0 12px;color:#b08b31;font-size:12px;font-weight:900;letter-spacing:.18em}.splash-title{max-width:520px;margin:0;color:#174f3a;font-size:clamp(24px,4.4vw,36px);font-weight:900;line-height:1.45;text-wrap:balance}.splash-title span{display:block}.splash-description{position:relative;margin:16px 0 0;padding-top:16px;color:#63766d;font-size:clamp(14px,2.4vw,18px);font-weight:700;line-height:1.8}.splash-description::before{content:"";position:absolute;top:0;left:50%;width:74px;height:3px;translate:-50%;border-radius:999px;background:linear-gradient(90deg,transparent,#c7a954,transparent)}.splash-progress{position:relative;width:min(210px,58vw);height:3px;margin-top:34px;overflow:hidden;border-radius:999px;background:rgba(23,95,71,.10)}.splash-progress::after{content:"";position:absolute;inset:0;width:42%;border-radius:inherit;background:linear-gradient(90deg,#b99740,#2a8e64);animation:splashProgress 1.25s ease-in-out infinite}
 @keyframes splashRise{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}@keyframes splashProgress{0%{translate:-115%}100%{translate:340%}}@media(max-width:600px){#appSplash{padding:22px}.splash-logo-shell{margin-bottom:24px;border-radius:36px}.splash-logo-shell::after{border-radius:27px}.splash-title{font-size:25px}.splash-description{font-size:14px}.splash-progress{margin-top:28px}}@media(prefers-reduced-motion:reduce){.splash-content,.splash-progress::after{animation:none}}
 body.auth-checking .app,body.auth-locked .app{visibility:hidden}#authGate{position:fixed;inset:0;z-index:1000;display:none;place-items:center;overflow:auto;padding:26px 18px;background:radial-gradient(circle at 50% 24%,rgba(196,235,215,.68),rgba(245,250,247,.18) 34%,transparent 58%),linear-gradient(155deg,#fbfdfc,#edf6f1)}body.auth-locked #authGate{display:grid}.auth-card{position:relative;width:min(470px,100%);overflow:hidden;padding:30px;border:1px solid rgba(31,110,78,.14);border-radius:30px;background:rgba(255,255,255,.94);box-shadow:0 32px 90px rgba(21,70,50,.18),inset 0 1px 0 #fff;text-align:right;backdrop-filter:blur(16px)}.auth-card::before{content:"";position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#b8953d,#2d8c65,#b8953d)}.auth-brand{display:grid;justify-items:center;margin-bottom:20px;text-align:center}.auth-brand-mark{display:grid;place-items:center;width:96px;height:96px;margin-bottom:14px;border:1px solid rgba(33,104,77,.12);border-radius:27px;background:linear-gradient(145deg,#fff,#e8f5ee);box-shadow:0 18px 38px rgba(31,93,68,.15),inset 0 0 0 7px rgba(255,255,255,.62)}.auth-brand-mark img{display:block;width:82%;height:82%;object-fit:contain}.auth-eyebrow{margin:0 0 5px!important;color:#aa8731!important;font-size:10px!important;font-weight:900;letter-spacing:.16em}.auth-card h2{margin:0;color:#174f3a;font-size:30px}.auth-subtitle{max-width:360px;margin:8px auto 0!important;color:#516f62!important;font-size:13px!important;font-weight:700;line-height:1.75!important}.auth-purpose{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:7px 11px;border:1px solid #e3d5a9;border-radius:999px;background:#fffaf0;color:#7b6429;font-size:10px;font-weight:900}.auth-purpose::before{content:"";width:6px;height:6px;border-radius:50%;background:#c4a24c;box-shadow:0 0 0 4px rgba(196,162,76,.13)}.auth-divider{width:76px;height:2px;margin:0 auto 20px;border-radius:999px;background:linear-gradient(90deg,transparent,#c7a954,transparent)}.auth-card label{display:grid;gap:7px;margin-top:13px;color:#315e4c;font-size:12px;font-weight:900}.auth-card input{width:100%;min-height:48px;border-color:#d7e5de;background:#fbfdfc;transition:border-color .2s ease,box-shadow .2s ease}.auth-card input:focus{outline:none;border-color:#3b9a72;box-shadow:0 0 0 4px rgba(43,139,99,.11)}.auth-card button{width:100%;min-height:50px;margin-top:17px;border-radius:14px;background:linear-gradient(135deg,#176344,#2d8a64);color:#fff;border-color:#176344;box-shadow:0 12px 26px rgba(23,99,68,.20)}.auth-card button:hover{background:linear-gradient(135deg,#125438,#257a57);color:#fff}.auth-error{min-height:20px;margin:10px 0 0;color:#a22b3d!important;font-weight:900;text-align:center}.auth-code{letter-spacing:8px;text-align:center;font-size:24px;font-weight:900;direction:ltr}@media(max-width:540px){#authGate{align-items:start;padding-top:max(18px,env(safe-area-inset-top))}.auth-card{margin:auto;padding:24px 20px;border-radius:24px}.auth-brand-mark{width:82px;height:82px;border-radius:23px}.auth-card h2{font-size:27px}.auth-subtitle{font-size:12px!important}}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Tahoma,"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,#f9fbfa,var(--bg));color:var(--text)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:"Best Care Arabic","IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;font-kerning:normal;font-feature-settings:"kern" 1,"liga" 1,"calt" 1;background:linear-gradient(180deg,#f9fbfa,var(--bg));color:var(--text)}
 button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1780px;margin:auto;padding:14px}.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
 .header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;padding:16px 18px;border-top:5px solid var(--green)}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}.logo{width:86px;height:86px;flex:0 0 86px;border-radius:18px;background:#fff;border:1px solid var(--line);padding:6px;object-fit:contain}.brand h1{margin:0;font-size:clamp(23px,2.5vw,36px);color:#145e46}.brand p{margin:6px 0 0;color:var(--muted)}
@@ -2099,7 +2101,7 @@ function exitScreen(){
   if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
 }
 let deferredInstallPrompt=null;
-let waitingServiceWorker=null;
+let waitingServiceWorker=null,pwaReloadRequested=false;
 function isStandalone(){return matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true}
 function isIosDevice(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
 function openIosInstallGuide(){openModal('iosInstallModal');$('iosInstallModal').setAttribute('aria-hidden','false')}
@@ -2140,7 +2142,11 @@ async function registerPwa(){
         if(worker.state==='installed'&&navigator.serviceWorker.controller)showUpdate(worker);
       });
     });
-    navigator.serviceWorker.addEventListener('controllerchange',()=>location.reload());
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(!pwaReloadRequested)return;
+      pwaReloadRequested=false;
+      location.reload();
+    });
   }catch(error){console.warn('PWA registration failed',error)}
 }
 function setText(selector,value){const el=document.querySelector(selector);if(el)el.textContent=value}
@@ -2347,7 +2353,11 @@ $('exitScreenBtn').addEventListener('click',exitScreen);
 $('installBtn').addEventListener('click',installApp);
 $('iosInstallGuideBtn').addEventListener('click',()=>{els.settingsMenu.classList.remove('open');openIosInstallGuide()});
 $('copyAppLinkBtn').addEventListener('click',copyAppLink);
-$('pwaUpdateBtn').addEventListener('click',()=>waitingServiceWorker?.postMessage({type:'SKIP_WAITING'}));
+$('pwaUpdateBtn').addEventListener('click',()=>{
+  if(!waitingServiceWorker)return;
+  pwaReloadRequested=true;
+  waitingServiceWorker.postMessage({type:'SKIP_WAITING'});
+});
 $('authRequestBtn')?.addEventListener('click',()=>requestAuthOtp());
 $('authVerifyBtn')?.addEventListener('click',verifyAuthOtp);
 $('authBackBtn')?.addEventListener('click',()=>{$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;authErrorMessage('')});
