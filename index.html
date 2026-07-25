@@ -130,18 +130,30 @@ body.view-clinic #usersBtn,
 body.view-clinic [data-edit-id],
 body.view-clinic [data-delete-id],
 body.view-clinic .review-row-btn{display:none!important}
-.doctor-workspace{padding:0;overflow:hidden;border-color:#b7d4e8;background:linear-gradient(145deg,#f8fcff,#eef7fc);box-shadow:0 16px 38px rgba(38,89,126,.12)}
-.doctor-workspace-head{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:14px;padding:18px 20px;background:linear-gradient(135deg,#315f85,#3d7c9f);color:#fff}
-.doctor-workspace-icon{display:grid;place-items:center;width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,.16);font-size:27px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
-.doctor-workspace-head h2{margin:0;font-size:22px}
-.doctor-workspace-head p{margin:4px 0 0;color:rgba(255,255,255,.82);font-size:12px}
-.doctor-workspace-count{display:grid;place-items:center;min-width:54px;height:54px;padding:0 13px;border-radius:16px;background:#fff;color:#315f85;font-size:24px;font-weight:950}
-.doctor-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:14px 18px 5px}
-.doctor-metric{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #c8ddec;border-radius:14px;background:rgba(255,255,255,.8)}
-.doctor-metric span{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#e1eff8;color:#315f85;font-size:18px}
-.doctor-metric strong,.doctor-metric small{display:block}
-.doctor-metric strong{font-size:20px;color:#244f70}
-.doctor-metric small{margin-top:2px;color:#687f8f}
+.doctor-floating-alerts{position:fixed;z-index:1250;inset-inline-end:max(20px,env(safe-area-inset-right));bottom:max(24px,env(safe-area-inset-bottom));width:72px;height:72px;pointer-events:none}
+.doctor-floating-alerts[hidden]{display:none!important}
+.doctor-floating-alert-button{position:relative;z-index:3;display:grid;place-items:center;width:72px;height:72px;padding:0;border:2px solid rgba(255,255,255,.94);border-radius:24px;background:linear-gradient(145deg,#4c91bb 0%,#315f85 48%,#23445f 100%);color:#fff;box-shadow:0 13px 28px rgba(34,76,106,.33),inset 0 2px 2px rgba(255,255,255,.42),inset 0 -7px 12px rgba(16,48,71,.28);pointer-events:auto;transition:transform .2s ease,box-shadow .2s ease}
+.doctor-floating-alert-button:hover,.doctor-floating-alert-button:focus-visible{transform:translateY(-3px) scale(1.04);box-shadow:0 18px 38px rgba(34,76,106,.4),0 0 0 7px rgba(83,155,199,.14),inset 0 2px 2px rgba(255,255,255,.45)}
+.doctor-floating-alert-button::before{content:"";position:absolute;inset:-8px;border:2px solid rgba(68,146,194,.24);border-radius:30px;animation:doctorAlertPulse 2s ease-out infinite}
+.doctor-floating-alert-button svg{width:31px;height:31px;fill:currentColor;filter:drop-shadow(0 3px 3px rgba(13,45,65,.35));transform-origin:50% 8%;animation:doctorBellSwing 2.4s ease-in-out infinite}
+.doctor-floating-alert-count{position:absolute;inset-inline-start:-7px;top:-8px;display:grid;place-items:center;min-width:28px;height:28px;padding:0 7px;border:3px solid #f7fbfe;border-radius:999px;background:#d32642;color:#fff;font-size:12px;font-weight:950;box-shadow:0 5px 14px rgba(167,29,52,.32)}
+.doctor-floating-alert-panel{position:absolute;z-index:2;inset-inline-end:0;bottom:calc(100% + 14px);width:min(410px,calc(100vw - 30px));max-height:min(66vh,560px);overflow:auto;border:1px solid #b7d4e8;border-radius:22px;background:rgba(248,252,255,.98);box-shadow:0 24px 60px rgba(30,67,94,.28);pointer-events:auto;transform-origin:bottom right;animation:doctorPanelIn .2s ease-out}
+.doctor-floating-alert-panel[hidden],.doctor-floating-alert-peek[hidden]{display:none!important}
+.doctor-floating-alert-head{display:grid;grid-template-columns:46px minmax(0,1fr) 34px;align-items:center;gap:11px;padding:15px 15px 13px;background:linear-gradient(135deg,#315f85,#3d7c9f);color:#fff}
+.doctor-floating-alert-head>span{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.16);font-size:22px}
+.doctor-floating-alert-head h2,.doctor-floating-alert-head p{margin:0}.doctor-floating-alert-head h2{font-size:17px}.doctor-floating-alert-head p{margin-top:3px;color:rgba(255,255,255,.8);font-size:10px}
+.doctor-floating-alert-close{width:32px;height:32px;padding:0;border-color:rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-size:22px;line-height:1}
+.doctor-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:10px 10px 2px}
+.doctor-metric{display:grid;place-items:center;gap:3px;padding:8px 4px;border:1px solid #c8ddec;border-radius:12px;background:#fff;text-align:center}
+.doctor-metric span{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:#e1eff8;color:#315f85;font-size:15px}
+.doctor-metric strong,.doctor-metric small{display:block}.doctor-metric strong{font-size:17px;color:#244f70}.doctor-metric small{color:#687f8f;font-size:9px}
+.doctor-floating-alert-peek{position:absolute;z-index:1;inset-inline-end:calc(100% + 13px);bottom:7px;width:min(290px,calc(100vw - 120px));padding:12px 14px;border:1px solid #a9cade;border-radius:15px;background:#fff;color:#244f70;box-shadow:0 15px 34px rgba(34,76,106,.22);pointer-events:auto;animation:doctorPeekIn .25s ease-out}
+.doctor-floating-alert-peek small,.doctor-floating-alert-peek strong{display:block}.doctor-floating-alert-peek small{margin-bottom:3px;color:#6b8291;font-size:9px}.doctor-floating-alert-peek strong{font-size:12px;line-height:1.55}
+.doctor-alert-message{display:grid;grid-template-columns:38px 1fr;gap:10px;align-items:center;margin:10px 10px 0;padding:11px;border:1px solid #b9d4e5;border-radius:13px;background:#eef7fc;color:#244f70}
+.doctor-alert-message>span{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:#315f85;color:#fff;font-size:18px}.doctor-alert-message strong,.doctor-alert-message small{display:block}.doctor-alert-message small{margin-top:3px;color:#667f8f;font-size:10px;line-height:1.5}
+.doctor-alert-message.kind-arrival{border-color:#89cfaf;background:#ecfaf3;color:#176744}.doctor-alert-message.kind-arrival>span{background:#159464}.doctor-alert-message.kind-delay{border-color:#e6cb70;background:#fff9df;color:#755807}.doctor-alert-message.kind-delay>span{background:#bd8b12}.doctor-alert-message.kind-payment{border-color:#8bc8a8;background:#edfaf3;color:#176744}.doctor-alert-message.kind-payment>span{background:#178a57}.doctor-alert-message.kind-cancel{border-color:#e5a7b1;background:#fff2f4;color:#923045}.doctor-alert-message.kind-cancel>span{background:#ba2d45}
+body.view-clinic #alertBtn,body.view-clinic #alertRow{display:none!important}
+@keyframes doctorAlertPulse{0%{transform:scale(.92);opacity:.7}70%,100%{transform:scale(1.16);opacity:0}}@keyframes doctorBellSwing{0%,70%,100%{transform:rotate(0)}76%{transform:rotate(11deg)}82%{transform:rotate(-11deg)}88%{transform:rotate(7deg)}}@keyframes doctorPanelIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}@keyframes doctorPeekIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
 .doctor-action-queue{display:grid;gap:9px;padding:12px 18px 18px}
 .doctor-action-item{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:13px 14px;border:1px solid #c8ddec;border-radius:14px;background:#fff;box-shadow:0 7px 17px rgba(45,90,122,.07)}
 .doctor-action-item.is-urgent{border-color:#e1a567;background:#fffaf3}
@@ -171,6 +183,7 @@ body.view-clinic.screen-mode #doctorWorkspace,
 body.view-clinic.screen-mode #adminWorkspace,
 body.view-clinic.screen-mode .app-footer{display:none!important}
 body.view-clinic.screen-mode .alert-row.show{display:flex!important;margin:4px 0 8px}
+body.view-clinic.screen-mode #alertRow{display:none!important}
 body.view-clinic.screen-mode #flowStage{margin:0;min-height:calc(100vh - 20px)}
 body.view-clinic.screen-mode .focus-grid{min-height:calc(100vh - 28px)}
 body.view-clinic.screen-mode .current-card{min-height:calc(100vh - 44px)}
@@ -194,16 +207,11 @@ body.view-admin .view-identity button{color:#176344}
 .role-option.clinic-option:hover{border-color:#5d91b5;box-shadow:0 17px 34px rgba(49,95,133,.16)}
 .role-option.admin-option:hover{box-shadow:0 17px 34px rgba(23,79,58,.15)}
 @media(max-width:680px){
-  .doctor-workspace-head{grid-template-columns:46px 1fr auto;padding:15px}
-  .doctor-workspace-icon{width:44px;height:44px}
-  .doctor-workspace-head h2{font-size:18px}
-  .doctor-workspace-head p{display:none}
-  .doctor-workspace-count{min-width:44px;height:44px;font-size:20px}
-  .doctor-metrics{grid-template-columns:repeat(3,1fr);padding:10px 10px 2px}
-  .doctor-metric{display:grid;place-items:center;text-align:center;padding:8px 4px}
-  .doctor-metric span{width:31px;height:31px}
-  .doctor-metric strong{font-size:17px}
-  .doctor-metric small{font-size:9px}
+  .doctor-floating-alerts{inset-inline-end:max(13px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));width:64px;height:64px}
+  .doctor-floating-alert-button{width:64px;height:64px;border-radius:21px}
+  .doctor-floating-alert-button svg{width:28px;height:28px}
+  .doctor-floating-alert-panel{width:min(390px,calc(100vw - 22px));max-height:68vh}
+  .doctor-floating-alert-peek{width:min(235px,calc(100vw - 98px));inset-inline-end:calc(100% + 9px)}
   .doctor-action-queue{padding:10px}
   .doctor-action-item{grid-template-columns:39px 1fr;padding:11px}
   .doctor-action-item button{grid-column:1/-1;width:100%}
@@ -258,19 +266,26 @@ body.view-admin .view-identity button{color:#176344}
 </section>
 <div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span></div>
 <div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
-<section id="doctorWorkspace" class="card doctor-workspace clinic-only">
-  <div class="doctor-workspace-head">
-    <span class="doctor-workspace-icon" aria-hidden="true">🩺</span>
-    <div><h2 id="doctorWorkspaceTitle">مركز قرارات الطبيب</h2><p id="doctorWorkspaceHelp">الخطط التي تنتظر اعتمادك وإجراءات ما بعد العلاج في مكان واحد.</p></div>
-    <strong id="doctorActionCount" class="doctor-workspace-count">0</strong>
-  </div>
+<aside id="doctorFloatingAlerts" class="doctor-floating-alerts clinic-only" hidden aria-live="polite">
+  <button id="doctorFloatingAlertBtn" class="doctor-floating-alert-button" type="button" aria-haspopup="dialog" aria-controls="doctorFloatingAlertPanel" aria-expanded="false" title="تنبيهات واعتمادات الطبيب">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.35-1.67h-4.7A2.5 2.5 0 0 0 12 22Zm7-6.5-1.5-1.7V9a5.51 5.51 0 0 0-4.25-5.36V3a1.25 1.25 0 0 0-2.5 0v.64A5.51 5.51 0 0 0 6.5 9v4.8L5 15.5V18h14v-2.5Z"/></svg>
+    <strong id="doctorActionCount" class="doctor-floating-alert-count">0</strong>
+  </button>
+  <div id="doctorFloatingAlertPeek" class="doctor-floating-alert-peek" hidden><small id="doctorFloatingPeekLabel">تنبيه جديد</small><strong id="doctorFloatingPeekText"></strong></div>
+  <section id="doctorFloatingAlertPanel" class="doctor-floating-alert-panel" role="dialog" aria-modal="false" aria-labelledby="doctorWorkspaceTitle" hidden>
+    <header class="doctor-floating-alert-head">
+      <span aria-hidden="true">🩺</span>
+      <div><h2 id="doctorWorkspaceTitle">تنبيهات الطبيب</h2><p id="doctorWorkspaceHelp">التنبيهات والاعتمادات المطلوبة في مكان واحد.</p></div>
+      <button id="doctorFloatingAlertClose" class="doctor-floating-alert-close" type="button" aria-label="إغلاق">×</button>
+    </header>
   <div class="doctor-metrics">
     <div class="doctor-metric"><span aria-hidden="true">✓</span><div><strong id="doctorApprovalCount">0</strong><small id="doctorApprovalLabel">تحتاج اعتمادك</small></div></div>
     <div class="doctor-metric"><span aria-hidden="true">💳</span><div><strong id="doctorPaymentCount">0</strong><small id="doctorPaymentLabel">طلبات دفع مرسلة</small></div></div>
     <div class="doctor-metric"><span aria-hidden="true">📋</span><div><strong id="doctorSubmittedCount">0</strong><small id="doctorSubmittedLabel">خطط لدى الإدارة</small></div></div>
   </div>
   <div id="doctorActionQueue" class="doctor-action-queue"></div>
-</section>
+  </section>
+</aside>
 <section id="paymentPanel" class="card payment-panel admin-only"><div class="payment-panel-head"><div><span class="payment-kicker">متابعة الإدارة</span><h2>إجراءات الدفع المطلوبة</h2><p>تظهر هنا فقط الحالات التي أرسلها الطبيب بعد إكمال العلاج.</p></div><strong id="paymentCount">0</strong></div><div id="paymentQueue" class="payment-queue"></div></section>
 <section class="stats">
   <div class="card stat"><small>إجمالي المرضى</small><strong id="statTotal">0</strong><span class="stat-icon" aria-hidden="true">♙</span></div>
@@ -424,6 +439,8 @@ const IOS_INSTALL_COPY={
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let doctorAlertPeekTimer=null;
+let lastDoctorFloatingAlertAt=Number(sessionStorage.getItem('bestcare_doctor_alert_seen_at')||0);
 let treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:0};
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
@@ -1492,13 +1509,46 @@ function renderDoctorWorkspace(){
       <button type="button" data-doctor-completion-id="${escapeHtml(patient.id)}">إجراءات ما بعد العلاج</button>
     </article>`)
   ];
-  $('doctorActionCount').textContent=String(tasks.length);
+  const alertActive=Boolean(updateAlert.active&&updateAlert.message);
+  const alertKind=String(updateAlert.kind||'');
+  const alertPresentation=alertKind.includes('arriv')
+    ?{className:'kind-arrival',icon:'✓',label:lang==='en'?'Patient arrival':'وصول مريض'}
+    :alertKind.includes('delay')
+      ?{className:'kind-delay',icon:'⏱',label:lang==='en'?'Delay inquiry':'استفسار عن التأخير'}
+      :alertKind.includes('payment')
+        ?{className:'kind-payment',icon:'﷼',label:lang==='en'?'Payment update':'تحديث دفع'}
+        :alertKind.includes('cancel')||alertKind.includes('left')
+          ?{className:'kind-cancel',icon:'×',label:lang==='en'?'Patient status update':'تحديث حالة المريض'}
+          :{className:'',icon:'!',label:lang==='en'?'New clinic alert':'تنبيه جديد من الإدارة'};
+  const alertMarkup=alertActive?`<article class="doctor-alert-message ${alertPresentation.className}">
+    <span aria-hidden="true">${alertPresentation.icon}</span>
+    <div><strong>${escapeHtml(alertPresentation.label)}</strong><small>${escapeHtml(updateAlert.message)}</small></div>
+  </article>`:'';
+  const totalAttention=tasks.length+(alertActive?1:0);
+  $('doctorActionCount').textContent=String(totalAttention);
   $('doctorApprovalCount').textContent=String(planTasks.length);
   $('doctorPaymentCount').textContent=String(paymentRequests.length);
   $('doctorSubmittedCount').textContent=String(submittedPlans.length);
-  $('doctorActionQueue').innerHTML=tasks.length
+  $('doctorActionQueue').innerHTML=alertMarkup+(tasks.length
     ?tasks.join('')
-    :`<div class="doctor-action-empty">${lang==='en'?'No approvals are waiting for the doctor now.':'لا توجد اعتمادات تنتظر الطبيب حاليًا.'}</div>`;
+    :alertActive?'':`<div class="doctor-action-empty">${lang==='en'?'No approvals are waiting for the doctor now.':'لا توجد اعتمادات تنتظر الطبيب حاليًا.'}</div>`);
+  const floating=$('doctorFloatingAlerts');
+  floating.hidden=VIEW_MODE!=='clinic'||totalAttention===0;
+  if(floating.hidden){
+    $('doctorFloatingAlertPanel').hidden=true;
+    $('doctorFloatingAlertBtn').setAttribute('aria-expanded','false');
+    $('doctorFloatingAlertPeek').hidden=true;
+    return;
+  }
+  const alertTimestamp=Number(updateAlert.updatedAt||0);
+  if(alertActive&&alertTimestamp>lastDoctorFloatingAlertAt){
+    lastDoctorFloatingAlertAt=alertTimestamp;
+    sessionStorage.setItem('bestcare_doctor_alert_seen_at',String(alertTimestamp));
+    $('doctorFloatingPeekText').textContent=updateAlert.message;
+    $('doctorFloatingAlertPeek').hidden=false;
+    clearTimeout(doctorAlertPeekTimer);
+    doctorAlertPeekTimer=setTimeout(()=>{$('doctorFloatingAlertPeek').hidden=true},6500);
+  }
 }
 function render(){
   renderTable();
@@ -2057,8 +2107,11 @@ function applyLang(){
   setText('#viewIdentityChange',lang==='en'?'Change task':'تغيير المهمة');
   setText('#pageTitle',VIEW_MODE==='admin'?(lang==='en'?'Best Care Administration & Scheduling':'إدارة وتنسيق مواعيد عيادات أفضل عناية الاستشارية للأسنان'):(lang==='en'?'Best Care Doctor Workspace':'صفحة الطبيب — عيادات أفضل عناية الاستشارية للأسنان'));
   setText('#pageSubtitle',VIEW_MODE==='admin'?(lang==='en'?'Patient lists, scheduling, alerts, payments, and final plan approvals':'قوائم المرضى والمواعيد والتنبيهات وإجراءات الدفع واعتماد الخطط'):(lang==='en'?'Plan approvals, payment requests, and today’s clinical flow':'اعتمادات الخطط وطلبات الدفع ومتابعة مرضى اليوم'));
-  setText('#doctorWorkspaceTitle',lang==='en'?'Doctor decision center':'مركز قرارات الطبيب');
-  setText('#doctorWorkspaceHelp',lang==='en'?'Plans waiting for your approval and post-treatment actions in one place.':'الخطط التي تنتظر اعتمادك وإجراءات ما بعد العلاج في مكان واحد.');
+  setText('#doctorWorkspaceTitle',lang==='en'?'Doctor alerts':'تنبيهات الطبيب');
+  setText('#doctorWorkspaceHelp',lang==='en'?'Alerts and pending approvals in one compact place.':'التنبيهات والاعتمادات المطلوبة في مكان واحد.');
+  setText('#doctorFloatingPeekLabel',lang==='en'?'New alert':'تنبيه جديد');
+  $('doctorFloatingAlertBtn').title=lang==='en'?'Doctor alerts and approvals':'تنبيهات واعتمادات الطبيب';
+  $('doctorFloatingAlertClose').setAttribute('aria-label',lang==='en'?'Close':'إغلاق');
   setText('#doctorApprovalLabel',lang==='en'?'Need your approval':'تحتاج اعتمادك');
   setText('#doctorPaymentLabel',lang==='en'?'Payment requests sent':'طلبات دفع مرسلة');
   setText('#doctorSubmittedLabel',lang==='en'?'Plans with admin':'خطط لدى الإدارة');
@@ -2272,6 +2325,28 @@ $('doctorActionQueue').addEventListener('click',event=>{
   const completionId=event.target.closest('[data-doctor-completion-id]')?.dataset.doctorCompletionId;
   if(planId)openTreatmentPlan(planId);
   if(completionId)finishPatient(completionId);
+});
+$('doctorFloatingAlertBtn').addEventListener('click',()=>{
+  const panel=$('doctorFloatingAlertPanel');
+  const open=panel.hidden;
+  panel.hidden=!open;
+  $('doctorFloatingAlertBtn').setAttribute('aria-expanded',String(open));
+  $('doctorFloatingAlertPeek').hidden=true;
+});
+$('doctorFloatingAlertClose').addEventListener('click',()=>{
+  $('doctorFloatingAlertPanel').hidden=true;
+  $('doctorFloatingAlertBtn').setAttribute('aria-expanded','false');
+  $('doctorFloatingAlertBtn').focus();
+});
+document.addEventListener('click',event=>{
+  const floating=$('doctorFloatingAlerts');
+  if(!floating||floating.hidden||floating.contains(event.target))return;
+  $('doctorFloatingAlertPanel').hidden=true;
+  $('doctorFloatingAlertBtn').setAttribute('aria-expanded','false');
+});
+document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||$('doctorFloatingAlertPanel').hidden)return;
+  $('doctorFloatingAlertClose').click();
 });
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal&&modal.id!=='roleModal')closeModal(modal.id)}));
