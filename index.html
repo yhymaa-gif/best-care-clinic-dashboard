@@ -990,13 +990,16 @@ function normalizeWhatsappNumber(value){
   if(digits.startsWith('5')&&digits.length===9)digits=`966${digits}`;
   return digits;
 }
+function patientWhatsappNumber(patient){
+  return normalizeWhatsappNumber(patient?.phone??patient?.mobile??patient?.contactPhone??'');
+}
 function openReviewComposer(id){
   const patient=patientById(id);if(!patient)return;
   pendingReviewId=patient.id;
   const storedUrl=localStorage.getItem('bestcare_google_review_url')||'';
   const url=storedUrl&&!storedUrl.includes('search.google.com/local/writereview')?storedUrl:DEFAULT_GOOGLE_REVIEW_URL;
   $('reviewPatientText').textContent=lang==='en'?`Ready WhatsApp message for ${firstName(patient.name)}`:`رسالة واتساب جاهزة للمريض ${firstName(patient.name)}`;
-  $('reviewPhoneInput').value='';
+  $('reviewPhoneInput').value=patientWhatsappNumber(patient);
   $('reviewUrlInput').value=url;
   $('reviewMessageInput').value=reviewRequestMessage(patient,url);
   $('reviewLinkPreview').href=url;
@@ -1015,7 +1018,7 @@ function sendReviewWhatsapp(){
   const message=$('reviewMessageInput').value.trim();
   if(!message){toast(lang==='en'?'Message required':'الرسالة مطلوبة',lang==='en'?'Write the WhatsApp message first.':'اكتب رسالة واتساب أولًا.');return}
   localStorage.setItem('bestcare_google_review_url',url);
-  const phone=normalizeWhatsappNumber($('reviewPhoneInput').value);
+  const phone=normalizeWhatsappNumber($('reviewPhoneInput').value)||patientWhatsappNumber(patient);
   const whatsappUrl=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl,'_blank','noopener');
   closeModal('reviewModal');
