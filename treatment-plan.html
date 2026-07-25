@@ -547,6 +547,11 @@
       const d=new Date(),offset=d.getTimezoneOffset()*60000;
       return new Date(d-offset).toISOString().slice(0,16);
     };
+    const signatureDateText=value=>{
+      const date=new Date(Number(value||0));
+      if(!Number(value)||Number.isNaN(date.getTime()))return'____ / ____ / ______';
+      return`${String(date.getDate()).padStart(2,'0')} / ${String(date.getMonth()+1).padStart(2,'0')} / ${date.getFullYear()}`;
+    };
     const nextPlanNo=()=>{
       const year=new Date().getFullYear(),key=`bestcare_plan_sequence_${year}`;
       const next=Math.max(1,Number(localStorage.getItem(key)||0)+1);
@@ -737,8 +742,8 @@
       const expired=valid.getTime()<Date.now();
       $('validityText').textContent=expired?`انتهت صلاحية هذا العرض بتاريخ ${dateFormatter.format(valid)} — يلزم إعادة التسعير.`:$('validityText').textContent;
       $('heroPatient').textContent=state.patient.fullName||'مريض جديد';
-      $('patientSignatureDate').textContent=patientAcceptedDate?dateFormatter.format(new Date(patientAcceptedDate)):'____ / ____ / ______';
-      $('clinicApprovalDate').textContent=clinicApprovalDate?dateFormatter.format(new Date(clinicApprovalDate)):'____ / ____ / ______';
+      $('patientSignatureDate').textContent=signatureDateText(patientAcceptedDate);
+      $('clinicApprovalDate').textContent=signatureDateText(clinicApprovalDate);
       renderDocCode();
     }
     function renderDocCode(){
