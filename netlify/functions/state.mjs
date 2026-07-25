@@ -1,19 +1,8 @@
 import { getStore } from "@netlify/blobs";
 import { sendPushNotifications } from './lib/push.mjs';
-import { createHash, createHmac } from 'node:crypto';
-const headers={"content-type":"application/json; charset=utf-8","cache-control":"no-store, no-cache, must-revalidate","access-control-allow-origin":"*","access-control-allow-methods":"GET,PUT,POST,OPTIONS","access-control-allow-headers":"content-type,accept"};
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
+const headers=apiHeaders('GET,PUT,POST,OPTIONS');
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
-const authSession=async request=>{
- if(process.env.AUTH_ENABLED!=='true')return true;
- const raw=(request.headers.get('cookie')||'').split(';').map(v=>v.trim()).find(v=>v.startsWith('bc_session='))?.slice(11);
- if(!raw)return false;
- const key=`sessions/${createHash('sha256').update(raw).digest('hex')}`;
- const sessionStore=getStore({name:'clinic-dashboard-auth-sessions',consistency:'strong'});
- const session=await sessionStore.get(key,{type:'json',consistency:'strong'}); const now=Date.now();
- const signature=createHmac('sha256',process.env.AUTH_SESSION_SECRET||'change-me-before-production').update(raw).digest('hex');
- if(!session||session.tokenSignature!==signature||now-Number(session.lastSeenAt||0)>3*60*60*1000||now>Number(session.expiresAt||0)){if(session)await sessionStore.delete(key);return false}
- session.lastSeenAt=now;await sessionStore.setJSON(key,session);return true;
-};
 const validDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||"");
 const validClinic=v=>/^clinic-([1-9]|1[0-5])$/.test(v||'');
 const cleanAlert=v=>({active:Boolean(v?.active),message:String(v?.message||"").slice(0,200),updatedAt:Number(v?.updatedAt||0),kind:String(v?.kind||"").slice(0,30)});
@@ -45,7 +34,8 @@ const cleanPatient=p=>({
 });
 const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
  const oldMap=new Map(before.map(patient=>[String(patient.id),patient])),events=[];
- const decorate=(event,patient)=>({...event,patientName:String(patient?.name||'').slice(0,80),patientFile:String(patient?.file||'').slice(0,40),clinicId:clinic.id,clinicLabel:`${clinic.name||'العيادة'} · رقم ${clinic.roomNumber||''}${clinic.doctorName?` · د. ${clinic.doctorName}`:''}`});
+ const doctorName=String(clinic.doctorName||'').trim(),doctorLabel=/^(?:د\.?|الدكتور)\s*/.test(doctorName)?doctorName:`د. ${doctorName}`;
+ const decorate=(event,patient)=>({...event,patientName:String(patient?.name||'').slice(0,80),patientFile:String(patient?.file||'').slice(0,40),clinicId:clinic.id,clinicLabel:`${clinic.name||'العيادة'} · رقم ${clinic.roomNumber||''}${doctorName?` · ${doctorLabel}`:''}`});
  for(const patient of after){
   const old=oldMap.get(String(patient.id));
   if(!old){events.push(decorate({type:'patient',title:'تحديث جديد على المرضى',body:'تمت إضافة مريض إلى قائمة اليوم.',tag:`patient-${patient.id}`},patient));continue}
@@ -70,12 +60,15 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
 };
 export default async request=>{
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
- if(!(await authSession(request)))return reply({error:'Authentication required'},401);
+ if(request.method!=='GET'&&!sameOriginRequest(request))return reply({error:'Invalid request origin'},403);
+ const auth=await requireUser(request);
+ if(!auth.ok)return reply({error:auth.error},auth.status);
  const url=new URL(request.url),date=url.searchParams.get('date'),clinicId=url.searchParams.get('clinic')||'clinic-1';
  if(!validDate(date))return reply({error:'Invalid date'},400);
  if(!validClinic(clinicId))return reply({error:'Invalid clinic'},400);
+ if(!canAccessClinic(auth.user,clinicId))return reply({error:'Clinic access denied'},403);
  const store=getStore({name:'clinic-dashboard-days',consistency:'strong'}),key=clinicId==='clinic-1'?`days/${date}`:`clinics/${clinicId}/days/${date}`;
  if(request.method==='GET'){const state=await store.get(key,{type:'json',consistency:'strong'});return state?reply({exists:true,...state,updateAlert:cleanAlert(state.updateAlert)}):reply({exists:false,date,patients:[],notes:'',updateAlert:cleanAlert(null),revision:0,updatedAt:0})}
- if(request.method==='PUT'||request.method==='POST'){let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}if(!Array.isArray(body.patients)||body.patients.length>300)return reply({error:'Invalid patients'},400);const clinic={id:clinicId,name:String(body.clinic?.name||'').slice(0,80),doctorName:String(body.clinic?.doctorName||'').slice(0,80),roomNumber:String(body.clinic?.roomNumber||'').slice(0,20)};const existing=await store.get(key,{type:'json',consistency:'strong'});const state={date,clinic,patients:body.patients.map(cleanPatient),notes:String(body.notes||'').slice(0,5000),updateAlert:cleanAlert(body.updateAlert),clientId:String(body.clientId||'').slice(0,100),revision:Number(existing?.revision||0)+1,updatedAt:Date.now()};await store.setJSON(key,state);const events=pushEvents(existing?.patients||[],state.patients,existing?.updateAlert||{},state.updateAlert,clinic);await Promise.allSettled(events.map(event=>sendPushNotifications(event,{excludeClientId:state.clientId})));return reply({ok:true,revision:state.revision,updatedAt:state.updatedAt,pushEvents:events.length})}
+ if(request.method==='PUT'||request.method==='POST'){let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}if(!Array.isArray(body.patients)||body.patients.length>300)return reply({error:'Invalid patients'},400);const clinic={id:clinicId,name:String(body.clinic?.name||'').slice(0,80),doctorName:String(body.clinic?.doctorName||'').slice(0,80),roomNumber:String(body.clinic?.roomNumber||'').slice(0,20)};const existing=await store.get(key,{type:'json',consistency:'strong'});const expected=Number(body.expectedRevision);const currentRevision=Number(existing?.revision||0);if(Number.isFinite(expected)&&expected>=0&&expected!==currentRevision)return reply({error:'Revision conflict',revision:currentRevision,updatedAt:Number(existing?.updatedAt||0)},409);const existingPatients=new Map((existing?.patients||[]).map(patient=>[String(patient.id),patient]));const cleanedPatients=body.patients.map(cleanPatient).map(patient=>{if(auth.user?.role==='admin')return patient;const previous=existingPatients.get(String(patient.id));patient.paymentAcknowledgedAt=Number(previous?.paymentAcknowledgedAt||0);patient.paymentCompletedAt=Number(previous?.paymentCompletedAt||0);if(['patient_accepted','approved','approved_signed'].includes(patient.treatmentPlanStatus))patient.treatmentPlanStatus=String(previous?.treatmentPlanStatus||'');return patient});const state={date,clinic,patients:cleanedPatients,notes:String(body.notes||'').slice(0,5000),updateAlert:cleanAlert(body.updateAlert),clientId:String(body.clientId||'').slice(0,100),revision:currentRevision+1,updatedAt:Date.now(),updatedBy:String(auth.user?.displayName||auth.user?.username||'').slice(0,120)};await store.setJSON(key,state);const events=pushEvents(existing?.patients||[],state.patients,existing?.updateAlert||{},state.updateAlert,clinic);await Promise.allSettled(events.map(event=>sendPushNotifications(event,{excludeClientId:state.clientId})));return reply({ok:true,revision:state.revision,updatedAt:state.updatedAt,pushEvents:events.length})}
  return reply({error:'Method not allowed'},405);
 };

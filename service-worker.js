@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260725zj';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260725-security-ux';
 const APP_SHELL=[
   './',
   './index.html',

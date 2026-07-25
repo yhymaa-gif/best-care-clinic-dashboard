@@ -1,16 +1,9 @@
 import { getStore } from '@netlify/blobs';
-import { createHash, createHmac } from 'node:crypto';
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 
-const headers = {
-  'content-type': 'application/json; charset=utf-8',
-  'cache-control': 'no-store, no-cache, must-revalidate',
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET,PUT,OPTIONS',
-  'access-control-allow-headers': 'content-type,accept'
-};
+const headers = apiHeaders('GET,PUT,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const store = getStore({ name: 'clinic-treatment-catalog', consistency: 'strong' });
-const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
 const DEFAULT_ITEMS = [
@@ -35,24 +28,6 @@ const DEFAULT_ITEMS = [
   ['other', 'إجراء آخر']
 ].map(([id, name]) => ({ id, name, beforePrice: '', afterPrice: '' }));
 
-async function authUser(request) {
-  if (process.env.AUTH_ENABLED !== 'true') return { role: 'admin' };
-  const raw = (request.headers.get('cookie') || '').split(';').map(value => value.trim()).find(value => value.startsWith('bc_session='))?.slice(11);
-  if (!raw) return null;
-  const key = `sessions/${hash(raw)}`;
-  const sessionStore = getStore({ name: 'clinic-dashboard-auth-sessions', consistency: 'strong' });
-  const session = await sessionStore.get(key, { type: 'json', consistency: 'strong' });
-  const now = Date.now();
-  const signature = createHmac('sha256', process.env.AUTH_SESSION_SECRET || 'change-me-before-production').update(raw).digest('hex');
-  if (!session || session.tokenSignature !== signature || now - Number(session.lastSeenAt || 0) > 3 * 60 * 60 * 1000 || now > Number(session.expiresAt || 0)) {
-    if (session) await sessionStore.delete(key);
-    return null;
-  }
-  session.lastSeenAt = now;
-  await sessionStore.setJSON(key, session);
-  return session.user || null;
-}
-
 const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map((item, index) => {
   const id = cleanText(item?.id, 50).toLowerCase().replace(/[^a-z0-9_-]/g, '') || `custom-${index + 1}`;
   const cleanPrice = value => value === '' || value === null || value === undefined
@@ -65,11 +40,14 @@ const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  const user = await authUser(request);
-  if (!user) return reply({ error: 'Authentication required' }, 401);
+  if (request.method !== 'GET' && !sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
+  const auth = await requireUser(request);
+  if (!auth.ok) return reply({ error: auth.error }, auth.status);
+  const user = auth.user;
   const url = new URL(request.url);
   const clinicId = url.searchParams.get('clinic') || 'clinic-1';
   if (!validClinic(clinicId)) return reply({ error: 'Invalid clinic' }, 400);
+  if (!canAccessClinic(user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
   const key = `catalog/${clinicId}`;
 
   if (request.method === 'GET') {

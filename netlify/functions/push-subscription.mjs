@@ -1,6 +1,7 @@
 import { publicVapidKey,savePushSubscription,deletePushSubscription } from './lib/push.mjs';
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 
-const headers={'content-type':'application/json; charset=utf-8','cache-control':'no-store','access-control-allow-origin':'*','access-control-allow-methods':'GET,POST,DELETE,OPTIONS','access-control-allow-headers':'content-type'};
+const headers=apiHeaders('GET,POST,DELETE,OPTIONS');
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
 
 export default async request=>{
@@ -9,13 +10,19 @@ export default async request=>{
     const publicKey=publicVapidKey();
     return publicKey?reply({publicKey}):reply({error:'Push notifications are not configured'},503);
   }
+  if(!sameOriginRequest(request))return reply({error:'Invalid request origin'},403);
   let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}
+  const auth=await requireUser(request);
+  if(!auth.ok)return reply({error:auth.error},auth.status);
   if(request.method==='POST'){
-    try{await savePushSubscription(body.subscription,{role:body.role,clientId:body.clientId,clinicId:body.clinicId,showPatientDetails:body.showPatientDetails});return reply({ok:true})}
+    const requestedClinic=auth.user.role==='admin'?String(body.clinicId||'clinic-1'):String(auth.user.clinicId||'');
+    if(!canAccessClinic(auth.user,requestedClinic))return reply({error:'Clinic access denied'},403);
+    try{await savePushSubscription(body.subscription,{user:auth.user,clientId:body.clientId,clinicId:requestedClinic,showPatientDetails:body.showPatientDetails});return reply({ok:true})}
     catch{return reply({error:'Invalid subscription'},400)}
   }
   if(request.method==='DELETE'){
-    await deletePushSubscription(String(body.endpoint||''));return reply({ok:true});
+    const deleted=await deletePushSubscription(String(body.endpoint||''),auth.user);
+    return deleted?reply({ok:true}):reply({error:'Subscription access denied'},403);
   }
   return reply({error:'Method not allowed'},405);
 };

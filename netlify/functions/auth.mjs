@@ -4,7 +4,7 @@ import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 
 const IDLE_MS = 3 * 60 * 60 * 1000;
 const OTP_MS = 5 * 60 * 1000;
 const COOKIE = 'bc_session';
-const origin = process.env.APP_ORIGIN || '*';
+const origin = process.env.APP_ORIGIN || 'https://bestcaredentalclinicsdash.netlify.app';
 const headers = {
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
@@ -12,16 +12,50 @@ const headers = {
   'access-control-allow-credentials': 'true',
   'access-control-allow-methods': 'GET,POST,OPTIONS',
   'access-control-allow-headers': 'content-type',
+  vary: 'Origin',
 };
 const reply = (body, status = 200, extra = {}) => new Response(JSON.stringify(body), { status, headers: { ...headers, ...extra } });
 const json = async request => { try { return await request.json(); } catch { return {}; } };
 const authEnabled = () => process.env.AUTH_ENABLED === 'true';
 const store = name => getStore({ name, consistency: 'strong' });
+const sameOriginRequest = request => {
+  const requestOrigin = request.headers.get('origin');
+  if (!requestOrigin) return false;
+  try { return requestOrigin === new URL(request.url).origin || requestOrigin === origin; } catch { return false; }
+};
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
-const sign = value => createHmac('sha256', process.env.AUTH_SESSION_SECRET || 'change-me-before-production').update(value).digest('hex');
+const sessionSecret = () => {
+  const value = String(process.env.AUTH_SESSION_SECRET || '');
+  return value.length >= 32 ? value : '';
+};
+const sign = value => {
+  const secret = sessionSecret();
+  return secret ? createHmac('sha256', secret).update(value).digest('hex') : '';
+};
 const passwordHash = value => createHash('sha256').update(String(value)).digest();
-const passwordMatches = value => timingSafeEqual(passwordHash(value), passwordHash(process.env.AUTH_BOOTSTRAP_PASSWORD || 'BestCare@2026'));
+const passwordMatches = value => {
+  const expected = String(process.env.AUTH_BOOTSTRAP_PASSWORD || '');
+  return expected.length >= 12 && timingSafeEqual(passwordHash(value), passwordHash(expected));
+};
 const token = () => randomBytes(32).toString('base64url');
+const requestIp = request => String(request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim().slice(0, 80);
+async function consumeRateLimit(request, scope, subject, limit, windowMs) {
+  const rateStore = store('clinic-dashboard-auth-rate-limit');
+  const key = `limits/${scope}/${hash(`${requestIp(request)}|${subject}`)}`;
+  const now = Date.now();
+  const current = await rateStore.get(key, { type: 'json', consistency: 'strong' });
+  const active = current && now < Number(current.resetAt || 0)
+    ? current
+    : { count: 0, resetAt: now + windowMs };
+  active.count = Number(active.count || 0) + 1;
+  await rateStore.setJSON(key, active);
+  return {
+    allowed: active.count <= limit,
+    retryAfter: Math.max(1, Math.ceil((Number(active.resetAt || now) - now) / 1000)),
+    key,
+    store: rateStore,
+  };
+}
 const cleanUsername = value => String(value || '').trim().toLowerCase().replace(/[^a-z0-9._-]/g, '').slice(0, 48);
 const cleanPhone = value => {
   let phone = String(value || '').replace(/[\s()-]/g, '');
@@ -72,6 +106,7 @@ async function sendEmailOtp(email, code) {
   return true;
 }
 async function sessionFrom(request) {
+  if (!sessionSecret()) return null;
   const cookie = request.headers.get('cookie') || '';
   const raw = cookie.split(';').map(v => v.trim()).find(v => v.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1);
   if (!raw) return null;
@@ -83,8 +118,10 @@ async function sessionFrom(request) {
     if (session) await sessions.delete(key);
     return null;
   }
-  session.lastSeenAt = now;
-  await sessions.setJSON(key, session);
+  if (now - Number(session.lastSeenAt || 0) >= 5 * 60 * 1000) {
+    session.lastSeenAt = now;
+    await sessions.setJSON(key, session);
+  }
   return { token: raw, ...session };
 }
 const sessionCookie = value => `${COOKIE}=${value}; Path=/; Max-Age=${Math.floor(IDLE_MS / 1000)}; HttpOnly; Secure; SameSite=Lax`;
@@ -93,16 +130,22 @@ const clearCookie = `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=L
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   const url = new URL(request.url);
-  if (!authEnabled()) return reply({ enabled: false, authenticated: true, user: null });
+  if (!authEnabled()) return reply({ enabled: false, authenticated: false, user: null }, 503);
+  if (!sessionSecret()) return reply({ enabled: true, authenticated: false, error: 'Authentication secret is not configured' }, 503);
   const action = url.searchParams.get('action') || 'session';
   if (request.method === 'GET' && action === 'session') {
     const session = await sessionFrom(request);
     return reply({ enabled: true, authenticated: Boolean(session), user: session ? safeUser(session.user) : null }, session ? 200 : 401);
   }
+  if (request.method !== 'GET' && !sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
   if (request.method === 'POST' && action === 'password-login') {
     const body = await json(request);
+    const username = cleanUsername(body.username);
+    const rate = await consumeRateLimit(request, 'password', username || 'unknown', 5, 15 * 60 * 1000);
+    if (!rate.allowed) return reply({ error: 'محاولات كثيرة. حاول لاحقًا.' }, 429, { 'retry-after': String(rate.retryAfter) });
     const user = bootstrapUser();
-    if (!user || cleanUsername(body.username) !== user.username || !passwordMatches(body.password)) return reply({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, 401);
+    if (!user || username !== user.username || !passwordMatches(body.password)) return reply({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, 401);
+    await rate.store.delete(rate.key);
     const raw = token(); const now = Date.now();
     await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + 12 * 60 * 60 * 1000 });
     return reply({ ok: true, user: safeUser(user) }, 200, { 'set-cookie': sessionCookie(raw) });
@@ -111,6 +154,12 @@ export default async request => {
     const body = await json(request);
     const username = cleanUsername(body.username); const method = body.method === 'email' ? 'email' : 'phone';
     const contact = method === 'email' ? cleanEmail(body.email) : cleanPhone(body.phone);
+    const shortRate = await consumeRateLimit(request, 'otp-request', `${username}|${method}|${contact}`, 5, 15 * 60 * 1000);
+    const dailyRate = await consumeRateLimit(request, 'otp-daily', `${username}|${method}|${contact}`, 20, 24 * 60 * 60 * 1000);
+    if (!shortRate.allowed || !dailyRate.allowed) {
+      const retryAfter = Math.max(shortRate.retryAfter, dailyRate.retryAfter);
+      return reply({ error: 'طلبات كثيرة لرمز التحقق. حاول لاحقًا.' }, 429, { 'retry-after': String(retryAfter) });
+    }
     const user = await findUser(username, contact, method);
     // Do not reveal whether a username/phone pair exists.
     if (!user) return reply({ ok: true, message: 'If the details match an account, a code will be sent.' });
@@ -123,7 +172,10 @@ export default async request => {
   if (request.method === 'POST' && action === 'verify-otp') {
     const body = await json(request); const challengeId = String(body.challengeId || ''); const code = String(body.code || '').trim();
     const key = `challenges/${hash(challengeId)}`; const otpStore = store('clinic-dashboard-auth-otp'); const challenge = await otpStore.get(key, { type: 'json', consistency: 'strong' });
-    if (!challenge || Date.now() > challenge.expiresAt || challenge.attempts >= 5 || !/^\d{4}$/.test(code)) return reply({ error: 'Invalid or expired code' }, 401);
+    if (!challenge || Date.now() > challenge.expiresAt || challenge.attempts >= 5 || !/^\d{4}$/.test(code)) {
+      if (challenge && (Date.now() > challenge.expiresAt || challenge.attempts >= 5)) await otpStore.delete(key);
+      return reply({ error: 'Invalid or expired code' }, 401);
+    }
     challenge.attempts += 1; await otpStore.setJSON(key, challenge);
     if (!timingSafeEqual(Buffer.from(hash(code)), Buffer.from(challenge.codeHash))) return reply({ error: 'Invalid or expired code' }, 401);
     await otpStore.delete(key);
@@ -131,14 +183,22 @@ export default async request => {
     const raw = token(); const now = Date.now(); await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + 12 * 60 * 60 * 1000 });
     return reply({ ok: true, user: safeUser(user) }, 200, { 'set-cookie': sessionCookie(raw) });
   }
-  if (request.method === 'POST' && action === 'logout') return reply({ ok: true }, 200, { 'set-cookie': clearCookie });
+  if (request.method === 'POST' && action === 'logout') {
+    const cookie = request.headers.get('cookie') || '';
+    const raw = cookie.split(';').map(value => value.trim()).find(value => value.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1);
+    if (raw) await store('clinic-dashboard-auth-sessions').delete(`sessions/${hash(raw)}`);
+    return reply({ ok: true }, 200, { 'set-cookie': clearCookie });
+  }
   const session = await sessionFrom(request);
   if (!session) return reply({ error: 'Authentication required' }, 401, { 'set-cookie': clearCookie });
   if (request.method === 'POST' && action === 'users') {
     if (session.user.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
     const body = await json(request); const username = cleanUsername(body.username); const phone = cleanPhone(body.phone); const email = cleanEmail(body.email);
     if (!username || (!/^\+\d{8,15}$/.test(phone) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) return reply({ error: 'Invalid username, phone, or email' }, 400);
-    await store('clinic-dashboard-auth-users').setJSON(`users/${username}`, { username, phone, email, displayName: String(body.displayName || username).slice(0, 80), role: body.role === 'admin' ? 'admin' : 'clinic', clinicId: String(body.clinicId || '').slice(0, 40), createdAt: Date.now() });
+    const role = body.role === 'admin' ? 'admin' : 'clinic';
+    const clinicId = role === 'clinic' ? String(body.clinicId || '') : '';
+    if (role === 'clinic' && !/^clinic-([1-9]|1[0-5])$/.test(clinicId)) return reply({ error: 'A valid clinic assignment is required' }, 400);
+    await store('clinic-dashboard-auth-users').setJSON(`users/${username}`, { username, phone, email, displayName: String(body.displayName || username).slice(0, 80), role, clinicId, createdAt: Date.now() });
     return reply({ ok: true });
   }
   return reply({ error: 'Unsupported action' }, 400);

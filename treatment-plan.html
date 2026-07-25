@@ -641,6 +641,14 @@
         const data=await response.json();
         if(!data.authenticated)throw new Error();
         currentUser=data.user||{role:viewMode};
+        const assignedClinic=/^clinic-(?:[1-9]|1[0-5])$/.test(String(currentUser?.clinicId||''))?String(currentUser.clinicId):'clinic-1';
+        if(currentUser?.role==='clinic'&&(viewMode!=='clinic'||clinicId!==assignedClinic)){
+          const next=new URL(location.href);
+          next.searchParams.set('view','clinic');
+          next.searchParams.set('clinic',assignedClinic);
+          location.replace(next.href);
+          return false;
+        }
         document.body.classList.remove('auth-checking','auth-locked');
         return true;
       }catch{
@@ -790,16 +798,16 @@
           const variant=item.code==='ceramic-veneer'?`<select class="line-input variant-select" data-field="variant"><option value="">اختر النوع</option><option value="with-prep" ${item.variant==='with-prep'?'selected':''}>بتحضير</option><option value="without-prep" ${item.variant==='without-prep'?'selected':''}>بدون تحضير</option></select>`:'';
           const custom=item.code==='other'?`<input class="line-input custom-procedure" data-field="customService" value="${escapeAttr(item.customService||'')}" placeholder="اكتب الإجراء">`:'';
           return`<tr data-item-row="${pIndex}:${iIndex}" style="${active?'box-shadow:inset -3px 0 0 var(--teal)':''}">
-            <td><select class="line-input procedure-select" data-field="procedureCode">${procedureOptions}</select>${variant}${custom}</td>
+            <td><select class="line-input procedure-select" data-field="procedureCode" aria-label="اختيار الإجراء في المرحلة ${pIndex+1}">${procedureOptions}</select>${variant}${custom}</td>
             <td class="num"><div class="qty-stepper" aria-label="عدد الإجراءات"><button type="button" data-qty-action="decrease" aria-label="إنقاص العدد">−</button><output>${Number(item.qty||1)}</output><button type="button" data-qty-action="increase" aria-label="زيادة العدد">+</button></div></td>
-            <td class="money"><input class="line-input money" data-field="unitPriceBefore" inputmode="decimal" value="${escapeAttr(item.unitPriceBefore)}" placeholder="${item.type==='included'?'مجاني':'—'}" ${item.type==='included'?'disabled':''}></td>
-            <td class="money"><input class="line-input money" data-field="unitPriceAfter" inputmode="decimal" value="${escapeAttr(item.unitPriceAfter)}" placeholder="${item.type==='included'?'مجاني':'—'}" ${item.type==='included'?'disabled':''}></td>
+            <td class="money"><input class="line-input money" data-field="unitPriceBefore" inputmode="decimal" aria-label="السعر قبل الخصم للإجراء ${iIndex+1}" value="${escapeAttr(item.unitPriceBefore)}" placeholder="${item.type==='included'?'مجاني':'—'}" ${item.type==='included'?'disabled':''}></td>
+            <td class="money"><input class="line-input money" data-field="unitPriceAfter" inputmode="decimal" aria-label="السعر بعد الخصم للإجراء ${iIndex+1}" value="${escapeAttr(item.unitPriceAfter)}" placeholder="${item.type==='included'?'مجاني':'—'}" ${item.type==='included'?'disabled':''}></td>
             <td class="money"><span>${formatMoney(total.after)}</span>${total.before!==null&&total.after!==null&&total.before!==total.after?`<br><small style="text-decoration:line-through;color:var(--ink-2)">${formatMoney(total.before)}</small>`:''}${item.type==='included'?`<br><span class="included-chip">مجاني${item.includedLabel?` — ${escapeHtml(item.includedLabel)}`:''}</span>`:''}</td>
             <td class="edit-only"><button type="button" class="row-action" data-toggle-included="${pIndex}:${iIndex}" title="تبديل مجاني">${item.type==='included'?'مدفوع':'مجاني'}</button><button type="button" class="row-action" data-delete-item="${pIndex}:${iIndex}" title="حذف">×</button></td>
           </tr>`}).join('');
         const collapsed=collapsedPhases.has(pIndex);
         return`<div class="phase-block${collapsed?' collapsed':''}" data-phase="${pIndex}">
-          <div class="phase-head"><div class="phase-name"><span class="phase-index">${pIndex+1}</span><input data-phase-title="${pIndex}" value="${escapeAttr(phase.title)}"></div><div class="phase-actions edit-only"><button type="button" class="phase-collapse" data-toggle-phase="${pIndex}" aria-expanded="${collapsed?'false':'true'}" aria-label="${collapsed?'فتح':'طي'} المرحلة">⌄</button><button type="button" data-delete-phase="${pIndex}" ${state.phases.length===1?'disabled':''}>حذف المرحلة</button></div></div>
+          <div class="phase-head"><div class="phase-name"><span class="phase-index">${pIndex+1}</span><input data-phase-title="${pIndex}" aria-label="اسم المرحلة العلاجية ${pIndex+1}" value="${escapeAttr(phase.title)}"></div><div class="phase-actions edit-only"><button type="button" class="phase-collapse" data-toggle-phase="${pIndex}" aria-expanded="${collapsed?'false':'true'}" aria-label="${collapsed?'فتح':'طي'} المرحلة">⌄</button><button type="button" data-delete-phase="${pIndex}" ${state.phases.length===1?'disabled':''}>حذف المرحلة</button></div></div>
           <div class="phase-content">
             <table><thead><tr><th style="width:25%">الإجراء</th><th class="num" style="width:14%">العدد</th><th class="money" style="width:16%">قبل الخصم</th><th class="money" style="width:16%">بعد الخصم</th><th class="money" style="width:17%">الإجمالي</th><th class="edit-only" style="width:12%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
             <button type="button" class="add-item edit-only" data-add-item="${pIndex}">＋ إضافة إجراء</button>
@@ -1401,7 +1409,7 @@
       $('saveStatus').textContent=remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote));
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
-      setInterval(()=>loadProcedureCatalog(true),5000);
+      setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},15000);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));
     }
     init();

@@ -1,16 +1,9 @@
 import { getStore } from '@netlify/blobs';
-import { createHash, createHmac } from 'node:crypto';
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 
-const headers = {
-  'content-type': 'application/json; charset=utf-8',
-  'cache-control': 'no-store, no-cache, must-revalidate',
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET,POST,PUT,OPTIONS',
-  'access-control-allow-headers': 'content-type,accept'
-};
+const headers = apiHeaders('GET,POST,PUT,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const store = getStore({ name: 'clinic-treatment-plan-registry', consistency: 'strong' });
-const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
 const normalizePhone = value => {
@@ -28,27 +21,16 @@ const identityKeys = patient => {
   ].filter(Boolean))];
 };
 
-async function authUser(request) {
-  if (process.env.AUTH_ENABLED !== 'true') return { role: 'admin' };
-  const raw = (request.headers.get('cookie') || '').split(';').map(value => value.trim()).find(value => value.startsWith('bc_session='))?.slice(11);
-  if (!raw) return null;
-  const sessionStore = getStore({ name: 'clinic-dashboard-auth-sessions', consistency: 'strong' });
-  const session = await sessionStore.get(`sessions/${hash(raw)}`, { type: 'json', consistency: 'strong' });
-  const now = Date.now();
-  const signature = createHmac('sha256', process.env.AUTH_SESSION_SECRET || 'change-me-before-production').update(raw).digest('hex');
-  if (!session || session.tokenSignature !== signature || now - Number(session.lastSeenAt || 0) > 3 * 60 * 60 * 1000 || now > Number(session.expiresAt || 0)) return null;
-  session.lastSeenAt = now;
-  await sessionStore.setJSON(`sessions/${hash(raw)}`, session);
-  return session.user || null;
-}
-
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  const user = await authUser(request);
-  if (!user) return reply({ error: 'Authentication required' }, 401);
+  if (request.method !== 'GET' && !sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
+  const auth = await requireUser(request);
+  if (!auth.ok) return reply({ error: auth.error }, auth.status);
+  const user = auth.user;
   const url = new URL(request.url);
   const clinicId = url.searchParams.get('clinic') || 'clinic-1';
   if (!validClinic(clinicId)) return reply({ error: 'Invalid clinic' }, 400);
+  if (!canAccessClinic(user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
   const key = 'registry/global';
 
   if (request.method === 'GET') {
