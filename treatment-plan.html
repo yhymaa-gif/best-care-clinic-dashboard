@@ -118,7 +118,7 @@
     .patient-signature-card{border-top:3px solid var(--teal)}.clinic-approval{position:relative;display:flex;flex-direction:column;text-align:start;overflow:hidden;border:1px solid #b9d8ee;border-top:3px solid #1769aa;background:linear-gradient(145deg,#fbfdff,#edf7ff)}
     .clinic-approval .signature-mark{background:linear-gradient(145deg,#2584c7,#0a5592)}.clinic-approval strong{display:block;margin:1mm 0 2mm;color:#125f99;font-size:9.5pt;text-align:center}
     .signature-field{display:grid;gap:.7mm;color:var(--ink-2);font-size:6.7pt;font-weight:750}.signature-field .line-input{width:100%;font-size:8pt}
-    .signature-date-row{display:flex;justify-content:space-between;gap:4mm;margin-top:1.2mm;color:var(--ink-2);font-size:6.4pt}
+    .signature-date-row{display:flex;justify-content:space-between;gap:4mm;margin-top:1.2mm;color:var(--ink-2);font-size:6.4pt}.signature-date-value{color:var(--ink);font-weight:950;direction:ltr;unicode-bidi:isolate}
     .clinic-approval .signature-date-row{margin-top:auto;padding-top:1mm;border-top:.4pt dashed var(--rule)}
     .clinic-seal{position:relative;display:grid;place-items:center;align-content:center;width:34mm;height:34mm;margin:0 auto 1mm;border:1mm solid rgba(18,91,150,.72);border-radius:50%;color:rgba(12,82,141,.82);text-align:center;line-height:1.03;transform:rotate(-6deg);opacity:.68;mix-blend-mode:multiply;filter:contrast(1.08);background:radial-gradient(circle at 22% 24%,rgba(255,255,255,.9) 0 .32mm,transparent .5mm),radial-gradient(circle at 76% 68%,rgba(255,255,255,.72) 0 .25mm,transparent .46mm),radial-gradient(circle at 45% 83%,rgba(255,255,255,.62) 0 .22mm,transparent .4mm),rgba(23,105,170,.025);box-shadow:inset 0 0 0 .35mm rgba(18,91,150,.42),inset 0 0 0 1.45mm rgba(18,91,150,.09)}
     .clinic-seal::before,.clinic-seal::after{content:"";position:absolute;border-radius:50%;pointer-events:none}.clinic-seal::before{inset:2.2mm;border:.36mm dashed rgba(18,91,150,.64)}.clinic-seal::after{inset:5.4mm;border:.3mm solid rgba(18,91,150,.5);box-shadow:0 0 0 .22mm rgba(18,91,150,.08)}
@@ -165,22 +165,22 @@
     .print-only{display:none}
     .action-proxy-control,.share-draft-buttons.action-proxy-control{display:none!important}
     .floating-plan-actions{position:fixed!important;inset:auto auto max(54px,calc(env(safe-area-inset-bottom) + 34px)) max(24px,env(safe-area-inset-left))!important;z-index:2147483000;display:grid;gap:20px;justify-items:start;pointer-events:none;isolation:isolate}
-    .floating-plan-action{position:relative;display:grid;place-items:center;width:86px;height:86px;min-width:86px;min-height:86px;padding:0;border:3px solid rgba(255,255,255,.92);border-radius:50%;color:#fff;font-weight:950;box-shadow:0 20px 46px rgba(21,56,45,.3);transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;pointer-events:auto;touch-action:manipulation;cursor:pointer;will-change:transform,box-shadow}
+    .floating-plan-action{position:relative;display:grid;place-items:center;width:92px;height:92px;min-width:92px;min-height:92px;padding:0;border:4px solid rgba(255,255,255,.94);border-radius:50%;color:#fff;font-weight:950;box-shadow:0 22px 50px rgba(21,56,45,.34);transition:transform .22s ease,box-shadow .22s ease,filter .22s ease;pointer-events:auto;touch-action:manipulation;cursor:pointer;will-change:transform,box-shadow;transform-style:preserve-3d}
     .floating-plan-action:hover,.floating-plan-action:focus-visible{transform:translateY(-5px) scale(1.08)!important;filter:saturate(1.12);outline:3px solid rgba(255,255,255,.92);outline-offset:3px}
-    .floating-plan-action:active{transform:scale(.94)!important}
-    .floating-plan-action .action-icon{position:relative;z-index:2;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.13);font-size:22px;text-shadow:0 2px 8px rgba(0,0,0,.18)}
+    .floating-plan-action:active{transform:translateY(5px) scale(.95)!important;filter:saturate(.95)}
+    .floating-plan-action .action-icon{position:relative;z-index:2;display:grid;place-items:center;width:68px;height:68px;border-radius:50%;background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.48),rgba(255,255,255,.12) 34%,rgba(0,0,0,.08) 72%);font-size:23px;text-shadow:0 3px 9px rgba(0,0,0,.22);box-shadow:inset 0 5px 9px rgba(255,255,255,.34),inset 0 -7px 12px rgba(0,0,0,.17),0 6px 12px rgba(0,0,0,.16);transform:translateZ(12px)}
     .floating-plan-action .action-icon::after{content:"✦";position:absolute;top:-9px;right:-8px;color:#fff8b5;font-size:17px;line-height:1;text-shadow:0 0 6px #fff,0 0 15px currentColor;animation:action-sparkle 1.7s ease-in-out infinite}
     .floating-plan-action .action-icon svg{width:37px;height:37px;fill:none;stroke:currentColor;stroke-width:2.05;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 5px rgba(0,0,0,.18))}
     .floating-plan-action .action-label{position:absolute;z-index:3;right:-8px;bottom:-9px;width:auto;height:auto;min-width:48px;margin:0;padding:4px 8px;overflow:visible;clip:auto;white-space:nowrap;border:2px solid #fff;border-radius:999px;background:#fff;color:#173d31;font-size:10px;line-height:1;font-weight:950;box-shadow:0 5px 14px rgba(23,61,49,.2)}
     .floating-plan-action::after{content:attr(aria-label);position:absolute;left:calc(100% + 13px);bottom:14px;width:max-content;max-width:240px;padding:9px 12px;border-radius:12px;background:#173d31;color:#fff;font-size:12px;line-height:1.4;font-weight:850;box-shadow:0 10px 28px rgba(23,61,49,.25);opacity:0;pointer-events:none;transform:translateX(-7px) scale(.96);transition:.18s ease}
     .floating-plan-action:hover::after,.floating-plan-action:focus-visible::after{opacity:1;transform:translateX(0) scale(1)}
-    .floating-plan-action.whatsapp{background:linear-gradient(145deg,#39e77b 0%,#18bd61 45%,#08783f 100%);border-color:#d9ffe7;animation:whatsapp-float 2.8s ease-in-out infinite,whatsapp-glow 2s ease-in-out infinite}
+    .floating-plan-action.whatsapp{background:radial-gradient(circle at 31% 20%,#9fffc2 0%,#38e978 22%,#13b957 52%,#08783f 78%,#04592d 100%);border-color:#e7fff0;animation:whatsapp-float 2.8s ease-in-out infinite,whatsapp-glow 2s ease-in-out infinite}
     .floating-plan-action.whatsapp .action-icon{background:transparent}
     .floating-plan-action.whatsapp .action-icon svg{width:52px;height:52px;stroke-width:2.25}
     .floating-plan-action.whatsapp .action-label{color:#08783f}
-    .floating-plan-action.whatsapp::before,.floating-plan-action.pdf::before{content:"";position:absolute;inset:-8px;border:3px solid currentColor;border-radius:50%;opacity:.38;animation:chat-pulse 2s ease-out infinite}
-    .floating-plan-action.pdf{background:linear-gradient(145deg,#ff6b72 0%,#d83c4c 48%,#8c1f31 100%);border-color:#ffe1e4;animation:pdf-float 3s ease-in-out .35s infinite,pdf-glow 2.2s ease-in-out .2s infinite}
-    .floating-plan-action.pdf .action-icon{background:rgba(255,255,255,.1)}
+    .floating-plan-action.whatsapp::before,.floating-plan-action.pdf::before{content:"";position:absolute;inset:-10px;border:4px solid currentColor;border-radius:50%;opacity:.44;filter:drop-shadow(0 0 8px currentColor);animation:chat-pulse 2s ease-out infinite}
+    .floating-plan-action.pdf{background:radial-gradient(circle at 31% 20%,#ffb4b8 0%,#ff6971 23%,#d83c4c 53%,#961f34 79%,#691326 100%);border-color:#fff0f2;animation:pdf-float 3s ease-in-out .35s infinite,pdf-glow 2.2s ease-in-out .2s infinite}
+    .floating-plan-action.pdf .action-icon{background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.5),rgba(255,255,255,.13) 38%,rgba(76,0,18,.12) 75%)}
     .floating-plan-action.pdf .action-icon svg{width:47px;height:47px;stroke-width:1.9}
     .floating-plan-action.pdf .action-label{color:#a42738}
     .floating-plan-action[hidden]{display:none}
@@ -188,15 +188,15 @@
     @keyframes chat-pulse{0%{transform:scale(.78);opacity:.72}72%,100%{transform:scale(1.32);opacity:0}}
     @keyframes whatsapp-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-7px) rotate(2deg)}}
     @keyframes pdf-float{0%,100%{transform:translateY(0) rotate(2deg)}50%{transform:translateY(-6px) rotate(-2deg)}}
-    @keyframes whatsapp-glow{0%,100%{box-shadow:0 16px 38px rgba(8,120,63,.3),0 0 0 0 rgba(37,211,102,.28)}50%{box-shadow:0 20px 48px rgba(8,120,63,.42),0 0 24px 7px rgba(37,211,102,.32)}}
-    @keyframes pdf-glow{0%,100%{box-shadow:0 16px 38px rgba(140,31,49,.3),0 0 0 0 rgba(255,107,114,.25)}50%{box-shadow:0 20px 48px rgba(140,31,49,.42),0 0 24px 7px rgba(255,107,114,.3)}}
+    @keyframes whatsapp-glow{0%,100%{box-shadow:inset 0 8px 10px rgba(255,255,255,.3),inset 0 -10px 14px rgba(0,73,35,.34),0 8px 0 #056832,0 20px 42px rgba(8,120,63,.36),0 0 18px 5px rgba(37,211,102,.26)}50%{box-shadow:inset 0 8px 12px rgba(255,255,255,.4),inset 0 -10px 14px rgba(0,73,35,.3),0 8px 0 #056832,0 24px 56px rgba(8,120,63,.5),0 0 34px 12px rgba(37,211,102,.42)}}
+    @keyframes pdf-glow{0%,100%{box-shadow:inset 0 8px 10px rgba(255,255,255,.28),inset 0 -10px 14px rgba(84,0,22,.34),0 8px 0 #78172a,0 20px 42px rgba(140,31,49,.36),0 0 18px 5px rgba(255,107,114,.24)}50%{box-shadow:inset 0 8px 12px rgba(255,255,255,.38),inset 0 -10px 14px rgba(84,0,22,.3),0 8px 0 #78172a,0 24px 56px rgba(140,31,49,.5),0 0 34px 12px rgba(255,107,114,.4)}}
     @keyframes action-sparkle{0%,100%{transform:scale(.72) rotate(-12deg);opacity:.45}50%{transform:scale(1.18) rotate(12deg);opacity:1}}
     .empty-state{padding:9mm;text-align:center;color:var(--ink-2)}
     .missing-banner{display:none;margin-bottom:3mm;padding:2mm 3mm;border:1px solid #efc3b8;background:#fff7f4;color:#9b4937;border-radius:3mm;font-size:8pt}.missing-banner.show{display:block}
     .toast-wrap{position:fixed;left:18px;bottom:18px;z-index:200;display:grid;gap:8px}.toast{max-width:330px;padding:12px 15px;border-radius:14px;background:var(--ink);color:#fff;box-shadow:0 15px 40px rgba(24,50,46,.24);animation:toast-in .25s ease}
     @keyframes toast-in{from{opacity:0;transform:translateY(8px)}}
     @media(max-width:1050px){.workspace{grid-template-columns:1fr}.editor-panel{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}.paper-wrap{overflow:auto;padding-bottom:10px}}
-    @media(max-width:700px){.topbar{align-items:flex-start}.topbar,.topbar-group{gap:6px}.topbar .brand span{display:none}.topbar button{padding:8px 10px;font-size:12px}.workspace{width:100%;margin-top:12px}.editor-panel{grid-template-columns:1fr;padding:0 12px}.workspace-hero{min-height:180px}.hero-copy{width:calc(100% - 26px)}.hero-metrics{display:grid;grid-template-columns:1fr 1fr}.paper{transform-origin:top right}.paper-wrap{padding-inline:10px}.two-col,.diagnosis-grid,.financial-layout{grid-template-columns:1fr}.consent-list{columns:1}.floating-plan-actions{inset:auto auto max(88px,calc(env(safe-area-inset-bottom) + 68px)) max(18px,env(safe-area-inset-left))!important;gap:18px}.floating-plan-action{width:82px;height:82px;min-width:82px;min-height:82px;padding:0;border-radius:50%}.floating-plan-action .action-icon{width:60px;height:60px}.floating-plan-action.whatsapp .action-icon svg{width:49px;height:49px}.floating-plan-action.pdf .action-icon svg{width:44px;height:44px}.floating-plan-action .action-label{right:-7px;bottom:-9px;min-width:51px;padding:5px 8px;font-size:10px}.floating-plan-action::after{display:none}}
+    @media(max-width:700px){.topbar{align-items:flex-start}.topbar,.topbar-group{gap:6px}.topbar .brand span{display:none}.topbar button{padding:8px 10px;font-size:12px}.workspace{width:100%;margin-top:12px}.editor-panel{grid-template-columns:1fr;padding:0 12px}.workspace-hero{min-height:180px}.hero-copy{width:calc(100% - 26px)}.hero-metrics{display:grid;grid-template-columns:1fr 1fr}.paper{transform-origin:top right}.paper-wrap{padding-inline:10px}.two-col,.diagnosis-grid,.financial-layout{grid-template-columns:1fr}.consent-list{columns:1}.floating-plan-actions{inset:auto auto max(92px,calc(env(safe-area-inset-bottom) + 72px)) max(18px,env(safe-area-inset-left))!important;gap:20px}.floating-plan-action{width:88px;height:88px;min-width:88px;min-height:88px;padding:0;border-radius:50%}.floating-plan-action .action-icon{width:65px;height:65px}.floating-plan-action.whatsapp .action-icon svg{width:52px;height:52px}.floating-plan-action.pdf .action-icon svg{width:47px;height:47px}.floating-plan-action .action-label{right:-7px;bottom:-10px;min-width:54px;padding:5px 9px;font-size:10px}.floating-plan-action::after{display:none}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
     @page{size:A4 portrait;margin:5mm}
     @media print{
@@ -465,7 +465,7 @@
                 <div class="signature-meta">
                   <label class="signature-field">اسم الموقّع<input id="signerName" class="line-input" type="text" placeholder="الاسم الكامل"></label>
                 </div>
-                <div class="signature-date-row"><span>التوقيع أعلاه</span><span>التاريخ: ____ / ____ / ______</span></div>
+                <div class="signature-date-row"><span>التوقيع أعلاه</span><span>التاريخ: <b id="patientSignatureDate" class="signature-date-value">____ / ____ / ______</b></span></div>
               </div>
               <div class="signature-box clinic-approval">
                 <div class="signature-box-head">
@@ -477,7 +477,7 @@
                   <b>معتمد</b>
                   <small>BEST CARE</small>
                 </div>
-                <div class="signature-date-row"><span>ختم الاعتماد الرسمي</span><span>التاريخ: ____ / ____ / ______</span></div>
+                <div class="signature-date-row"><span>ختم الاعتماد الرسمي</span><span>تاريخ الاعتماد: <b id="clinicApprovalDate" class="signature-date-value">____ / ____ / ______</b></span></div>
               </div>
             </div>
           </section>
@@ -546,6 +546,11 @@
     const nowLocal=()=>{
       const d=new Date(),offset=d.getTimezoneOffset()*60000;
       return new Date(d-offset).toISOString().slice(0,16);
+    };
+    const signatureDateText=value=>{
+      const date=new Date(Number(value||0));
+      if(!Number(value)||Number.isNaN(date.getTime()))return'____ / ____ / ______';
+      return`${String(date.getDate()).padStart(2,'0')} / ${String(date.getMonth()+1).padStart(2,'0')} / ${date.getFullYear()}`;
     };
     const nextPlanNo=()=>{
       const year=new Date().getFullYear(),key=`bestcare_plan_sequence_${year}`;
@@ -725,6 +730,9 @@
     }
     function renderDocMeta(){
       const {issued,valid}=planDates();
+      const finalStatus=['approved','approved_signed'].includes(state.meta.status);
+      const patientAcceptedDate=Number(state.meta.patientAcceptedAt||0);
+      const clinicApprovalDate=Number(state.meta.approvedAt||0)||(finalStatus?Number(state.meta.lastPrintedAt||0)||Date.now():0);
       $('planNoText').textContent=state.meta.planNo;
       $('revisionText').textContent=String(state.meta.revision||1);
       $('issuedDateText').textContent=`${dateFormatter.format(issued)} · ${hijriFormatter.format(issued)}`;
@@ -734,6 +742,8 @@
       const expired=valid.getTime()<Date.now();
       $('validityText').textContent=expired?`انتهت صلاحية هذا العرض بتاريخ ${dateFormatter.format(valid)} — يلزم إعادة التسعير.`:$('validityText').textContent;
       $('heroPatient').textContent=state.patient.fullName||'مريض جديد';
+      $('patientSignatureDate').textContent=signatureDateText(patientAcceptedDate);
+      $('clinicApprovalDate').textContent=signatureDateText(clinicApprovalDate);
       renderDocCode();
     }
     function renderDocCode(){
@@ -1285,6 +1295,7 @@
       if(!validateBeforePrint())return;
       state.meta.lastPrintedAt=Date.now();
       $('printedAtText').textContent=dateTimeFormatter.format(new Date(state.meta.lastPrintedAt));
+      renderDocMeta();
       collectHeaderFields();document.body.classList.add('preview-mode','one-page-print');
       const itemCount=state.phases.reduce((sum,phase)=>sum+phase.items.filter(item=>item.service).length,0);
       document.body.classList.toggle('print-dense',itemCount>8);
