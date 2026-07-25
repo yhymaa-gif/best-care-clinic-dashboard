@@ -1,19 +1,9 @@
 import { getStore } from '@netlify/blobs';
-import { createHash, createHmac } from 'node:crypto';
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 
-const IDLE_MS = 3 * 60 * 60 * 1000;
-const COOKIE = 'bc_session';
-const headers = {
-  'content-type': 'application/json; charset=utf-8',
-  'cache-control': 'no-store',
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET,PUT,OPTIONS',
-  'access-control-allow-headers': 'content-type',
-};
+const headers = apiHeaders('GET,PUT,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const store = name => getStore({ name, consistency: 'strong' });
-const hash = value => createHash('sha256').update(String(value)).digest('hex');
-const sign = value => createHmac('sha256', process.env.AUTH_SESSION_SECRET || 'change-me-before-production').update(value).digest('hex');
 const clinicIdPattern = /^clinic-([1-9]|1[0-5])$/;
 const defaults = () => Array.from({ length: 15 }, (_, index) => ({
   id: `clinic-${index + 1}`,
@@ -29,24 +19,6 @@ const clean = clinic => ({
   roomNumber: String(clinic?.roomNumber || '').trim().slice(0, 20),
   active: Boolean(clinic?.active),
 });
-
-async function sessionUser(request) {
-  if (process.env.AUTH_ENABLED !== 'true') return { username: 'system', role: 'admin' };
-  const cookie = request.headers.get('cookie') || '';
-  const raw = cookie.split(';').map(value => value.trim()).find(value => value.startsWith(`${COOKIE}=`))?.slice(COOKIE.length + 1);
-  if (!raw) return null;
-  const sessions = store('clinic-dashboard-auth-sessions');
-  const key = `sessions/${hash(raw)}`;
-  const session = await sessions.get(key, { type: 'json', consistency: 'strong' });
-  const now = Date.now();
-  if (!session || session.tokenSignature !== sign(raw) || now - Number(session.lastSeenAt || 0) > IDLE_MS || now > Number(session.expiresAt || 0)) {
-    if (session) await sessions.delete(key);
-    return null;
-  }
-  session.lastSeenAt = now;
-  await sessions.setJSON(key, session);
-  return session.user || null;
-}
 
 function mergeClinics(saved) {
   const base = defaults();
@@ -73,16 +45,23 @@ function mergeClinics(saved) {
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  const user = await sessionUser(request);
-  if (!user) return reply({ error: 'Authentication required' }, 401);
+  if (request.method !== 'GET' && !sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
+  const auth = await requireUser(request);
+  if (!auth.ok) return reply({ error: auth.error }, auth.status);
+  const user = auth.user;
 
   const configStore = store('clinic-dashboard-config');
   const key = 'clinics';
   if (request.method === 'GET') {
     const saved = await configStore.get(key, { type: 'json', consistency: 'strong' });
-    const clinics = mergeClinics(saved);
+    const allClinics = mergeClinics(saved);
+    const clinics = user.role === 'admin'
+      ? allClinics
+      : allClinics.filter(clinic => canAccessClinic(user, clinic.id));
     const state = { version: 2, clinics, updatedAt: Number(saved?.updatedAt || 0) };
-    if (saved && Number(saved.version || 0) < 2) await configStore.setJSON(key, state);
+    if (saved && Number(saved.version || 0) < 2 && user.role === 'admin') {
+      await configStore.setJSON(key, { ...state, clinics: allClinics });
+    }
     return reply(state);
   }
 

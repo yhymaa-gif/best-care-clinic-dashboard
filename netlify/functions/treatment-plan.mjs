@@ -1,13 +1,8 @@
 import { getStore } from '@netlify/blobs';
-import { createHash, createHmac } from 'node:crypto';
+import { createHash } from 'node:crypto';
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 
-const headers = {
-  'content-type': 'application/json; charset=utf-8',
-  'cache-control': 'no-store, no-cache, must-revalidate',
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET,PUT,OPTIONS',
-  'access-control-allow-headers': 'content-type,accept'
-};
+const headers = apiHeaders('GET,PUT,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const store = getStore({ name: 'clinic-treatment-plans', consistency: 'strong' });
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
@@ -20,24 +15,6 @@ const cleanNumber = (value, min = 0, max = 10_000_000) => {
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const validPatientId = value => /^[a-zA-Z0-9._:-]{1,80}$/.test(value || '');
-
-async function authSession(request) {
-  if (process.env.AUTH_ENABLED !== 'true') return true;
-  const raw = (request.headers.get('cookie') || '').split(';').map(value => value.trim()).find(value => value.startsWith('bc_session='))?.slice(11);
-  if (!raw) return false;
-  const key = `sessions/${hash(raw)}`;
-  const sessionStore = getStore({ name: 'clinic-dashboard-auth-sessions', consistency: 'strong' });
-  const session = await sessionStore.get(key, { type: 'json', consistency: 'strong' });
-  const now = Date.now();
-  const signature = createHmac('sha256', process.env.AUTH_SESSION_SECRET || 'change-me-before-production').update(raw).digest('hex');
-  if (!session || session.tokenSignature !== signature || now - Number(session.lastSeenAt || 0) > 3 * 60 * 60 * 1000 || now > Number(session.expiresAt || 0)) {
-    if (session) await sessionStore.delete(key);
-    return false;
-  }
-  session.lastSeenAt = now;
-  await sessionStore.setJSON(key, session);
-  return true;
-}
 
 const cleanItem = item => ({
   code: cleanText(item?.code, 50),
@@ -141,13 +118,16 @@ const cleanPlan = plan => ({
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  if (!(await authSession(request))) return reply({ error: 'Authentication required' }, 401);
+  if (request.method !== 'GET' && !sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
+  const auth = await requireUser(request);
+  if (!auth.ok) return reply({ error: auth.error }, auth.status);
 
   const url = new URL(request.url);
   const patientId = url.searchParams.get('patientId') || '';
   const date = url.searchParams.get('date') || '';
   const clinicId = url.searchParams.get('clinic') || 'clinic-1';
   if (!validPatientId(patientId) || !validDate(date) || !validClinic(clinicId)) return reply({ error: 'Invalid treatment plan key' }, 400);
+  if (!canAccessClinic(auth.user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
 
   const key = `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
   if (request.method === 'GET') {
@@ -160,7 +140,13 @@ export default async request => {
     if (!body?.plan || typeof body.plan !== 'object') return reply({ error: 'Invalid plan' }, 400);
     const existing = await store.get(key, { type: 'json', consistency: 'strong' });
     const plan = cleanPlan(body.plan);
-    const record = { patientId, clinicId, date, plan, revision: Number(existing?.revision || 0) + 1, updatedAt: Date.now() };
+    if (auth.user?.role !== 'admin' && !['draft', 'submitted', 'rejected'].includes(plan.meta.status)) {
+      return reply({ error: 'Administration approval is required for this plan status' }, 403);
+    }
+    if (auth.user?.role !== 'admin' && ['approved', 'approved_signed'].includes(existing?.plan?.meta?.status)) {
+      return reply({ error: 'An approved plan can only be changed by administration' }, 403);
+    }
+    const record = { patientId, clinicId, date, plan, revision: Number(existing?.revision || 0) + 1, updatedAt: Date.now(), updatedBy: String(auth.user?.displayName || auth.user?.username || '').slice(0, 120) };
     await store.setJSON(key, record);
     return reply({ ok: true, revision: record.revision, updatedAt: record.updatedAt });
   }

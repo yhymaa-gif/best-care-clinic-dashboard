@@ -221,6 +221,7 @@ body.view-clinic .view-identity{background:linear-gradient(135deg,#244f70,#3e7da
 body.view-clinic .view-identity button{color:#315f85}
 body.view-admin .view-identity{background:linear-gradient(135deg,#14543d,#27815d)}
 body.view-admin .view-identity button{color:#176344}
+.role-clinic #adminViewLink,.role-clinic [data-role-view="admin"],.role-clinic .admin-only,.role-clinic .clinic-switcher{display:none!important}
 .role-option.clinic-option{border-color:#bfd6e6;background:linear-gradient(145deg,#fff,#edf7fc)}
 .role-option.clinic-option .role-icon{background:linear-gradient(135deg,#315f85,#4988aa)}
 .role-option.clinic-option:hover{border-color:#5d91b5;box-shadow:0 17px 34px rgba(49,95,133,.16)}
@@ -244,6 +245,38 @@ body.view-admin .view-identity button{color:#176344}
   .view-identity-copy span{font-size:10px}
   .view-identity button{grid-column:1/-1;width:100%;min-height:40px}
 }
+/* Final visual and accessibility refinements */
+html{scrollbar-gutter:stable}
+.header{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,252,250,.96));box-shadow:0 13px 36px rgba(21,76,54,.08);backdrop-filter:saturate(1.08) blur(10px)}
+.logo{box-shadow:0 9px 24px rgba(23,91,65,.09);transition:transform .22s ease,box-shadow .22s ease}
+.logo:hover{transform:translateY(-1px);box-shadow:0 13px 28px rgba(23,91,65,.14)}
+button,input,select,textarea{transition:border-color .18s ease,box-shadow .18s ease,background-color .18s ease,transform .18s ease}
+button:not(:disabled):active{transform:translateY(1px) scale(.99)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid rgba(38,139,99,.34);outline-offset:3px}
+body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view-clinic input:focus-visible,body.view-clinic select:focus-visible{outline-color:rgba(49,95,133,.38)}
+.settings-menu{max-height:min(72vh,560px);overflow:auto;padding:9px;border-color:#d9e7df;box-shadow:0 24px 60px rgba(17,61,44,.2);animation:menuReveal .16s ease-out}
+.settings-menu button{min-height:39px;border-radius:10px}
+.settings-menu #logoutBtn{margin-top:7px;border-top:1px solid #e5ece8;border-radius:0 0 10px 10px;color:#8c3340}
+@keyframes menuReveal{from{opacity:0;transform:translateY(-5px) scale(.985)}to{opacity:1;transform:none}}
+.modal.open{animation:modalShadeIn .16s ease-out}.modal.open .modal-card{animation:modalCardIn .2s cubic-bezier(.2,.72,.2,1)}
+@keyframes modalShadeIn{from{background:rgba(14,42,31,0)}}@keyframes modalCardIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.modal-card{overscroll-behavior:contain}
+.table-wrap{scrollbar-color:#a9cbbb transparent;overscroll-behavior-inline:contain}
+#patientRows tr{position:relative}
+.toast{border-inline-start:5px solid #2b8b63;box-shadow:0 18px 48px rgba(20,64,47,.16);animation:toastIn .2s ease-out}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:680px){
+  .header{gap:12px;padding:13px;border-radius:16px}
+  .toolbar{gap:6px}
+  .toolbar>button,.toolbar>.settings{flex:1 1 auto}
+  .toolbar>.settings>button{width:100%}
+  .settings-menu{position:fixed;inset:auto 10px max(12px,env(safe-area-inset-bottom)) 10px;width:auto;max-height:68vh;border-radius:18px}
+  .toast-wrap{right:10px;left:10px;bottom:max(10px,env(safe-area-inset-bottom))}
+  .toast{min-width:0;max-width:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body class="auth-checking">
@@ -257,7 +290,7 @@ body.view-admin .view-identity button{color:#176344}
   </div>
 </div>
 <script>
-(()=>{const splash=document.getElementById('appSplash'),started=Date.now();let closed=false;const closeSplash=()=>{if(closed||!splash)return;closed=true;splash.classList.add('splash-exit');setTimeout(()=>splash.remove(),360)};window.addEventListener('load',()=>setTimeout(closeSplash,Math.max(0,1650-(Date.now()-started))),{once:true});setTimeout(closeSplash,3600)})();
+(()=>{const splash=document.getElementById('appSplash'),started=Date.now(),seen=sessionStorage.getItem('bestcare_splash_seen')==='1';let closed=false;const closeSplash=()=>{if(closed||!splash)return;closed=true;sessionStorage.setItem('bestcare_splash_seen','1');splash.classList.add('splash-exit');setTimeout(()=>splash.remove(),320)};window.addEventListener('load',()=>setTimeout(closeSplash,Math.max(0,(seen?160:900)-(Date.now()-started))),{once:true});setTimeout(closeSplash,seen?900:2200)})();
 </script>
 <div id="authGate" aria-live="polite">
   <div class="auth-card">
@@ -297,6 +330,7 @@ body.view-admin .view-identity button{color:#176344}
         <button id="clinicsBtn" class="admin-only" type="button">🏥 إدارة العيادات والأطباء</button>
         <button id="usersBtn" type="button">👤 إدارة مستخدمي النظام</button>
         <button id="syncTestBtn" type="button">🧪 اختبار المزامنة</button>
+        <button id="logoutBtn" type="button">↪ تسجيل الخروج الآمن</button>
         <button id="clearBtn" class="danger" type="button">🗑 مسح قائمة اليوم</button>
       </div></div>
     </div>
@@ -394,14 +428,14 @@ body.view-admin .view-identity button{color:#176344}
 </details>
 
 <section id="adminWorkspace" class="main main-clean">
-  <details class="card collapsible" open><summary id="patientListTitle">قائمة المرضى اليومية</summary><p id="doctorListNote" class="doctor-list-note">حدّث حالة المريض، وافتح خطته أو إجراء ما بعد العلاج من صفه مباشرة.</p><div class="section-head"><div id="statusLegend" class="status-legend"></div><div class="filters hide-screen"><input id="searchInput" type="search" placeholder="بحث بالاسم أو رقم الملف"><select id="filterStatus"><option value="">كل الحالات</option></select></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>الحالة</th><th class="hide-screen">إجراء</th></tr></thead><tbody id="patientRows"></tbody></table></div></details>
+  <details class="card collapsible" open><summary id="patientListTitle">قائمة المرضى اليومية</summary><p id="doctorListNote" class="doctor-list-note">حدّث حالة المريض، وافتح خطته أو إجراء ما بعد العلاج من صفه مباشرة.</p><div class="section-head"><div id="statusLegend" class="status-legend"></div><div class="filters hide-screen"><input id="searchInput" type="search" aria-label="بحث في قائمة المرضى" placeholder="بحث بالاسم أو رقم الملف"><select id="filterStatus" aria-label="تصفية قائمة المرضى حسب الحالة"><option value="">كل الحالات</option></select></div></div><div class="table-wrap"><table><thead><tr><th>#</th><th>الاسم</th><th>رقم الملف</th><th>البداية</th><th>النهاية</th><th>الإجراء</th><th>الحالة</th><th class="hide-screen">إجراء</th></tr></thead><tbody id="patientRows"></tbody></table></div></details>
   <textarea id="notes" hidden aria-hidden="true"></textarea>
 </section>
 <footer class="app-footer"><span class="footer-mark" aria-hidden="true">BC</span><span id="developerRights">جميع الحقوق محفوظة — تطوير يحيى هادي</span></footer>
 </div>
 <button id="exitScreenBtn" class="exit-full" type="button">⤢ إلغاء ملء الشاشة</button>
 <input id="hiddenCsv" type="file" hidden>
-<div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button type="button" data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary" type="button">حفظ القائمة</button></div></div></div>
+<div id="bulkModal" class="modal"><div class="modal-card"><h3>تحديث قائمة اليوم</h3><p>كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء</p><textarea id="bulkText" class="bulk" aria-label="بيانات قائمة المرضى اليومية" placeholder="مها,727,08:00,08:30,مراجعة"></textarea><div class="modal-actions"><button type="button" data-close="bulkModal">إلغاء</button><button id="applyBulkBtn" class="primary" type="button">حفظ القائمة</button></div></div></div>
 <div id="alertModal" class="modal"><div class="modal-card alert-modal-card" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle"><div class="alert-modal-head"><h3 id="alertModalTitle">🔔 إرسال تنبيه تعديل</h3><p>اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.</p></div><div class="alert-modal-body"><label for="alertMessageInput">رسالة التنبيه</label><textarea id="alertMessageInput" maxlength="220" placeholder="مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة"></textarea><div class="alert-preview"><span aria-hidden="true">💡</span><span>يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.</span></div></div><div class="modal-actions"><button type="button" data-close="alertModal">إغلاق</button><button id="clearAlertBtn" type="button" class="danger alert-clear" hidden>إلغاء التنبيه الحالي</button><button id="sendAlertBtn" type="button" class="alert-send">نشر التنبيه</button></div></div></div>
 <div id="usersModal" class="modal"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="usersModalTitle"><h3 id="usersModalTitle">إضافة مستخدم للنظام</h3><p>يتم الدخول باسم المستخدم ورقم الجوال عبر رمز تحقق لمرة واحدة.</p><div class="grid"><label>اسم المستخدم<input id="newUsername" type="text" autocomplete="off" maxlength="48"></label><label>الاسم الظاهر<input id="newDisplayName" type="text" autocomplete="off" maxlength="80"></label><label>رقم الجوال<input id="newPhone" type="tel" inputmode="tel" placeholder="05xxxxxxxx"></label><label>الدور<select id="newRole"><option value="clinic">العيادة</option><option value="admin">الإدارة</option></select></label><label class="full">رقم العيادة (اختياري)<input id="newClinicId" type="text" placeholder="clinic-1"></label></div><p id="usersError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="usersModal">إلغاء</button><button id="saveUserBtn" type="button" class="primary">حفظ المستخدم</button></div></div></div>
 <div id="clinicsModal" class="modal"><div class="modal-card clinic-directory-card" role="dialog" aria-modal="true" aria-labelledby="clinicsModalTitle">
@@ -426,7 +460,7 @@ body.view-admin .view-identity button{color:#176344}
     </label>
   </div>
   <p id="completionFlowNote" class="completion-flow-note"><b>المسار:</b> الطبيب يُكمل المسودة ويؤكد اعتمادها، ثم تستلمها الإدارة لإكمال الإجراءات والأسعار.</p>
-  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
+  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
   <div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج والمتابعة</button></div>
 </div></div>
 <div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية الاستشارية للأسنان على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
@@ -465,11 +499,11 @@ body.view-admin .view-identity button{color:#176344}
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const API='/.netlify/functions/state';
+const API='/api/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
-const PUSH_API='/.netlify/functions/push-subscription';
+const PUSH_API='/api/push';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.21-clear-role-identity';
+const DASHBOARD_BUILD='7.25-security-ux';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -504,16 +538,61 @@ const defaultClinic=index=>({id:`clinic-${index}`,name:`العيادة ${index}`
 let clinicDirectory=Array.from({length:15},(_,index)=>defaultClinic(index+1));
 let currentClinic={...clinicDirectory[clinicNumber(ACTIVE_CLINIC_ID)-1]};
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
-let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email';
+let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email'; let localStateHydrated=false; let authUser=null;
 function setupEmailAuth(){const step=$('authRequestStep'),phone=$('authPhone');if(!step||!phone||$('authEmail'))return;const methods=document.createElement('div');methods.className='auth-methods';methods.innerHTML='<label><input type="radio" name="authMethod" value="email" checked> البريد الإلكتروني</label><label><input type="radio" name="authMethod" value="phone"> الجوال</label>';const emailLabel=document.createElement('label');emailLabel.id='authEmailLabel';emailLabel.innerHTML='البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">';step.insertBefore(methods,phone.parentElement);step.insertBefore(emailLabel,phone.parentElement);phone.parentElement.id='authPhoneLabel';phone.parentElement.hidden=true;methods.querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{authMethod=input.value;emailLabel.hidden=authMethod!=='email';phone.parentElement.hidden=authMethod!=='phone'}));}
 const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=message||''};
 async function authRequest(path,options={}){const response=await fetch(`/api/auth${path}`,{credentials:'include',...options});let data={};try{data=await response.json()}catch{}if(!response.ok&&response.status!==401)throw new Error(data.error||'تعذر الاتصال بخدمة الدخول');return{response,data};}
-function startSyncAfterAuth(){if(window.__syncStarted)return;window.__syncStarted=true;startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(3000)})}
-function unlockApp(){document.body.classList.remove('auth-checking','auth-locked');$('authGate').hidden=true;authReady=true;authLastActivity=Date.now();authKeepAliveAt=Date.now();startAuthIdleProtection();loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(startSyncAfterAuth)}
-function lockApp(message='انتهت الجلسة بسبب الخمول. سجّل الدخول مرة أخرى.'){document.body.classList.remove('auth-checking');document.body.classList.add('auth-locked');$('authGate').hidden=false;$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;if($('authCode'))$('authCode').value='';authErrorMessage(message)}
-async function initAuth(){document.body.classList.add('auth-checking');document.body.classList.remove('auth-locked');$('authGate').hidden=true;try{const {response,data}=await authRequest('?action=session');if(!data.enabled){lockApp('الحماية غير مفعّلة بعد. يجب ضبط AUTH_ENABLED في Netlify قبل استخدام التطبيق.');return}if(data.authenticated){unlockApp();return}lockApp('')}catch(error){lockApp(error.message||'تعذر التحقق من الجلسة')}}
-async function requestAuthOtp(){const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
-async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp()}catch(error){authErrorMessage(error.message)}}
+function startSyncAfterAuth(){
+  if(!localStateHydrated){
+    cleanupOldLocalPatientData();
+    loadLocal(selectedDate);
+    localStateHydrated=true;
+  }
+  if(window.__syncStarted)return;
+  window.__syncStarted=true;
+  startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(3000)})
+}
+function unlockApp(user=null){
+  authUser=user||authUser;
+  const assignedClinic=/^clinic-([1-9]|1[0-5])$/.test(String(authUser?.clinicId||''))?String(authUser.clinicId):'clinic-1';
+  if(authUser?.role==='clinic'&&(VIEW_MODE!=='clinic'||ACTIVE_CLINIC_ID!==assignedClinic)){
+    location.replace(viewUrl('clinic',assignedClinic));
+    return;
+  }
+  document.body.classList.toggle('role-clinic',authUser?.role==='clinic');
+  document.body.classList.toggle('role-admin',authUser?.role==='admin');
+  document.body.classList.remove('auth-checking','auth-locked');
+  $('authGate').hidden=true;
+  authReady=true;
+  authLastActivity=Date.now();
+  authKeepAliveAt=Date.now();
+  startAuthIdleProtection();
+  loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(startSyncAfterAuth);
+}
+function lockApp(message='انتهت الجلسة بسبب الخمول. سجّل الدخول مرة أخرى.'){
+  authReady=false;
+  authUser=null;
+  purgeSyncedLocalPatientData();
+  clearTimeout(sync?.autoTimer);
+  clearTimeout(sync?.pushTimer);
+  sync.autoStarted=false;
+  window.__syncStarted=false;
+  localStateHydrated=false;
+  patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};
+  if(els.notes)els.notes.value='';
+  treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:0};
+  render();
+  document.body.classList.remove('auth-checking');
+  document.body.classList.add('auth-locked');
+  $('authGate').hidden=false;
+  $('authRequestStep').hidden=false;
+  $('authVerifyStep').hidden=true;
+  if($('authCode'))$('authCode').value='';
+  authErrorMessage(message);
+}
+async function initAuth(){document.body.classList.add('auth-checking');document.body.classList.remove('auth-locked');$('authGate').hidden=true;try{const {response,data}=await authRequest('?action=session');if(!data.enabled){lockApp('الحماية غير مفعّلة بعد. يجب ضبط AUTH_ENABLED في Netlify قبل استخدام التطبيق.');return}if(data.authenticated){unlockApp(data.user);return}lockApp('')}catch(error){lockApp(error.message||'تعذر التحقق من الجلسة')}}
+async function requestAuthOtp(){const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة.');return}unlockApp(data.user)}catch(error){authErrorMessage(error.message)}}
+async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp(data.user)}catch(error){authErrorMessage(error.message)}}
 function openUsersModal(){openModal('usersModal');$('usersError').textContent=''}
 function normalizeClinicDirectory(items){
   const source=new Map((Array.isArray(items)?items:[]).map(item=>[String(item?.id||''),item]));
@@ -526,8 +605,10 @@ function clinicDisplayName(clinic,{compact=false}={}){
   const name=String(clinic?.name||`العيادة ${clinicNumber(clinic?.id)}`);
   const room=String(clinic?.roomNumber||clinicNumber(clinic?.id));
   const doctor=String(clinic?.doctorName||'').trim();
-  if(lang==='en')return `${name} · Room ${room}${doctor&&!compact?` · Dr. ${doctor}`:''}`;
-  return `${name} · رقم ${room}${doctor&&!compact?` · د. ${doctor}`:''}`;
+  const doctorEn=/^(?:dr\.?|doctor)\s/i.test(doctor)?doctor:`Dr. ${doctor}`;
+  const doctorAr=/^(?:د\.?|الدكتور)\s*/.test(doctor)?doctor:`د. ${doctor}`;
+  if(lang==='en')return `${name} · Room ${room}${doctor&&!compact?` · ${doctorEn}`:''}`;
+  return `${name} · رقم ${room}${doctor&&!compact?` · ${doctorAr}`:''}`;
 }
 function renderClinicSwitcher(){
   const active=clinicDirectory.filter(clinic=>clinic.active);
@@ -544,8 +625,10 @@ function roleClinicOptionLabel(clinic){
   const name=String(clinic?.name||`العيادة ${clinicNumber(clinic?.id)}`).trim();
   const room=String(clinic?.roomNumber||clinicNumber(clinic?.id)).trim();
   const doctor=String(clinic?.doctorName||'').trim();
-  if(lang==='en')return doctor?`${name} — Room ${room} — Dr. ${doctor}`:`${name} — Room ${room} — No doctor assigned`;
-  return doctor?`${name} — عيادة رقم ${room} — د. ${doctor}`:`${name} — عيادة رقم ${room} — لم يحدد طبيب`;
+  const doctorEn=/^(?:dr\.?|doctor)\s/i.test(doctor)?doctor:`Dr. ${doctor}`;
+  const doctorAr=/^(?:د\.?|الدكتور)\s*/.test(doctor)?doctor:`د. ${doctor}`;
+  if(lang==='en')return doctor?`${name} — Room ${room} — ${doctorEn}`:`${name} — Room ${room} — No doctor assigned`;
+  return doctor?`${name} — عيادة رقم ${room} — ${doctorAr}`:`${name} — عيادة رقم ${room} — لم يحدد طبيب`;
 }
 function resetClinicRolePicker(){
   $('clinicRolePicker').hidden=true;
@@ -595,6 +678,16 @@ async function loadClinicDirectory({redirect=true}={}){
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||'تعذر تحميل إعدادات العيادات');
   clinicDirectory=normalizeClinicDirectory(data.clinics);
+  if(authUser?.role==='clinic'){
+    const assignedClinic=String(authUser.clinicId||'');
+    clinicDirectory=clinicDirectory.map(clinic=>({
+      ...clinic,
+      active:clinic.id===assignedClinic,
+      doctorName:clinic.id===assignedClinic
+        ?String(clinic.doctorName||authUser.displayName||authUser.username||'').slice(0,80)
+        :clinic.doctorName
+    }));
+  }
   const active=clinicDirectory.filter(clinic=>clinic.active);
   if(redirect&&!active.some(clinic=>clinic.id===ACTIVE_CLINIC_ID)){
     const params=new URLSearchParams(location.search);
@@ -717,6 +810,16 @@ async function saveTreatmentCatalog(){
   try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');treatmentCatalog=data.items||items;localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والأسعار','حُفظت القائمة مركزيًا وستظهر تلقائيًا داخل الخطط العلاجية لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent='حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
 }
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
+async function logoutApp(){
+  els.settingsMenu.classList.remove('open');
+  if(!confirm(lang==='en'?'Sign out from this device?':'تسجيل الخروج من هذا الجهاز؟'))return;
+  try{await authRequest('?action=logout',{method:'POST'})}catch(error){console.warn('Logout request failed',error)}
+  finally{
+    authLastActivity=0;
+    lockApp(lang==='en'?'Signed out securely.':'تم تسجيل الخروج بأمان.');
+    $('authUsername')?.focus();
+  }
+}
 function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(Date.now()-authLastActivity>=3*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}if(Date.now()-authKeepAliveAt>10*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
 const statusText=status=>(lang==='en'?EN[status]:STATUS[status])||status;
 let sync={
@@ -736,6 +839,29 @@ let sync={
   localUpdatedAt:0
 };
 const localKey=d=>`bestcare_dashboard_v4_${ACTIVE_CLINIC_ID}_${d}`;
+function cleanupOldLocalPatientData(){
+  const cutoff=Date.now()-30*24*60*60*1000;
+  const prefix='bestcare_dashboard_v4_';
+  for(let index=localStorage.length-1;index>=0;index--){
+    const key=localStorage.key(index);
+    if(!key?.startsWith(prefix))continue;
+    try{
+      const record=JSON.parse(localStorage.getItem(key)||'null');
+      if(record&&!record.pending&&Number(record.localUpdatedAt||0)>0&&Number(record.localUpdatedAt)<cutoff)localStorage.removeItem(key);
+    }catch{}
+  }
+}
+function purgeSyncedLocalPatientData(){
+  const prefix='bestcare_dashboard_v4_';
+  for(let index=localStorage.length-1;index>=0;index--){
+    const key=localStorage.key(index);
+    if(!key?.startsWith(prefix))continue;
+    try{
+      const record=JSON.parse(localStorage.getItem(key)||'null');
+      if(record&&!record.pending)localStorage.removeItem(key);
+    }catch{localStorage.removeItem(key)}
+  }
+}
 const stateUrl=(date,nonce=false)=>`${API}?date=${encodeURIComponent(date)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}${nonce?`&_=${Date.now()}`:''}`;
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
 const firstName=v=>String(v||'مريض').trim().split(/\s+/)[0];
@@ -744,8 +870,25 @@ const timeDate=t=>{const d=/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)?new Date(`${
 const fmtMs=ms=>{const sign=ms<0?'-':'';ms=Math.abs(ms);const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000);return sign+[h,m,s].map(v=>String(v).padStart(2,'0')).join(':')};
 function toast(title,msg){const el=document.createElement('div');el.className='toast';el.innerHTML=`<strong>${escapeHtml(title)}</strong><div>${escapeHtml(msg)}</div>`;$('toastWrap').appendChild(el);setTimeout(()=>el.remove(),4200)}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function openModal(id){const modal=$(id);if(!modal)return;modal.classList.add('open');modal.removeAttribute('aria-hidden')}
-function closeModal(id){const modal=$(id);if(!modal)return;modal.classList.remove('open');modal.setAttribute('aria-hidden','true')}
+const modalReturnFocus=new Map();
+function modalFocusable(modal){return [...modal.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(element=>!element.hidden&&element.offsetParent!==null)}
+function openModal(id){
+  const modal=$(id);if(!modal)return;
+  modalReturnFocus.set(id,document.activeElement);
+  modal.setAttribute('role','dialog');
+  modal.setAttribute('aria-modal','true');
+  modal.classList.add('open');
+  modal.removeAttribute('aria-hidden');
+  requestAnimationFrame(()=>modalFocusable(modal)[0]?.focus());
+}
+function closeModal(id){
+  const modal=$(id);if(!modal)return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+  const returnTarget=modalReturnFocus.get(id);
+  modalReturnFocus.delete(id);
+  if(returnTarget?.isConnected)requestAnimationFrame(()=>returnTarget.focus());
+}
 function setBadge(mode,text,detail=''){
   els.syncBadge.className='sync-badge '+mode;
   els.syncBadge.textContent=text;
@@ -853,7 +996,7 @@ function detectRemoteNotification(previousPatients,previousAlert,data){
   if(nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))return {type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:lang==='en'?'Best Care update':'تنبيه جديد من أفضل عناية',body:String(nextAlert.message||tr('defaultAlert')),tag:`alert-${nextAlert.kind||'update'}`};
   return null;
 }
-function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now()}}
+function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined}}
 function loadLocal(date){
   try{
     const v=JSON.parse(localStorage.getItem(localKey(date))||'null');
@@ -892,6 +1035,27 @@ function markDirty(){
   },100);
 }
 async function request(url,options={},timeout=12000){const c=new AbortController();const timer=setTimeout(()=>c.abort(),timeout);try{return await fetch(url,{...options,signal:c.signal,cache:'no-store',headers:{accept:'application/json',...(options.headers||{})}})}finally{clearTimeout(timer)}}
+async function reconcileRevisionConflict(date,snapshot){
+  const latestResponse=await request(stateUrl(date,true));
+  if(!latestResponse.ok)throw new Error(`HTTP ${latestResponse.status}`);
+  const latest=await latestResponse.json();
+  if(selectedDate!==date)return false;
+  const merged=new Map((Array.isArray(latest.patients)?latest.patients:[]).map(patient=>[String(patient.id),{...patient}]));
+  snapshot.patients.forEach(patient=>merged.set(String(patient.id),{...patient}));
+  patients=[...merged.values()].sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')));
+  if(!notes&&latest.notes)notes=String(latest.notes);
+  if(Number(latest.updateAlert?.updatedAt||0)>Number(updateAlert?.updatedAt||0))updateAlert={...latest.updateAlert};
+  sync.revision=Number(latest.revision||0);
+  sync.updatedAt=Number(latest.updatedAt||0);
+  sync.ready=true;
+  sync.dirty=true;
+  sync.localVersion+=1;
+  sync.localUpdatedAt=Date.now();
+  persistLocal(true);
+  render();
+  toast(lang==='en'?'Updates merged safely':'تم دمج تحديثين بأمان',lang==='en'?'Another device updated the list; both sets of changes were preserved.':'عدّل جهاز آخر القائمة في الوقت نفسه؛ حُفظت القائمتان وسيعاد الإرسال تلقائيًا.');
+  return true;
+}
 async function pushState(){
   if(sync.pushing||!sync.dirty)return false;
   if(sync.pulling){scheduleAutomaticSync(250);return false}
@@ -902,6 +1066,10 @@ async function pushState(){
   setBadge('saving',lang==='en'?'Saving automatically…':'جارٍ الحفظ تلقائيًا…');
   try{
     const res=await request(stateUrl(sentDate),{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});
+    if(res.status===409){
+      await reconcileRevisionConflict(sentDate,snapshot);
+      return false;
+    }
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==sentDate)return false;
@@ -1006,7 +1174,7 @@ async function runAutomaticSync(){
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
-    const nextDelay=sync.error?3000:POLL_MS;
+    const nextDelay=sync.error?3000:(document.hidden?20000:POLL_MS);
     scheduleAutomaticSync(nextDelay);
   }
 }
@@ -1224,7 +1392,7 @@ function renderTable(){
         <td>${escapeHtml(p.end)}</td>
         <td>${escapeHtml(p.procedure||'—')}</td>
         <td>
-          <select class="status-select" data-status-id="${escapeHtml(p.id)}">
+          <select class="status-select" data-status-id="${escapeHtml(p.id)}" aria-label="${escapeHtml(`${lang==='en'?'Patient status':'حالة المريض'}: ${firstName(p.name)}`)}">
             ${Object.keys(STATUS).map(k=>`<option value="${k}" ${p.status===k?'selected':''}>${escapeHtml(statusText(k))}</option>`).join('')}
           </select>
         </td>
@@ -1834,7 +2002,8 @@ async function movePatientToDate(item,targetDate){
       patients:targetPatients,
       notes:String(targetData.notes||''),
       updateAlert:targetAlert,
-      clientId:CLIENT_ID
+      clientId:CLIENT_ID,
+      expectedRevision:Number(targetData.revision||0)
     };
     let savedTarget;
     try{
@@ -2398,6 +2567,7 @@ $('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();t
 $('treatmentCatalogList').addEventListener('click',event=>{const button=event.target.closest('[data-catalog-delete]');if(!button)return;collectTreatmentCatalog();treatmentCatalog.splice(Number(button.dataset.catalogDelete),1);renderTreatmentCatalog()});
 $('saveTreatmentCatalogBtn').addEventListener('click',saveTreatmentCatalog);
 $('syncTestBtn').addEventListener('click',syncTest);
+$('logoutBtn').addEventListener('click',logoutApp);
 $('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
 $('alertBtn').addEventListener('click',openAlertComposer);
 $('sendAlertBtn').addEventListener('click',publishAlert);
@@ -2486,8 +2656,23 @@ document.addEventListener('click',event=>{
   $('doctorFloatingAlertBtn').setAttribute('aria-expanded','false');
 });
 document.addEventListener('keydown',event=>{
-  if(event.key!=='Escape'||$('doctorFloatingAlertPanel').hidden)return;
-  $('doctorFloatingAlertClose').click();
+  const modal=[...document.querySelectorAll('.modal.open')].at(-1);
+  if(modal){
+    if(event.key==='Escape'&&modal.id!=='roleModal'){
+      event.preventDefault();
+      closeModal(modal.id);
+      return;
+    }
+    if(event.key==='Tab'){
+      const focusable=modalFocusable(modal);
+      if(!focusable.length){event.preventDefault();return}
+      const first=focusable[0],last=focusable.at(-1);
+      if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus()}
+      else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus()}
+    }
+    return;
+  }
+  if(event.key==='Escape'&&!$('doctorFloatingAlertPanel').hidden)$('doctorFloatingAlertClose').click();
 });
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal&&modal.id!=='roleModal')closeModal(modal.id)}));
@@ -2551,7 +2736,6 @@ applyViewMode();
 applyLang();
 initAuth();
 if(isIosDevice()&&!isStandalone())$('installBtn').hidden=false;
-loadLocal(selectedDate);
 resetPatientForm(false);
 if(NEED_ROLE_CHOICE)openRoleChoice();
 updateClock();

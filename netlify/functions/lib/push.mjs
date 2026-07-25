@@ -10,11 +10,13 @@ const safeClinic = id => /^clinic-([1-9]|1[0-5])$/.test(String(id || '')) ? Stri
 
 export const publicVapidKey = () => process.env.VAPID_PUBLIC_KEY || '';
 
-export async function savePushSubscription(subscription, { role = 'clinic', clientId = '', clinicId = 'clinic-1', showPatientDetails = false } = {}) {
+export async function savePushSubscription(subscription, { user = null, clientId = '', clinicId = 'clinic-1', showPatientDetails = false } = {}) {
   if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) throw new Error('Invalid push subscription');
+  if (!user?.username) throw new Error('Authenticated user required');
   await store().setJSON(keyFor(subscription.endpoint), {
     subscription,
-    role: safeRole(role),
+    username: String(user.username).slice(0, 48),
+    role: safeRole(user.role),
     clientId: String(clientId || '').slice(0, 100),
     clinicId: safeClinic(clinicId),
     showPatientDetails: Boolean(showPatientDetails),
@@ -22,8 +24,16 @@ export async function savePushSubscription(subscription, { role = 'clinic', clie
   });
 }
 
-export async function deletePushSubscription(endpoint) {
-  if (endpoint) await store().delete(keyFor(endpoint));
+export async function deletePushSubscription(endpoint, user = null) {
+  if (!endpoint || !user?.username) return false;
+  const pushStore = store();
+  const key = keyFor(endpoint);
+  const record = await pushStore.get(key, { type: 'json', consistency: 'strong' });
+  if (!record) return true;
+  const permitted = user.role === 'admin' || String(record.username || '') === String(user.username);
+  if (!permitted) return false;
+  await pushStore.delete(key);
+  return true;
 }
 
 export async function sendPushNotifications(event, { excludeClientId = '' } = {}) {
