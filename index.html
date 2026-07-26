@@ -286,6 +286,37 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+/* Compact administration patient hub: collapsed by default and scrollable when opened. */
+.admin-patient-hub{overflow:visible}
+.admin-patient-hub>summary{list-style:none;cursor:pointer;user-select:none}
+.admin-patient-hub>summary::-webkit-details-marker{display:none}
+.admin-patient-hub .admin-hub-head{grid-template-columns:42px minmax(0,1fr) auto 28px;gap:10px;padding:11px 14px;border-radius:inherit;transition:filter .2s ease,border-radius .2s ease}
+.admin-patient-hub .admin-hub-head:hover{filter:brightness(1.035)}
+.admin-patient-hub .admin-hub-icon{width:38px;height:38px;border-radius:12px;font-size:20px}
+.admin-patient-hub .admin-hub-head h2{font-size:16px}
+.admin-patient-hub .admin-hub-head p{margin-top:2px;max-width:760px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.admin-patient-hub .admin-hub-count{min-width:40px;height:40px;border-radius:12px;font-size:18px}
+.admin-hub-chevron{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.16);color:#fff;font-size:20px;font-weight:900;transition:transform .22s ease}
+.admin-patient-hub[open] .admin-hub-chevron{transform:rotate(180deg)}
+.admin-patient-hub[open] .admin-hub-head{border-radius:20px 20px 0 0}
+.admin-hub-body{overflow:hidden}
+.admin-patient-hub .admin-hub-controls{padding:10px 14px}
+.admin-patient-hub .admin-hub-summary{padding:8px 14px 2px}
+.admin-patient-hub .admin-hub-summary span{padding:5px 8px}
+.admin-patient-hub .admin-hub-list{max-height:min(56vh,680px);overflow:auto;overscroll-behavior:contain;padding:10px 14px 14px;scrollbar-color:#92bea9 #edf6f1}
+.admin-patient-hub .admin-patient-item{gap:9px;padding:9px 11px 9px 14px;border-radius:12px}
+.admin-patient-hub .admin-patient-clinic{min-height:46px;padding:5px 7px}
+.admin-patient-hub .admin-patient-actions a{min-height:34px;padding:6px 9px}
+@media(max-width:620px){
+  .admin-patient-hub .admin-hub-head{grid-template-columns:36px minmax(0,1fr) auto 24px;padding:10px 11px}
+  .admin-patient-hub .admin-hub-icon{width:34px;height:34px;font-size:18px}
+  .admin-patient-hub .admin-hub-head h2{font-size:14px}
+  .admin-patient-hub .admin-hub-head p{font-size:9px}
+  .admin-patient-hub .admin-hub-count{min-width:34px;height:34px;font-size:16px}
+  .admin-hub-chevron{width:24px;height:24px;font-size:17px}
+  .admin-patient-hub .admin-hub-list{max-height:58vh;padding:8px 10px 11px}
+  .admin-patient-hub .admin-patient-item{padding:9px 10px 9px 13px}
+}
 </style>
 </head>
 <body class="auth-checking">
@@ -384,12 +415,14 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   <div id="doctorActionQueue" class="doctor-action-queue"></div>
   </section>
 </aside>
-<section id="adminPatientHub" class="card admin-patient-hub admin-only">
-  <div class="admin-hub-head">
+<details id="adminPatientHub" class="card admin-patient-hub admin-only">
+  <summary class="admin-hub-head">
     <span class="admin-hub-icon" aria-hidden="true">⌁</span>
     <div><h2 id="adminHubTitle">متابعة مرضى جميع العيادات</h2><p id="adminHubHelp">قائمة موحدة للحالات والتحديثات التي تحتاج تدخل الإدارة اليوم.</p></div>
     <strong id="adminHubCount" class="admin-hub-count">0</strong>
-  </div>
+    <span class="admin-hub-chevron" aria-hidden="true">⌄</span>
+  </summary>
+  <div class="admin-hub-body">
   <div class="admin-hub-controls">
     <select id="adminHubClinicFilter" aria-label="تصفية حسب العيادة"><option value="all">جميع العيادات</option></select>
     <select id="adminHubScopeFilter" aria-label="نوع القائمة"><option value="attention">يحتاج تدخل الإدارة</option><option value="all">كل مرضى اليوم</option></select>
@@ -404,7 +437,8 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   </div>
   <p id="adminHubError" class="admin-hub-error" hidden></p>
   <div id="adminHubList" class="admin-hub-list"></div>
-</section>
+  </div>
+</details>
 <section id="paymentPanel" class="card payment-panel admin-only"><div class="payment-panel-head"><div><span class="payment-kicker">متابعة الإدارة</span><h2>إجراءات الدفع المطلوبة للعيادة المحددة</h2><p>تظهر هنا حالات العيادة المفتوحة حاليًا؛ استخدم القائمة الموحدة أعلاه لمتابعة بقية العيادات.</p></div><strong id="paymentCount">0</strong></div><div id="paymentQueue" class="payment-queue"></div></section>
 <section class="stats">
   <div class="card stat"><small>إجمالي المرضى</small><strong id="statTotal">0</strong><span class="stat-icon" aria-hidden="true">♙</span></div>
@@ -552,7 +586,7 @@ const PRESENCE_API='/api/presence';
 const ALERTS_API='/api/alerts';
 const ADMIN_PATIENTS_API='/api/admin-patients';
 const POLL_MS=2000;
-const DASHBOARD_BUILD='7.28-patient-identity';
+const DASHBOARD_BUILD='7.29-compact-admin-hub';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
