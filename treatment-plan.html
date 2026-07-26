@@ -356,7 +356,7 @@
               <div class="field-grid">
                 <label class="field wide">الاسم الكامل<input id="patientName" class="edit-field" type="text" autocomplete="name"></label>
                 <label class="field">رقم الملف<input id="patientFile" class="edit-field" type="text" inputmode="numeric"></label>
-                <label class="field wide">رقم الجوال<input id="patientMobile" class="edit-field" type="tel" inputmode="tel" maxlength="10" placeholder="05xxxxxxxx"></label>
+                <label class="field wide">رقم الجوال<input id="patientMobile" class="edit-field" type="tel" inputmode="tel" maxlength="16" placeholder="05xxxxxxxx أو 9665xxxxxxxx"></label>
               </div>
             </div>
             <div class="info-card">
@@ -612,6 +612,22 @@
       if(group)group.setAttribute('aria-label',finalPlan?'مشاركة الخطة النهائية عبر واتساب':'مشاركة مسودة الخطة عبر واتساب');
     }
     function safeText(value,max=500){return String(value??'').slice(0,max)}
+    function normalizeWhatsAppPhone(value){
+      let digits=String(value||'').replace(/\D/g,'');
+      if(digits.startsWith('00'))digits=digits.slice(2);
+      if(digits.startsWith('9660'))digits=`966${digits.slice(4)}`;
+      else if(/^05\d{8}$/.test(digits))digits=`966${digits.slice(1)}`;
+      else if(/^5\d{8}$/.test(digits))digits=`966${digits}`;
+      return /^9665\d{8}$/.test(digits)?digits:'';
+    }
+    function whatsappPlanMessage(finalPlan=isFinalPlanStatus()){
+      const patientName=(state.patient.fullName||'').trim();
+      const greeting=patientName?`مرحبًا ${patientName}،`:'مرحبًا،';
+      const planDescription=finalPlan
+        ?'مرفق لكم الخطة العلاجية المقترحة (نسخة نهائية).\nنرجو التكرم بإفادتنا بقبول الخطة لنتمكن من إكمال إجراءات حجز المواعيد لكم.'
+        :'مرفق لكم الخطة العلاجية المقترحة (مسودة للاطلاع).';
+      return `${greeting}\n\n${planDescription}\n\nمع تمنياتنا لكم بدوام الصحة والعافية،\nعيادات أفضل عناية الاستشارية للأسنان`;
+    }
     function toCents(value){if(value===''||value===null||value===undefined)return null;const n=Number(value);return Number.isFinite(n)?Math.round(n*100):null}
     function formatMoney(cents){return cents===null||cents===undefined?'—':`${moneyFormatter.format(cents/100)} ر.س`}
     function sourceFromLocal(){
@@ -709,7 +725,7 @@
     function collectHeaderFields(){
       state.patient.fullName=$('patientName').value.trim();
       state.patient.fileNo=$('patientFile').value.trim();
-      state.patient.mobile=$('patientMobile').value.replace(/\D/g,'').slice(0,10);
+      state.patient.mobile=$('patientMobile').value.replace(/[^\d+]/g,'').slice(0,16);
       state.meta.issuedAt=$('visitDate').value?new Date($('visitDate').value).toISOString():state.meta.issuedAt;
       state.clinical.diagnosis=DEFAULT_DIAGNOSIS;
       state.clinical.radiographs=$('radiographs').value.trim();
@@ -823,7 +839,7 @@
       const missing=[];
       if(!(state.patient.fullName||'').trim())missing.push('اسم المريض');
       if(!(state.patient.fileNo||'').trim())missing.push('رقم الملف');
-      if(!/^05\d{8}$/.test(state.patient.mobile||''))missing.push('رقم الجوال');
+      if(!normalizeWhatsAppPhone(state.patient.mobile))missing.push('رقم الجوال');
       if(!state.phases.some(phase=>phase.items.some(item=>(item.service||'').trim()&&(item.code!=='other'||(item.customService||'').trim()))))missing.push('إجراء علاجي واحد');
       if(state.phases.some(phase=>phase.items.some(item=>item.code==='ceramic-veneer'&&!item.variant)))missing.push('نوع الفينير');
       return missing;
@@ -1172,17 +1188,33 @@
     }
     async function sharePreparedPlan(){
       if(!preparedShareFile)return;
+      collectHeaderFields();
       const title=preparedShareIsFinal?'نسخة نهائية':'مسودة';
-      const text=preparedShareIsFinal?'نسخة نهائية من الخطة العلاجية — عيادات أفضل عناية الاستشارية للأسنان':'مسودة الخطة العلاجية للاطلاع — عيادات أفضل عناية الاستشارية للأسنان';
+      const text=whatsappPlanMessage(preparedShareIsFinal);
+      const patientPhone=normalizeWhatsAppPhone(state.patient.mobile);
+      if(!patientPhone){
+        closeShareReady();
+        $('patientMobile').scrollIntoView({behavior:'smooth',block:'center'});
+        $('patientMobile').focus();
+        toast('رقم جوال المريض غير مكتمل','أدخل رقمًا سعوديًا صحيحًا مثل 05xxxxxxxx ثم أعد المشاركة.');
+        return;
+      }
       try{
         if(navigator.canShare?.({files:[preparedShareFile]})){
           document.documentElement.dataset.pdfShareState=`sharing-${preparedShareFormat}:${preparedShareFile.size}`;
           await navigator.share({title,text,files:[preparedShareFile]});
           document.documentElement.dataset.pdfShareState='shared';closeShareReady();
-          toast('تم فتح المشاركة','اختر واتساب ثم جهة اتصال المريض.');
+          toast('تم فتح المشاركة',`اختر واتساب ثم محادثة المريض على الرقم ${state.patient.mobile}.`);
         }else{
           document.documentElement.dataset.pdfShareState=`downloaded:${preparedShareFile.size}`;
           downloadShareFile(preparedShareFile,preparedShareFormat);
+          const whatsappUrl=`https://wa.me/${patientPhone}?text=${encodeURIComponent(text)}`;
+          const whatsappLink=document.createElement('a');
+          whatsappLink.href=whatsappUrl;whatsappLink.target='_blank';whatsappLink.rel='noopener noreferrer';
+          document.body.appendChild(whatsappLink);whatsappLink.click();whatsappLink.remove();
+          document.documentElement.dataset.pdfShareState=`opened-whatsapp:${patientPhone}`;
+          closeShareReady();
+          toast('تم فتح محادثة المريض','تم تنزيل ملف الخطة وفتح واتساب على رقم المريض؛ أرفق الملف الذي تم تنزيله.');
         }
       }catch(error){
         document.documentElement.dataset.pdfShareState=error?.name==='AbortError'?'share-cancelled':`error:${error?.message||error?.name||'unknown'}`;
