@@ -36,7 +36,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1
 .settings{position:relative}.settings-menu{position:absolute;top:calc(100% + 8px);right:0;left:auto;z-index:50;width:250px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px rgba(20,64,47,.18);display:none}.settings-menu.open{display:block}.settings-menu button{width:100%;text-align:right;margin:2px 0;border:0;background:transparent}.settings-menu button:hover{background:#f2f7f4}
 .clinic-context-line{display:flex;align-items:center;gap:7px;margin-top:5px;color:#2d7057;font-size:12px;font-weight:900}.clinic-context-line::before{content:"●";color:#33a474;font-size:9px}.clinic-switcher{display:inline-flex;align-items:center;gap:8px;min-width:245px;padding:7px 11px;border:1px solid #bcd8cb;border-radius:13px;background:#f8fcfa;color:#174f3a;font-size:12px;font-weight:900;box-shadow:0 6px 16px rgba(29,73,55,.06)}.clinic-switcher[hidden]{display:none}.clinic-switcher select{flex:1;min-width:145px;border:0;background:transparent;color:#174f3a;font:inherit;outline:0}.clinic-directory-card{width:min(980px,94vw);max-height:88vh;overflow:auto}.clinic-directory-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:15px;border-bottom:1px solid var(--line)}.clinic-directory-head h3{margin:0 0 5px}.clinic-directory-head p{margin:0;color:var(--muted);line-height:1.7}.clinic-capacity{display:grid;place-items:center;min-width:82px;padding:10px 13px;border-radius:14px;background:#e8f6ef;color:#176344;font-weight:950}.clinic-directory-note{margin:14px 0;padding:12px 14px;border:1px solid #d8e8df;border-radius:13px;background:#f7fbf9;color:#557067;font-size:12px;line-height:1.65}.clinic-directory-list{display:grid;gap:10px;margin-top:12px}.clinic-config-row{display:grid;grid-template-columns:52px minmax(180px,1.3fr) minmax(100px,.55fr) minmax(180px,1fr) auto;gap:10px;align-items:end;padding:13px;border:1px solid #d8e6df;border-radius:15px;background:#fff;box-shadow:0 6px 16px rgba(35,83,62,.05)}.clinic-slot{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#e3f4eb,#f4faf7);color:#176344;font-weight:950}.clinic-config-row label{display:grid;gap:5px;color:#506c61;font-size:11px;font-weight:900}.clinic-config-row input{width:100%;padding:10px 11px;border:1px solid #cddfd6;border-radius:11px;background:#fbfdfc}.clinic-hide-btn{align-self:end;color:#a3343c;border-color:#e2b7bb;background:#fff7f8}.clinic-directory-empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed #bdd5c9;border-radius:14px;background:#fafdfb}.clinic-directory-actions{display:flex;justify-content:space-between;gap:10px;margin-top:16px}.clinic-directory-actions .primary{margin-inline-start:auto}
 @media(max-width:820px){.clinic-switcher{width:100%;min-width:0}.clinic-config-row{grid-template-columns:46px 1fr}.clinic-config-row label{grid-column:2}.clinic-hide-btn{grid-column:1/-1}.clinic-directory-head{align-items:center}.clinic-directory-actions{display:grid;grid-template-columns:1fr}.clinic-directory-actions button{width:100%}.clinic-directory-actions .primary{margin:0}}
-.alert-row{display:none;margin-top:10px;padding:14px 18px;border-radius:16px;color:#fff;background:linear-gradient(110deg,#980e24,#dc2940,#980e24);background-size:220% 100%;font-weight:900;font-size:18px;text-align:center;box-shadow:0 14px 32px rgba(185,24,46,.24);animation:sweep 2.6s linear infinite}.alert-row.show{display:flex;align-items:center;justify-content:center;gap:10px}@keyframes sweep{to{background-position:220% 0}}
+.alert-row{display:none;margin-top:10px;padding:14px 18px;border-radius:16px;color:#fff;background:linear-gradient(110deg,#980e24,#dc2940,#980e24);background-size:220% 100%;font-weight:900;font-size:18px;text-align:center;box-shadow:0 14px 32px rgba(185,24,46,.24);animation:sweep 2.6s linear infinite}.alert-row.show{display:flex;align-items:center;justify-content:center;gap:10px}.alert-row-dismiss{margin-inline-start:auto;padding:7px 11px;border:1px solid rgba(255,255,255,.58);border-radius:10px;background:rgba(255,255,255,.17);color:#fff;font-size:11px;white-space:nowrap;backdrop-filter:blur(5px)}.alert-row-dismiss:hover{background:#fff;color:#8f1025}.alert-row-dismiss[hidden]{display:none}@keyframes sweep{to{background-position:220% 0}}
 .alert-trigger{min-width:222px;padding:9px 11px;display:grid;grid-template-columns:42px minmax(0,1fr) 9px;align-items:center;gap:10px;text-align:right;border-radius:15px;background:#fff8f8;border-color:#edc8ce;color:#8f2637;box-shadow:0 8px 22px rgba(142,38,55,.08);transition:.25s ease}.alert-trigger:hover{background:#fff0f2;border-color:#df9daa;transform:translateY(-1px)}.alert-trigger .alert-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#fde5e9;font-size:21px}.alert-trigger .alert-copy{min-width:0}.alert-trigger strong,.alert-trigger small{display:block}.alert-trigger strong{font-size:14px}.alert-trigger small{margin-top:3px;color:#95606a;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alert-trigger .alert-state{width:9px;height:9px;border-radius:50%;background:#c8d0cc;box-shadow:0 0 0 4px rgba(111,129,120,.10)}.alert-trigger.is-active{color:#fff;border-color:#a30e26;background:linear-gradient(120deg,#9d1028,#db2f46);box-shadow:0 13px 30px rgba(181,28,51,.25)}.alert-trigger.is-active:hover{background:linear-gradient(120deg,#8f0d23,#cc263e)}.alert-trigger.is-active .alert-icon{background:rgba(255,255,255,.18);animation:alertBell 1.25s ease-in-out infinite}.alert-trigger.is-active small{color:#ffe4e8}.alert-trigger.is-active .alert-state{background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.19);animation:alertStatePulse 1.4s ease-in-out infinite}@keyframes alertBell{0%,65%,100%{transform:rotate(0)}72%{transform:rotate(12deg)}80%{transform:rotate(-12deg)}88%{transform:rotate(7deg)}}@keyframes alertStatePulse{50%{transform:scale(1.24);opacity:.72}}
 .alert-modal-card{width:min(590px,100%);padding:0;overflow:hidden}.alert-modal-head{padding:20px 22px;color:#fff;background:linear-gradient(125deg,#8f1025,#d62d45)}.alert-modal-head h3{margin:0 0 5px}.alert-modal-head p{margin:0;color:#ffe2e6;font-size:12px;line-height:1.7}.alert-modal-body{padding:20px 22px}.alert-modal-body>label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:900}.alert-modal-body textarea{min-height:118px}.alert-target-box{margin-bottom:15px;padding:13px;border:1px solid #e4ccd1;border-radius:15px;background:#fffafb}.alert-target-title{display:block;margin-bottom:9px;color:#6f2634;font-size:12px;font-weight:950}.alert-target-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}.alert-target-option{display:flex!important;align-items:center;gap:8px;margin:0!important;padding:11px 12px;border:1px solid #dec8cd;border-radius:12px;background:#fff;color:#5f3440!important;cursor:pointer}.alert-target-option:has(input:checked){border-color:#bd2640;background:#fff0f2;box-shadow:0 0 0 3px rgba(189,38,64,.08)}.alert-target-option input{width:18px;height:18px;accent-color:#b51d36}.alert-clinic-picker{display:grid;gap:7px;margin-top:10px}.alert-clinic-picker[hidden]{display:none}.alert-clinic-picker select{width:100%;min-height:44px;background:#fff}.alert-target-summary{display:flex;align-items:center;gap:7px;margin:10px 0 0;color:#7d3442;font-size:11px;font-weight:900}.alert-preview{display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:12px 13px;border-radius:13px;background:#fff4f5;border:1px solid #efcbd1;color:#8e2637;font-size:12px;line-height:1.7}.alert-modal-card .modal-actions{padding:0 22px 20px}.alert-send{background:#b51d36;color:#fff;border-color:#b51d36}.alert-send:hover{background:#9d142b;color:#fff}.alert-send:disabled{opacity:.55;cursor:not-allowed}.alert-clear[hidden]{display:none}.sound-enabled{color:#176441!important;background:#e3f5eb!important}.sound-enabled::after{content:" ✓"}
 .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:12px 0}.stat{padding:14px;border-top:4px solid var(--navy)}.stat:nth-child(2){border-color:var(--green)}.stat:nth-child(3){border-color:var(--yellow)}.stat:nth-child(4){border-color:var(--orange)}.stat:nth-child(5){border-color:var(--red)}.stat:nth-child(6){border-color:#318e90}.stat small{display:block;color:var(--muted);font-weight:800}.stat strong{display:block;font-size:29px;margin-top:6px;color:var(--navy)}
@@ -389,7 +389,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   </div>
   <button id="viewIdentityChange" type="button">تغيير المهمة</button>
 </section>
-<div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span></div>
+<div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span><button id="alertRowDismissBtn" class="alert-row-dismiss" type="button" hidden>إلغاء التنبيه</button></div>
 <div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
 <aside id="doctorFloatingAlerts" class="doctor-floating-alerts clinic-only" hidden aria-live="polite">
   <button id="doctorFloatingAlertBtn" class="doctor-floating-alert-button" type="button" aria-haspopup="dialog" aria-controls="doctorFloatingAlertPanel" aria-expanded="false" title="تنبيهات واعتمادات الطبيب">
@@ -617,7 +617,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.30-adaptive-sync';
+const DASHBOARD_BUILD='7.31-notification-controls';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -651,7 +651,7 @@ const IOS_INSTALL_COPY={
   ar:{menu:'📱 تثبيت التطبيق على iPhone',title:'تثبيت التطبيق على iPhone',help:'أربع خطوات بسيطة من متصفح Safari — دون متجر التطبيقات.',steps:[['افتح الرابط في Safari','إذا كنت تستخدم Chrome، انسخ الرابط وافتحه في Safari أولًا.'],['اضغط زر المشاركة','اضغط رمز المربع والسهم ↑ أسفل شاشة Safari.'],['اختر «إضافة إلى الشاشة الرئيسية»','مرّر قائمة المشاركة إلى أسفل إذا لم يظهر الخيار مباشرة.'],['اضغط «إضافة»','ستظهر أيقونة Best Care على الشاشة الرئيسية وتفتح كتطبيق مستقل.']],note:'مهم: استخدم Safari للتثبيت. بعد التثبيت افتح التطبيق من الأيقونة الجديدة، وستبقى المزامنة مرتبطة بنفس رابط العيادة.',shareTitle:'مشاركة التطبيق مع جهاز آخر',shareText:'انسخ الرابط وأرسله لمستخدم iPhone، ثم يتبع الخطوات أعلاه.',copy:'نسخ رابط التطبيق',close:'تم، فهمت الخطوات',copiedTitle:'تم نسخ الرابط',copiedText:'أرسله الآن إلى مستخدم iPhone لفتح التطبيق وتثبيته.',alreadyTitle:'التطبيق مثبت',alreadyText:'أنت تستخدم التطبيق الآن من وضع الشاشة المستقلة.'},
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
-const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
+const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
 let manualAlertFetchedAt=0;
 let audioContext=null;
@@ -1099,7 +1099,31 @@ function setIdleSyncBadge(detail=''){
   setBadge(cadence.workHours?'synced':'scheduled',syncCadenceCopy(cadence),detail||(lang==='en'?'Full live sync: Sat–Thu, 2:00 PM–11:00 PM (Riyadh)':'المزامنة المباشرة: السبت–الخميس، ٢:٠٠م–١١:٠٠م بتوقيت الرياض'));
 }
 const IS_DEPLOY_PREVIEW=/^deploy-preview-\d+--/i.test(location.hostname);
+let pushSubscriptionActive=null;
 function systemNotificationsEnabled(){return !IS_DEPLOY_PREVIEW&&'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('bestcare_system_notifications')==='enabled'}
+async function currentPushSubscription(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window))return null;
+  try{
+    const registration=await navigator.serviceWorker.ready;
+    return await registration.pushManager.getSubscription();
+  }catch(error){
+    console.warn('Push subscription state unavailable',error);
+    return null;
+  }
+}
+async function refreshPushSubscriptionState(){
+  const subscription=await currentPushSubscription();
+  pushSubscriptionActive=Boolean(subscription);
+  if(pushSubscriptionActive&&Notification.permission==='granted'){
+    localStorage.setItem('bestcare_system_notifications','enabled');
+    localStorage.setItem('bestcare_push_registered','enabled');
+  }else if(!pushSubscriptionActive){
+    localStorage.removeItem('bestcare_system_notifications');
+    localStorage.removeItem('bestcare_push_registered');
+  }
+  updateNotificationsButton();
+  return subscription;
+}
 function urlBase64ToUint8Array(value){
   const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)));
@@ -1125,10 +1149,11 @@ function updateNotificationsButton(){
     button.title=lang==='en'?'Enable external notifications on the final site only.':'فعّل التنبيهات الخارجية من الرابط النهائي فقط.';
     return;
   }
-  button.classList.toggle('notification-enabled',systemNotificationsEnabled());
+  const enabled=systemNotificationsEnabled()&&(pushSubscriptionActive!==false);
+  button.classList.toggle('notification-enabled',enabled);
   button.classList.toggle('notification-denied','Notification' in window&&Notification.permission==='denied');
-  button.textContent=systemNotificationsEnabled()?(lang==='en'?'🔕 Disable system notifications':'🔕 إيقاف إشعارات النظام'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
-  button.title=systemNotificationsEnabled()?(lang==='en'?'Stop Best Care alerts on this device.':'إيقاف تنبيهات أفضل عناية على هذا الجهاز.'):(lang==='en'?'Enable Best Care alerts on this device.':'تفعيل تنبيهات أفضل عناية على هذا الجهاز.');
+  button.textContent=enabled?(lang==='en'?'🔕 Disable system notifications':'🔕 إيقاف إشعارات النظام'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
+  button.title=enabled?(lang==='en'?'Stop Best Care alerts on this device.':'إيقاف تنبيهات أفضل عناية على هذا الجهاز.'):(lang==='en'?'Enable Best Care alerts on this device.':'تفعيل تنبيهات أفضل عناية على هذا الجهاز.');
 }
 async function requestSystemNotifications(){
   if(IS_DEPLOY_PREVIEW){
@@ -1153,25 +1178,32 @@ async function requestSystemNotifications(){
 }
 async function disableSystemNotifications(){
   const wasEnabled=localStorage.getItem('bestcare_system_notifications')==='enabled';
-  try{
-    if('serviceWorker' in navigator&&'PushManager' in window){
-      const registration=await navigator.serviceWorker.ready;
-      const subscription=await registration.pushManager.getSubscription();
-      if(subscription){
-        const endpoint=subscription.endpoint;
-        await subscription.unsubscribe();
-        await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint})}).catch(()=>{});
-      }
-    }
-  }catch(error){console.warn('Push unsubscribe failed',error)}
   localStorage.removeItem('bestcare_push_registered');
   localStorage.removeItem('bestcare_system_notifications');
+  pushSubscriptionActive=false;
   updateNotificationsButton();
-  if(wasEnabled)toast(lang==='en'?'Notifications disabled':'تم إيقاف الإشعارات',lang==='en'?'Best Care alerts have been stopped on this device.':'توقفت تنبيهات أفضل عناية على هذا الجهاز.');
+  try{
+    const subscription=await currentPushSubscription();
+    if(subscription){
+      const endpoint=subscription.endpoint;
+      await subscription.unsubscribe();
+      await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint})}).catch(()=>{});
+    }
+  }catch(error){console.warn('Push unsubscribe failed',error)}
+  if(wasEnabled||pushSubscriptionActive===false)toast(lang==='en'?'Notifications disabled':'تم إيقاف الإشعارات',lang==='en'?'Best Care alerts have been stopped on this device.':'توقفت تنبيهات أفضل عناية على هذا الجهاز.');
 }
 async function toggleSystemNotifications(){
-  if(localStorage.getItem('bestcare_system_notifications')==='enabled')await disableSystemNotifications();
-  else await requestSystemNotifications();
+  const button=$('notificationsBtn');
+  if(button)button.disabled=true;
+  try{
+    const subscription=await currentPushSubscription();
+    pushSubscriptionActive=Boolean(subscription);
+    if(subscription||localStorage.getItem('bestcare_system_notifications')==='enabled')await disableSystemNotifications();
+    else await requestSystemNotifications();
+  }finally{
+    if(button)button.disabled=false;
+    await refreshPushSubscriptionState();
+  }
 }
 async function showSystemNotification(event){
   if(!event||!systemNotificationsEnabled())return;
@@ -2416,7 +2448,13 @@ function renderAlertUI(){
   els.alertBtnHint.textContent=active
     ? tr('alertActiveHint')
     : tr('alertInactiveHint');
-  els.clearAlertBtn.hidden=!manualAlert.active||authUser?.role!=='admin';
+  const canClearManualAlert=Boolean(manualAlert.active&&authUser?.role==='admin');
+  els.clearAlertBtn.hidden=authUser?.role!=='admin';
+  els.clearAlertBtn.disabled=!canClearManualAlert;
+  els.clearAlertBtn.textContent=canClearManualAlert
+    ?(lang==='en'?'Cancel current alert':'إلغاء التنبيه الحالي')
+    :(lang==='en'?'No active alert':'لا يوجد تنبيه فعال');
+  els.alertRowDismissBtn.hidden=!canClearManualAlert;
 }
 function renderLive(updateStructure=true){
   const derived=patients.map(p=>derivedStatus(p));
@@ -3046,6 +3084,11 @@ async function publishAlert(){
   finally{button.disabled=false}
 }
 async function clearAlert(){
+  if(!manualAlert.active){
+    toast(lang==='en'?'No active alert':'لا يوجد تنبيه فعال',lang==='en'?'There is no published administration alert to cancel.':'لا يوجد تنبيه منشور من الإدارة لإلغائه.');
+    return;
+  }
+  if(!confirm(lang==='en'?'Cancel the current alert on all connected screens?':'إلغاء التنبيه الحالي من جميع الشاشات المتصلة؟'))return;
   const button=els.clearAlertBtn;button.disabled=true;
   try{
     const response=await request(ALERTS_API,{method:'DELETE'});
@@ -3364,6 +3407,7 @@ $('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة الي
 $('alertBtn').addEventListener('click',openAlertComposer);
 $('sendAlertBtn').addEventListener('click',publishAlert);
 $('clearAlertBtn').addEventListener('click',clearAlert);
+$('alertRowDismissBtn').addEventListener('click',clearAlert);
 $('alertMessageInput').addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();publishAlert()}});
 document.querySelectorAll('input[name="alertScope"]').forEach(input=>input.addEventListener('change',updateAlertTargetUI));
 els.alertTargetClinic.addEventListener('change',updateAlertTargetUI);
@@ -3541,7 +3585,9 @@ if(NEED_ROLE_CHOICE)openRoleChoice();
 updateClock();
 setInterval(updateClock,1000);
 registerPwa();
-disablePreviewPushSubscription();
+disablePreviewPushSubscription()
+  .then(refreshPushSubscriptionState)
+  .catch(error=>console.warn('Push state refresh failed',error));
 
 })();
 </script>

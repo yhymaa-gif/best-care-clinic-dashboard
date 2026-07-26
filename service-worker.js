@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260726-adaptive-sync';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260726-notification-controls';
 const APP_SHELL=[
   './',
   './index.html',
