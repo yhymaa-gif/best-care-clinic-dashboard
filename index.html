@@ -31,7 +31,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1
 .brand{display:flex;align-items:center;gap:14px;min-width:0}.logo{width:86px;height:86px;flex:0 0 86px;border-radius:18px;background:#fff;border:1px solid var(--line);padding:6px;object-fit:contain}.brand h1{margin:0;font-size:clamp(23px,2.5vw,36px);color:#145e46}.brand p{margin:6px 0 0;color:var(--muted)}
 .header-side{display:grid;gap:8px;justify-items:end}.clock{font-size:31px;font-weight:900;color:#145e46;direction:ltr}.date-text{font-size:12px;color:var(--muted)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button,.field{border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:#fff;color:var(--text);font-weight:800}button:hover{background:#f3f8f5}button.primary{background:#eaf6ef;color:#176344;border-color:#c8e3d3}button.danger{background:#fdecef;color:#9e2537;border-color:#efc7ce}button.dark{background:#edf2f4;color:#294e60}input,select,textarea{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff;color:var(--text)}
-.sync-badge{display:inline-flex;align-items:center;gap:7px;min-height:41px;border-radius:999px;padding:9px 14px;border:1px solid var(--line);font-weight:900}.sync-badge.connecting,.sync-badge.saving{background:#fff7dd;color:#806019;border-color:#ead999}.sync-badge.synced{background:#e8f7ee;color:#216a47;border-color:#bedfc9}.sync-badge.error{background:#fdebed;color:#a52739;border-color:#edbdc5}.sync-badge::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 15%,transparent)}
+.sync-badge{display:inline-flex;align-items:center;gap:7px;min-height:41px;border-radius:999px;padding:9px 14px;border:1px solid var(--line);font-weight:900}.sync-badge.connecting,.sync-badge.saving{background:#fff7dd;color:#806019;border-color:#ead999}.sync-badge.synced{background:#e8f7ee;color:#216a47;border-color:#bedfc9}.sync-badge.scheduled{background:#eef4fb;color:#315f85;border-color:#bfd2e0}.sync-badge.error{background:#fdebed;color:#a52739;border-color:#edbdc5}.sync-badge::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 15%,transparent)}
 .presence-badge{display:inline-flex;align-items:center;gap:8px;min-height:41px;border-radius:999px;padding:8px 13px;border:1px solid #c7ddd2;background:linear-gradient(135deg,#f9fcfa,#edf7f2);color:#285f49;box-shadow:0 7px 18px rgba(35,91,67,.07);transition:.2s ease}.presence-badge:hover{border-color:#93c5ad;background:#eaf6ef;transform:translateY(-1px)}.presence-badge .presence-dot{width:9px;height:9px;border-radius:50%;background:#a8b7b0;box-shadow:0 0 0 4px rgba(130,153,143,.12)}.presence-badge.online .presence-dot{background:#26a269;box-shadow:0 0 0 4px rgba(38,162,105,.14);animation:presencePulse 2s ease-in-out infinite}.presence-badge strong{min-width:18px;color:#174f3a;font-size:17px;text-align:center}.presence-badge small{color:#597266;font-size:10px;font-weight:900}@keyframes presencePulse{50%{box-shadow:0 0 0 7px rgba(38,162,105,.05)}}.presence-card{width:min(620px,100%);padding:0;overflow:hidden}.presence-head{display:flex;align-items:center;gap:13px;padding:20px 22px;background:linear-gradient(135deg,#185d43,#2e8d67);color:#fff}.presence-head-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.15);font-size:24px}.presence-head h3{margin:0 0 4px}.presence-head p{margin:0;color:#dff4e9;font-size:12px}.presence-body{padding:20px 22px}.presence-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.presence-metric{padding:14px;border:1px solid #d8e8df;border-radius:15px;background:#f9fcfa;text-align:center}.presence-metric strong{display:block;color:#176344;font-size:27px}.presence-metric small{display:block;margin-top:3px;color:#60776c;font-weight:800}.presence-devices{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0 0}.presence-chip{padding:7px 10px;border-radius:999px;background:#eef5f1;color:#456456;font-size:11px;font-weight:900}.presence-clinics{display:grid;gap:7px;margin-top:15px}.presence-clinic-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #e1ebe6;border-radius:12px;background:#fff}.presence-clinic-row strong{color:#176344}.presence-updated{margin:14px 0 0;color:#718279;font-size:11px;text-align:center}@media(max-width:680px){.presence-badge{flex:1;justify-content:center}.presence-summary{grid-template-columns:1fr}.presence-card{border-radius:18px}}
 .settings{position:relative}.settings-menu{position:absolute;top:calc(100% + 8px);right:0;left:auto;z-index:50;width:250px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px rgba(20,64,47,.18);display:none}.settings-menu.open{display:block}.settings-menu button{width:100%;text-align:right;margin:2px 0;border:0;background:transparent}.settings-menu button:hover{background:#f2f7f4}
 .clinic-context-line{display:flex;align-items:center;gap:7px;margin-top:5px;color:#2d7057;font-size:12px;font-weight:900}.clinic-context-line::before{content:"●";color:#33a474;font-size:9px}.clinic-switcher{display:inline-flex;align-items:center;gap:8px;min-width:245px;padding:7px 11px;border:1px solid #bcd8cb;border-radius:13px;background:#f8fcfa;color:#174f3a;font-size:12px;font-weight:900;box-shadow:0 6px 16px rgba(29,73,55,.06)}.clinic-switcher[hidden]{display:none}.clinic-switcher select{flex:1;min-width:145px;border:0;background:transparent;color:#174f3a;font:inherit;outline:0}.clinic-directory-card{width:min(980px,94vw);max-height:88vh;overflow:auto}.clinic-directory-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:15px;border-bottom:1px solid var(--line)}.clinic-directory-head h3{margin:0 0 5px}.clinic-directory-head p{margin:0;color:var(--muted);line-height:1.7}.clinic-capacity{display:grid;place-items:center;min-width:82px;padding:10px 13px;border-radius:14px;background:#e8f6ef;color:#176344;font-weight:950}.clinic-directory-note{margin:14px 0;padding:12px 14px;border:1px solid #d8e8df;border-radius:13px;background:#f7fbf9;color:#557067;font-size:12px;line-height:1.65}.clinic-directory-list{display:grid;gap:10px;margin-top:12px}.clinic-config-row{display:grid;grid-template-columns:52px minmax(180px,1.3fr) minmax(100px,.55fr) minmax(180px,1fr) auto;gap:10px;align-items:end;padding:13px;border:1px solid #d8e6df;border-radius:15px;background:#fff;box-shadow:0 6px 16px rgba(35,83,62,.05)}.clinic-slot{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#e3f4eb,#f4faf7);color:#176344;font-weight:950}.clinic-config-row label{display:grid;gap:5px;color:#506c61;font-size:11px;font-weight:900}.clinic-config-row input{width:100%;padding:10px 11px;border:1px solid #cddfd6;border-radius:11px;background:#fbfdfc}.clinic-hide-btn{align-self:end;color:#a3343c;border-color:#e2b7bb;background:#fff7f8}.clinic-directory-empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed #bdd5c9;border-radius:14px;background:#fafdfb}.clinic-directory-actions{display:flex;justify-content:space-between;gap:10px;margin-top:16px}.clinic-directory-actions .primary{margin-inline-start:auto}
@@ -585,8 +585,39 @@ const PUSH_API='/api/push';
 const PRESENCE_API='/api/presence';
 const ALERTS_API='/api/alerts';
 const ADMIN_PATIENTS_API='/api/admin-patients';
-const POLL_MS=2000;
-const DASHBOARD_BUILD='7.29-compact-admin-hub';
+const POLL_MS=5000;
+const SYNC_WORK_HIDDEN_MS=60000;
+const SYNC_OFF_HOURS_MS=5*60*1000;
+const SYNC_OFF_HOURS_HIDDEN_MS=15*60*1000;
+const RIYADH_OFFSET_MS=3*60*60*1000;
+function syncCadence(now=Date.now()){
+  const riyadh=new Date(now+RIYADH_OFFSET_MS);
+  const day=riyadh.getUTCDay(),hour=riyadh.getUTCHours();
+  const friday=day===5;
+  const workHours=!friday&&hour>=14&&hour<23;
+  const hidden=document.hidden;
+  return {
+    friday,
+    workHours,
+    delay:workHours?(hidden?SYNC_WORK_HIDDEN_MS:POLL_MS):(hidden?SYNC_OFF_HOURS_HIDDEN_MS:SYNC_OFF_HOURS_MS)
+  };
+}
+function syncCadenceCopy(cadence=syncCadence()){
+  if(cadence.workHours)return lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة';
+  if(cadence.friday)return lang==='en'?'Reduced sync — Friday':'مزامنة مخفّضة — يوم الجمعة';
+  return lang==='en'?'Reduced sync outside working hours':'مزامنة مخفّضة خارج أوقات العمل';
+}
+function presenceCadence(){
+  const cadence=syncCadence();
+  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
+  return document.hidden?30*60*1000:10*60*1000;
+}
+function adminHubCadence(){
+  const cadence=syncCadence();
+  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
+  return document.hidden?30*60*1000:10*60*1000;
+}
+const DASHBOARD_BUILD='7.30-adaptive-sync';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const PAYMENT_PROCEDURES=[
   {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
@@ -651,7 +682,7 @@ function startSyncAfterAuth(){
   }
   if(window.__syncStarted)return;
   window.__syncStarted=true;
-  startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(3000)})
+  startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(syncCadence().workHours?30000:syncCadence().delay)})
 }
 function unlockApp(user=null){
   authUser=user||authUser;
@@ -1063,6 +1094,10 @@ function setBadge(mode,text,detail=''){
   els.syncBadge.title=`${detail||text} | build ${DASHBOARD_BUILD}`;
   els.syncBadge.dataset.build=DASHBOARD_BUILD;
 }
+function setIdleSyncBadge(detail=''){
+  const cadence=syncCadence();
+  setBadge(cadence.workHours?'synced':'scheduled',syncCadenceCopy(cadence),detail||(lang==='en'?'Full live sync: Sat–Thu, 2:00 PM–11:00 PM (Riyadh)':'المزامنة المباشرة: السبت–الخميس، ٢:٠٠م–١١:٠٠م بتوقيت الرياض'));
+}
 const IS_DEPLOY_PREVIEW=/^deploy-preview-\d+--/i.test(location.hostname);
 function systemNotificationsEnabled(){return !IS_DEPLOY_PREVIEW&&'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('bestcare_system_notifications')==='enabled'}
 function urlBase64ToUint8Array(value){
@@ -1199,7 +1234,7 @@ function markDirty(){
   clearTimeout(sync.pushTimer);
   sync.pushTimer=setTimeout(async()=>{
     await pushState();
-    scheduleAutomaticSync(POLL_MS);
+    scheduleAutomaticSync(syncCadence().delay);
   },100);
 }
 async function request(url,options={},timeout=12000){const c=new AbortController();const timer=setTimeout(()=>c.abort(),timeout);try{return await fetch(url,{...options,signal:c.signal,cache:'no-store',headers:{accept:'application/json',...(options.headers||{})}})}finally{clearTimeout(timer)}}
@@ -1295,7 +1330,7 @@ function renderPresence(){
     ?copy.unavailable
     :(presence.updatedAt?`${copy.updated}: ${new Date(presence.updatedAt).toLocaleTimeString(lang==='en'?'en-US':'ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`:copy.waiting);
 }
-function schedulePresence(delay=document.hidden?60000:30000){
+function schedulePresence(delay=presenceCadence()){
   clearTimeout(presence.timer);
   if(!presence.started||!authReady)return;
   presence.timer=setTimeout(()=>refreshPresence({silent:true}),delay);
@@ -1325,9 +1360,9 @@ function startPresence(){
   renderPresence();
   if(!window.__presenceListeners){
     window.__presenceListeners=true;
-    window.addEventListener('online',()=>refreshPresence({silent:true}));
-    window.addEventListener('focus',()=>refreshPresence({silent:true}));
-    document.addEventListener('visibilitychange',()=>document.hidden?schedulePresence(60000):refreshPresence({silent:true}));
+    window.addEventListener('online',()=>schedulePresence(1000));
+    window.addEventListener('focus',()=>schedulePresence(syncCadence().workHours?1000:presenceCadence()));
+    document.addEventListener('visibilitychange',()=>schedulePresence(document.hidden?presenceCadence():(syncCadence().workHours?1000:presenceCadence())));
   }
   refreshPresence({silent:true});
 }
@@ -1510,14 +1545,14 @@ function renderAdminPatientHub(){
     </article>`;
   }).join('');
 }
-function scheduleAdminPatientHub(delay=document.hidden?120000:30000){
+function scheduleAdminPatientHub(delay=adminHubCadence()){
   clearTimeout(adminPatientHub.timer);
   if(!adminPatientHub.started||VIEW_MODE!=='admin')return;
   adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub(),delay);
 }
 async function refreshAdminPatientHub({force=false}={}){
   if(VIEW_MODE!=='admin'||!authReady||adminPatientHub.loading)return false;
-  if(!force&&adminPatientHub.date===selectedDate&&Date.now()-Number(adminPatientHub.updatedAt||0)<5000){
+  if(!force&&adminPatientHub.date===selectedDate&&Date.now()-Number(adminPatientHub.updatedAt||0)<adminHubCadence()){
     scheduleAdminPatientHub();
     return false;
   }
@@ -1552,9 +1587,9 @@ function startAdminPatientHub(){
   adminPatientHub.started=true;
   if(!window.__adminHubListeners){
     window.__adminHubListeners=true;
-    window.addEventListener('online',()=>refreshAdminPatientHub({force:true}));
-    window.addEventListener('focus',()=>refreshAdminPatientHub({force:true}));
-    document.addEventListener('visibilitychange',()=>document.hidden?scheduleAdminPatientHub(120000):refreshAdminPatientHub({force:true}));
+    window.addEventListener('online',()=>scheduleAdminPatientHub(1000));
+    window.addEventListener('focus',()=>scheduleAdminPatientHub(syncCadence().workHours?1000:adminHubCadence()));
+    document.addEventListener('visibilitychange',()=>scheduleAdminPatientHub(document.hidden?adminHubCadence():(syncCadence().workHours?1000:adminHubCadence())));
   }
   refreshAdminPatientHub({force:true});
 }
@@ -1609,7 +1644,8 @@ async function pushState(){
     sync.error='';
     sync.lastSync=Date.now();
     persistLocal(sync.dirty);
-    setBadge(sync.dirty?'saving':'synced',sync.dirty?(lang==='en'?'Saving latest changes…':'جارٍ حفظ آخر التعديلات…'):(lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة'),`revision ${sync.revision}`);
+    if(sync.dirty)setBadge('saving',lang==='en'?'Saving latest changes…':'جارٍ حفظ آخر التعديلات…',`revision ${sync.revision}`);
+    else setIdleSyncBadge(`revision ${sync.revision}`);
     if(VIEW_MODE==='admin')refreshAdminPatientHub({force:true});
     if(sync.dirty){clearTimeout(sync.pushTimer);sync.pushTimer=setTimeout(pushState,80)}
     return true;
@@ -1620,7 +1656,10 @@ async function pushState(){
     return false;
   }finally{
     sync.pushing=false;
-    if(sync.dirty)scheduleAutomaticSync(2500);
+    if(sync.dirty){
+      const cadence=syncCadence();
+      scheduleAutomaticSync(sync.error?(cadence.workHours?30000:cadence.delay):2500);
+    }
   }
 }
 function applyRemote(data){
@@ -1667,7 +1706,7 @@ async function pullState(force=false){
     sync.ready=true;
     sync.error='';
     sync.lastSync=Date.now();
-    if(!sync.dirty)setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+    if(!sync.dirty)setIdleSyncBadge(`revision ${sync.revision}`);
     return true;
   }catch(e){
     sync.error=e.name==='AbortError'?'انتهت مهلة الاتصال':String(e.message||e);
@@ -1690,7 +1729,7 @@ async function runAutomaticSync(){
     sync.ready=false;
     sync.error='الجهاز غير متصل بالإنترنت';
     setBadge('error',lang==='en'?'Offline — retrying':'غير متصل — ستتم إعادة المحاولة',sync.error);
-    scheduleAutomaticSync(3000);
+    scheduleAutomaticSync(syncCadence().workHours?60000:syncCadence().delay);
     return;
   }
 
@@ -1704,7 +1743,11 @@ async function runAutomaticSync(){
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
-    const nextDelay=sync.error?3000:(document.hidden?20000:POLL_MS);
+    const cadence=syncCadence();
+    const nextDelay=sync.error?(cadence.workHours?30000:cadence.delay):cadence.delay;
+    if(!sync.error&&!sync.dirty&&!cadence.workHours){
+      setIdleSyncBadge();
+    }
     scheduleAutomaticSync(nextDelay);
   }
 }
@@ -1717,7 +1760,13 @@ async function startAutomaticSync(){
 
   const wake=()=>{
     clearTimeout(sync.autoTimer);
-    runAutomaticSync();
+    const cadence=syncCadence();
+    const elapsed=Date.now()-Number(sync.lastSync||0);
+    if(cadence.workHours||!sync.lastSync||elapsed>=cadence.delay)runAutomaticSync();
+    else{
+      setIdleSyncBadge();
+      scheduleAutomaticSync(Math.max(1000,cadence.delay-elapsed));
+    }
   };
 
   window.addEventListener('online',wake);
@@ -1730,7 +1779,7 @@ async function startAutomaticSync(){
     sync.ready=false;
     sync.error='الجهاز غير متصل بالإنترنت';
     setBadge('error',lang==='en'?'Offline — retrying':'غير متصل — ستتم إعادة المحاولة',sync.error);
-    scheduleAutomaticSync(3000);
+    scheduleAutomaticSync(syncCadence().workHours?60000:syncCadence().delay);
   });
 
   await runAutomaticSync();
@@ -2715,10 +2764,10 @@ async function movePatientToDate(item,targetDate){
     sync.localUpdatedAt=Date.now();
     persistLocal(false);
     render();
-    setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+    setIdleSyncBadge(`revision ${sync.revision}`);
     patientFormSavedFeedback(true,item,`${firstName(item.name)} — ${sourceDate} ← ${targetDate}`);
     resetPatientForm(false);
-    scheduleAutomaticSync(POLL_MS);
+    scheduleAutomaticSync(syncCadence().delay);
     return true;
   }catch(error){
     if(selectedDate===sourceDate&&!patients.some(patient=>String(patient.id)===String(item.id))){
@@ -2734,7 +2783,7 @@ async function movePatientToDate(item,targetDate){
       await pushState();
     }
     toast(tr('dateMoveFailed'),String(error.message||error));
-    scheduleAutomaticSync(1200);
+    scheduleAutomaticSync(syncCadence().workHours?1200:syncCadence().delay);
     return false;
   }finally{
     saveButton.disabled=false;
@@ -2957,7 +3006,7 @@ async function syncTest(){
       toast('فشل الاختبار',sync.error||'خطأ غير معروف');
     }
   }finally{
-    scheduleAutomaticSync(POLL_MS);
+    scheduleAutomaticSync(syncCadence().delay);
   }
 }
 async function openAlertComposer(){
@@ -3237,7 +3286,7 @@ function applyLang(){
   $('langBtn').textContent=lang==='en'?'العربية':'English';
   if(sync.error)setBadge('error',lang==='en'?'Connection failed — retrying':'فشل الاتصال — ستتم إعادة المحاولة',sync.error);
   else if(sync.pushing||sync.dirty)setBadge('saving',lang==='en'?'Saving automatically…':'جارٍ الحفظ تلقائيًا…');
-  else if(sync.ready)setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+  else if(sync.ready)setIdleSyncBadge(`revision ${sync.revision}`);
   else setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ الاتصال تلقائيًا…');
   if(editingId){
     $('patientFormTitle').textContent=tr('editPatient');
