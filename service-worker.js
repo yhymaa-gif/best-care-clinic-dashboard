@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260726-patient-identity';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260726-compact-admin-hub';
 const APP_SHELL=[
   './',
   './index.html',
