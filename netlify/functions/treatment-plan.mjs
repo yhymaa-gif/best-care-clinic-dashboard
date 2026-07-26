@@ -5,6 +5,7 @@ import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './l
 const headers = apiHeaders('GET,PUT,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const store = getStore({ name: 'clinic-treatment-plans', consistency: 'strong' });
+const registryStore = getStore({ name: 'clinic-treatment-plan-registry', consistency: 'strong' });
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const cleanText = (value, max = 500) => String(value ?? '').trim().slice(0, max);
 const cleanNumber = (value, min = 0, max = 10_000_000) => {
@@ -15,6 +16,23 @@ const cleanNumber = (value, min = 0, max = 10_000_000) => {
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const validPatientId = value => /^[a-zA-Z0-9._:-]{1,80}$/.test(value || '');
+const normalizePhone = value => {
+  const digits = cleanText(value, 20).replace(/\D/g, '');
+  if (/^009665\d{8}$/.test(digits)) return `0${digits.slice(5)}`;
+  if (/^9665\d{8}$/.test(digits)) return `0${digits.slice(3)}`;
+  if (/^5\d{8}$/.test(digits)) return `0${digits}`;
+  return digits;
+};
+const identityKeys = patient => {
+  const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/\s+/g, '');
+  const mobile = normalizePhone(patient?.mobile ?? patient?.phone);
+  return [...new Set([
+    file ? `file:${file}` : '',
+    mobile ? `phone:${mobile}` : ''
+  ].filter(Boolean))];
+};
+const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
+const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
 
 const cleanItem = item => ({
   code: cleanText(item?.code, 50),
@@ -129,10 +147,41 @@ export default async request => {
   if (!validPatientId(patientId) || !validDate(date) || !validClinic(clinicId)) return reply({ error: 'Invalid treatment plan key' }, 400);
   if (!canAccessClinic(auth.user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
 
-  const key = `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
+  const key = legacyPlanKey(clinicId, date, patientId);
   if (request.method === 'GET') {
-    const record = await store.get(key, { type: 'json', consistency: 'strong' });
-    return record ? reply({ exists: true, ...record }) : reply({ exists: false, plan: null, updatedAt: 0 });
+    let record = await store.get(key, { type: 'json', consistency: 'strong' });
+    let carriedForward = false;
+    const lookupPatient = {
+      fileNo: url.searchParams.get('fileNo') || '',
+      mobile: url.searchParams.get('mobile') || ''
+    };
+    const keys = identityKeys(lookupPatient);
+    if (!record && keys.length) {
+      const matches = await Promise.all(keys.map(identity => store.get(permanentPlanKey(clinicId, identity), { type: 'json', consistency: 'strong' })));
+      record = matches.filter(Boolean).sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0))[0] || null;
+      carriedForward = Boolean(record);
+    }
+    if (!record && keys.length) {
+      const registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || {};
+      const planReference = keys
+        .map(identity => registry.records?.[registry.aliases?.[identity]])
+        .filter(Boolean)
+        .sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0))[0];
+      if (planReference
+        && validClinic(planReference.clinicId)
+        && validPatientId(planReference.sourcePatientId)
+        && validDate(planReference.sourceDate)
+        && canAccessClinic(auth.user, planReference.clinicId)) {
+        record = await store.get(
+          legacyPlanKey(planReference.clinicId, planReference.sourceDate, planReference.sourcePatientId),
+          { type: 'json', consistency: 'strong' }
+        );
+        carriedForward = Boolean(record);
+      }
+    }
+    return record
+      ? reply({ exists: true, ...record, carriedForward, appointment: { patientId, date, clinicId } })
+      : reply({ exists: false, plan: null, updatedAt: 0, carriedForward: false });
   }
   if (request.method === 'PUT') {
     let body;
@@ -148,6 +197,8 @@ export default async request => {
     }
     const record = { patientId, clinicId, date, plan, revision: Number(existing?.revision || 0) + 1, updatedAt: Date.now(), updatedBy: String(auth.user?.displayName || auth.user?.username || '').slice(0, 120) };
     await store.setJSON(key, record);
+    const keys = identityKeys(plan.patient);
+    await Promise.all(keys.map(identity => store.setJSON(permanentPlanKey(clinicId, identity), record)));
     return reply({ ok: true, revision: record.revision, updatedAt: record.updatedAt });
   }
   return reply({ error: 'Method not allowed' }, 405);

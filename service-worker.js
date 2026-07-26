@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260725-targeted-audio-alerts';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260726-patient-identity';
 const APP_SHELL=[
   './',
   './index.html',
