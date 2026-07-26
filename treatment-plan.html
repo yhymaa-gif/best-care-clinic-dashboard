@@ -661,11 +661,18 @@
     async function loadRemote(){
       if(!patientId||!appointmentDate)return null;
       try{
-        const url=`${PLAN_API}?patientId=${encodeURIComponent(patientId)}&date=${encodeURIComponent(appointmentDate)}&clinic=${encodeURIComponent(clinicId)}`;
+        const identityParams=new URLSearchParams({
+          patientId,
+          date:appointmentDate,
+          clinic:clinicId
+        });
+        if(source?.file)identityParams.set('fileNo',source.file);
+        if(source?.phone)identityParams.set('mobile',source.phone);
+        const url=`${PLAN_API}?${identityParams.toString()}`;
         const response=await fetch(url,{credentials:'include',cache:'no-store'});
         if(!response.ok)return null;
         const data=await response.json();
-        return data.exists?data.plan:null;
+        return data.exists?{plan:data.plan,carriedForward:Boolean(data.carriedForward)}:null;
       }catch{return null}
     }
     async function loadProcedureCatalog(rerender=false){
@@ -1398,17 +1405,21 @@
       if(!(await verifyAuth()))return;
       source=sourceFromLocal();
       const local=loadLocalPlan();
-      const [remote]=await Promise.all([loadRemote(),loadProcedureCatalog(false)]);
+      const [remoteResult]=await Promise.all([loadRemote(),loadProcedureCatalog(false)]);
+      const remote=remoteResult?.plan||null;
       state=normalizeState(remote||local||null);
       if(!remote&&!local){
         state.patient.fullName=source.name||'';
         state.patient.fileNo=source.file||'';
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
+      }else if(remoteResult?.carriedForward){
+        if(source.file)state.patient.fileNo=source.file;
+        if(source.phone)state.patient.mobile=source.phone;
       }
       const compact=localStorage.getItem('bestcare_treatment_compact')!=='0';document.body.classList.toggle('compact-entry',compact);$('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
       hydrateFields();setupSignature();bindEvents();render();
-      $('saveStatus').textContent=remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
+      $('saveStatus').textContent=remoteResult?.carriedForward?'تم استرجاع خطة المريض من موعد سابق':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote));
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
       setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},15000);

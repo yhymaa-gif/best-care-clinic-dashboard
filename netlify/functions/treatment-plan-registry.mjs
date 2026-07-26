@@ -8,6 +8,7 @@ const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
 const normalizePhone = value => {
   const digits = cleanText(value, 20).replace(/\D/g, '');
+  if (/^009665\d{8}$/.test(digits)) return `0${digits.slice(5)}`;
   if (/^9665\d{8}$/.test(digits)) return `0${digits.slice(3)}`;
   if (/^5\d{8}$/.test(digits)) return `0${digits}`;
   return digits;
