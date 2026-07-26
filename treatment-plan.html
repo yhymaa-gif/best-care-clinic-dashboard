@@ -1454,7 +1454,7 @@
       $('saveStatus').textContent=remoteResult?.carriedForward?'تم استرجاع خطة المريض من موعد سابق':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote));
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
-      setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},15000);
+      setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},60000);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));
     }
     init();
