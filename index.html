@@ -31,12 +31,12 @@ button,input,select,textarea{font:inherit}button{cursor:pointer}.app{max-width:1
 .brand{display:flex;align-items:center;gap:14px;min-width:0}.logo{width:86px;height:86px;flex:0 0 86px;border-radius:18px;background:#fff;border:1px solid var(--line);padding:6px;object-fit:contain}.brand h1{margin:0;font-size:clamp(23px,2.5vw,36px);color:#145e46}.brand p{margin:6px 0 0;color:var(--muted)}
 .header-side{display:grid;gap:8px;justify-items:end}.clock{font-size:31px;font-weight:900;color:#145e46;direction:ltr}.date-text{font-size:12px;color:var(--muted)}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}button,.field{border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:#fff;color:var(--text);font-weight:800}button:hover{background:#f3f8f5}button.primary{background:#eaf6ef;color:#176344;border-color:#c8e3d3}button.danger{background:#fdecef;color:#9e2537;border-color:#efc7ce}button.dark{background:#edf2f4;color:#294e60}input,select,textarea{border:1px solid var(--line);border-radius:11px;padding:10px 12px;background:#fff;color:var(--text)}
-.sync-badge{display:inline-flex;align-items:center;gap:7px;min-height:41px;border-radius:999px;padding:9px 14px;border:1px solid var(--line);font-weight:900}.sync-badge.connecting,.sync-badge.saving{background:#fff7dd;color:#806019;border-color:#ead999}.sync-badge.synced{background:#e8f7ee;color:#216a47;border-color:#bedfc9}.sync-badge.error{background:#fdebed;color:#a52739;border-color:#edbdc5}.sync-badge::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 15%,transparent)}
+.sync-badge{display:inline-flex;align-items:center;gap:7px;min-height:41px;border-radius:999px;padding:9px 14px;border:1px solid var(--line);font-weight:900}.sync-badge.connecting,.sync-badge.saving{background:#fff7dd;color:#806019;border-color:#ead999}.sync-badge.synced{background:#e8f7ee;color:#216a47;border-color:#bedfc9}.sync-badge.scheduled{background:#eef4fb;color:#315f85;border-color:#bfd2e0}.sync-badge.error{background:#fdebed;color:#a52739;border-color:#edbdc5}.sync-badge::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 15%,transparent)}
 .presence-badge{display:inline-flex;align-items:center;gap:8px;min-height:41px;border-radius:999px;padding:8px 13px;border:1px solid #c7ddd2;background:linear-gradient(135deg,#f9fcfa,#edf7f2);color:#285f49;box-shadow:0 7px 18px rgba(35,91,67,.07);transition:.2s ease}.presence-badge:hover{border-color:#93c5ad;background:#eaf6ef;transform:translateY(-1px)}.presence-badge .presence-dot{width:9px;height:9px;border-radius:50%;background:#a8b7b0;box-shadow:0 0 0 4px rgba(130,153,143,.12)}.presence-badge.online .presence-dot{background:#26a269;box-shadow:0 0 0 4px rgba(38,162,105,.14);animation:presencePulse 2s ease-in-out infinite}.presence-badge strong{min-width:18px;color:#174f3a;font-size:17px;text-align:center}.presence-badge small{color:#597266;font-size:10px;font-weight:900}@keyframes presencePulse{50%{box-shadow:0 0 0 7px rgba(38,162,105,.05)}}.presence-card{width:min(620px,100%);padding:0;overflow:hidden}.presence-head{display:flex;align-items:center;gap:13px;padding:20px 22px;background:linear-gradient(135deg,#185d43,#2e8d67);color:#fff}.presence-head-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:rgba(255,255,255,.15);font-size:24px}.presence-head h3{margin:0 0 4px}.presence-head p{margin:0;color:#dff4e9;font-size:12px}.presence-body{padding:20px 22px}.presence-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.presence-metric{padding:14px;border:1px solid #d8e8df;border-radius:15px;background:#f9fcfa;text-align:center}.presence-metric strong{display:block;color:#176344;font-size:27px}.presence-metric small{display:block;margin-top:3px;color:#60776c;font-weight:800}.presence-devices{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0 0}.presence-chip{padding:7px 10px;border-radius:999px;background:#eef5f1;color:#456456;font-size:11px;font-weight:900}.presence-clinics{display:grid;gap:7px;margin-top:15px}.presence-clinic-row{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #e1ebe6;border-radius:12px;background:#fff}.presence-clinic-row strong{color:#176344}.presence-updated{margin:14px 0 0;color:#718279;font-size:11px;text-align:center}@media(max-width:680px){.presence-badge{flex:1;justify-content:center}.presence-summary{grid-template-columns:1fr}.presence-card{border-radius:18px}}
 .settings{position:relative}.settings-menu{position:absolute;top:calc(100% + 8px);right:0;left:auto;z-index:50;width:250px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px rgba(20,64,47,.18);display:none}.settings-menu.open{display:block}.settings-menu button{width:100%;text-align:right;margin:2px 0;border:0;background:transparent}.settings-menu button:hover{background:#f2f7f4}
 .clinic-context-line{display:flex;align-items:center;gap:7px;margin-top:5px;color:#2d7057;font-size:12px;font-weight:900}.clinic-context-line::before{content:"●";color:#33a474;font-size:9px}.clinic-switcher{display:inline-flex;align-items:center;gap:8px;min-width:245px;padding:7px 11px;border:1px solid #bcd8cb;border-radius:13px;background:#f8fcfa;color:#174f3a;font-size:12px;font-weight:900;box-shadow:0 6px 16px rgba(29,73,55,.06)}.clinic-switcher[hidden]{display:none}.clinic-switcher select{flex:1;min-width:145px;border:0;background:transparent;color:#174f3a;font:inherit;outline:0}.clinic-directory-card{width:min(980px,94vw);max-height:88vh;overflow:auto}.clinic-directory-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding-bottom:15px;border-bottom:1px solid var(--line)}.clinic-directory-head h3{margin:0 0 5px}.clinic-directory-head p{margin:0;color:var(--muted);line-height:1.7}.clinic-capacity{display:grid;place-items:center;min-width:82px;padding:10px 13px;border-radius:14px;background:#e8f6ef;color:#176344;font-weight:950}.clinic-directory-note{margin:14px 0;padding:12px 14px;border:1px solid #d8e8df;border-radius:13px;background:#f7fbf9;color:#557067;font-size:12px;line-height:1.65}.clinic-directory-list{display:grid;gap:10px;margin-top:12px}.clinic-config-row{display:grid;grid-template-columns:52px minmax(180px,1.3fr) minmax(100px,.55fr) minmax(180px,1fr) auto;gap:10px;align-items:end;padding:13px;border:1px solid #d8e6df;border-radius:15px;background:#fff;box-shadow:0 6px 16px rgba(35,83,62,.05)}.clinic-slot{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,#e3f4eb,#f4faf7);color:#176344;font-weight:950}.clinic-config-row label{display:grid;gap:5px;color:#506c61;font-size:11px;font-weight:900}.clinic-config-row input{width:100%;padding:10px 11px;border:1px solid #cddfd6;border-radius:11px;background:#fbfdfc}.clinic-hide-btn{align-self:end;color:#a3343c;border-color:#e2b7bb;background:#fff7f8}.clinic-directory-empty{padding:22px;text-align:center;color:var(--muted);border:1px dashed #bdd5c9;border-radius:14px;background:#fafdfb}.clinic-directory-actions{display:flex;justify-content:space-between;gap:10px;margin-top:16px}.clinic-directory-actions .primary{margin-inline-start:auto}
 @media(max-width:820px){.clinic-switcher{width:100%;min-width:0}.clinic-config-row{grid-template-columns:46px 1fr}.clinic-config-row label{grid-column:2}.clinic-hide-btn{grid-column:1/-1}.clinic-directory-head{align-items:center}.clinic-directory-actions{display:grid;grid-template-columns:1fr}.clinic-directory-actions button{width:100%}.clinic-directory-actions .primary{margin:0}}
-.alert-row{display:none;margin-top:10px;padding:14px 18px;border-radius:16px;color:#fff;background:linear-gradient(110deg,#980e24,#dc2940,#980e24);background-size:220% 100%;font-weight:900;font-size:18px;text-align:center;box-shadow:0 14px 32px rgba(185,24,46,.24);animation:sweep 2.6s linear infinite}.alert-row.show{display:flex;align-items:center;justify-content:center;gap:10px}@keyframes sweep{to{background-position:220% 0}}
+.alert-row{display:none;margin-top:10px;padding:14px 18px;border-radius:16px;color:#fff;background:linear-gradient(110deg,#980e24,#dc2940,#980e24);background-size:220% 100%;font-weight:900;font-size:18px;text-align:center;box-shadow:0 14px 32px rgba(185,24,46,.24);animation:sweep 2.6s linear infinite}.alert-row.show{display:flex;align-items:center;justify-content:center;gap:10px}.alert-row-dismiss{margin-inline-start:auto;padding:7px 11px;border:1px solid rgba(255,255,255,.58);border-radius:10px;background:rgba(255,255,255,.17);color:#fff;font-size:11px;white-space:nowrap;backdrop-filter:blur(5px)}.alert-row-dismiss:hover{background:#fff;color:#8f1025}.alert-row-dismiss[hidden]{display:none}@keyframes sweep{to{background-position:220% 0}}
 .alert-trigger{min-width:222px;padding:9px 11px;display:grid;grid-template-columns:42px minmax(0,1fr) 9px;align-items:center;gap:10px;text-align:right;border-radius:15px;background:#fff8f8;border-color:#edc8ce;color:#8f2637;box-shadow:0 8px 22px rgba(142,38,55,.08);transition:.25s ease}.alert-trigger:hover{background:#fff0f2;border-color:#df9daa;transform:translateY(-1px)}.alert-trigger .alert-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#fde5e9;font-size:21px}.alert-trigger .alert-copy{min-width:0}.alert-trigger strong,.alert-trigger small{display:block}.alert-trigger strong{font-size:14px}.alert-trigger small{margin-top:3px;color:#95606a;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alert-trigger .alert-state{width:9px;height:9px;border-radius:50%;background:#c8d0cc;box-shadow:0 0 0 4px rgba(111,129,120,.10)}.alert-trigger.is-active{color:#fff;border-color:#a30e26;background:linear-gradient(120deg,#9d1028,#db2f46);box-shadow:0 13px 30px rgba(181,28,51,.25)}.alert-trigger.is-active:hover{background:linear-gradient(120deg,#8f0d23,#cc263e)}.alert-trigger.is-active .alert-icon{background:rgba(255,255,255,.18);animation:alertBell 1.25s ease-in-out infinite}.alert-trigger.is-active small{color:#ffe4e8}.alert-trigger.is-active .alert-state{background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.19);animation:alertStatePulse 1.4s ease-in-out infinite}@keyframes alertBell{0%,65%,100%{transform:rotate(0)}72%{transform:rotate(12deg)}80%{transform:rotate(-12deg)}88%{transform:rotate(7deg)}}@keyframes alertStatePulse{50%{transform:scale(1.24);opacity:.72}}
 .alert-modal-card{width:min(590px,100%);padding:0;overflow:hidden}.alert-modal-head{padding:20px 22px;color:#fff;background:linear-gradient(125deg,#8f1025,#d62d45)}.alert-modal-head h3{margin:0 0 5px}.alert-modal-head p{margin:0;color:#ffe2e6;font-size:12px;line-height:1.7}.alert-modal-body{padding:20px 22px}.alert-modal-body>label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:900}.alert-modal-body textarea{min-height:118px}.alert-target-box{margin-bottom:15px;padding:13px;border:1px solid #e4ccd1;border-radius:15px;background:#fffafb}.alert-target-title{display:block;margin-bottom:9px;color:#6f2634;font-size:12px;font-weight:950}.alert-target-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}.alert-target-option{display:flex!important;align-items:center;gap:8px;margin:0!important;padding:11px 12px;border:1px solid #dec8cd;border-radius:12px;background:#fff;color:#5f3440!important;cursor:pointer}.alert-target-option:has(input:checked){border-color:#bd2640;background:#fff0f2;box-shadow:0 0 0 3px rgba(189,38,64,.08)}.alert-target-option input{width:18px;height:18px;accent-color:#b51d36}.alert-clinic-picker{display:grid;gap:7px;margin-top:10px}.alert-clinic-picker[hidden]{display:none}.alert-clinic-picker select{width:100%;min-height:44px;background:#fff}.alert-target-summary{display:flex;align-items:center;gap:7px;margin:10px 0 0;color:#7d3442;font-size:11px;font-weight:900}.alert-preview{display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:12px 13px;border-radius:13px;background:#fff4f5;border:1px solid #efcbd1;color:#8e2637;font-size:12px;line-height:1.7}.alert-modal-card .modal-actions{padding:0 22px 20px}.alert-send{background:#b51d36;color:#fff;border-color:#b51d36}.alert-send:hover{background:#9d142b;color:#fff}.alert-send:disabled{opacity:.55;cursor:not-allowed}.alert-clear[hidden]{display:none}.sound-enabled{color:#176441!important;background:#e3f5eb!important}.sound-enabled::after{content:" ✓"}
 .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:12px 0}.stat{padding:14px;border-top:4px solid var(--navy)}.stat:nth-child(2){border-color:var(--green)}.stat:nth-child(3){border-color:var(--yellow)}.stat:nth-child(4){border-color:var(--orange)}.stat:nth-child(5){border-color:var(--red)}.stat:nth-child(6){border-color:#318e90}.stat small{display:block;color:var(--muted);font-weight:800}.stat strong{display:block;font-size:29px;margin-top:6px;color:var(--navy)}
@@ -129,11 +129,11 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 @media(max-width:980px){.admin-hub-controls{grid-template-columns:1fr 1fr}.admin-hub-controls input{grid-column:1/-1}.admin-patient-item{grid-template-columns:1fr 1fr}.admin-action-tags{grid-column:1/-1}.admin-patient-actions{grid-column:1/-1;justify-content:stretch}.admin-patient-actions a{flex:1}}
 @media(max-width:620px){.admin-hub-head{grid-template-columns:46px 1fr auto;padding:15px 14px}.admin-hub-icon{width:44px;height:44px;border-radius:14px;font-size:22px}.admin-hub-head h2{font-size:17px}.admin-hub-count{min-width:46px;height:46px;border-radius:14px;font-size:20px}.admin-hub-controls{grid-template-columns:1fr;padding:11px 12px}.admin-hub-controls input{grid-column:auto}.admin-hub-summary{padding-inline:12px}.admin-hub-list{padding:11px 12px 14px}.admin-patient-item{grid-template-columns:1fr;padding:13px 14px 13px 17px}.admin-action-tags,.admin-patient-actions{grid-column:auto}.admin-patient-actions{display:grid;grid-template-columns:1fr 1fr}}
 .payment-item p{margin:5px 0;color:#245d47;font-weight:800}.payment-item.received{border-color:#e3ba55;background:#fffaf0}.payment-item.completed{border-color:#42aa70;background:#eaf9f0}.payment-done{color:#1a885a;font-weight:900}.payment-received{color:#9a6d08;font-weight:900}.payment-actions-inline{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.payment-row-badge{display:flex;width:max-content;align-items:center;gap:4px;margin-top:6px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;white-space:nowrap}.payment-row-badge.requested{background:#fff0c9;color:#8b6200}.payment-row-badge.received{background:#e9f1ff;color:#28659b}.payment-row-badge.completed{background:#d9f5e4;color:#147744;box-shadow:0 0 0 1px #79c99a}.role-modal{background:rgba(16,48,36,.20);backdrop-filter:blur(3px)}.role-modal.open{animation:roleBackdropIn .16s ease-out}.role-modal.open .role-modal-card{animation:roleCardIn .18s cubic-bezier(.2,.75,.2,1)}.role-modal-card{max-width:760px;text-align:center;background:rgba(255,255,255,.94)}.role-modal-card>p{margin:5px auto 20px;max-width:590px;color:var(--muted)}.role-options{display:grid;grid-template-columns:1fr 1fr;gap:14px}.role-option{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center;padding:20px;text-align:start;border:1px solid #b9d7c8;border-radius:18px;background:linear-gradient(145deg,#fff,#f2f9f5);color:var(--navy);box-shadow:0 12px 28px rgba(23,79,58,.08);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.role-option:hover{transform:translateY(-2px);border-color:#4d9b78}.role-option.is-selected{border-color:#3f7fa5;box-shadow:0 0 0 4px rgba(63,127,165,.12),0 15px 32px rgba(49,95,133,.15)}.role-option .role-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:17px;background:#174f3a;color:#fff;font-size:27px}.role-option strong,.role-option small{display:block}.role-option strong{font-size:17px}.role-option small{margin-top:5px;color:var(--muted);line-height:1.55}.role-note{margin-top:16px!important;font-size:12px}.clinic-role-picker{margin-top:16px;padding:17px;border:1px solid #b8d3e4;border-radius:18px;background:linear-gradient(150deg,rgba(248,252,255,.92),rgba(238,247,252,.88));box-shadow:inset 0 1px 0 #fff;text-align:start;animation:clinicPickerIn .16s ease-out}.clinic-role-picker[hidden]{display:none}.clinic-role-picker-head{display:grid;grid-template-columns:44px 1fr;gap:11px;align-items:center;margin-bottom:14px}.clinic-role-picker-head>span{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#315f85,#4c91bb);color:#fff;font-size:21px;box-shadow:0 8px 18px rgba(49,95,133,.22)}.clinic-role-picker-head strong,.clinic-role-picker-head small{display:block}.clinic-role-picker-head strong{color:#244f70;font-size:16px}.clinic-role-picker-head small{margin-top:3px;color:#657d8c;font-size:11px}.clinic-role-fields{display:grid;grid-template-columns:1fr;gap:12px}.clinic-role-fields label{display:grid;gap:7px;color:#315f85;font-size:12px;font-weight:900}.clinic-role-fields select{width:100%;min-height:50px;padding:10px 12px;border:1px solid #bcd5e4;border-radius:13px;background:#fff;color:#244f70;font:inherit;outline:0}.clinic-role-fields select:focus{border-color:#4c91bb;box-shadow:0 0 0 4px rgba(76,145,187,.12)}.clinic-role-fields select option:disabled{color:#8a9ba5}.clinic-role-error{min-height:20px;margin:10px 0 0!important;color:#a13042!important;font-size:11px!important;font-weight:900;text-align:start}.clinic-role-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:10px}.clinic-role-actions .primary{min-width:190px;background:#315f85;border-color:#315f85;color:#fff}.clinic-role-actions .primary:disabled{cursor:not-allowed;opacity:.48;box-shadow:none}@keyframes roleBackdropIn{from{opacity:0}to{opacity:1}}@keyframes roleCardIn{from{opacity:0;transform:translateY(8px) scale(.992)}to{opacity:1;transform:none}}@keyframes clinicPickerIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}.queue-card.status-arrived{border-color:#33b484;background:linear-gradient(145deg,#e4faef,#c8f2df)}.queue-card.status-early-arrival{border-color:#599fde;background:linear-gradient(145deg,#ebf5ff,#d9eaff)}.current-visual-icon.arrival-pulse{background:#1fa874;color:#fff;animation:arrivalIconPulse 1.15s ease-in-out infinite}@keyframes arrivalIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(31,168,116,.42)}50%{transform:scale(1.12);box-shadow:0 0 0 13px rgba(31,168,116,0)}}
-.payment-modal-card{width:min(820px,100%)}.payment-action-field{margin-top:14px;padding:14px;border:1px solid #c5dfd0;border-radius:16px;background:#f7fbf9}.payment-action-field>label{margin-bottom:11px;color:#175f42}.payment-procedure-list{display:grid;gap:8px}.payment-procedure-row{display:grid;grid-template-columns:minmax(0,1fr) 142px 92px;align-items:center;gap:9px;padding:10px 11px;border:1px solid #d4e6dc;border-radius:12px;background:#fff}.payment-procedure-name,.payment-free{display:flex;align-items:center;gap:8px;font-weight:900}.payment-procedure-name input,.payment-free input{width:18px;height:18px;flex:0 0 18px}.payment-quantity{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:7px}.payment-quantity small{color:var(--muted);font-weight:900}.payment-stepper{display:grid;grid-template-columns:38px 48px 38px;align-items:center;direction:ltr;border:1px solid #b9d6c7;border-radius:11px;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(26,97,66,.08)}.payment-stepper button{display:grid;place-items:center;width:38px;height:38px;padding:0;border:0;border-radius:0;background:#e7f5ed;color:#176443;font-size:22px;font-weight:950;line-height:1}.payment-stepper button:hover{background:#cfeadb}.payment-stepper input{width:48px!important;min-height:38px!important;padding:5px!important;border:0!important;border-inline:1px solid #d6e7de!important;border-radius:0!important;text-align:center;font-weight:950;color:#163f31;background:#fff;pointer-events:none}.payment-free{justify-content:center;padding:7px;border-radius:9px;background:#eef8f2;color:#176643}.payment-other-row{grid-template-columns:auto minmax(120px,1fr) 142px 92px}.payment-other-row .payment-other-input{width:100%;min-height:38px}.payment-discount-field{display:grid;gap:6px;margin-top:11px}.payment-discount-field label{color:#5c4a12;font-size:12px;font-weight:900}.payment-discount-field input{width:100%;background:#fffdf3;border-color:#ead99d}.payment-items-summary{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.payment-item-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:#e5f4eb;color:#176441;font-size:11px;font-weight:900}.payment-item-chip.free{background:#fff3c9;color:#876000}.payment-discount-note{color:#936b00!important}.notification-enabled{color:#176441!important;background:#e3f5eb!important}.notification-enabled::after{content:" ✓"}.notification-denied{color:#a32f42!important;background:#fdebed!important}
+.payment-modal-card{width:min(880px,100%)}.payment-action-field{margin-top:14px;padding:15px;border:1px solid #c5dfd0;border-radius:17px;background:#f7fbf9}.payment-action-field>label{margin-bottom:11px;color:#175f42}.payment-catalog-source{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 13px;padding:11px 12px;border:1px solid #bddbc9;border-radius:13px;background:linear-gradient(135deg,#e9f7ef,#fff)}.payment-catalog-source strong,.payment-catalog-source small{display:block}.payment-catalog-source strong{color:#165e40}.payment-catalog-source small{margin-top:3px;color:var(--muted);font-size:11px;line-height:1.5}.payment-catalog-source button{flex:0 0 auto;min-height:38px;padding:8px 12px;background:#fff;color:#176344;border-color:#a9cfba;font-size:11px}.payment-catalog-source button.is-loading{opacity:.65;pointer-events:none}.payment-procedure-list{display:grid;gap:9px}.payment-procedure-row{display:grid;grid-template-columns:minmax(220px,1fr) minmax(190px,220px) 100px;align-items:center;gap:12px;padding:11px 12px;border:1px solid #d4e6dc;border-radius:13px;background:#fff;box-shadow:0 4px 14px rgba(25,94,64,.045)}.payment-procedure-name,.payment-free{display:flex;align-items:center;gap:9px;font-weight:900}.payment-procedure-name input,.payment-free input{width:19px;height:19px;flex:0 0 19px;accent-color:#1d8056}.payment-quantity{display:grid;grid-template-columns:1fr;align-items:center;justify-items:center;gap:5px;min-width:0}.payment-quantity small{color:#496b5c;font-size:10px;font-weight:950}.payment-stepper{display:grid;grid-template-columns:44px minmax(52px,64px) 44px;align-items:center;justify-content:center;width:100%;max-width:160px;direction:ltr;border:1px solid #a9cdbc;border-radius:13px;background:#fff;box-shadow:0 5px 15px rgba(26,97,66,.1);overflow:hidden}.payment-stepper button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:0;font-size:25px;font-weight:950;line-height:1;transition:background .16s ease,transform .16s ease}.payment-stepper button:active{transform:scale(.92)}.payment-stepper button[data-payment-step="decrease"],.payment-stepper button[data-payment-other-step="decrease"]{background:#fde9eb;color:#a32f42;border-inline-end:1px solid #ebcbd0}.payment-stepper button[data-payment-step="increase"],.payment-stepper button[data-payment-other-step="increase"]{background:#dcf4e6;color:#126943;border-inline-start:1px solid #c2e2d0}.payment-stepper button[data-payment-step="decrease"]:hover,.payment-stepper button[data-payment-other-step="decrease"]:hover{background:#f8d7dc}.payment-stepper button[data-payment-step="increase"]:hover,.payment-stepper button[data-payment-other-step="increase"]:hover{background:#c8ead7}.payment-stepper input{width:100%!important;min-width:0!important;min-height:44px!important;padding:5px!important;border:0!important;border-radius:0!important;text-align:center;font-size:16px!important;font-weight:950;color:#163f31;background:#fff;pointer-events:none}.payment-free{justify-content:center;min-height:40px;padding:8px;border-radius:10px;background:#eef8f2;color:#176643}.payment-other-row{grid-template-columns:auto minmax(160px,1fr) minmax(190px,220px) 100px}.payment-other-row .payment-other-input{width:100%;min-height:42px}.payment-discount-field{display:grid;gap:6px;margin-top:12px}.payment-discount-field label{color:#5c4a12;font-size:12px;font-weight:900}.payment-discount-field input{width:100%;background:#fffdf3;border-color:#ead99d}.payment-items-summary{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.payment-item-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:#e5f4eb;color:#176441;font-size:11px;font-weight:900}.payment-item-chip.free{background:#fff3c9;color:#876000}.payment-discount-note{color:#936b00!important}.notification-enabled{color:#176441!important;background:#e3f5eb!important}.notification-enabled::after{content:" ✓"}.notification-denied{color:#a32f42!important;background:#fdebed!important}
 .completion-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:17px 0 12px}.completion-choice{position:relative;display:grid;grid-template-columns:28px 1fr;align-items:start;gap:11px;margin:0;padding:16px;border:1px solid #c9ddd3;border-radius:16px;background:linear-gradient(145deg,#fff,#f4faf7);cursor:pointer;transition:.2s ease}.completion-choice:hover{transform:translateY(-1px);border-color:#6eb18f;box-shadow:0 8px 20px rgba(30,111,75,.09)}.completion-choice:has(input:checked){border-color:#27865d;background:linear-gradient(145deg,#e6f8ee,#f8fffb);box-shadow:0 0 0 3px rgba(39,134,93,.12)}.completion-choice.plan-choice:has(input:checked){border-color:#477ca7;background:linear-gradient(145deg,#eaf4fc,#f9fcff);box-shadow:0 0 0 3px rgba(71,124,167,.13)}.completion-choice input{width:22px;height:22px;margin-top:2px;accent-color:#27865d}.completion-choice strong,.completion-choice small{display:block}.completion-choice strong{color:#174d37;font-size:15px}.completion-choice small{margin-top:5px;color:var(--muted);font-size:12px;line-height:1.55}.completion-choice.plan-choice strong{color:#295f87}.completion-flow-note{margin:8px 0 0;padding:11px 13px;border-radius:12px;background:#f3f7fa;color:#4e6b7d;font-size:12px;font-weight:800}.completion-flow-note b{color:#295f87}
 .review-modal-card{max-width:620px}.review-modal-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}.review-modal-head>span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#dcf7e9;color:#128451;font-size:24px}.review-modal-head h3,.review-modal-head p{margin:0}.review-modal-head p{margin-top:4px;color:var(--muted);font-size:12px}.review-field{display:grid;gap:6px;margin:13px 0}.review-field label{font-size:12px;font-weight:900;color:#325c4b}.review-field input,.review-field textarea{width:100%}.review-field textarea{min-height:150px;line-height:1.8}.review-link-preview{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#f0f8f4;color:#266049;font-size:11px}.review-link-preview a{color:#147b50;font-weight:900}.review-send{background:#16a563;color:#fff;border-color:#16a563}.review-send:hover{background:#0e8d52;color:#fff}.review-row-btn{position:relative;isolation:isolate;display:inline-flex!important;align-items:center;gap:7px;overflow:visible!important;padding:6px 11px!important;border-color:#d9b13f!important;background:linear-gradient(135deg,#fffdf4,#fff0ac)!important;color:#6e5200!important;box-shadow:0 0 0 1px rgba(222,179,54,.24),0 0 15px rgba(226,185,62,.38)!important;animation:reviewGoldGlow 1.9s ease-in-out infinite}.review-row-btn:hover{transform:translateY(-1px) scale(1.04);background:linear-gradient(135deg,#fff9dc,#ffe582)!important;box-shadow:0 0 0 2px rgba(222,179,54,.28),0 0 25px rgba(226,185,62,.58)!important}.whatsapp-gold-mark{position:relative;z-index:1;display:grid;place-items:center;width:25px;height:25px;transform-origin:50% 12%;color:#d6a514;filter:drop-shadow(0 0 5px rgba(231,192,71,.78));animation:reviewSwing 1.35s ease-in-out infinite}.whatsapp-gold-mark svg{display:block;width:25px;height:25px;fill:currentColor}.review-row-btn .review-star{position:absolute;z-index:3;color:#ffd53e;font-size:11px;line-height:1;pointer-events:none;text-shadow:0 0 5px #fff,0 0 10px #ffd940;animation:reviewStar 1.7s ease-in-out infinite}.review-row-btn .star-one{inset-inline-start:1px;top:-9px}.review-row-btn .star-two{inset-inline-start:22px;top:-12px;animation-delay:.5s}.review-row-btn .star-three{inset-inline-start:42px;top:-7px;animation-delay:1s}@keyframes reviewGoldGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}@keyframes reviewSwing{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}@keyframes reviewStar{0%,100%{opacity:.2;transform:translateY(2px) scale(.6) rotate(0deg)}45%{opacity:1;transform:translateY(-3px) scale(1.4) rotate(145deg)}70%{opacity:.7;transform:translateY(-1px) scale(.95) rotate(230deg)}}@media(prefers-reduced-motion:reduce){.review-row-btn,.whatsapp-gold-mark,.review-row-btn .review-star{animation:none}}
 .plan-row-btn{display:inline-flex!important;align-items:center;gap:5px;border-color:#9bcac2!important;background:#edf8f5!important;color:#1d6f63!important;font-weight:900}.plan-row-btn::before{content:"✦";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:#2a9d8f;color:#fff}.plan-row-btn:hover{background:#dff2ee!important;box-shadow:0 8px 18px rgba(42,157,143,.18)!important}
-@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:minmax(0,1fr) 142px}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.payment-free{grid-column:1/-1}.completion-choice-grid{grid-template-columns:1fr}.role-options,.clinic-role-fields{grid-template-columns:1fr}.role-option{padding:15px}.clinic-role-picker{padding:14px}.clinic-role-actions{display:grid;grid-template-columns:1fr}.clinic-role-actions button,.clinic-role-actions .primary{width:100%;min-width:0}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
+@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-catalog-source{align-items:flex-start;flex-direction:column}.payment-catalog-source button{width:100%}.payment-procedure-row,.payment-other-row{grid-template-columns:1fr}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input,.payment-quantity,.payment-free{grid-column:1/-1}.payment-quantity{grid-template-columns:auto minmax(0,160px);justify-content:space-between;justify-items:stretch}.payment-stepper{justify-self:end}.payment-free{justify-content:flex-start}.completion-choice-grid{grid-template-columns:1fr}.role-options,.clinic-role-fields{grid-template-columns:1fr}.role-option{padding:15px}.clinic-role-picker{padding:14px}.clinic-role-actions{display:grid;grid-template-columns:1fr}.clinic-role-actions button,.clinic-role-actions .primary{width:100%;min-width:0}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 .auth-methods{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.auth-methods label{display:flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #d5e8df;border-radius:10px;background:#f8fcfa;font-size:13px}.auth-methods input{accent-color:#1d8059}.auth-card #authEmailLabel[hidden],.auth-card #authPhoneLabel[hidden]{display:none}
 .catalog-modal-card{width:min(900px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 145px 145px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}.catalog-warning{padding:9px 11px;border-radius:11px;background:#fff7dc!important;color:#785b0b!important}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-head{display:block}}
 .view-clinic #treatmentCatalogBtn{display:none}
@@ -317,6 +317,8 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   .admin-patient-hub .admin-hub-list{max-height:58vh;padding:8px 10px 11px}
   .admin-patient-hub .admin-patient-item{padding:9px 10px 9px 13px}
 }
+.payment-modal-card{max-width:880px}
+#paymentItemsLabel{color:#175f42;font-size:14px;font-weight:950}
 </style>
 </head>
 <body class="auth-checking">
@@ -368,7 +370,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
         <button id="exportBtn" type="button">📤 تصدير CSV</button>
         <button id="notificationsBtn" type="button">🔔 تفعيل إشعارات النظام</button>
         <button id="soundAlertsBtn" type="button">🔊 التنبيهات الصوتية مفعلة</button>
-        <button id="treatmentCatalogBtn" type="button">🧾 إجراءات وأسعار الخطط العلاجية</button>
+        <button id="treatmentCatalogBtn" type="button">🧾 الإجراءات والخدمات والأسعار</button>
         <button id="clinicsBtn" class="admin-only" type="button">🏥 إدارة العيادات والأطباء</button>
         <button id="usersBtn" type="button">👤 إدارة مستخدمي النظام</button>
         <button id="syncTestBtn" type="button">🧪 اختبار المزامنة</button>
@@ -389,7 +391,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   </div>
   <button id="viewIdentityChange" type="button">تغيير المهمة</button>
 </section>
-<div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span></div>
+<div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span><button id="alertRowDismissBtn" class="alert-row-dismiss" type="button" hidden>إلغاء التنبيه</button></div>
 <div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
 <aside id="doctorFloatingAlerts" class="doctor-floating-alerts clinic-only" hidden aria-live="polite">
   <button id="doctorFloatingAlertBtn" class="doctor-floating-alert-button" type="button" aria-haspopup="dialog" aria-controls="doctorFloatingAlertPanel" aria-expanded="false" title="تنبيهات واعتمادات الطبيب">
@@ -511,7 +513,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   <p id="clinicsError" class="auth-error"></p>
   <div class="clinic-directory-actions"><button type="button" data-close="clinicsModal">إلغاء</button><button id="addClinicSlotBtn" type="button">＋ فتح عيادة جديدة</button><button id="saveClinicsBtn" type="button" class="primary">حفظ العيادات والأطباء</button></div>
 </div></div>
-<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">إجراءات وأسعار الخطط العلاجية</h3><p>عدّل الاسم والسعر قبل الخصم وبعده مرة واحدة؛ ستظهر القيم تلقائيًا في خطط هذه العيادة.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">الأسعار اختيارية. أي سعر تعدّله الإدارة يدويًا داخل خطة محددة يبقى محفوظًا ولا يستبدله الكتالوج.</div><div class="catalog-columns"><span>اسم الإجراء</span><span>قبل الخصم</span><span>بعد الخصم</span><span></span></div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث الخطط</button></div></div></div>
+<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">الإجراءات والخدمات والأسعار</h3><p>عدّل اسم الإجراء والسعر قبل الخصم وبعده مرة واحدة؛ تتحدث منه الخطط العلاجية وأوامر الدفع لهذه العيادة.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">الأسعار اختيارية. أسماء الخدمات تظهر في أمر الدفع، بينما تظهر الأسعار تلقائيًا داخل الخطة العلاجية.</div><div class="catalog-columns"><span>اسم الإجراء</span><span>قبل الخصم</span><span>بعد الخصم</span><span></span></div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث النظام</button></div></div></div>
 <div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
   <h3 id="paymentModalTitle">اكتمال علاج المريض</h3>
   <p id="paymentPatientText">اختر الإجراءات المطلوبة بعد اكتمال العلاج.</p>
@@ -526,7 +528,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
     </label>
   </div>
   <p id="completionFlowNote" class="completion-flow-note"><b>المسار:</b> الطبيب يُكمل المسودة ويؤكد اعتمادها، ثم تستلمها الإدارة لإكمال الإجراءات والأسعار.</p>
-  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
+  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div class="payment-catalog-source"><div><strong id="paymentCatalogSourceTitle">قائمة الإجراءات والخدمات المركزية</strong><small id="paymentCatalogSourceHelp">تُدار من الإعدادات، ويظهر أي تعديل هنا تلقائيًا.</small></div><button id="paymentCatalogRefreshBtn" type="button">↻ تحديث القائمة</button></div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
   <div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج والمتابعة</button></div>
 </div></div>
 <div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية الاستشارية للأسنان على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
@@ -585,16 +587,40 @@ const PUSH_API='/api/push';
 const PRESENCE_API='/api/presence';
 const ALERTS_API='/api/alerts';
 const ADMIN_PATIENTS_API='/api/admin-patients';
-const POLL_MS=2000;
-const DASHBOARD_BUILD='7.29-compact-admin-hub';
+const POLL_MS=5000;
+const SYNC_WORK_HIDDEN_MS=60000;
+const SYNC_OFF_HOURS_MS=5*60*1000;
+const SYNC_OFF_HOURS_HIDDEN_MS=15*60*1000;
+const RIYADH_OFFSET_MS=3*60*60*1000;
+function syncCadence(now=Date.now()){
+  const riyadh=new Date(now+RIYADH_OFFSET_MS);
+  const day=riyadh.getUTCDay(),hour=riyadh.getUTCHours();
+  const friday=day===5;
+  const workHours=!friday&&hour>=14&&hour<23;
+  const hidden=document.hidden;
+  return {
+    friday,
+    workHours,
+    delay:workHours?(hidden?SYNC_WORK_HIDDEN_MS:POLL_MS):(hidden?SYNC_OFF_HOURS_HIDDEN_MS:SYNC_OFF_HOURS_MS)
+  };
+}
+function syncCadenceCopy(cadence=syncCadence()){
+  if(cadence.workHours)return lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة';
+  if(cadence.friday)return lang==='en'?'Reduced sync — Friday':'مزامنة مخفّضة — يوم الجمعة';
+  return lang==='en'?'Reduced sync outside working hours':'مزامنة مخفّضة خارج أوقات العمل';
+}
+function presenceCadence(){
+  const cadence=syncCadence();
+  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
+  return document.hidden?30*60*1000:10*60*1000;
+}
+function adminHubCadence(){
+  const cadence=syncCadence();
+  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
+  return document.hidden?30*60*1000:10*60*1000;
+}
+const DASHBOARD_BUILD='7.32-unified-payment-catalog';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
-const PAYMENT_PROCEDURES=[
-  {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
-  {id:'root_canal',ar:'علاج عصب وإعادة علاج عصب',en:'Root canal / retreatment'},
-  {id:'crowns_veneers',ar:'تركيبات وعدسات',en:'Crowns and veneers'},
-  {id:'post',ar:'وتد',en:'Post'},
-  {id:'removal',ar:'إزالة وتد أو إزالة تركيبة',en:'Post or crown removal'}
-];
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
   const key='bestcare_device_id_v1';
@@ -620,7 +646,7 @@ const IOS_INSTALL_COPY={
   ar:{menu:'📱 تثبيت التطبيق على iPhone',title:'تثبيت التطبيق على iPhone',help:'أربع خطوات بسيطة من متصفح Safari — دون متجر التطبيقات.',steps:[['افتح الرابط في Safari','إذا كنت تستخدم Chrome، انسخ الرابط وافتحه في Safari أولًا.'],['اضغط زر المشاركة','اضغط رمز المربع والسهم ↑ أسفل شاشة Safari.'],['اختر «إضافة إلى الشاشة الرئيسية»','مرّر قائمة المشاركة إلى أسفل إذا لم يظهر الخيار مباشرة.'],['اضغط «إضافة»','ستظهر أيقونة Best Care على الشاشة الرئيسية وتفتح كتطبيق مستقل.']],note:'مهم: استخدم Safari للتثبيت. بعد التثبيت افتح التطبيق من الأيقونة الجديدة، وستبقى المزامنة مرتبطة بنفس رابط العيادة.',shareTitle:'مشاركة التطبيق مع جهاز آخر',shareText:'انسخ الرابط وأرسله لمستخدم iPhone، ثم يتبع الخطوات أعلاه.',copy:'نسخ رابط التطبيق',close:'تم، فهمت الخطوات',copiedTitle:'تم نسخ الرابط',copiedText:'أرسله الآن إلى مستخدم iPhone لفتح التطبيق وتثبيته.',alreadyTitle:'التطبيق مثبت',alreadyText:'أنت تستخدم التطبيق الآن من وضع الشاشة المستقلة.'},
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
-const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
+const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
 let manualAlertFetchedAt=0;
 let audioContext=null;
@@ -651,7 +677,7 @@ function startSyncAfterAuth(){
   }
   if(window.__syncStarted)return;
   window.__syncStarted=true;
-  startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(3000)})
+  startAutomaticSync().catch(error=>{console.error('Automatic synchronization failed to start',error);sync.error=String(error?.message||error);setBadge('error',lang==='en'?'Auto sync failed — retrying':'تعذر بدء المزامنة — ستتم إعادة المحاولة',sync.error);scheduleAutomaticSync(syncCadence().workHours?30000:syncCadence().delay)})
 }
 function unlockApp(user=null){
   authUser=user||authUser;
@@ -870,6 +896,7 @@ function switchClinic(clinicId){
   location.href=`${location.pathname}?${params.toString()}`;
 }
 let treatmentCatalog=[];
+let treatmentCatalogLoadedAt=0;
 const DEFAULT_TREATMENT_CATALOG=[
   ['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
   ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
@@ -882,11 +909,42 @@ const DEFAULT_TREATMENT_CATALOG=[
   ['cleaning-gbt','تنظيف أسنان GBT'],['other','إجراء آخر']
 ].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
 const treatmentCatalogLocalKey=()=>`bestcare_treatment_catalog_${ACTIVE_CLINIC_ID}`;
+function normalizeTreatmentCatalog(items){
+  const seen=new Set();
+  return (Array.isArray(items)?items:[]).map((item,index)=>{
+    const name=String(item?.name||'').trim().slice(0,120);
+    let id=String(item?.id||`service-${index+1}`).trim().replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,80)||`service-${index+1}`;
+    while(seen.has(id))id=`${id}-${index+1}`;
+    seen.add(id);
+    const before=item?.beforePrice===''?'':Number(item?.beforePrice);
+    const after=(item?.afterPrice??item?.price)===''?'':Number(item?.afterPrice??item?.price);
+    return{id,name,beforePrice:Number.isFinite(before)?before:'',afterPrice:Number.isFinite(after)?after:''};
+  }).filter(item=>item.name);
+}
 function localTreatmentCatalog(){
   try{
     const items=JSON.parse(localStorage.getItem(treatmentCatalogLocalKey())||'null');
-    return Array.isArray(items)&&items.length?items.map(item=>({...item})):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
+    return Array.isArray(items)&&items.length?normalizeTreatmentCatalog(items):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
   }catch{return DEFAULT_TREATMENT_CATALOG.map(item=>({...item}))}
+}
+function setTreatmentCatalog(items){
+  treatmentCatalog=normalizeTreatmentCatalog(items);
+  if(!treatmentCatalog.length)treatmentCatalog=DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
+  localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));
+  treatmentCatalogLoadedAt=Date.now();
+  return treatmentCatalog;
+}
+function paymentProcedureCatalog(){
+  const source=treatmentCatalog.length?treatmentCatalog:localTreatmentCatalog();
+  return source.filter(item=>item.id!=='other'&&String(item.name||'').trim());
+}
+async function refreshTreatmentCatalog({force=false}={}){
+  if(!treatmentCatalog.length)treatmentCatalog=localTreatmentCatalog();
+  if(!force&&treatmentCatalogLoadedAt&&Date.now()-treatmentCatalogLoadedAt<30000)return treatmentCatalog;
+  const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');
+  return setTreatmentCatalog(Array.isArray(data.items)&&data.items.length?data.items:DEFAULT_TREATMENT_CATALOG);
 }
 const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function renderTreatmentCatalog(){
@@ -900,11 +958,7 @@ async function openTreatmentCatalog(){
   renderTreatmentCatalog();
   openModal('treatmentCatalogModal');
   try{
-    const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);
-    const data=await response.json();
-    if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');
-    treatmentCatalog=Array.isArray(data.items)&&data.items.length?data.items.map(item=>({...item})):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
-    localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));
+    await refreshTreatmentCatalog({force:true});
     $('treatmentCatalogError').textContent='';$('treatmentCatalogError').classList.remove('catalog-warning');
     renderTreatmentCatalog();
   }catch(error){
@@ -917,8 +971,8 @@ function collectTreatmentCatalog(){
 }
 async function saveTreatmentCatalog(){
   collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').classList.remove('catalog-warning');$('treatmentCatalogError').textContent='جارٍ الحفظ…';
-  localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(items));
-  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');treatmentCatalog=data.items||items;localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والأسعار','حُفظت القائمة مركزيًا وستظهر تلقائيًا داخل الخطط العلاجية لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent='حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
+  setTreatmentCatalog(items);
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');setTreatmentCatalog(data.items||items);if($('paymentModal').classList.contains('open'))renderPaymentProcedureOptions(true);$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والخدمات','حُفظت القائمة مركزيًا وستظهر تلقائيًا في الخطط العلاجية وأوامر الدفع لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent='حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
 }
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
 async function logoutApp(){
@@ -1063,8 +1117,36 @@ function setBadge(mode,text,detail=''){
   els.syncBadge.title=`${detail||text} | build ${DASHBOARD_BUILD}`;
   els.syncBadge.dataset.build=DASHBOARD_BUILD;
 }
+function setIdleSyncBadge(detail=''){
+  const cadence=syncCadence();
+  setBadge(cadence.workHours?'synced':'scheduled',syncCadenceCopy(cadence),detail||(lang==='en'?'Full live sync: Sat–Thu, 2:00 PM–11:00 PM (Riyadh)':'المزامنة المباشرة: السبت–الخميس، ٢:٠٠م–١١:٠٠م بتوقيت الرياض'));
+}
 const IS_DEPLOY_PREVIEW=/^deploy-preview-\d+--/i.test(location.hostname);
+let pushSubscriptionActive=null;
 function systemNotificationsEnabled(){return !IS_DEPLOY_PREVIEW&&'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('bestcare_system_notifications')==='enabled'}
+async function currentPushSubscription(){
+  if(!('serviceWorker' in navigator)||!('PushManager' in window))return null;
+  try{
+    const registration=await navigator.serviceWorker.ready;
+    return await registration.pushManager.getSubscription();
+  }catch(error){
+    console.warn('Push subscription state unavailable',error);
+    return null;
+  }
+}
+async function refreshPushSubscriptionState(){
+  const subscription=await currentPushSubscription();
+  pushSubscriptionActive=Boolean(subscription);
+  if(pushSubscriptionActive&&Notification.permission==='granted'){
+    localStorage.setItem('bestcare_system_notifications','enabled');
+    localStorage.setItem('bestcare_push_registered','enabled');
+  }else if(!pushSubscriptionActive){
+    localStorage.removeItem('bestcare_system_notifications');
+    localStorage.removeItem('bestcare_push_registered');
+  }
+  updateNotificationsButton();
+  return subscription;
+}
 function urlBase64ToUint8Array(value){
   const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)));
@@ -1090,10 +1172,11 @@ function updateNotificationsButton(){
     button.title=lang==='en'?'Enable external notifications on the final site only.':'فعّل التنبيهات الخارجية من الرابط النهائي فقط.';
     return;
   }
-  button.classList.toggle('notification-enabled',systemNotificationsEnabled());
+  const enabled=systemNotificationsEnabled()&&(pushSubscriptionActive!==false);
+  button.classList.toggle('notification-enabled',enabled);
   button.classList.toggle('notification-denied','Notification' in window&&Notification.permission==='denied');
-  button.textContent=systemNotificationsEnabled()?(lang==='en'?'🔕 Disable system notifications':'🔕 إيقاف إشعارات النظام'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
-  button.title=systemNotificationsEnabled()?(lang==='en'?'Stop Best Care alerts on this device.':'إيقاف تنبيهات أفضل عناية على هذا الجهاز.'):(lang==='en'?'Enable Best Care alerts on this device.':'تفعيل تنبيهات أفضل عناية على هذا الجهاز.');
+  button.textContent=enabled?(lang==='en'?'🔕 Disable system notifications':'🔕 إيقاف إشعارات النظام'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
+  button.title=enabled?(lang==='en'?'Stop Best Care alerts on this device.':'إيقاف تنبيهات أفضل عناية على هذا الجهاز.'):(lang==='en'?'Enable Best Care alerts on this device.':'تفعيل تنبيهات أفضل عناية على هذا الجهاز.');
 }
 async function requestSystemNotifications(){
   if(IS_DEPLOY_PREVIEW){
@@ -1118,25 +1201,32 @@ async function requestSystemNotifications(){
 }
 async function disableSystemNotifications(){
   const wasEnabled=localStorage.getItem('bestcare_system_notifications')==='enabled';
-  try{
-    if('serviceWorker' in navigator&&'PushManager' in window){
-      const registration=await navigator.serviceWorker.ready;
-      const subscription=await registration.pushManager.getSubscription();
-      if(subscription){
-        const endpoint=subscription.endpoint;
-        await subscription.unsubscribe();
-        await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint})}).catch(()=>{});
-      }
-    }
-  }catch(error){console.warn('Push unsubscribe failed',error)}
   localStorage.removeItem('bestcare_push_registered');
   localStorage.removeItem('bestcare_system_notifications');
+  pushSubscriptionActive=false;
   updateNotificationsButton();
-  if(wasEnabled)toast(lang==='en'?'Notifications disabled':'تم إيقاف الإشعارات',lang==='en'?'Best Care alerts have been stopped on this device.':'توقفت تنبيهات أفضل عناية على هذا الجهاز.');
+  try{
+    const subscription=await currentPushSubscription();
+    if(subscription){
+      const endpoint=subscription.endpoint;
+      await subscription.unsubscribe();
+      await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint})}).catch(()=>{});
+    }
+  }catch(error){console.warn('Push unsubscribe failed',error)}
+  if(wasEnabled||pushSubscriptionActive===false)toast(lang==='en'?'Notifications disabled':'تم إيقاف الإشعارات',lang==='en'?'Best Care alerts have been stopped on this device.':'توقفت تنبيهات أفضل عناية على هذا الجهاز.');
 }
 async function toggleSystemNotifications(){
-  if(localStorage.getItem('bestcare_system_notifications')==='enabled')await disableSystemNotifications();
-  else await requestSystemNotifications();
+  const button=$('notificationsBtn');
+  if(button)button.disabled=true;
+  try{
+    const subscription=await currentPushSubscription();
+    pushSubscriptionActive=Boolean(subscription);
+    if(subscription||localStorage.getItem('bestcare_system_notifications')==='enabled')await disableSystemNotifications();
+    else await requestSystemNotifications();
+  }finally{
+    if(button)button.disabled=false;
+    await refreshPushSubscriptionState();
+  }
 }
 async function showSystemNotification(event){
   if(!event||!systemNotificationsEnabled())return;
@@ -1199,7 +1289,7 @@ function markDirty(){
   clearTimeout(sync.pushTimer);
   sync.pushTimer=setTimeout(async()=>{
     await pushState();
-    scheduleAutomaticSync(POLL_MS);
+    scheduleAutomaticSync(syncCadence().delay);
   },100);
 }
 async function request(url,options={},timeout=12000){const c=new AbortController();const timer=setTimeout(()=>c.abort(),timeout);try{return await fetch(url,{...options,signal:c.signal,cache:'no-store',headers:{accept:'application/json',...(options.headers||{})}})}finally{clearTimeout(timer)}}
@@ -1295,7 +1385,7 @@ function renderPresence(){
     ?copy.unavailable
     :(presence.updatedAt?`${copy.updated}: ${new Date(presence.updatedAt).toLocaleTimeString(lang==='en'?'en-US':'ar-SA',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}`:copy.waiting);
 }
-function schedulePresence(delay=document.hidden?60000:30000){
+function schedulePresence(delay=presenceCadence()){
   clearTimeout(presence.timer);
   if(!presence.started||!authReady)return;
   presence.timer=setTimeout(()=>refreshPresence({silent:true}),delay);
@@ -1325,9 +1415,9 @@ function startPresence(){
   renderPresence();
   if(!window.__presenceListeners){
     window.__presenceListeners=true;
-    window.addEventListener('online',()=>refreshPresence({silent:true}));
-    window.addEventListener('focus',()=>refreshPresence({silent:true}));
-    document.addEventListener('visibilitychange',()=>document.hidden?schedulePresence(60000):refreshPresence({silent:true}));
+    window.addEventListener('online',()=>schedulePresence(1000));
+    window.addEventListener('focus',()=>schedulePresence(syncCadence().workHours?1000:presenceCadence()));
+    document.addEventListener('visibilitychange',()=>schedulePresence(document.hidden?presenceCadence():(syncCadence().workHours?1000:presenceCadence())));
   }
   refreshPresence({silent:true});
 }
@@ -1510,14 +1600,14 @@ function renderAdminPatientHub(){
     </article>`;
   }).join('');
 }
-function scheduleAdminPatientHub(delay=document.hidden?120000:30000){
+function scheduleAdminPatientHub(delay=adminHubCadence()){
   clearTimeout(adminPatientHub.timer);
   if(!adminPatientHub.started||VIEW_MODE!=='admin')return;
   adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub(),delay);
 }
 async function refreshAdminPatientHub({force=false}={}){
   if(VIEW_MODE!=='admin'||!authReady||adminPatientHub.loading)return false;
-  if(!force&&adminPatientHub.date===selectedDate&&Date.now()-Number(adminPatientHub.updatedAt||0)<5000){
+  if(!force&&adminPatientHub.date===selectedDate&&Date.now()-Number(adminPatientHub.updatedAt||0)<adminHubCadence()){
     scheduleAdminPatientHub();
     return false;
   }
@@ -1552,9 +1642,9 @@ function startAdminPatientHub(){
   adminPatientHub.started=true;
   if(!window.__adminHubListeners){
     window.__adminHubListeners=true;
-    window.addEventListener('online',()=>refreshAdminPatientHub({force:true}));
-    window.addEventListener('focus',()=>refreshAdminPatientHub({force:true}));
-    document.addEventListener('visibilitychange',()=>document.hidden?scheduleAdminPatientHub(120000):refreshAdminPatientHub({force:true}));
+    window.addEventListener('online',()=>scheduleAdminPatientHub(1000));
+    window.addEventListener('focus',()=>scheduleAdminPatientHub(syncCadence().workHours?1000:adminHubCadence()));
+    document.addEventListener('visibilitychange',()=>scheduleAdminPatientHub(document.hidden?adminHubCadence():(syncCadence().workHours?1000:adminHubCadence())));
   }
   refreshAdminPatientHub({force:true});
 }
@@ -1609,7 +1699,8 @@ async function pushState(){
     sync.error='';
     sync.lastSync=Date.now();
     persistLocal(sync.dirty);
-    setBadge(sync.dirty?'saving':'synced',sync.dirty?(lang==='en'?'Saving latest changes…':'جارٍ حفظ آخر التعديلات…'):(lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة'),`revision ${sync.revision}`);
+    if(sync.dirty)setBadge('saving',lang==='en'?'Saving latest changes…':'جارٍ حفظ آخر التعديلات…',`revision ${sync.revision}`);
+    else setIdleSyncBadge(`revision ${sync.revision}`);
     if(VIEW_MODE==='admin')refreshAdminPatientHub({force:true});
     if(sync.dirty){clearTimeout(sync.pushTimer);sync.pushTimer=setTimeout(pushState,80)}
     return true;
@@ -1620,7 +1711,10 @@ async function pushState(){
     return false;
   }finally{
     sync.pushing=false;
-    if(sync.dirty)scheduleAutomaticSync(2500);
+    if(sync.dirty){
+      const cadence=syncCadence();
+      scheduleAutomaticSync(sync.error?(cadence.workHours?30000:cadence.delay):2500);
+    }
   }
 }
 function applyRemote(data){
@@ -1667,7 +1761,7 @@ async function pullState(force=false){
     sync.ready=true;
     sync.error='';
     sync.lastSync=Date.now();
-    if(!sync.dirty)setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+    if(!sync.dirty)setIdleSyncBadge(`revision ${sync.revision}`);
     return true;
   }catch(e){
     sync.error=e.name==='AbortError'?'انتهت مهلة الاتصال':String(e.message||e);
@@ -1690,7 +1784,7 @@ async function runAutomaticSync(){
     sync.ready=false;
     sync.error='الجهاز غير متصل بالإنترنت';
     setBadge('error',lang==='en'?'Offline — retrying':'غير متصل — ستتم إعادة المحاولة',sync.error);
-    scheduleAutomaticSync(3000);
+    scheduleAutomaticSync(syncCadence().workHours?60000:syncCadence().delay);
     return;
   }
 
@@ -1704,7 +1798,11 @@ async function runAutomaticSync(){
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
-    const nextDelay=sync.error?3000:(document.hidden?20000:POLL_MS);
+    const cadence=syncCadence();
+    const nextDelay=sync.error?(cadence.workHours?30000:cadence.delay):cadence.delay;
+    if(!sync.error&&!sync.dirty&&!cadence.workHours){
+      setIdleSyncBadge();
+    }
     scheduleAutomaticSync(nextDelay);
   }
 }
@@ -1717,7 +1815,13 @@ async function startAutomaticSync(){
 
   const wake=()=>{
     clearTimeout(sync.autoTimer);
-    runAutomaticSync();
+    const cadence=syncCadence();
+    const elapsed=Date.now()-Number(sync.lastSync||0);
+    if(cadence.workHours||!sync.lastSync||elapsed>=cadence.delay)runAutomaticSync();
+    else{
+      setIdleSyncBadge();
+      scheduleAutomaticSync(Math.max(1000,cadence.delay-elapsed));
+    }
   };
 
   window.addEventListener('online',wake);
@@ -1730,7 +1834,7 @@ async function startAutomaticSync(){
     sync.ready=false;
     sync.error='الجهاز غير متصل بالإنترنت';
     setBadge('error',lang==='en'?'Offline — retrying':'غير متصل — ستتم إعادة المحاولة',sync.error);
-    scheduleAutomaticSync(3000);
+    scheduleAutomaticSync(syncCadence().workHours?60000:syncCadence().delay);
   });
 
   await runAutomaticSync();
@@ -2205,9 +2309,27 @@ function startActualTreatment(id){
   mutate(()=>{p.status='active';p.actualStartedAt=Date.now();p.lastCalledAt=p.lastCalledAt||Date.now()});
   toast('بدأ الوقت الفعلي',`${firstName(p.name)} — دون تغيير وقت الموعد الأصلي`);
 }
-function renderPaymentProcedureOptions(){
+function currentPaymentSelections(){
+  const selections=new Map();
+  document.querySelectorAll('[data-payment-row]').forEach(row=>{
+    const id=String(row.dataset.paymentRow||'');
+    if(!id)return;
+    selections.set(id,{
+      selected:Boolean(row.querySelector('[data-payment-select]')?.checked),
+      quantity:Math.max(1,Math.min(99,Number(row.querySelector('[data-payment-quantity]')?.value||1))),
+      free:Boolean(row.querySelector('[data-payment-free]')?.checked)
+    });
+  });
+  return selections;
+}
+function renderPaymentProcedureOptions(preserve=false){
   const list=$('paymentProcedureList');if(!list)return;
-  list.innerHTML=PAYMENT_PROCEDURES.map(item=>`<div class="payment-procedure-row" data-payment-row="${item.id}"><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${item.id}"><span>${escapeHtml(lang==='en'?item.en:item.ar)}</span></label><div class="payment-quantity"><small>${lang==='en'?'Qty':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${item.id}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="1" data-payment-quantity="${item.id}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${item.id}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${item.id}"><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`).join('');
+  const saved=preserve?currentPaymentSelections():new Map();
+  const items=paymentProcedureCatalog();
+  list.innerHTML=items.length?items.map(item=>{
+    const state=saved.get(item.id)||{selected:false,quantity:1,free:false};
+    return `<div class="payment-procedure-row" data-payment-row="${escapeHtml(item.id)}"><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${escapeHtml(item.id)}" ${state.selected?'checked':''}><span>${escapeHtml(item.name)}</span></label><div class="payment-quantity"><small>${lang==='en'?'Quantity':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="${state.quantity}" data-payment-quantity="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${escapeHtml(item.id)}" ${state.free?'checked':''}><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`;
+  }).join(''):`<div class="payment-empty">${lang==='en'?'No services are available. Add them from Settings.':'لا توجد خدمات متاحة. أضفها من الإعدادات ← الإجراءات والخدمات والأسعار.'}</div>`;
 }
 function changePaymentQuantity(input,delta){
   if(!input)return;
@@ -2222,11 +2344,11 @@ function resetPaymentProcedureEditor(){
   $('paymentDiscountInput').value='';
 }
 function collectPaymentItems(){
-  const items=PAYMENT_PROCEDURES.flatMap(item=>{
+  const items=paymentProcedureCatalog().flatMap(item=>{
     if(!document.querySelector(`[data-payment-select="${item.id}"]`)?.checked)return[];
     const quantity=Math.max(1,Math.min(99,Number(document.querySelector(`[data-payment-quantity="${item.id}"]`)?.value||1)));
     const free=Boolean(document.querySelector(`[data-payment-free="${item.id}"]`)?.checked);
-    return [{code:item.id,name:item.ar,quantity,free}];
+    return [{code:item.id,name:item.name,quantity,free}];
   });
   if($('paymentOtherCheck').checked){
     const name=$('paymentOtherInput').value.trim();
@@ -2234,6 +2356,22 @@ function collectPaymentItems(){
     items.push({code:'other',name,quantity:Math.max(1,Math.min(99,Number($('paymentOtherQuantity').value||1))),free:$('paymentOtherFree').checked});
   }
   return {items,discount:$('paymentDiscountInput').value.trim()};
+}
+async function updatePaymentCatalogFromSettings({notify=true}={}){
+  const button=$('paymentCatalogRefreshBtn');
+  button?.classList.add('is-loading');
+  if(button)button.textContent=lang==='en'?'Updating…':'جارٍ التحديث…';
+  try{
+    await refreshTreatmentCatalog({force:true});
+    renderPaymentProcedureOptions(true);
+    if(notify)toast(lang==='en'?'Services updated':'تم تحديث الإجراءات والخدمات',lang==='en'?'The payment order now uses the latest settings.':'يستخدم أمر الدفع الآن آخر قائمة محفوظة في الإعدادات.');
+  }catch(error){
+    if(notify)toast(lang==='en'?'Could not update services':'تعذر تحديث قائمة الخدمات',lang==='en'?'The locally saved list is still available.':'ستبقى القائمة المحفوظة على هذا الجهاز متاحة.');
+    console.warn('Payment catalog refresh failed',error);
+  }finally{
+    button?.classList.remove('is-loading');
+    if(button)button.textContent=lang==='en'?'↻ Update list':'↻ تحديث القائمة';
+  }
 }
 function paymentItemsSummary(items,discount=''){
   const parts=(Array.isArray(items)?items:[]).map(item=>`${item.name} ×${item.quantity}${item.free?' (مجاني)':''}`);
@@ -2249,6 +2387,7 @@ function finishPatient(id){
   $('paymentActionField').hidden=true;
   resetPaymentProcedureEditor();
   openModal('paymentModal');
+  updatePaymentCatalogFromSettings({notify:false});
 }
 async function confirmPatientCompletion(){
   const p=patientById(pendingCompletionId);if(!p)return;
@@ -2367,7 +2506,13 @@ function renderAlertUI(){
   els.alertBtnHint.textContent=active
     ? tr('alertActiveHint')
     : tr('alertInactiveHint');
-  els.clearAlertBtn.hidden=!manualAlert.active||authUser?.role!=='admin';
+  const canClearManualAlert=Boolean(manualAlert.active&&authUser?.role==='admin');
+  els.clearAlertBtn.hidden=authUser?.role!=='admin';
+  els.clearAlertBtn.disabled=!canClearManualAlert;
+  els.clearAlertBtn.textContent=canClearManualAlert
+    ?(lang==='en'?'Cancel current alert':'إلغاء التنبيه الحالي')
+    :(lang==='en'?'No active alert':'لا يوجد تنبيه فعال');
+  els.alertRowDismissBtn.hidden=!canClearManualAlert;
 }
 function renderLive(updateStructure=true){
   const derived=patients.map(p=>derivedStatus(p));
@@ -2715,10 +2860,10 @@ async function movePatientToDate(item,targetDate){
     sync.localUpdatedAt=Date.now();
     persistLocal(false);
     render();
-    setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+    setIdleSyncBadge(`revision ${sync.revision}`);
     patientFormSavedFeedback(true,item,`${firstName(item.name)} — ${sourceDate} ← ${targetDate}`);
     resetPatientForm(false);
-    scheduleAutomaticSync(POLL_MS);
+    scheduleAutomaticSync(syncCadence().delay);
     return true;
   }catch(error){
     if(selectedDate===sourceDate&&!patients.some(patient=>String(patient.id)===String(item.id))){
@@ -2734,7 +2879,7 @@ async function movePatientToDate(item,targetDate){
       await pushState();
     }
     toast(tr('dateMoveFailed'),String(error.message||error));
-    scheduleAutomaticSync(1200);
+    scheduleAutomaticSync(syncCadence().workHours?1200:syncCadence().delay);
     return false;
   }finally{
     saveButton.disabled=false;
@@ -2957,7 +3102,7 @@ async function syncTest(){
       toast('فشل الاختبار',sync.error||'خطأ غير معروف');
     }
   }finally{
-    scheduleAutomaticSync(POLL_MS);
+    scheduleAutomaticSync(syncCadence().delay);
   }
 }
 async function openAlertComposer(){
@@ -2997,6 +3142,11 @@ async function publishAlert(){
   finally{button.disabled=false}
 }
 async function clearAlert(){
+  if(!manualAlert.active){
+    toast(lang==='en'?'No active alert':'لا يوجد تنبيه فعال',lang==='en'?'There is no published administration alert to cancel.':'لا يوجد تنبيه منشور من الإدارة لإلغائه.');
+    return;
+  }
+  if(!confirm(lang==='en'?'Cancel the current alert on all connected screens?':'إلغاء التنبيه الحالي من جميع الشاشات المتصلة؟'))return;
   const button=els.clearAlertBtn;button.disabled=true;
   try{
     const response=await request(ALERTS_API,{method:'DELETE'});
@@ -3201,6 +3351,9 @@ function applyLang(){
   $('completionFlowNote').innerHTML=lang==='en'?'<strong>Workflow:</strong> The doctor completes and approves the draft, then administration receives it to finish the process.':'<strong>المسار:</strong> يُكمل الطبيب المسودة ويعتمدها، ثم تستلمها الإدارة لاستكمال الإجراءات.';
   setText('#confirmCompletionBtn',lang==='en'?'Confirm completion and continue':'اعتماد إكمال العلاج والمتابعة');
   setText('#paymentItemsLabel',lang==='en'?'Payment order procedures':'إجراءات أمر الدفع');
+  setText('#paymentCatalogSourceTitle',lang==='en'?'Central procedures and services list':'قائمة الإجراءات والخدمات المركزية');
+  setText('#paymentCatalogSourceHelp',lang==='en'?'Managed from Settings; saved changes appear here automatically.':'تُدار من الإعدادات، ويظهر أي تعديل محفوظ هنا تلقائيًا.');
+  setText('#paymentCatalogRefreshBtn',lang==='en'?'↻ Update list':'↻ تحديث القائمة');
   setText('#paymentOtherLabel',lang==='en'?'Other procedure':'إجراء آخر');
   setText('#paymentDiscountLabel',lang==='en'?'Discount (written note)':'الخصم (كتابة)');
   $('paymentOtherInput').placeholder=lang==='en'?'Write the other procedure':'اكتب الإجراء الآخر';
@@ -3237,7 +3390,7 @@ function applyLang(){
   $('langBtn').textContent=lang==='en'?'العربية':'English';
   if(sync.error)setBadge('error',lang==='en'?'Connection failed — retrying':'فشل الاتصال — ستتم إعادة المحاولة',sync.error);
   else if(sync.pushing||sync.dirty)setBadge('saving',lang==='en'?'Saving automatically…':'جارٍ الحفظ تلقائيًا…');
-  else if(sync.ready)setBadge('synced',lang==='en'?'Live sync active':'المزامنة المباشرة مفعلة',`revision ${sync.revision}`);
+  else if(sync.ready)setIdleSyncBadge(`revision ${sync.revision}`);
   else setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ الاتصال تلقائيًا…');
   if(editingId){
     $('patientFormTitle').textContent=tr('editPatient');
@@ -3309,12 +3462,14 @@ $('clinicSwitcher').addEventListener('change',event=>switchClinic(event.target.v
 $('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();treatmentCatalog.push({id:`custom-${Date.now()}`,name:'',beforePrice:'',afterPrice:''});renderTreatmentCatalog();$('treatmentCatalogList').lastElementChild?.querySelector('[data-catalog-name]')?.focus()});
 $('treatmentCatalogList').addEventListener('click',event=>{const button=event.target.closest('[data-catalog-delete]');if(!button)return;collectTreatmentCatalog();treatmentCatalog.splice(Number(button.dataset.catalogDelete),1);renderTreatmentCatalog()});
 $('saveTreatmentCatalogBtn').addEventListener('click',saveTreatmentCatalog);
+$('paymentCatalogRefreshBtn').addEventListener('click',()=>updatePaymentCatalogFromSettings({notify:true}));
 $('syncTestBtn').addEventListener('click',syncTest);
 $('logoutBtn').addEventListener('click',logoutApp);
 $('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
 $('alertBtn').addEventListener('click',openAlertComposer);
 $('sendAlertBtn').addEventListener('click',publishAlert);
 $('clearAlertBtn').addEventListener('click',clearAlert);
+$('alertRowDismissBtn').addEventListener('click',clearAlert);
 $('alertMessageInput').addEventListener('keydown',event=>{if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();publishAlert()}});
 document.querySelectorAll('input[name="alertScope"]').forEach(input=>input.addEventListener('change',updateAlertTargetUI));
 els.alertTargetClinic.addEventListener('change',updateAlertTargetUI);
@@ -3492,7 +3647,9 @@ if(NEED_ROLE_CHOICE)openRoleChoice();
 updateClock();
 setInterval(updateClock,1000);
 registerPwa();
-disablePreviewPushSubscription();
+disablePreviewPushSubscription()
+  .then(refreshPushSubscriptionState)
+  .catch(error=>console.warn('Push state refresh failed',error));
 
 })();
 </script>
