@@ -61,6 +61,11 @@
   to = "/.netlify/functions/treatment-plan-registry"
   status = 200
 
+[[redirects]]
+  from = "/api/lab-cases"
+  to = "/.netlify/functions/lab-cases"
+  status = 200
+
 [[headers]]
   for = "/manifest.webmanifest"
   [headers.values]

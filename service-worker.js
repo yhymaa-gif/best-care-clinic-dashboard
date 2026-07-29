@@ -1,9 +1,10 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260726-compact-admin-hub';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260729-dental-lab';
 const APP_SHELL=[
   './',
   './index.html',
   './treatment-plan.html',
   './offline.html',
+  './lab.html',
   './manifest.webmanifest',
   './best-care-logo.png',
   './assets/treatment-plan-department-stamp.svg',
@@ -45,7 +46,11 @@ self.addEventListener('fetch',event=>{
   }
 
   if(request.mode==='navigate'){
-    const shellPage=url.pathname.endsWith('/treatment-plan.html')?'./treatment-plan.html':'./index.html';
+    const shellPage=url.pathname.endsWith('/treatment-plan.html')
+      ?'./treatment-plan.html'
+      :url.pathname.endsWith('/lab.html')
+        ?'./lab.html'
+        :'./index.html';
     event.respondWith(
       fetch(request)
         .then(response=>{
