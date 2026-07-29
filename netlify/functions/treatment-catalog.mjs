@@ -6,7 +6,6 @@ const reply = (data, status = 200) => new Response(JSON.stringify(data), { statu
 const store = getStore({ name: 'clinic-treatment-catalog', consistency: 'strong' });
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
-const DEFAULT_LAB_IDS = new Set(['ceramic-crown', 'ceramic-veneer', 'implant-crown', 'whitening-trays']);
 const DEFAULT_ITEMS = [
   ['cosmetic-filling', 'حشوة تجميلية'],
   ['post-rct-filling', 'حشوة تجميلية بعد علاج العصب'],
@@ -28,7 +27,7 @@ const DEFAULT_ITEMS = [
   ['cleaning-gbt', 'تنظيف أسنان GBT'],
   ['whitening-trays', 'قوالب تبييض'],
   ['other', 'إجراء آخر']
-].map(([id, name]) => ({ id, name, beforePrice: '', afterPrice: '', requiresLab: DEFAULT_LAB_IDS.has(id) }));
+].map(([id, name]) => ({ id, name, beforePrice: '', afterPrice: '' }));
 
 const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map((item, index) => {
   const id = cleanText(item?.id, 50).toLowerCase().replace(/[^a-z0-9_-]/g, '') || `custom-${index + 1}`;
@@ -41,8 +40,7 @@ const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map
     id,
     name: cleanText(item?.name, 120),
     beforePrice,
-    afterPrice,
-    requiresLab: item?.requiresLab === undefined ? DEFAULT_LAB_IDS.has(id) : Boolean(item.requiresLab)
+    afterPrice
   };
 }).filter(item => item.name);
 const cleanDoctorKey = value => cleanText(value, 100).toLocaleLowerCase('ar').replace(/\s+/g, ' ') || 'clinic-default';

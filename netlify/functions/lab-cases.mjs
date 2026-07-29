@@ -102,7 +102,7 @@ const visibleCases = cases => cases
 const clinicLabel = item => `${item.clinicName || 'العيادة'} · رقم ${item.roomNumber || ''}${item.doctorName ? ` · د. ${item.doctorName}` : ''}`;
 const statusCopy = status => ({
   pending_send: ['حالة معمل جديدة', 'تم إنشاء حالة معمل وبانتظار إرسالها.'],
-  sent: ['أُرسلت الحالة للمعمل', 'بدأ احتساب مدة الحالة لدى المعمل.'],
+  sent: ['سُلّمت الحالة للمعمل', 'بدأ احتساب مدة الحالة لدى المعمل.'],
   in_production: ['الحالة قيد التصنيع', 'بدأ المعمل تنفيذ الحالة.'],
   ready_at_lab: ['الحالة جاهزة لدى المعمل', 'الحالة جاهزة للاستلام من المعمل.'],
   received_clinic: ['وصلت الحالة إلى العيادة', 'وصلت الحالة ولم تُسلّم للمريض بعد.'],

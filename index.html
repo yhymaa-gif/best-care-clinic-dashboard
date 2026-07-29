@@ -135,7 +135,7 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 .plan-row-btn{display:inline-flex!important;align-items:center;gap:5px;border-color:#9bcac2!important;background:#edf8f5!important;color:#1d6f63!important;font-weight:900}.plan-row-btn::before{content:"✦";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:#2a9d8f;color:#fff}.plan-row-btn:hover{background:#dff2ee!important;box-shadow:0 8px 18px rgba(42,157,143,.18)!important}
 @media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-catalog-source{align-items:flex-start;flex-direction:column}.payment-catalog-source button{width:100%}.payment-procedure-row,.payment-other-row{grid-template-columns:1fr}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input,.payment-quantity,.payment-free{grid-column:1/-1}.payment-quantity{grid-template-columns:auto minmax(0,160px);justify-content:space-between;justify-items:stretch}.payment-stepper{justify-self:end}.payment-free{justify-content:flex-start}.completion-choice-grid{grid-template-columns:1fr}.role-options,.clinic-role-fields{grid-template-columns:1fr}.role-option{padding:15px}.clinic-role-picker{padding:14px}.clinic-role-actions{display:grid;grid-template-columns:1fr}.clinic-role-actions button,.clinic-role-actions .primary{width:100%;min-width:0}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 .auth-methods{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.auth-methods label{display:flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #d5e8df;border-radius:10px;background:#f8fcfa;font-size:13px}.auth-methods input{accent-color:#1d8059}.auth-card #authEmailLabel[hidden],.auth-card #authPhoneLabel[hidden]{display:none}
-.catalog-modal-card{width:min(980px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 130px 130px 115px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-lab-toggle{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:10px;background:#eaf6f0;color:#176244;font-size:10px;font-weight:900}.catalog-lab-toggle input{width:18px;height:18px;accent-color:#1f7b56}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}.catalog-warning{padding:9px 11px;border-radius:11px;background:#fff7dc!important;color:#785b0b!important}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 105px 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-head{display:block}}
+.catalog-modal-card{width:min(900px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 140px 140px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}.catalog-warning{padding:9px 11px;border-radius:11px;background:#fff7dc!important;color:#785b0b!important}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-head{display:block}}
 .view-clinic #treatmentCatalogBtn{display:none}
 .clinic-only{display:none}
 body.view-clinic .clinic-only{display:block}
@@ -320,6 +320,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
 .payment-modal-card{max-width:880px}
 #paymentItemsLabel{color:#175f42;font-size:14px;font-weight:950}
 .lab-payment-box{display:grid;gap:12px;margin-top:14px;padding:14px;border:1px solid #b8d7c8;border-radius:17px;background:linear-gradient(145deg,#f1faf5,#fff)}.lab-payment-box[hidden]{display:none}.lab-payment-head{display:flex;align-items:center;gap:11px}.lab-payment-icon{display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;border-radius:13px;background:#dff2e8;color:#176244;font-size:22px}.lab-payment-head strong,.lab-payment-head small{display:block}.lab-payment-head small{margin-top:3px;color:var(--muted);font-size:10px}.lab-assigned-doctor{display:inline-flex;align-items:center;gap:5px;margin-inline-start:auto;padding:6px 10px;border:1px solid #c8dce8;border-radius:999px;background:#eef5f9;color:#315e77;font-size:10px;font-weight:900}.lab-assigned-doctor::before{content:"●";font-size:7px;color:#3c82a3}.lab-payment-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.lab-payment-grid label{display:grid;gap:5px;color:#4f6c5e;font-size:10px;font-weight:900}.lab-payment-grid select,.lab-payment-grid input{width:100%;min-height:42px}.lab-payment-units{display:flex;align-items:center;overflow:hidden;border:1px solid #b9d2c5;border-radius:11px;background:#fff;direction:ltr}.lab-payment-units button{width:40px;height:40px;padding:0;border:0;border-radius:0;background:#eef7f2;color:#176244;font-size:22px}.lab-payment-units input{min-width:50px!important;border:0!important;text-align:center;font-weight:950;pointer-events:none}.lab-sent-now{display:flex!important;grid-column:1/-1;align-items:center;gap:8px;padding:9px 11px;border:1px solid #d9e7e0;border-radius:12px;background:#fff}.lab-sent-now input{width:18px!important;min-height:auto!important;height:18px;accent-color:#1f7b56}.lab-procedure-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;background:#dff3e8;color:#176445;font-size:9px;font-weight:900}.lab-row-badge{display:inline-flex;align-items:center;gap:5px;margin:5px 7px 0 0;padding:5px 8px;border:1px solid #b9d8c9;border-radius:999px;background:#eaf7f0;color:#176244;font-size:9px;font-weight:950;cursor:pointer}.lab-row-badge.late{border-color:#efbdc4;background:#fff0f2;color:#ad293c}.lab-row-badge.received{border-color:#9fd1b5;background:#ddf4e7;color:#14633f}.lab-row-badge::before{content:"◆";font-size:8px}.lab-page-link{color:#176244!important;background:#e8f5ee!important}.payment-ordering-note{display:flex;align-items:center;gap:7px;margin:-3px 0 10px;padding:7px 10px;border-radius:10px;background:#f5f8f6;color:#557064;font-size:10px;font-weight:800}.payment-catalog-doctor{color:#286b4e!important;font-weight:900}.payment-procedure-copy{display:grid;gap:4px;min-width:0}.payment-procedure-meta{display:flex;gap:5px;flex-wrap:wrap}.payment-favorite-toggle{display:grid;place-items:center;width:40px;height:40px;padding:0;border-radius:12px;background:#fff9df;color:#b77d00;border-color:#e3bd4b;font-size:21px}.payment-procedure-row:not(.payment-other-row){grid-template-columns:42px minmax(210px,1fr) minmax(190px,220px) 100px}.payment-procedure-row.is-favorite{border-color:#e3c45f;background:#fffdf4}@media(max-width:680px){.lab-payment-grid{grid-template-columns:1fr}.lab-sent-now{grid-column:auto}.lab-payment-head{align-items:flex-start;flex-wrap:wrap}.lab-assigned-doctor{margin-inline-start:54px}.payment-procedure-row:not(.payment-other-row){grid-template-columns:42px minmax(0,1fr)}.payment-procedure-row:not(.payment-other-row) .payment-quantity,.payment-procedure-row:not(.payment-other-row) .payment-free{grid-column:1/-1}}
+.lab-entry-btn{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#276f8c,#1e536b)!important;color:#fff!important;border-color:#17485e!important;box-shadow:0 7px 15px rgba(31,91,117,.18)}.lab-entry-btn::before{content:"◆";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:rgba(255,255,255,.18);font-size:10px}.lab-entry-btn:hover{box-shadow:0 10px 22px rgba(31,91,117,.28)!important}.lab-case-modal-card{width:min(760px,96vw);padding:0;overflow:hidden}.lab-case-modal-head{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:13px;padding:18px 20px;background:linear-gradient(135deg,#174f68,#287a91);color:#fff}.lab-case-modal-head>span:first-child{display:grid;place-items:center;width:54px;height:54px;border-radius:17px;background:rgba(255,255,255,.16);font-size:25px;box-shadow:inset 0 1px 0 rgba(255,255,255,.28)}.lab-case-modal-head h3,.lab-case-modal-head p{margin:0}.lab-case-modal-head p{margin-top:4px;color:rgba(255,255,255,.8);font-size:11px}.lab-case-modal-head button{width:40px;height:40px;padding:0;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;font-size:23px}.lab-patient-strip{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;margin:16px 18px 0;padding:12px 14px;border:1px solid #c9dce4;border-radius:14px;background:#f4f9fb}.lab-patient-strip strong,.lab-patient-strip small{display:block}.lab-patient-strip strong{color:#184f68}.lab-patient-strip small{margin-top:3px;color:#617986}.lab-case-form{padding:16px 18px 4px}.lab-case-work{grid-column:1/-1}.lab-case-work-other{grid-column:1/-1}.lab-case-actions{padding:14px 18px 18px}.lab-case-actions .primary{min-width:190px;background:#1e6680;border-color:#1e6680}.lab-case-open-page{margin-inline-end:auto;color:#1c6079;background:#edf7fa;border-color:#bfd9e2}@media(max-width:680px){.lab-case-modal-head{grid-template-columns:46px minmax(0,1fr) auto;padding:14px}.lab-case-modal-head>span:first-child{width:46px;height:46px}.lab-patient-strip{grid-template-columns:1fr}.lab-case-actions{display:grid;grid-template-columns:1fr}.lab-case-actions button{width:100%}.lab-case-open-page{margin-inline-end:0}}
 </style>
 </head>
 <body class="auth-checking">
@@ -515,7 +516,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   <p id="clinicsError" class="auth-error"></p>
   <div class="clinic-directory-actions"><button type="button" data-close="clinicsModal">إلغاء</button><button id="addClinicSlotBtn" type="button">＋ فتح عيادة جديدة</button><button id="saveClinicsBtn" type="button" class="primary">حفظ العيادات والأطباء</button></div>
 </div></div>
-<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">الإجراءات والخدمات والأسعار</h3><p>عدّل اسم الإجراء والأسعار، وحدد الخدمات التي تحتاج معمل أسنان.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">الإجراء المعلَّم «يحتاج معمل» يفتح بيانات المعمل تلقائيًا داخل أمر الدفع.</div><div class="catalog-columns"><span>اسم الإجراء</span><span>قبل الخصم</span><span>بعد الخصم</span><span>ربط المعمل</span><span></span></div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث النظام</button></div></div></div>
+<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">الإجراءات والخدمات والأسعار</h3><p>عدّل اسم الإجراء والسعر قبل الخصم وبعده. حالات المعمل تُضاف مباشرة من قائمة المرضى.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">هذه القائمة مخصصة لأوامر الدفع والخطط العلاجية فقط، ولا تُنشئ حالات معمل تلقائيًا.</div><div class="catalog-columns"><span>اسم الإجراء</span><span>قبل الخصم</span><span>بعد الخصم</span><span></span></div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث النظام</button></div></div></div>
 <div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
   <h3 id="paymentModalTitle">اكتمال علاج المريض</h3>
   <p id="paymentPatientText">اختر الإجراءات المطلوبة بعد اكتمال العلاج.</p>
@@ -530,8 +531,24 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
     </label>
   </div>
   <p id="completionFlowNote" class="completion-flow-note"><b>المسار:</b> الطبيب يُكمل المسودة ويؤكد اعتمادها، ثم تستلمها الإدارة لإكمال الإجراءات والأسعار.</p>
-  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div class="payment-catalog-source"><div><strong id="paymentCatalogSourceTitle">قائمة الإجراءات والخدمات المركزية</strong><small id="paymentCatalogSourceHelp">تُدار من الإعدادات، ويظهر أي تعديل هنا تلقائيًا.</small><small id="paymentCatalogDoctor" class="payment-catalog-doctor"></small></div><button id="paymentCatalogRefreshBtn" type="button">↻ تحديث القائمة</button></div><div id="paymentOrderingNote" class="payment-ordering-note">★ المفضلة أولًا، ثم الإجراءات الأكثر استخدامًا لهذا الطبيب.</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div id="labPaymentBox" class="lab-payment-box" hidden><div class="lab-payment-head"><span class="lab-payment-icon" aria-hidden="true">◆</span><div><strong>بيانات معمل الأسنان</strong><small>ظهر هذا القسم لأن الإجراء المختار يحتاج تصنيعًا معمليًا.</small></div><span id="labAssignedDoctor" class="lab-assigned-doctor"></span></div><div class="lab-payment-grid"><label>اسم المعمل<select id="labNameSelect"><option value="">اختر المعمل</option><option value="دانتي">دانتي</option><option value="كولجين">كولجين</option><option value="السن الرقمي ديجيتال">السن الرقمي ديجيتال</option><option value="السن الطبيعي">السن الطبيعي</option><option value="معمل مروان">معمل مروان</option><option value="other">معمل آخر</option></select></label><label id="labCustomNameLabel" class="lab-custom-name" hidden>اسم المعمل الآخر<input id="labCustomNameInput" maxlength="100" placeholder="اكتب اسم المعمل"></label><label>عدد الوحدات<span class="lab-payment-units"><button id="labUnitsMinus" type="button" aria-label="إنقاص عدد الوحدات">−</button><input id="labUnitsInput" type="text" inputmode="numeric" readonly value="1"><button id="labUnitsPlus" type="button" aria-label="زيادة عدد الوحدات">+</button></span></label><label>تاريخ الاستلام المتوقع<input id="labExpectedDate" type="date"></label><label>المادة أو النوع<input id="labMaterialInput" maxlength="80" placeholder="مثال: زركون، E-max"></label><label>درجة اللون<input id="labShadeInput" maxlength="50" placeholder="اختياري"></label><label class="lab-sent-now"><input id="labSentNowCheck" type="checkbox"><span>أُرسلت الحالة للمعمل الآن — ابدأ العداد</span></label></div></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
+  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div class="payment-catalog-source"><div><strong id="paymentCatalogSourceTitle">قائمة الإجراءات والخدمات المركزية</strong><small id="paymentCatalogSourceHelp">تُدار من الإعدادات، ويظهر أي تعديل هنا تلقائيًا.</small><small id="paymentCatalogDoctor" class="payment-catalog-doctor"></small></div><button id="paymentCatalogRefreshBtn" type="button">↻ تحديث القائمة</button></div><div id="paymentOrderingNote" class="payment-ordering-note">★ المفضلة أولًا، ثم الإجراءات الأكثر استخدامًا لهذا الطبيب.</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
   <div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج والمتابعة</button></div>
+</div></div>
+<div id="labCaseModal" class="modal"><div class="modal-card lab-case-modal-card" role="dialog" aria-modal="true" aria-labelledby="labCaseModalTitle">
+  <div class="lab-case-modal-head"><span aria-hidden="true">◆</span><div><h3 id="labCaseModalTitle">إضافة حالة معمل</h3><p>إدخال سريع مستقل عن أمر الدفع</p></div><button type="button" data-close="labCaseModal" aria-label="إغلاق">×</button></div>
+  <div class="lab-patient-strip"><div><strong id="labPatientName">—</strong><small id="labPatientIdentity">—</small></div><span id="labAssignedDoctor" class="lab-assigned-doctor"></span></div>
+  <div class="lab-case-form"><div class="lab-payment-grid">
+    <label class="lab-case-work">نوع الحالة<select id="labWorkType"><option value="">اختر نوع الحالة</option><option value="تركيب تاج">تركيب تاج</option><option value="فينير">فينير</option><option value="تركيبة زراعة">تركيبة زراعة</option><option value="قوالب تبييض">قوالب تبييض</option><option value="تركيبة مؤقتة">تركيبة مؤقتة</option><option value="other">إجراء معملي آخر</option></select></label>
+    <label id="labCustomWorkLabel" class="lab-case-work-other" hidden>الإجراء المعملي<input id="labCustomWorkInput" maxlength="120" placeholder="اكتب الإجراء المطلوب"></label>
+    <label>اسم المعمل<select id="labNameSelect"><option value="">اختر المعمل</option><option value="دانتي">دانتي</option><option value="كولجين">كولجين</option><option value="السن الرقمي ديجيتال">السن الرقمي ديجيتال</option><option value="السن الطبيعي">السن الطبيعي</option><option value="معمل مروان">معمل مروان</option><option value="other">معمل آخر</option></select></label>
+    <label id="labCustomNameLabel" class="lab-custom-name" hidden>اسم المعمل الآخر<input id="labCustomNameInput" maxlength="100" placeholder="اكتب اسم المعمل"></label>
+    <label>عدد الوحدات<span class="lab-payment-units"><button id="labUnitsMinus" type="button" aria-label="إنقاص عدد الوحدات">−</button><input id="labUnitsInput" type="text" inputmode="numeric" readonly value="1"><button id="labUnitsPlus" type="button" aria-label="زيادة عدد الوحدات">+</button></span></label>
+    <label>المادة أو النوع<input id="labMaterialInput" maxlength="80" placeholder="مثال: زركون، E-max"></label>
+    <label>درجة اللون<input id="labShadeInput" maxlength="50" placeholder="اختياري"></label>
+    <label class="lab-sent-now"><input id="labSentNowCheck" type="checkbox"><span>تم تسليم الحالة للمعمل الآن — يبدأ عداد المدة تلقائيًا</span></label>
+  </div></div>
+  <p id="labCaseError" class="auth-error"></p>
+  <div class="modal-actions lab-case-actions"><button id="openLabCasesPageBtn" class="lab-case-open-page" type="button">قائمة حالات المعمل</button><button type="button" data-close="labCaseModal">إلغاء</button><button id="saveLabCaseBtn" type="button" class="primary">حفظ حالة المعمل</button></div>
 </div></div>
 <div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية الاستشارية للأسنان على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
 <div id="roleModal" class="modal role-modal"><div class="modal-card role-modal-card" role="dialog" aria-modal="true" aria-labelledby="roleModalTitle"><h3 id="roleModalTitle">اختر مهمتك</h3><p id="roleModalHelp">ستفتح لك واجهة مستقلة بالأدوات المرتبطة بعملك.</p><div class="role-options"><button type="button" class="role-option admin-option" data-role-view="admin"><span class="role-icon">🗓️</span><span><strong id="adminRoleTitle">صفحة الإدارة وتنسيق المواعيد</strong><small id="adminRoleHelp">إضافة وتعديل المرضى، إدارة القوائم والتنبيهات، واعتماد الدفع والخطط.</small></span></button><button type="button" class="role-option clinic-option" data-role-view="clinic"><span class="role-icon">🩺</span><span><strong id="clinicRoleTitle">صفحة الطبيب والعيادة</strong><small id="clinicRoleHelp">اعتماد الخطط، رفع طلبات الدفع، واستدعاء المرضى ومتابعة العلاج.</small></span></button></div><div id="clinicRolePicker" class="clinic-role-picker" hidden><div class="clinic-role-picker-head"><span aria-hidden="true">🩺</span><div><strong id="clinicPickerTitle">اختر العيادة والطبيب</strong><small id="clinicPickerHelp">كل خيار يجمع العيادة بالطبيب المسجل لها.</small></div></div><div class="clinic-role-fields"><label><span id="clinicPickerClinicLabel">العيادة والطبيب</span><select id="roleClinicSelect"><option value="">اختر العيادة والطبيب</option></select></label></div><p id="roleClinicError" class="clinic-role-error"></p><div class="clinic-role-actions"><button id="roleClinicBackBtn" type="button">رجوع</button><button id="roleClinicContinueBtn" type="button" class="primary" disabled>دخول صفحة الطبيب</button></div></div><p id="rolePrivacyNote" class="role-note">الصفحتان منفصلتان بصريًا وتستخدمان القائمة نفسها والمزامنة المباشرة.</p></div></div>
@@ -901,7 +918,6 @@ function switchClinic(clinicId){
 let treatmentCatalog=[];
 let treatmentCatalogLoadedAt=0;
 let paymentCatalogProfile={favorites:[],usage:{}};
-const LAB_PROCEDURE_IDS=new Set(['ceramic-crown','ceramic-veneer','implant-crown','whitening-trays']);
 const DEFAULT_TREATMENT_CATALOG=[
   ['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
   ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
@@ -912,7 +928,7 @@ const DEFAULT_TREATMENT_CATALOG=[
   ['temporary','تركيب مؤقت'],['smile-design','تصميم ابتسامة'],
   ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
   ['cleaning-gbt','تنظيف أسنان GBT'],['whitening-trays','قوالب تبييض'],['other','إجراء آخر']
-].map(([id,name])=>({id,name,beforePrice:'',afterPrice:'',requiresLab:LAB_PROCEDURE_IDS.has(id)}));
+].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
 const treatmentCatalogLocalKey=()=>`bestcare_treatment_catalog_${ACTIVE_CLINIC_ID}`;
 function paymentDoctorKey(){
   const doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim().toLocaleLowerCase('ar').replace(/\s+/g,' ');
@@ -946,7 +962,7 @@ function normalizeTreatmentCatalog(items){
     seen.add(id);
     const before=item?.beforePrice===''?'':Number(item?.beforePrice);
     const after=(item?.afterPrice??item?.price)===''?'':Number(item?.afterPrice??item?.price);
-    return{id,name,beforePrice:Number.isFinite(before)?before:'',afterPrice:Number.isFinite(after)?after:'',requiresLab:item?.requiresLab===undefined?LAB_PROCEDURE_IDS.has(id):Boolean(item.requiresLab)};
+    return{id,name,beforePrice:Number.isFinite(before)?before:'',afterPrice:Number.isFinite(after)?after:''};
   }).filter(item=>item.name);
 }
 function localTreatmentCatalog(){
@@ -988,7 +1004,7 @@ async function refreshTreatmentCatalog({force=false}={}){
 const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function renderTreatmentCatalog(){
   const list=$('treatmentCatalogList');
-  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="قبل الخصم" aria-label="السعر قبل الخصم"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="بعد الخصم" aria-label="السعر بعد الخصم"><label class="catalog-lab-toggle"><input data-catalog-requires-lab type="checkbox" ${item.requiresLab?'checked':''}><span>يحتاج معمل</span></label><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
+  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="قبل الخصم" aria-label="السعر قبل الخصم"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="بعد الخصم" aria-label="السعر بعد الخصم"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
 }
 async function openTreatmentCatalog(){
   setSettingsMenuOpen(false);
@@ -1006,7 +1022,7 @@ async function openTreatmentCatalog(){
   }
 }
 function collectTreatmentCatalog(){
-  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);item.requiresLab=Boolean(row.querySelector('[data-catalog-requires-lab]')?.checked);delete item.price});
+  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);delete item.requiresLab;delete item.price});
 }
 async function saveTreatmentCatalog(){
   collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').classList.remove('catalog-warning');$('treatmentCatalogError').textContent='جارٍ الحفظ…';
@@ -1916,12 +1932,20 @@ function patientLabCases(patient,{activeOnly=true}={}){
   const terminal=new Set(['delivered_patient','cancelled']);
   return labCasesState.cases.filter(item=>labCaseMatchesPatient(item,patient)&&(!activeOnly||!terminal.has(item.status))).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
 }
-function labCaseIsLate(item){return !['delivered_patient','cancelled'].includes(item?.status)&&Number(item?.expectedAt)>0&&Date.now()>Number(item.expectedAt)}
-function labStatusText(status){return ({pending_send:'بانتظار الإرسال',sent:'أُرسلت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||'حالة معمل'}
+function labStatusText(status){return ({pending_send:'بانتظار التسليم للمعمل',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||'حالة معمل'}
+function labElapsedDays(item){
+  const start=Number(item?.sentAt||0);if(!start)return'';
+  const end=item?.status==='received_clinic'&&Number(item?.receivedAt)>0?Number(item.receivedAt):Date.now();
+  const elapsed=Math.max(0,end-start),days=Math.floor(elapsed/86400000),hours=Math.floor(elapsed%86400000/3600000),minutes=Math.floor(elapsed%3600000/60000);
+  if(days)return`${days} يوم${hours?` و${hours} س`:''}`;
+  if(hours)return`${hours} ساعة`;
+  return`${minutes} دقيقة`;
+}
 function labCaseBadgeMarkup(patient){
   const active=patientLabCases(patient);if(!active.length)return'';
-  const lead=active[0],tone=labCaseIsLate(lead)?'late':lead.status==='received_clinic'?'received':'';
-  const label=active.length>1?`${active.length} حالات بالمعمل`:`${labStatusText(lead.status)}${lead.sentAt?` · ${Math.max(0,Math.floor((Date.now()-Number(lead.sentAt))/86400000))} يوم`:''}`;
+  const lead=active[0],tone=lead.status==='received_clinic'?'received':'';
+  const elapsed=labElapsedDays(lead);
+  const label=active.length>1?`${active.length} حالات بالمعمل`:`${labStatusText(lead.status)}${elapsed?` · ${elapsed}`:''}`;
   return `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="فتح حالات معمل الأسنان">${escapeHtml(label)}</button>`;
 }
 async function refreshLabCases({force=false}={}){
@@ -2240,6 +2264,7 @@ function renderTable(){
         <td class="hide-screen">
           <div class="row-actions">
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
+            <button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}">${lang==='en'?'Dental lab':'معمل'}</button>
             <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>
             ${VIEW_MODE==='clinic'&&displayStatus==='done'?`<button class="mini" type="button" data-completion-id="${escapeHtml(p.id)}">${lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة'}</button>`:''}
             <button class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
@@ -2412,10 +2437,9 @@ function renderPaymentProcedureOptions(preserve=false){
   list.innerHTML=items.length?items.map(item=>{
     const state=saved.get(item.id)||{selected:false,quantity:1,free:false};
     const isFavorite=favorites.has(item.id),usage=Number(paymentCatalogProfile.usage?.[item.id]||0);
-    const badges=`${isFavorite?`<span class="lab-procedure-badge">${lang==='en'?'★ Favorite':'★ مفضل'}</span>`:''}${usage?`<span class="lab-procedure-badge">${lang==='en'?`Used ${usage}`:`استخدم ${usage}`}</span>`:''}${item.requiresLab?`<span class="lab-procedure-badge">${lang==='en'?'◆ Dental lab':'◆ يحتاج معمل'}</span>`:''}`;
+    const badges=`${isFavorite?`<span class="lab-procedure-badge">${lang==='en'?'★ Favorite':'★ مفضل'}</span>`:''}${usage?`<span class="lab-procedure-badge">${lang==='en'?`Used ${usage}`:`استخدم ${usage}`}</span>`:''}`;
     return `<div class="payment-procedure-row${isFavorite?' is-favorite':''}" data-payment-row="${escapeHtml(item.id)}"><button class="payment-favorite-toggle${isFavorite?' is-favorite':''}" type="button" data-payment-favorite="${escapeHtml(item.id)}" aria-pressed="${isFavorite}" title="${isFavorite?'إزالة من المفضلة':'إضافة إلى المفضلة'}">${isFavorite?'★':'☆'}</button><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${escapeHtml(item.id)}" ${state.selected?'checked':''}><span class="payment-procedure-copy"><span>${escapeHtml(item.name)}</span>${badges?`<small class="payment-procedure-meta">${badges}</small>`:''}</span></label><div class="payment-quantity"><small>${lang==='en'?'Quantity':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="${state.quantity}" data-payment-quantity="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${escapeHtml(item.id)}" ${state.free?'checked':''}><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`;
   }).join(''):`<div class="payment-empty">${lang==='en'?'No services are available. Add them from Settings.':'لا توجد خدمات متاحة. أضفها من الإعدادات ← الإجراءات والخدمات والأسعار.'}</div>`;
-  updateLabPaymentPanel();
 }
 async function updatePaymentPreference(body){
   const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&doctor=${encodeURIComponent(paymentDoctorKey())}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({doctorKey:paymentDoctorKey(),...body})});
@@ -2448,46 +2472,73 @@ function changePaymentQuantity(input,delta){
   input.value=String(Math.max(1,Math.min(99,Number(input.value||1)+delta)));
 }
 let labUnitsManuallyChanged=false;
-function selectedLabPaymentItems(){
-  return paymentProcedureCatalog().flatMap(item=>{
-    const selected=document.querySelector(`[data-payment-select="${item.id}"]`)?.checked;
-    if(!selected||!item.requiresLab)return[];
-    return [{code:item.id,name:item.name,quantity:Math.max(1,Math.min(99,Number(document.querySelector(`[data-payment-quantity="${item.id}"]`)?.value||1)))}];
-  });
+let pendingLabPatientId=null;
+function labAssignmentText(){
+  const doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
+  const doctorLabel=doctor?(/^(?:د\.?|الدكتور)\s*/i.test(doctor)?doctor:`د. ${doctor}`):'الطبيب غير محدد';
+  return [doctorLabel,currentClinic?.name,currentClinic?.roomNumber?`غرفة ${currentClinic.roomNumber}`:''].filter(Boolean).join(' · ');
 }
-function updateLabPaymentPanel(){
-  const box=$('labPaymentBox');if(!box)return;
-  const items=$('paymentRequiredCheck')?.checked?selectedLabPaymentItems():[];
-  box.hidden=!items.length;
+function openLabCaseEditor(patientId){
+  const patient=patientById(patientId);if(!patient)return;
+  pendingLabPatientId=String(patient.id);
+  resetLabCaseEditor();
+  $('labPatientName').textContent=firstName(patient.name);
+  $('labPatientIdentity').textContent=[patient.file?`ملف ${patient.file}`:'',patient.phone?`جوال ${patient.phone}`:''].filter(Boolean).join(' · ')||'بيانات المريض';
   const assignment=$('labAssignedDoctor');
-  if(!items.length){if(assignment)assignment.textContent='';return}
-  if(assignment){
-    const doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
-    const doctorLabel=doctor?(/^(?:د\.?|الدكتور)\s*/i.test(doctor)?doctor:`د. ${doctor}`):'الطبيب غير محدد';
-    assignment.textContent=[doctorLabel,currentClinic?.name,currentClinic?.roomNumber?`غرفة ${currentClinic.roomNumber}`:''].filter(Boolean).join(' · ');
-  }
-  if(!labUnitsManuallyChanged)$('labUnitsInput').value=String(Math.max(1,items.reduce((sum,item)=>sum+Number(item.quantity||1),0)));
-  if(!$('labExpectedDate').value){const expected=new Date(Date.now()+7*86400000);$('labExpectedDate').value=`${expected.getFullYear()}-${String(expected.getMonth()+1).padStart(2,'0')}-${String(expected.getDate()).padStart(2,'0')}`}
+  if(assignment)assignment.textContent=labAssignmentText();
+  openModal('labCaseModal');
 }
 function changeLabUnits(delta){labUnitsManuallyChanged=true;$('labUnitsInput').value=String(Math.max(1,Math.min(99,Number($('labUnitsInput').value||1)+delta)))}
-function resetLabPaymentEditor(){
-  labUnitsManuallyChanged=false;$('labNameSelect').value='';$('labCustomNameInput').value='';$('labCustomNameLabel').hidden=true;$('labUnitsInput').value='1';$('labExpectedDate').value='';$('labMaterialInput').value='';$('labShadeInput').value='';$('labSentNowCheck').checked=false;if($('labAssignedDoctor'))$('labAssignedDoctor').textContent='';$('labPaymentBox').hidden=true;
+function resetLabCaseEditor(){
+  labUnitsManuallyChanged=false;
+  $('labWorkType').value='';
+  $('labCustomWorkInput').value='';
+  $('labCustomWorkLabel').hidden=true;
+  $('labNameSelect').value='';
+  $('labCustomNameInput').value='';
+  $('labCustomNameLabel').hidden=true;
+  $('labUnitsInput').value='1';
+  $('labMaterialInput').value='';
+  $('labShadeInput').value='';
+  $('labSentNowCheck').checked=false;
+  $('labCaseError').textContent='';
 }
 function collectLabCaseDraft(){
-  const items=selectedLabPaymentItems();if(!items.length)return null;
+  const workType=$('labWorkType').value;
+  const customWork=$('labCustomWorkInput').value.trim();
+  if(!workType)return{error:'اختر نوع حالة المعمل.',focus:'labWorkType'};
+  if(workType==='other'&&!customWork)return{error:'اكتب الإجراء المعملي المطلوب.',focus:'labCustomWorkInput'};
   const labName=$('labNameSelect').value,customLabName=$('labCustomNameInput').value.trim();
-  if(!labName)return{error:'اختر اسم معمل الأسنان.'};
-  if(labName==='other'&&!customLabName)return{error:'اكتب اسم المعمل الآخر.'};
-  const expectedValue=$('labExpectedDate').value;
-  return{labName,customLabName:labName==='other'?customLabName:'',items,units:Math.max(1,Math.min(99,Number($('labUnitsInput').value||1))),material:$('labMaterialInput').value.trim(),shade:$('labShadeInput').value.trim(),expectedAt:expectedValue?new Date(`${expectedValue}T12:00:00`).getTime():0,status:$('labSentNowCheck').checked?'sent':'pending_send',sentAt:$('labSentNowCheck').checked?Date.now():0};
+  if(!labName)return{error:'اختر اسم معمل الأسنان.',focus:'labNameSelect'};
+  if(labName==='other'&&!customLabName)return{error:'اكتب اسم المعمل الآخر.',focus:'labCustomNameInput'};
+  const units=Math.max(1,Math.min(99,Number($('labUnitsInput').value||1)));
+  const procedureName=workType==='other'?customWork:workType;
+  return{labName,customLabName:labName==='other'?customLabName:'',items:[{code:'direct-lab-entry',name:procedureName,quantity:units}],units,material:$('labMaterialInput').value.trim(),shade:$('labShadeInput').value.trim(),status:$('labSentNowCheck').checked?'sent':'pending_send',sentAt:$('labSentNowCheck').checked?Date.now():0};
 }
-async function createLabCaseForPayment(patient,draft,paymentOrderId){
-  const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,clinicId:ACTIVE_CLINIC_ID,clinicName:currentClinic?.name||'',roomNumber:currentClinic?.roomNumber||'',doctorName:currentClinic?.doctorName||authUser?.displayName||'',patient:{id:patient.id,name:patient.name,file:patient.file,phone:patient.phone},paymentOrderId,sourceDate:selectedDate})});
+async function createLabCase(patient,draft){
+  const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,clinicId:ACTIVE_CLINIC_ID,clinicName:currentClinic?.name||'',roomNumber:currentClinic?.roomNumber||'',doctorName:currentClinic?.doctorName||authUser?.displayName||'',patient:{id:patient.id,name:patient.name,file:patient.file,phone:patient.phone},sourceDate:selectedDate})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||'تعذر إنشاء حالة المعمل');
   if(data.case)labCasesState.cases=[data.case,...labCasesState.cases.filter(item=>item.id!==data.case.id)];
   labCasesState.revision=Number(data.revision||labCasesState.revision);labCasesState.updatedAt=Number(data.updatedAt||Date.now());labCasesState.lastFetchedAt=Date.now();
   return data.case;
+}
+async function saveLabCase(){
+  const patient=patientById(pendingLabPatientId);if(!patient)return;
+  const draft=collectLabCaseDraft();
+  if(draft.error){$('labCaseError').textContent=draft.error;$(draft.focus)?.focus();return}
+  const button=$('saveLabCaseBtn'),original=button.textContent;
+  button.disabled=true;button.textContent='جارٍ الحفظ…';$('labCaseError').textContent='';
+  try{
+    await createLabCase(patient,draft);
+    closeModal('labCaseModal');
+    pendingLabPatientId=null;
+    renderTable();
+    toast('تمت إضافة حالة المعمل',`${firstName(patient.name)} · ${draft.items[0].name} · ${draft.units} ${draft.units===1?'وحدة':'وحدات'}`);
+  }catch(error){
+    console.error('Direct lab case creation failed',error);
+    $('labCaseError').textContent=error.message||'تعذر حفظ حالة المعمل. تحقق من الاتصال ثم حاول مرة أخرى.';
+  }finally{button.disabled=false;button.textContent=original}
 }
 function resetPaymentProcedureEditor(){
   renderPaymentProcedureOptions();
@@ -2496,7 +2547,6 @@ function resetPaymentProcedureEditor(){
   $('paymentOtherQuantity').value='1';
   $('paymentOtherFree').checked=false;
   $('paymentDiscountInput').value='';
-  resetLabPaymentEditor();
 }
 function collectPaymentItems(){
   const items=paymentProcedureCatalog().flatMap(item=>{
@@ -2551,20 +2601,12 @@ async function confirmPatientCompletion(){
   const selection=collectPaymentItems();
   if(selection.error){toast(lang==='en'?'Payment action required':'بيانات الإجراء ناقصة',selection.error);$('paymentOtherInput').focus();return}
   if(paymentRequired&&!selection.items.length){toast(lang==='en'?'Payment action required':'اختر إجراء الدفع',lang==='en'?'Select at least one procedure.':'اختر إجراءً واحدًا على الأقل لإرساله إلى الإدارة.');return}
-  const labDraft=paymentRequired?collectLabCaseDraft():null;
-  if(labDraft?.error){
-    toast('بيانات المعمل مطلوبة',labDraft.error);
-    (labDraft.error.includes('الآخر')?$('labCustomNameInput'):$('labNameSelect'))?.focus();
-    return;
-  }
   const paymentAction=paymentRequired?paymentItemsSummary(selection.items,selection.discount):'';
   const confirmButton=$('confirmCompletionBtn');
   const originalConfirmText=confirmButton.textContent;
   confirmButton.disabled=true;
   confirmButton.textContent='جارٍ الحفظ…';
-  let labCase=null;
   try{
-    if(labDraft)labCase=await createLabCaseForPayment(p,labDraft,`payment-${String(p.id).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50)}-${Date.now()}`);
     mutate(()=>{
     p.status='done';
     p.completedAt=Date.now();
@@ -2587,13 +2629,12 @@ async function confirmPatientCompletion(){
     pendingCompletionId=null;
     if(createPlanDraft){
       await pushState();
-      toast('تم إنشاء مسودة الخطة',labCase?'أُنشئت الخطة وحالة المعمل وأصبحتا جاهزتين للمتابعة.':'أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
+      toast('تم إنشاء مسودة الخطة','أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
       openTreatmentPlan(p.id);
       return;
     }
     const upcoming=flowLeadPatient();
-    const labNote=labCase?' وتم إنشاء متابعة المعمل.':'';
-    toast(paymentRequired?'تم إرسال إجراء الدفع للإدارة':'اكتمل العلاج',`${paymentRequired?paymentAction:(upcoming?`أصبح ${firstName(upcoming.name)} في مقدمة الانتظار`:'لا يوجد مريض تالٍ')}${labNote}`);
+    toast(paymentRequired?'تم إرسال إجراء الدفع للإدارة':'اكتمل العلاج',paymentRequired?paymentAction:(upcoming?`أصبح ${firstName(upcoming.name)} في مقدمة الانتظار`:'لا يوجد مريض تالٍ'));
   }catch(error){
     console.error('Patient completion failed',error);
     toast('تعذر إكمال الطلب','لم تتغير حالة المريض. تحقق من الاتصال ثم حاول مرة أخرى.');
@@ -3637,7 +3678,7 @@ $('clinicDirectoryList').addEventListener('click',event=>{
   renderClinicDirectoryEditor();
 });
 $('clinicSwitcher').addEventListener('change',event=>switchClinic(event.target.value));
-$('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();treatmentCatalog.push({id:`custom-${Date.now()}`,name:'',beforePrice:'',afterPrice:'',requiresLab:false});renderTreatmentCatalog();$('treatmentCatalogList').lastElementChild?.querySelector('[data-catalog-name]')?.focus()});
+$('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();treatmentCatalog.push({id:`custom-${Date.now()}`,name:'',beforePrice:'',afterPrice:''});renderTreatmentCatalog();$('treatmentCatalogList').lastElementChild?.querySelector('[data-catalog-name]')?.focus()});
 $('treatmentCatalogList').addEventListener('click',event=>{const button=event.target.closest('[data-catalog-delete]');if(!button)return;collectTreatmentCatalog();treatmentCatalog.splice(Number(button.dataset.catalogDelete),1);renderTreatmentCatalog()});
 $('saveTreatmentCatalogBtn').addEventListener('click',saveTreatmentCatalog);
 $('paymentCatalogRefreshBtn').addEventListener('click',()=>updatePaymentCatalogFromSettings({notify:true}));
@@ -3703,7 +3744,8 @@ els.patientRows.addEventListener('change',async event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
-  const labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
   if(review)openReviewComposer(review);
   if(plan)openTreatmentPlan(plan);
@@ -3761,9 +3803,8 @@ document.addEventListener('keydown',event=>{
 });
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal&&modal.id!=='roleModal')closeModal(modal.id)}));
-$('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions();updateLabPaymentPanel()});
-$('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true;updateLabPaymentPanel()});
-$('paymentProcedureList').addEventListener('change',updateLabPaymentPanel);
+$('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions()});
+$('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true});
 $('paymentProcedureList').addEventListener('click',event=>{
   const favorite=event.target.closest('[data-payment-favorite]');
   if(favorite){togglePaymentFavorite(favorite.dataset.paymentFavorite);return}
@@ -3771,7 +3812,6 @@ $('paymentProcedureList').addEventListener('click',event=>{
   const row=button.closest('[data-payment-row]'),input=row?.querySelector('[data-payment-quantity]');
   changePaymentQuantity(input,button.dataset.paymentStep==='increase'?1:-1);
   if(row?.querySelector('[data-payment-select]'))row.querySelector('[data-payment-select]').checked=true;
-  updateLabPaymentPanel();
 });
 $('paymentModal').addEventListener('click',event=>{
   const button=event.target.closest('[data-payment-other-step]');if(!button)return;
@@ -3783,6 +3823,9 @@ $('paymentOtherInput').addEventListener('input',()=>{if($('paymentOtherInput').v
 $('labUnitsMinus').addEventListener('click',()=>changeLabUnits(-1));
 $('labUnitsPlus').addEventListener('click',()=>changeLabUnits(1));
 $('labNameSelect').addEventListener('change',()=>{$('labCustomNameLabel').hidden=$('labNameSelect').value!=='other';if(!$('labCustomNameLabel').hidden)$('labCustomNameInput').focus()});
+$('labWorkType').addEventListener('change',()=>{$('labCustomWorkLabel').hidden=$('labWorkType').value!=='other';if(!$('labCustomWorkLabel').hidden)$('labCustomWorkInput').focus()});
+$('saveLabCaseBtn').addEventListener('click',saveLabCase);
+$('openLabCasesPageBtn').addEventListener('click',()=>openLabCasesPage(patientById(pendingLabPatientId)));
 $('confirmCompletionBtn').addEventListener('click',confirmPatientCompletion);
 $('paymentQueue').addEventListener('click',event=>{
   const ackId=event.target.closest('[data-payment-ack-id]')?.dataset.paymentAckId;
