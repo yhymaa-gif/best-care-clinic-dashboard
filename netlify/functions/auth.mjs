@@ -1,7 +1,8 @@
 import { getStore } from '@netlify/blobs';
 import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 
-const IDLE_MS = 3 * 60 * 60 * 1000;
+const IDLE_MS = 5 * 60 * 60 * 1000;
+const SESSION_MAX_MS = 24 * 60 * 60 * 1000;
 const OTP_MS = 5 * 60 * 1000;
 const COOKIE = 'bc_session';
 const origin = process.env.APP_ORIGIN || 'https://bestcaredentalclinicsdash.netlify.app';
@@ -38,6 +39,15 @@ const passwordMatches = value => {
   return expected.length >= 12 && timingSafeEqual(passwordHash(value), passwordHash(expected));
 };
 const token = () => randomBytes(32).toString('base64url');
+const riyadhHour = (value = Date.now()) => Number(new Intl.DateTimeFormat('en', {
+  timeZone: 'Asia/Riyadh',
+  hour: '2-digit',
+  hourCycle: 'h23',
+}).format(new Date(value)));
+const idleProtectionPaused = (value = Date.now()) => {
+  const hour = riyadhHour(value);
+  return hour >= 14 && hour < 23;
+};
 const requestIp = request => String(request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim().slice(0, 80);
 async function consumeRateLimit(request, scope, subject, limit, windowMs) {
   const rateStore = store('clinic-dashboard-auth-rate-limit');
@@ -114,7 +124,8 @@ async function sessionFrom(request) {
   const key = `sessions/${hash(raw)}`;
   const session = await sessions.get(key, { type: 'json', consistency: 'strong' });
   const now = Date.now();
-  if (!session || session.tokenSignature !== sign(raw) || now - Number(session.lastSeenAt || 0) > IDLE_MS || now > Number(session.expiresAt || 0)) {
+  const idleExpired = !idleProtectionPaused(now) && now - Number(session?.lastSeenAt || 0) > IDLE_MS;
+  if (!session || session.tokenSignature !== sign(raw) || idleExpired || now > Number(session.expiresAt || 0)) {
     if (session) await sessions.delete(key);
     return null;
   }
@@ -124,7 +135,7 @@ async function sessionFrom(request) {
   }
   return { token: raw, ...session };
 }
-const sessionCookie = value => `${COOKIE}=${value}; Path=/; Max-Age=${Math.floor(IDLE_MS / 1000)}; HttpOnly; Secure; SameSite=Lax`;
+const sessionCookie = value => `${COOKIE}=${value}; Path=/; Max-Age=${Math.floor(SESSION_MAX_MS / 1000)}; HttpOnly; Secure; SameSite=Lax`;
 const clearCookie = `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 
 export default async request => {
@@ -147,7 +158,7 @@ export default async request => {
     if (!user || username !== user.username || !passwordMatches(body.password)) return reply({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, 401);
     await rate.store.delete(rate.key);
     const raw = token(); const now = Date.now();
-    await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + 12 * 60 * 60 * 1000 });
+    await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + SESSION_MAX_MS });
     return reply({ ok: true, user: safeUser(user) }, 200, { 'set-cookie': sessionCookie(raw) });
   }
   if (request.method === 'POST' && action === 'request-otp') {
@@ -180,7 +191,7 @@ export default async request => {
     if (!timingSafeEqual(Buffer.from(hash(code)), Buffer.from(challenge.codeHash))) return reply({ error: 'Invalid or expired code' }, 401);
     await otpStore.delete(key);
     const user = await findUser(challenge.username, challenge.method === 'email' ? challenge.email : challenge.phone, challenge.method || 'phone'); if (!user) return reply({ error: 'Account unavailable' }, 401);
-    const raw = token(); const now = Date.now(); await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + 12 * 60 * 60 * 1000 });
+    const raw = token(); const now = Date.now(); await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + SESSION_MAX_MS });
     return reply({ ok: true, user: safeUser(user) }, 200, { 'set-cookie': sessionCookie(raw) });
   }
   if (request.method === 'POST' && action === 'logout') {
@@ -203,3 +214,5 @@ export default async request => {
   }
   return reply({ error: 'Unsupported action' }, 400);
 };
+
+export const __test = { idleProtectionPaused, riyadhHour, IDLE_MS, SESSION_MAX_MS };

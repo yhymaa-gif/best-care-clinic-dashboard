@@ -51,6 +51,7 @@ export async function sendPushNotifications(event, { excludeClientId = '' } = {}
     // receive alerts belonging to their own clinic.
     if (event.clinicId && record.role !== 'admin' && record.clinicId !== event.clinicId) return;
     if (event.type === 'payment' && record.role !== 'admin') return;
+    if (event.type === 'appointment_request' && record.role !== 'admin') return;
     const clinicLabel = event.clinicLabel ? ` — ${event.clinicLabel}` : '';
     const detail = record.showPatientDetails && event.patientName
       ? ` ${event.patientName}${event.patientFile ? ` — ملف ${event.patientFile}` : ''}.`

@@ -1,12 +1,21 @@
 import { getStore } from '@netlify/blobs';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 
-const IDLE_MS = 3 * 60 * 60 * 1000;
+const IDLE_MS = 5 * 60 * 60 * 1000;
 const COOKIE = 'bc_session';
 const SESSION_STORE = 'clinic-dashboard-auth-sessions';
 const DEFAULT_ORIGIN = 'https://bestcaredentalclinicsdash.netlify.app';
 
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
+const riyadhHour = (value = Date.now()) => Number(new Intl.DateTimeFormat('en', {
+  timeZone: 'Asia/Riyadh',
+  hour: '2-digit',
+  hourCycle: 'h23',
+}).format(new Date(value)));
+const idleProtectionPaused = (value = Date.now()) => {
+  const hour = riyadhHour(value);
+  return hour >= 14 && hour < 23;
+};
 const safeEqual = (left, right) => {
   const a = Buffer.from(String(left || ''));
   const b = Buffer.from(String(right || ''));
@@ -58,9 +67,10 @@ export async function requireUser(request) {
   const session = await sessions.get(key, { type: 'json', consistency: 'strong' });
   const now = Date.now();
   const signature = createHmac('sha256', secret).update(raw).digest('hex');
+  const idleExpired = !idleProtectionPaused(now) && now - Number(session?.lastSeenAt || 0) > IDLE_MS;
   const expired = !session ||
     !safeEqual(session.tokenSignature, signature) ||
-    now - Number(session.lastSeenAt || 0) > IDLE_MS ||
+    idleExpired ||
     now > Number(session.expiresAt || 0);
   if (expired) {
     if (session) await sessions.delete(key);
@@ -73,6 +83,8 @@ export async function requireUser(request) {
   }
   return { ok: true, user: session.user || null, sessionKey: key };
 }
+
+export const __test = { IDLE_MS, idleProtectionPaused, riyadhHour };
 
 export function canAccessClinic(user, clinicId) {
   if (!user || !/^clinic-([1-9]|1[0-5])$/.test(String(clinicId || ''))) return false;
