@@ -2,7 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { sendPushNotifications } from './lib/push.mjs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 
-const headers = apiHeaders('GET,POST,PATCH,OPTIONS');
+const headers = apiHeaders('GET,POST,PATCH,DELETE,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const store = getStore({ name: 'clinic-lab-cases', consistency: 'strong' });
 const configStore = getStore({ name: 'clinic-dashboard-config', consistency: 'strong' });
@@ -20,6 +20,7 @@ const allowedStatuses = new Set([
   'returned_lab',
   'cancelled'
 ]);
+const terminalStatuses = new Set(['delivered_patient', 'cancelled']);
 
 const cleanItems = items => (Array.isArray(items) ? items : [])
   .slice(0, 20)
@@ -36,6 +37,14 @@ const cleanPatient = patient => ({
   file: cleanText(patient?.file, 50),
   phone: normalizePhone(patient?.phone)
 });
+const patientIdentity = patient => cleanText(patient?.file, 50)
+  || normalizePhone(patient?.phone)
+  || cleanText(patient?.id, 100)
+  || cleanText(patient?.name, 100).toLocaleLowerCase('ar');
+const normalizedItems = items => cleanItems(items)
+  .map(item => `${item.code || item.name.toLocaleLowerCase('ar')}:${item.quantity}`)
+  .sort()
+  .join('|');
 const doctorKey = (clinicId, doctorName) => `${clinicId}:${cleanText(doctorName, 100).toLocaleLowerCase('ar').replace(/\s+/g, ' ')}`;
 const readClinicAssignment = async clinicId => {
   const saved = await configStore.get('clinics', { type: 'json', consistency: 'strong' });
@@ -175,6 +184,21 @@ export default async request => {
     const assignment = await readClinicAssignment(clinicId);
     const assignedDoctor = assignment.doctorName || cleanText(body?.doctorName, 100) || cleanText(user.displayName || user.username, 100);
     if (!assignedDoctor) return reply({ error: 'Doctor assignment is required' }, 400);
+    const incomingPatientIdentity = patientIdentity(body.patient);
+    const incomingItems = normalizedItems(body.items);
+    const duplicate = current.cases
+      .map(item => cleanCase(item, item, false))
+      .find(item => !terminalStatuses.has(item.status)
+        && patientIdentity(item.patient) === incomingPatientIdentity
+        && normalizedItems(item.items) === incomingItems);
+    if (duplicate && body?.allowDuplicate !== true) {
+      return reply({
+        error: 'An active lab case already exists for this patient and procedure',
+        code: 'DUPLICATE_LAB_CASE',
+        duplicate: true,
+        case: duplicate
+      }, 409);
+    }
     const id = crypto.randomUUID();
     const item = cleanCase({
       ...body,
@@ -220,6 +244,17 @@ export default async request => {
     await store.setJSON(clinicKey(clinicId), record);
     if (item.status !== previous.status) await Promise.allSettled([notify(item)]);
     return reply({ ok: true, case: item, revision: record.revision, updatedAt: record.updatedAt });
+  }
+
+  if (request.method === 'DELETE') {
+    const id = cleanText(body?.id, 100);
+    const index = current.cases.findIndex(item => String(item.id) === id);
+    if (index < 0) return reply({ error: 'Lab case not found' }, 404);
+    const removed = cleanCase(current.cases[index], current.cases[index], false);
+    const cases = current.cases.filter((_, caseIndex) => caseIndex !== index);
+    const record = { clinicId, cases, revision: current.revision + 1, updatedAt: Date.now() };
+    await store.setJSON(clinicKey(clinicId), record);
+    return reply({ ok: true, case: removed, revision: record.revision, updatedAt: record.updatedAt });
   }
 
   return reply({ error: 'Method not allowed' }, 405);
