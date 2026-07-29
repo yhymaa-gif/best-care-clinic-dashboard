@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260729-direct-lab-entry';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260729-lab-elapsed-timer';
 const APP_SHELL=[
   './',
   './index.html',

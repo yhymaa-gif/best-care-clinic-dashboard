@@ -543,10 +543,9 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
     <label>اسم المعمل<select id="labNameSelect"><option value="">اختر المعمل</option><option value="دانتي">دانتي</option><option value="كولجين">كولجين</option><option value="السن الرقمي ديجيتال">السن الرقمي ديجيتال</option><option value="السن الطبيعي">السن الطبيعي</option><option value="معمل مروان">معمل مروان</option><option value="other">معمل آخر</option></select></label>
     <label id="labCustomNameLabel" class="lab-custom-name" hidden>اسم المعمل الآخر<input id="labCustomNameInput" maxlength="100" placeholder="اكتب اسم المعمل"></label>
     <label>عدد الوحدات<span class="lab-payment-units"><button id="labUnitsMinus" type="button" aria-label="إنقاص عدد الوحدات">−</button><input id="labUnitsInput" type="text" inputmode="numeric" readonly value="1"><button id="labUnitsPlus" type="button" aria-label="زيادة عدد الوحدات">+</button></span></label>
-    <label>تاريخ الاستلام المتوقع<input id="labExpectedDate" type="date"></label>
     <label>المادة أو النوع<input id="labMaterialInput" maxlength="80" placeholder="مثال: زركون، E-max"></label>
     <label>درجة اللون<input id="labShadeInput" maxlength="50" placeholder="اختياري"></label>
-    <label class="lab-sent-now"><input id="labSentNowCheck" type="checkbox"><span>أُرسلت الحالة للمعمل الآن — ابدأ العداد</span></label>
+    <label class="lab-sent-now"><input id="labSentNowCheck" type="checkbox"><span>تم تسليم الحالة للمعمل الآن — يبدأ عداد المدة تلقائيًا</span></label>
   </div></div>
   <p id="labCaseError" class="auth-error"></p>
   <div class="modal-actions lab-case-actions"><button id="openLabCasesPageBtn" class="lab-case-open-page" type="button">قائمة حالات المعمل</button><button type="button" data-close="labCaseModal">إلغاء</button><button id="saveLabCaseBtn" type="button" class="primary">حفظ حالة المعمل</button></div>
@@ -1933,12 +1932,20 @@ function patientLabCases(patient,{activeOnly=true}={}){
   const terminal=new Set(['delivered_patient','cancelled']);
   return labCasesState.cases.filter(item=>labCaseMatchesPatient(item,patient)&&(!activeOnly||!terminal.has(item.status))).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
 }
-function labCaseIsLate(item){return !['delivered_patient','cancelled'].includes(item?.status)&&Number(item?.expectedAt)>0&&Date.now()>Number(item.expectedAt)}
-function labStatusText(status){return ({pending_send:'بانتظار الإرسال',sent:'أُرسلت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||'حالة معمل'}
+function labStatusText(status){return ({pending_send:'بانتظار التسليم للمعمل',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||'حالة معمل'}
+function labElapsedDays(item){
+  const start=Number(item?.sentAt||0);if(!start)return'';
+  const end=item?.status==='received_clinic'&&Number(item?.receivedAt)>0?Number(item.receivedAt):Date.now();
+  const elapsed=Math.max(0,end-start),days=Math.floor(elapsed/86400000),hours=Math.floor(elapsed%86400000/3600000),minutes=Math.floor(elapsed%3600000/60000);
+  if(days)return`${days} يوم${hours?` و${hours} س`:''}`;
+  if(hours)return`${hours} ساعة`;
+  return`${minutes} دقيقة`;
+}
 function labCaseBadgeMarkup(patient){
   const active=patientLabCases(patient);if(!active.length)return'';
-  const lead=active[0],tone=labCaseIsLate(lead)?'late':lead.status==='received_clinic'?'received':'';
-  const label=active.length>1?`${active.length} حالات بالمعمل`:`${labStatusText(lead.status)}${lead.sentAt?` · ${Math.max(0,Math.floor((Date.now()-Number(lead.sentAt))/86400000))} يوم`:''}`;
+  const lead=active[0],tone=lead.status==='received_clinic'?'received':'';
+  const elapsed=labElapsedDays(lead);
+  const label=active.length>1?`${active.length} حالات بالمعمل`:`${labStatusText(lead.status)}${elapsed?` · ${elapsed}`:''}`;
   return `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="فتح حالات معمل الأسنان">${escapeHtml(label)}</button>`;
 }
 async function refreshLabCases({force=false}={}){
@@ -2491,8 +2498,6 @@ function resetLabCaseEditor(){
   $('labCustomNameInput').value='';
   $('labCustomNameLabel').hidden=true;
   $('labUnitsInput').value='1';
-  const expected=new Date(Date.now()+7*86400000);
-  $('labExpectedDate').value=`${expected.getFullYear()}-${String(expected.getMonth()+1).padStart(2,'0')}-${String(expected.getDate()).padStart(2,'0')}`;
   $('labMaterialInput').value='';
   $('labShadeInput').value='';
   $('labSentNowCheck').checked=false;
@@ -2508,8 +2513,7 @@ function collectLabCaseDraft(){
   if(labName==='other'&&!customLabName)return{error:'اكتب اسم المعمل الآخر.',focus:'labCustomNameInput'};
   const units=Math.max(1,Math.min(99,Number($('labUnitsInput').value||1)));
   const procedureName=workType==='other'?customWork:workType;
-  const expectedValue=$('labExpectedDate').value;
-  return{labName,customLabName:labName==='other'?customLabName:'',items:[{code:'direct-lab-entry',name:procedureName,quantity:units}],units,material:$('labMaterialInput').value.trim(),shade:$('labShadeInput').value.trim(),expectedAt:expectedValue?new Date(`${expectedValue}T12:00:00`).getTime():0,status:$('labSentNowCheck').checked?'sent':'pending_send',sentAt:$('labSentNowCheck').checked?Date.now():0};
+  return{labName,customLabName:labName==='other'?customLabName:'',items:[{code:'direct-lab-entry',name:procedureName,quantity:units}],units,material:$('labMaterialInput').value.trim(),shade:$('labShadeInput').value.trim(),status:$('labSentNowCheck').checked?'sent':'pending_send',sentAt:$('labSentNowCheck').checked?Date.now():0};
 }
 async function createLabCase(patient,draft){
   const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,clinicId:ACTIVE_CLINIC_ID,clinicName:currentClinic?.name||'',roomNumber:currentClinic?.roomNumber||'',doctorName:currentClinic?.doctorName||authUser?.displayName||'',patient:{id:patient.id,name:patient.name,file:patient.file,phone:patient.phone},sourceDate:selectedDate})});
