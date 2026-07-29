@@ -22,6 +22,16 @@
   status = 200
 
 [[redirects]]
+  from = "/api/statistics"
+  to = "/.netlify/functions/statistics"
+  status = 200
+
+[[redirects]]
+  from = "/api/appointment-requests"
+  to = "/.netlify/functions/appointment-requests"
+  status = 200
+
+[[redirects]]
   from = "/api/push"
   to = "/.netlify/functions/push-subscription"
   status = 200
