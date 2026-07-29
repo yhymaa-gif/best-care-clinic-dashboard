@@ -61,7 +61,9 @@ export async function sendPushNotifications(event, { excludeClientId = '' } = {}
       body: `${event.body}${detail}`,
       type: event.type || 'patient',
       tag: event.tag || `bestcare-${event.type || 'update'}`,
-      url: `/?view=${event.type === 'payment' ? 'admin' : record.role}&clinic=${targetClinic}`,
+      url: event.url || (event.type === 'lab'
+        ? `/lab.html?clinic=${encodeURIComponent(targetClinic)}`
+        : `/?view=${event.type === 'payment' ? 'admin' : record.role}&clinic=${targetClinic}`),
     };
     try {
       const topic = crypto.createHash('sha256').update(String(payload.tag)).digest('base64url').slice(0, 24);

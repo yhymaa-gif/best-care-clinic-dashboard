@@ -129,13 +129,16 @@ body.screen-mode .focus-grid{grid-template-columns:minmax(0,1.7fr) minmax(360px,
 @media(max-width:980px){.admin-hub-controls{grid-template-columns:1fr 1fr}.admin-hub-controls input{grid-column:1/-1}.admin-patient-item{grid-template-columns:1fr 1fr}.admin-action-tags{grid-column:1/-1}.admin-patient-actions{grid-column:1/-1;justify-content:stretch}.admin-patient-actions a{flex:1}}
 @media(max-width:620px){.admin-hub-head{grid-template-columns:46px 1fr auto;padding:15px 14px}.admin-hub-icon{width:44px;height:44px;border-radius:14px;font-size:22px}.admin-hub-head h2{font-size:17px}.admin-hub-count{min-width:46px;height:46px;border-radius:14px;font-size:20px}.admin-hub-controls{grid-template-columns:1fr;padding:11px 12px}.admin-hub-controls input{grid-column:auto}.admin-hub-summary{padding-inline:12px}.admin-hub-list{padding:11px 12px 14px}.admin-patient-item{grid-template-columns:1fr;padding:13px 14px 13px 17px}.admin-action-tags,.admin-patient-actions{grid-column:auto}.admin-patient-actions{display:grid;grid-template-columns:1fr 1fr}}
 .payment-item p{margin:5px 0;color:#245d47;font-weight:800}.payment-item.received{border-color:#e3ba55;background:#fffaf0}.payment-item.completed{border-color:#42aa70;background:#eaf9f0}.payment-done{color:#1a885a;font-weight:900}.payment-received{color:#9a6d08;font-weight:900}.payment-actions-inline{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.payment-row-badge{display:flex;width:max-content;align-items:center;gap:4px;margin-top:6px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:900;white-space:nowrap}.payment-row-badge.requested{background:#fff0c9;color:#8b6200}.payment-row-badge.received{background:#e9f1ff;color:#28659b}.payment-row-badge.completed{background:#d9f5e4;color:#147744;box-shadow:0 0 0 1px #79c99a}.role-modal{background:rgba(16,48,36,.20);backdrop-filter:blur(3px)}.role-modal.open{animation:roleBackdropIn .16s ease-out}.role-modal.open .role-modal-card{animation:roleCardIn .18s cubic-bezier(.2,.75,.2,1)}.role-modal-card{max-width:760px;text-align:center;background:rgba(255,255,255,.94)}.role-modal-card>p{margin:5px auto 20px;max-width:590px;color:var(--muted)}.role-options{display:grid;grid-template-columns:1fr 1fr;gap:14px}.role-option{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center;padding:20px;text-align:start;border:1px solid #b9d7c8;border-radius:18px;background:linear-gradient(145deg,#fff,#f2f9f5);color:var(--navy);box-shadow:0 12px 28px rgba(23,79,58,.08);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}.role-option:hover{transform:translateY(-2px);border-color:#4d9b78}.role-option.is-selected{border-color:#3f7fa5;box-shadow:0 0 0 4px rgba(63,127,165,.12),0 15px 32px rgba(49,95,133,.15)}.role-option .role-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:17px;background:#174f3a;color:#fff;font-size:27px}.role-option strong,.role-option small{display:block}.role-option strong{font-size:17px}.role-option small{margin-top:5px;color:var(--muted);line-height:1.55}.role-note{margin-top:16px!important;font-size:12px}.clinic-role-picker{margin-top:16px;padding:17px;border:1px solid #b8d3e4;border-radius:18px;background:linear-gradient(150deg,rgba(248,252,255,.92),rgba(238,247,252,.88));box-shadow:inset 0 1px 0 #fff;text-align:start;animation:clinicPickerIn .16s ease-out}.clinic-role-picker[hidden]{display:none}.clinic-role-picker-head{display:grid;grid-template-columns:44px 1fr;gap:11px;align-items:center;margin-bottom:14px}.clinic-role-picker-head>span{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#315f85,#4c91bb);color:#fff;font-size:21px;box-shadow:0 8px 18px rgba(49,95,133,.22)}.clinic-role-picker-head strong,.clinic-role-picker-head small{display:block}.clinic-role-picker-head strong{color:#244f70;font-size:16px}.clinic-role-picker-head small{margin-top:3px;color:#657d8c;font-size:11px}.clinic-role-fields{display:grid;grid-template-columns:1fr;gap:12px}.clinic-role-fields label{display:grid;gap:7px;color:#315f85;font-size:12px;font-weight:900}.clinic-role-fields select{width:100%;min-height:50px;padding:10px 12px;border:1px solid #bcd5e4;border-radius:13px;background:#fff;color:#244f70;font:inherit;outline:0}.clinic-role-fields select:focus{border-color:#4c91bb;box-shadow:0 0 0 4px rgba(76,145,187,.12)}.clinic-role-fields select option:disabled{color:#8a9ba5}.clinic-role-error{min-height:20px;margin:10px 0 0!important;color:#a13042!important;font-size:11px!important;font-weight:900;text-align:start}.clinic-role-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:10px}.clinic-role-actions .primary{min-width:190px;background:#315f85;border-color:#315f85;color:#fff}.clinic-role-actions .primary:disabled{cursor:not-allowed;opacity:.48;box-shadow:none}@keyframes roleBackdropIn{from{opacity:0}to{opacity:1}}@keyframes roleCardIn{from{opacity:0;transform:translateY(8px) scale(.992)}to{opacity:1;transform:none}}@keyframes clinicPickerIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}.queue-card.status-arrived{border-color:#33b484;background:linear-gradient(145deg,#e4faef,#c8f2df)}.queue-card.status-early-arrival{border-color:#599fde;background:linear-gradient(145deg,#ebf5ff,#d9eaff)}.current-visual-icon.arrival-pulse{background:#1fa874;color:#fff;animation:arrivalIconPulse 1.15s ease-in-out infinite}@keyframes arrivalIconPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(31,168,116,.42)}50%{transform:scale(1.12);box-shadow:0 0 0 13px rgba(31,168,116,0)}}
-.payment-modal-card{width:min(820px,100%)}.payment-action-field{margin-top:14px;padding:14px;border:1px solid #c5dfd0;border-radius:16px;background:#f7fbf9}.payment-action-field>label{margin-bottom:11px;color:#175f42}.payment-procedure-list{display:grid;gap:8px}.payment-procedure-row{display:grid;grid-template-columns:minmax(0,1fr) 142px 92px;align-items:center;gap:9px;padding:10px 11px;border:1px solid #d4e6dc;border-radius:12px;background:#fff}.payment-procedure-name,.payment-free{display:flex;align-items:center;gap:8px;font-weight:900}.payment-procedure-name input,.payment-free input{width:18px;height:18px;flex:0 0 18px}.payment-quantity{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:7px}.payment-quantity small{color:var(--muted);font-weight:900}.payment-stepper{display:grid;grid-template-columns:38px 48px 38px;align-items:center;direction:ltr;border:1px solid #b9d6c7;border-radius:11px;overflow:hidden;background:#fff;box-shadow:0 4px 12px rgba(26,97,66,.08)}.payment-stepper button{display:grid;place-items:center;width:38px;height:38px;padding:0;border:0;border-radius:0;background:#e7f5ed;color:#176443;font-size:22px;font-weight:950;line-height:1}.payment-stepper button:hover{background:#cfeadb}.payment-stepper input{width:48px!important;min-height:38px!important;padding:5px!important;border:0!important;border-inline:1px solid #d6e7de!important;border-radius:0!important;text-align:center;font-weight:950;color:#163f31;background:#fff;pointer-events:none}.payment-free{justify-content:center;padding:7px;border-radius:9px;background:#eef8f2;color:#176643}.payment-other-row{grid-template-columns:auto minmax(120px,1fr) 142px 92px}.payment-other-row .payment-other-input{width:100%;min-height:38px}.payment-discount-field{display:grid;gap:6px;margin-top:11px}.payment-discount-field label{color:#5c4a12;font-size:12px;font-weight:900}.payment-discount-field input{width:100%;background:#fffdf3;border-color:#ead99d}.payment-items-summary{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.payment-item-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:#e5f4eb;color:#176441;font-size:11px;font-weight:900}.payment-item-chip.free{background:#fff3c9;color:#876000}.payment-discount-note{color:#936b00!important}.notification-enabled{color:#176441!important;background:#e3f5eb!important}.notification-enabled::after{content:" ✓"}.notification-denied{color:#a32f42!important;background:#fdebed!important}
+.payment-modal-card{width:min(880px,100%)}.payment-action-field{margin-top:14px;padding:15px;border:1px solid #c5dfd0;border-radius:17px;background:#f7fbf9}.payment-action-field>label{margin-bottom:11px;color:#175f42}.payment-catalog-source{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0 13px;padding:11px 12px;border:1px solid #bddbc9;border-radius:13px;background:linear-gradient(135deg,#e9f7ef,#fff)}.payment-catalog-source strong,.payment-catalog-source small{display:block}.payment-catalog-source strong{color:#165e40}.payment-catalog-source small{margin-top:3px;color:var(--muted);font-size:11px;line-height:1.5}.payment-catalog-source button{flex:0 0 auto;min-height:38px;padding:8px 12px;background:#fff;color:#176344;border-color:#a9cfba;font-size:11px}.payment-catalog-source button.is-loading{opacity:.65;pointer-events:none}.payment-procedure-list{display:grid;gap:9px}.payment-procedure-row{display:grid;grid-template-columns:minmax(220px,1fr) minmax(190px,220px) 100px;align-items:center;gap:12px;padding:11px 12px;border:1px solid #d4e6dc;border-radius:13px;background:#fff;box-shadow:0 4px 14px rgba(25,94,64,.045)}.payment-procedure-name,.payment-free{display:flex;align-items:center;gap:9px;font-weight:900}.payment-procedure-name input,.payment-free input{width:19px;height:19px;flex:0 0 19px;accent-color:#1d8056}.payment-quantity{display:grid;grid-template-columns:1fr;align-items:center;justify-items:center;gap:5px;min-width:0}.payment-quantity small{color:#496b5c;font-size:10px;font-weight:950}.payment-stepper{display:grid;grid-template-columns:44px minmax(52px,64px) 44px;align-items:center;justify-content:center;width:100%;max-width:160px;direction:ltr;border:1px solid #a9cdbc;border-radius:13px;background:#fff;box-shadow:0 5px 15px rgba(26,97,66,.1);overflow:hidden}.payment-stepper button{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:0;font-size:25px;font-weight:950;line-height:1;transition:background .16s ease,transform .16s ease}.payment-stepper button:active{transform:scale(.92)}.payment-stepper button[data-payment-step="decrease"],.payment-stepper button[data-payment-other-step="decrease"]{background:#fde9eb;color:#a32f42;border-inline-end:1px solid #ebcbd0}.payment-stepper button[data-payment-step="increase"],.payment-stepper button[data-payment-other-step="increase"]{background:#dcf4e6;color:#126943;border-inline-start:1px solid #c2e2d0}.payment-stepper button[data-payment-step="decrease"]:hover,.payment-stepper button[data-payment-other-step="decrease"]:hover{background:#f8d7dc}.payment-stepper button[data-payment-step="increase"]:hover,.payment-stepper button[data-payment-other-step="increase"]:hover{background:#c8ead7}.payment-stepper input{width:100%!important;min-width:0!important;min-height:44px!important;padding:5px!important;border:0!important;border-radius:0!important;text-align:center;font-size:16px!important;font-weight:950;color:#163f31;background:#fff;pointer-events:none}.payment-free{justify-content:center;min-height:40px;padding:8px;border-radius:10px;background:#eef8f2;color:#176643}.payment-other-row{grid-template-columns:auto minmax(160px,1fr) minmax(190px,220px) 100px}.payment-other-row .payment-other-input{width:100%;min-height:42px}.payment-discount-field{display:grid;gap:6px;margin-top:12px}.payment-discount-field label{color:#5c4a12;font-size:12px;font-weight:900}.payment-discount-field input{width:100%;background:#fffdf3;border-color:#ead99d}.payment-items-summary{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.payment-item-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;background:#e5f4eb;color:#176441;font-size:11px;font-weight:900}.payment-item-chip.free{background:#fff3c9;color:#876000}.payment-discount-note{color:#936b00!important}.notification-enabled{color:#176441!important;background:#e3f5eb!important}.notification-enabled::after{content:" ✓"}.notification-denied{color:#a32f42!important;background:#fdebed!important}
+.payment-procedure-row:not(.payment-other-row){grid-template-columns:44px minmax(210px,1fr) minmax(190px,220px) 100px}.payment-favorite-toggle{display:grid;place-items:center;width:42px;height:42px;padding:0;border:1px solid #d8e4dc;border-radius:13px;background:#f7faf8;color:#9aa9a1;font-size:23px;line-height:1;box-shadow:none;transition:transform .16s ease,color .16s ease,background .16s ease,border-color .16s ease}.payment-favorite-toggle:hover{transform:translateY(-1px) scale(1.05);border-color:#e0b847;background:#fff9df;color:#c39000}.payment-favorite-toggle.is-favorite{border-color:#e3bd4b;background:linear-gradient(145deg,#fffbe7,#ffe89b);color:#b77d00;box-shadow:0 5px 15px rgba(190,140,18,.2)}.payment-favorite-toggle.is-saving{opacity:.58;pointer-events:none}.payment-procedure-row.is-favorite{border-color:#e3c45f;background:linear-gradient(145deg,#fffdf4,#fff)}.payment-procedure-copy{display:grid;gap:4px;min-width:0}.payment-procedure-copy>span{overflow:hidden;text-overflow:ellipsis}.payment-procedure-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.payment-procedure-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;background:#edf5f1;color:#4a6d5e;font-size:9px;font-weight:900}.payment-procedure-badge.favorite{background:#fff1b9;color:#805a00}.payment-procedure-badge.popular{background:#e4f2fa;color:#27637f}.payment-catalog-doctor{color:#286b4e!important;font-weight:900}.payment-ordering-note{display:flex;align-items:center;gap:7px;margin:-3px 0 10px;padding:7px 10px;border-radius:10px;background:#f5f8f6;color:#557064;font-size:10px;font-weight:800}
 .completion-choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:17px 0 12px}.completion-choice{position:relative;display:grid;grid-template-columns:28px 1fr;align-items:start;gap:11px;margin:0;padding:16px;border:1px solid #c9ddd3;border-radius:16px;background:linear-gradient(145deg,#fff,#f4faf7);cursor:pointer;transition:.2s ease}.completion-choice:hover{transform:translateY(-1px);border-color:#6eb18f;box-shadow:0 8px 20px rgba(30,111,75,.09)}.completion-choice:has(input:checked){border-color:#27865d;background:linear-gradient(145deg,#e6f8ee,#f8fffb);box-shadow:0 0 0 3px rgba(39,134,93,.12)}.completion-choice.plan-choice:has(input:checked){border-color:#477ca7;background:linear-gradient(145deg,#eaf4fc,#f9fcff);box-shadow:0 0 0 3px rgba(71,124,167,.13)}.completion-choice input{width:22px;height:22px;margin-top:2px;accent-color:#27865d}.completion-choice strong,.completion-choice small{display:block}.completion-choice strong{color:#174d37;font-size:15px}.completion-choice small{margin-top:5px;color:var(--muted);font-size:12px;line-height:1.55}.completion-choice.plan-choice strong{color:#295f87}.completion-flow-note{margin:8px 0 0;padding:11px 13px;border-radius:12px;background:#f3f7fa;color:#4e6b7d;font-size:12px;font-weight:800}.completion-flow-note b{color:#295f87}
 .review-modal-card{max-width:620px}.review-modal-head{display:flex;align-items:center;gap:13px;margin-bottom:16px}.review-modal-head>span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:#dcf7e9;color:#128451;font-size:24px}.review-modal-head h3,.review-modal-head p{margin:0}.review-modal-head p{margin-top:4px;color:var(--muted);font-size:12px}.review-field{display:grid;gap:6px;margin:13px 0}.review-field label{font-size:12px;font-weight:900;color:#325c4b}.review-field input,.review-field textarea{width:100%}.review-field textarea{min-height:150px;line-height:1.8}.review-link-preview{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#f0f8f4;color:#266049;font-size:11px}.review-link-preview a{color:#147b50;font-weight:900}.review-send{background:#16a563;color:#fff;border-color:#16a563}.review-send:hover{background:#0e8d52;color:#fff}.review-row-btn{position:relative;isolation:isolate;display:inline-flex!important;align-items:center;gap:7px;overflow:visible!important;padding:6px 11px!important;border-color:#d9b13f!important;background:linear-gradient(135deg,#fffdf4,#fff0ac)!important;color:#6e5200!important;box-shadow:0 0 0 1px rgba(222,179,54,.24),0 0 15px rgba(226,185,62,.38)!important;animation:reviewGoldGlow 1.9s ease-in-out infinite}.review-row-btn:hover{transform:translateY(-1px) scale(1.04);background:linear-gradient(135deg,#fff9dc,#ffe582)!important;box-shadow:0 0 0 2px rgba(222,179,54,.28),0 0 25px rgba(226,185,62,.58)!important}.whatsapp-gold-mark{position:relative;z-index:1;display:grid;place-items:center;width:25px;height:25px;transform-origin:50% 12%;color:#d6a514;filter:drop-shadow(0 0 5px rgba(231,192,71,.78));animation:reviewSwing 1.35s ease-in-out infinite}.whatsapp-gold-mark svg{display:block;width:25px;height:25px;fill:currentColor}.review-row-btn .review-star{position:absolute;z-index:3;color:#ffd53e;font-size:11px;line-height:1;pointer-events:none;text-shadow:0 0 5px #fff,0 0 10px #ffd940;animation:reviewStar 1.7s ease-in-out infinite}.review-row-btn .star-one{inset-inline-start:1px;top:-9px}.review-row-btn .star-two{inset-inline-start:22px;top:-12px;animation-delay:.5s}.review-row-btn .star-three{inset-inline-start:42px;top:-7px;animation-delay:1s}@keyframes reviewGoldGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.08)}}@keyframes reviewSwing{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(12deg)}}@keyframes reviewStar{0%,100%{opacity:.2;transform:translateY(2px) scale(.6) rotate(0deg)}45%{opacity:1;transform:translateY(-3px) scale(1.4) rotate(145deg)}70%{opacity:.7;transform:translateY(-1px) scale(.95) rotate(230deg)}}@media(prefers-reduced-motion:reduce){.review-row-btn,.whatsapp-gold-mark,.review-row-btn .review-star{animation:none}}
 .plan-row-btn{display:inline-flex!important;align-items:center;gap:5px;border-color:#9bcac2!important;background:#edf8f5!important;color:#1d6f63!important;font-weight:900}.plan-row-btn::before{content:"✦";display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:#2a9d8f;color:#fff}.plan-row-btn:hover{background:#dff2ee!important;box-shadow:0 8px 18px rgba(42,157,143,.18)!important}
-@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-procedure-row,.payment-other-row{grid-template-columns:minmax(0,1fr) 142px}.payment-procedure-name,.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input{grid-column:1/-1}.payment-free{grid-column:1/-1}.completion-choice-grid{grid-template-columns:1fr}.role-options,.clinic-role-fields{grid-template-columns:1fr}.role-option{padding:15px}.clinic-role-picker{padding:14px}.clinic-role-actions{display:grid;grid-template-columns:1fr}.clinic-role-actions button,.clinic-role-actions .primary{width:100%;min-width:0}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
+@media(max-width:680px){.view-switch{display:grid;grid-template-columns:1fr 1fr}.view-switch a{min-width:0;padding:9px 7px;font-size:12px}.view-switch button{grid-column:1/-1}.current-status-notice{grid-template-columns:38px 1fr}.current-status-notice #waitingTimer{grid-column:2;font-size:18px}.status-legend{max-width:100%;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px}.payment-panel-head{align-items:flex-start}.payment-item{grid-template-columns:1fr}.payment-catalog-source{align-items:flex-start;flex-direction:column}.payment-catalog-source button{width:100%}.payment-procedure-row,.payment-procedure-row:not(.payment-other-row),.payment-other-row{grid-template-columns:44px minmax(0,1fr)}.payment-favorite-toggle{grid-column:1}.payment-procedure-name{grid-column:2}.payment-other-row .payment-procedure-name,.payment-other-row .payment-other-input,.payment-quantity,.payment-free{grid-column:1/-1}.payment-quantity{grid-template-columns:auto minmax(0,160px);justify-content:space-between;justify-items:stretch}.payment-stepper{justify-self:end}.payment-free{justify-content:flex-start}.completion-choice-grid{grid-template-columns:1fr}.role-options,.clinic-role-fields{grid-template-columns:1fr}.role-option{padding:15px}.clinic-role-picker{padding:14px}.clinic-role-actions{display:grid;grid-template-columns:1fr}.clinic-role-actions button,.clinic-role-actions .primary{width:100%;min-width:0}.quick-add>summary{padding:14px}.quick-add>summary small{display:none}.review-row-btn{width:100%;justify-content:center}}
 .auth-methods{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.auth-methods label{display:flex;align-items:center;gap:6px;padding:8px 11px;border:1px solid #d5e8df;border-radius:10px;background:#f8fcfa;font-size:13px}.auth-methods input{accent-color:#1d8059}.auth-card #authEmailLabel[hidden],.auth-card #authPhoneLabel[hidden]{display:none}
-.catalog-modal-card{width:min(900px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 145px 145px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}.catalog-warning{padding:9px 11px;border-radius:11px;background:#fff7dc!important;color:#785b0b!important}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-head{display:block}}
+.catalog-modal-card{width:min(960px,96vw)}.catalog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.catalog-head h3{margin:0 0 5px}.catalog-head p{margin:0;color:var(--muted);line-height:1.6}.catalog-list{display:grid;gap:9px;max-height:54vh;overflow:auto;margin:18px 0;padding:3px}.catalog-row,.catalog-columns{display:grid;grid-template-columns:minmax(210px,1fr) 135px 135px 105px 42px;gap:9px;align-items:center}.catalog-row{padding:10px;border:1px solid var(--line);border-radius:13px;background:#fbfdfc}.catalog-columns{padding:0 11px;color:var(--muted);font-size:12px;font-weight:800}.catalog-columns span:not(:first-child){text-align:center}.catalog-row input{min-width:0}.catalog-row .catalog-price{direction:ltr;text-align:center}.catalog-lab-toggle{display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:7px;border:1px solid #c8dfd3;border-radius:11px;background:#f0f8f4;color:#236047;font-size:10px;font-weight:900}.catalog-lab-toggle input{width:18px;height:18px;accent-color:#1e7b56}.catalog-delete{width:40px;height:40px;padding:0;color:#a52f3c;border-color:#f0cbd0;background:#fff6f7}.catalog-empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}.catalog-note{padding:11px 13px;border-radius:12px;background:#eef8f2;color:#205e46;font-size:13px;line-height:1.6}.catalog-warning{padding:9px 11px;border-radius:11px;background:#fff7dc!important;color:#785b0b!important}@media(max-width:720px){.catalog-columns{display:none}.catalog-row{grid-template-columns:1fr 1fr 40px}.catalog-row [data-catalog-name]{grid-column:1/-1}.catalog-lab-toggle{grid-column:1/-1}.catalog-head{display:block}}
+.lab-payment-box{display:grid;gap:12px;margin-top:14px;padding:14px;border:1px solid #b8d7c8;border-radius:17px;background:linear-gradient(145deg,#f1faf5,#fff)}.lab-payment-box[hidden]{display:none}.lab-payment-head{display:flex;align-items:center;gap:11px}.lab-payment-icon{display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;border-radius:13px;background:#dff2e8;color:#176244;font-size:22px}.lab-payment-head strong,.lab-payment-head small{display:block}.lab-payment-head small{margin-top:3px;color:var(--muted);font-size:10px}.lab-assigned-doctor{display:inline-flex;align-items:center;gap:5px;margin-inline-start:auto;padding:6px 10px;border:1px solid #c8dce8;border-radius:999px;background:#eef5f9;color:#315e77;font-size:10px;font-weight:900}.lab-assigned-doctor::before{content:"●";font-size:7px;color:#3c82a3}.lab-payment-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.lab-payment-grid label{display:grid;gap:5px;color:#4f6c5e;font-size:10px;font-weight:900}.lab-payment-grid select,.lab-payment-grid input{width:100%;min-height:42px}.lab-payment-units{display:flex;align-items:center;overflow:hidden;border:1px solid #b9d2c5;border-radius:11px;background:#fff;direction:ltr}.lab-payment-units button{width:40px;height:40px;padding:0;border:0;border-radius:0;background:#eef7f2;color:#176244;font-size:22px}.lab-payment-units input{min-width:50px!important;border:0!important;text-align:center;font-weight:950;pointer-events:none}.lab-sent-now{display:flex!important;grid-column:1/-1;align-items:center;gap:8px;padding:9px 11px;border:1px solid #d9e7e0;border-radius:12px;background:#fff}.lab-sent-now input{width:18px!important;min-height:auto!important;height:18px;accent-color:#1f7b56}.lab-procedure-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 7px;border-radius:999px;background:#dff3e8;color:#176445;font-size:9px;font-weight:900}.lab-row-badge{display:inline-flex;align-items:center;gap:5px;margin:5px 7px 0 0;padding:5px 8px;border:1px solid #b9d8c9;border-radius:999px;background:#eaf7f0;color:#176244;font-size:9px;font-weight:950;cursor:pointer}.lab-row-badge.late{border-color:#efbdc4;background:#fff0f2;color:#ad293c}.lab-row-badge.received{border-color:#9fd1b5;background:#ddf4e7;color:#14633f}.lab-row-badge::before{content:"◆";font-size:8px}.lab-page-link{color:#176244!important;background:#e8f5ee!important}
+@media(max-width:680px){.lab-payment-grid{grid-template-columns:1fr 1fr}.lab-payment-grid label:first-child,.lab-payment-grid .lab-custom-name,.lab-sent-now{grid-column:1/-1}}
 .view-clinic #treatmentCatalogBtn{display:none}
 .clinic-only{display:none}
 body.view-clinic .clinic-only{display:block}
@@ -317,6 +320,8 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   .admin-patient-hub .admin-hub-list{max-height:58vh;padding:8px 10px 11px}
   .admin-patient-hub .admin-patient-item{padding:9px 10px 9px 13px}
 }
+.payment-modal-card{max-width:880px}
+#paymentItemsLabel{color:#175f42;font-size:14px;font-weight:950}
 </style>
 </head>
 <body class="auth-checking">
@@ -368,7 +373,8 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
         <button id="exportBtn" type="button">📤 تصدير CSV</button>
         <button id="notificationsBtn" type="button">🔔 تفعيل إشعارات النظام</button>
         <button id="soundAlertsBtn" type="button">🔊 التنبيهات الصوتية مفعلة</button>
-        <button id="treatmentCatalogBtn" type="button">🧾 إجراءات وأسعار الخطط العلاجية</button>
+        <button id="treatmentCatalogBtn" type="button">🧾 الإجراءات والخدمات والأسعار</button>
+        <button id="labCasesBtn" class="lab-page-link" type="button">◆ حالات معمل الأسنان</button>
         <button id="clinicsBtn" class="admin-only" type="button">🏥 إدارة العيادات والأطباء</button>
         <button id="usersBtn" type="button">👤 إدارة مستخدمي النظام</button>
         <button id="syncTestBtn" type="button">🧪 اختبار المزامنة</button>
@@ -511,7 +517,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
   <p id="clinicsError" class="auth-error"></p>
   <div class="clinic-directory-actions"><button type="button" data-close="clinicsModal">إلغاء</button><button id="addClinicSlotBtn" type="button">＋ فتح عيادة جديدة</button><button id="saveClinicsBtn" type="button" class="primary">حفظ العيادات والأطباء</button></div>
 </div></div>
-<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">إجراءات وأسعار الخطط العلاجية</h3><p>عدّل الاسم والسعر قبل الخصم وبعده مرة واحدة؛ ستظهر القيم تلقائيًا في خطط هذه العيادة.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">الأسعار اختيارية. أي سعر تعدّله الإدارة يدويًا داخل خطة محددة يبقى محفوظًا ولا يستبدله الكتالوج.</div><div class="catalog-columns"><span>اسم الإجراء</span><span>قبل الخصم</span><span>بعد الخصم</span><span></span></div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث الخطط</button></div></div></div>
+<div id="treatmentCatalogModal" class="modal"><div class="modal-card catalog-modal-card" role="dialog" aria-modal="true" aria-labelledby="treatmentCatalogTitle"><div class="catalog-head"><div><h3 id="treatmentCatalogTitle">الإجراءات والخدمات والأسعار</h3><p>عدّل اسم الإجراء والأسعار، وحدد الخدمات التي تحتاج معمل أسنان.</p></div><button type="button" data-close="treatmentCatalogModal" aria-label="إغلاق">×</button></div><div class="catalog-note">الإجراء المعلَّم «يحتاج معمل» يفتح نموذج المعمل تلقائيًا داخل أمر الدفع.</div><div class="catalog-columns"><span>اسم الإجراء</span><span>قبل الخصم</span><span>بعد الخصم</span><span>ربط المعمل</span><span></span></div><div id="treatmentCatalogList" class="catalog-list"></div><p id="treatmentCatalogError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="treatmentCatalogModal">إلغاء</button><button id="addCatalogItemBtn" type="button">＋ إضافة إجراء</button><button id="saveTreatmentCatalogBtn" type="button" class="primary">حفظ وتحديث النظام</button></div></div></div>
 <div id="paymentModal" class="modal"><div class="modal-card payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="paymentModalTitle">
   <h3 id="paymentModalTitle">اكتمال علاج المريض</h3>
   <p id="paymentPatientText">اختر الإجراءات المطلوبة بعد اكتمال العلاج.</p>
@@ -526,7 +532,7 @@ body.view-clinic button:focus-visible,body.view-clinic a:focus-visible,body.view
     </label>
   </div>
   <p id="completionFlowNote" class="completion-flow-note"><b>المسار:</b> الطبيب يُكمل المسودة ويؤكد اعتمادها، ثم تستلمها الإدارة لإكمال الإجراءات والأسعار.</p>
-  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
+  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div class="payment-catalog-source"><div><strong id="paymentCatalogSourceTitle">قائمة الإجراءات والخدمات المركزية</strong><small id="paymentCatalogSourceHelp">تُدار من الإعدادات، ويظهر أي تعديل هنا تلقائيًا.</small><small id="paymentCatalogDoctor" class="payment-catalog-doctor"></small></div><button id="paymentCatalogRefreshBtn" type="button">↻ تحديث القائمة</button></div><div id="paymentOrderingNote" class="payment-ordering-note">★ المفضلة أولًا، ثم الإجراءات الأكثر استخدامًا لهذا الطبيب.</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div id="labPaymentBox" class="lab-payment-box" hidden><div class="lab-payment-head"><span class="lab-payment-icon" aria-hidden="true">◆</span><div><strong>بيانات معمل الأسنان</strong><small>ظهر هذا القسم لأن الإجراء المختار يحتاج تصنيعًا معمليًا.</small></div><span id="labAssignedDoctor" class="lab-assigned-doctor"></span></div><div class="lab-payment-grid"><label>اسم المعمل<select id="labNameSelect"><option value="">اختر المعمل</option><option value="دانتي">دانتي</option><option value="كولجين">كولجين</option><option value="السن الرقمي ديجيتال">السن الرقمي ديجيتال</option><option value="السن الطبيعي">السن الطبيعي</option><option value="معمل مروان">معمل مروان</option><option value="other">معمل آخر</option></select></label><label id="labCustomNameLabel" class="lab-custom-name" hidden>اسم المعمل الآخر<input id="labCustomNameInput" maxlength="100" placeholder="اكتب اسم المعمل"></label><label>عدد الوحدات<span class="lab-payment-units"><button id="labUnitsMinus" type="button" aria-label="إنقاص عدد الوحدات">−</button><input id="labUnitsInput" type="text" inputmode="numeric" readonly value="1"><button id="labUnitsPlus" type="button" aria-label="زيادة عدد الوحدات">+</button></span></label><label>تاريخ الاستلام المتوقع<input id="labExpectedDate" type="date"></label><label>المادة أو النوع<input id="labMaterialInput" maxlength="80" placeholder="مثال: زركون، E-max"></label><label>درجة اللون<input id="labShadeInput" maxlength="50" placeholder="اختياري"></label><label class="lab-sent-now"><input id="labSentNowCheck" type="checkbox"><span>أُرسلت الحالة للمعمل الآن — ابدأ العداد</span></label></div></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
   <div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج والمتابعة</button></div>
 </div></div>
 <div id="reviewModal" class="modal"><div class="modal-card review-modal-card" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle"><div class="review-modal-head"><span aria-hidden="true">★</span><div><h3 id="reviewModalTitle">طلب تقييم تجربة المريض</h3><p id="reviewPatientText">رسالة جاهزة للإرسال عبر واتساب</p></div></div><div class="review-field"><label id="reviewPhoneLabel" for="reviewPhoneInput">رقم واتساب المريض (اختياري)</label><input id="reviewPhoneInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="مثال: 9665XXXXXXXX — اتركه فارغًا لاختيار جهة الاتصال داخل واتساب"></div><div class="review-field"><label id="reviewMessageLabel" for="reviewMessageInput">نص الرسالة</label><textarea id="reviewMessageInput" maxlength="700"></textarea></div><div class="review-field"><label id="reviewUrlLabel" for="reviewUrlInput">رابط تقييم Google</label><input id="reviewUrlInput" type="url" inputmode="url"></div><div class="review-link-preview"><span aria-hidden="true">📍</span><span id="reviewLinkHint">يفتح ملف عيادات أفضل عناية الاستشارية للأسنان على Google Maps.</span><a id="reviewLinkPreview" href="#" target="_blank" rel="noopener">معاينة الرابط</a></div><div class="modal-actions"><button type="button" data-close="reviewModal">إلغاء</button><button id="copyReviewBtn" type="button">نسخ الرسالة</button><button id="sendReviewWhatsappBtn" type="button" class="review-send">إرسال عبر واتساب</button></div></div></div>
@@ -617,15 +623,8 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.31-notification-controls';
+const DASHBOARD_BUILD='7.40-dental-lab-workflow';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
-const PAYMENT_PROCEDURES=[
-  {id:'cosmetic_filling',ar:'حشوة تجميلية',en:'Cosmetic filling'},
-  {id:'root_canal',ar:'علاج عصب وإعادة علاج عصب',en:'Root canal / retreatment'},
-  {id:'crowns_veneers',ar:'تركيبات وعدسات',en:'Crowns and veneers'},
-  {id:'post',ar:'وتد',en:'Post'},
-  {id:'removal',ar:'إزالة وتد أو إزالة تركيبة',en:'Post or crown removal'}
-];
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
   const key='bestcare_device_id_v1';
@@ -661,6 +660,7 @@ let doctorAlertPeekTimer=null;
 let lastDoctorFloatingAlertAt=Number(sessionStorage.getItem('bestcare_doctor_alert_seen_at')||0);
 let treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:0};
 let patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
+let labCasesState={cases:[],revision:0,updatedAt:0,lastFetchedAt:0,loading:false};
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
 const ACTIVE_CLINIC_ID=/^clinic-([1-9]|1[0-5])$/.test(new URLSearchParams(location.search).get('clinic')||'')?new URLSearchParams(location.search).get('clinic'):'clinic-1';
@@ -901,6 +901,9 @@ function switchClinic(clinicId){
   location.href=`${location.pathname}?${params.toString()}`;
 }
 let treatmentCatalog=[];
+let treatmentCatalogLoadedAt=0;
+let paymentCatalogProfile={favorites:[],usage:{}};
+const LAB_PROCEDURE_IDS=new Set(['ceramic-crown','ceramic-veneer','implant-crown','whitening-trays']);
 const DEFAULT_TREATMENT_CATALOG=[
   ['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
   ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
@@ -910,19 +913,84 @@ const DEFAULT_TREATMENT_CATALOG=[
   ['implant-surgery','زراعة — الجزء الجراحي'],['extraction','خلع الأسنان'],
   ['temporary','تركيب مؤقت'],['smile-design','تصميم ابتسامة'],
   ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
-  ['cleaning-gbt','تنظيف أسنان GBT'],['other','إجراء آخر']
-].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
+  ['cleaning-gbt','تنظيف أسنان GBT'],['whitening-trays','قوالب تبييض'],['other','إجراء آخر']
+].map(([id,name])=>({id,name,beforePrice:'',afterPrice:'',requiresLab:LAB_PROCEDURE_IDS.has(id)}));
 const treatmentCatalogLocalKey=()=>`bestcare_treatment_catalog_${ACTIVE_CLINIC_ID}`;
+function paymentDoctorKey(){
+  const doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim().toLocaleLowerCase('ar').replace(/\s+/g,' ');
+  return doctor||`${ACTIVE_CLINIC_ID}-default`;
+}
+const paymentProfileLocalKey=()=>`bestcare_payment_profile_${ACTIVE_CLINIC_ID}_${paymentDoctorKey()}`;
+function normalizePaymentProfile(value){
+  const validIds=new Set((treatmentCatalog.length?treatmentCatalog:DEFAULT_TREATMENT_CATALOG).map(item=>String(item.id)));
+  const favorites=[...new Set((Array.isArray(value?.favorites)?value.favorites:[]).map(String).filter(id=>validIds.has(id)))];
+  const usage={};
+  Object.entries(value?.usage&&typeof value.usage==='object'?value.usage:{}).forEach(([id,count])=>{
+    if(validIds.has(id))usage[id]=Math.max(0,Math.min(1000000,Math.round(Number(count)||0)));
+  });
+  return{favorites,usage};
+}
+function localPaymentProfile(){
+  try{return normalizePaymentProfile(JSON.parse(localStorage.getItem(paymentProfileLocalKey())||'null'))}
+  catch{return normalizePaymentProfile(null)}
+}
+function setPaymentProfile(profile){
+  paymentCatalogProfile=normalizePaymentProfile(profile);
+  localStorage.setItem(paymentProfileLocalKey(),JSON.stringify(paymentCatalogProfile));
+  return paymentCatalogProfile;
+}
+function normalizeTreatmentCatalog(items){
+  const seen=new Set();
+  return (Array.isArray(items)?items:[]).map((item,index)=>{
+    const name=String(item?.name||'').trim().slice(0,120);
+    let id=String(item?.id||`service-${index+1}`).trim().replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,80)||`service-${index+1}`;
+    while(seen.has(id))id=`${id}-${index+1}`;
+    seen.add(id);
+    const before=item?.beforePrice===''?'':Number(item?.beforePrice);
+    const after=(item?.afterPrice??item?.price)===''?'':Number(item?.afterPrice??item?.price);
+    return{id,name,beforePrice:Number.isFinite(before)?before:'',afterPrice:Number.isFinite(after)?after:'',requiresLab:item?.requiresLab===undefined?LAB_PROCEDURE_IDS.has(id):Boolean(item.requiresLab)};
+  }).filter(item=>item.name);
+}
 function localTreatmentCatalog(){
   try{
     const items=JSON.parse(localStorage.getItem(treatmentCatalogLocalKey())||'null');
-    return Array.isArray(items)&&items.length?items.map(item=>({...item})):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
+    return Array.isArray(items)&&items.length?normalizeTreatmentCatalog(items):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
   }catch{return DEFAULT_TREATMENT_CATALOG.map(item=>({...item}))}
+}
+function setTreatmentCatalog(items){
+  treatmentCatalog=normalizeTreatmentCatalog(items);
+  if(!treatmentCatalog.length)treatmentCatalog=DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
+  localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));
+  treatmentCatalogLoadedAt=Date.now();
+  return treatmentCatalog;
+}
+function paymentProcedureCatalog(){
+  const source=treatmentCatalog.length?treatmentCatalog:localTreatmentCatalog();
+  const profile=paymentCatalogProfile?.favorites?paymentCatalogProfile:localPaymentProfile();
+  const favorites=new Set(profile.favorites||[]);
+  const originalOrder=new Map(source.map((item,index)=>[item.id,index]));
+  return source.filter(item=>item.id!=='other'&&String(item.name||'').trim()).sort((a,b)=>{
+    const favoriteDelta=Number(favorites.has(b.id))-Number(favorites.has(a.id));
+    if(favoriteDelta)return favoriteDelta;
+    const usageDelta=Number(profile.usage?.[b.id]||0)-Number(profile.usage?.[a.id]||0);
+    return usageDelta||Number(originalOrder.get(a.id)||0)-Number(originalOrder.get(b.id)||0);
+  });
+}
+async function refreshTreatmentCatalog({force=false}={}){
+  if(!treatmentCatalog.length)treatmentCatalog=localTreatmentCatalog();
+  if(!paymentCatalogProfile.favorites.length&&!Object.keys(paymentCatalogProfile.usage||{}).length)paymentCatalogProfile=localPaymentProfile();
+  if(!force&&treatmentCatalogLoadedAt&&Date.now()-treatmentCatalogLoadedAt<30000)return treatmentCatalog;
+  const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&doctor=${encodeURIComponent(paymentDoctorKey())}`);
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');
+  setTreatmentCatalog(Array.isArray(data.items)&&data.items.length?data.items:DEFAULT_TREATMENT_CATALOG);
+  setPaymentProfile(data.profile);
+  return treatmentCatalog;
 }
 const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function renderTreatmentCatalog(){
   const list=$('treatmentCatalogList');
-  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="قبل الخصم" aria-label="السعر قبل الخصم"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="بعد الخصم" aria-label="السعر بعد الخصم"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
+  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="قبل الخصم" aria-label="السعر قبل الخصم"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="بعد الخصم" aria-label="السعر بعد الخصم"><label class="catalog-lab-toggle"><input data-catalog-requires-lab type="checkbox" ${item.requiresLab?'checked':''}><span>يحتاج معمل</span></label><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
 }
 async function openTreatmentCatalog(){
   setSettingsMenuOpen(false);
@@ -931,11 +999,7 @@ async function openTreatmentCatalog(){
   renderTreatmentCatalog();
   openModal('treatmentCatalogModal');
   try{
-    const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);
-    const data=await response.json();
-    if(!response.ok)throw new Error(data.error||'تعذر تحميل الإجراءات');
-    treatmentCatalog=Array.isArray(data.items)&&data.items.length?data.items.map(item=>({...item})):DEFAULT_TREATMENT_CATALOG.map(item=>({...item}));
-    localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));
+    await refreshTreatmentCatalog({force:true});
     $('treatmentCatalogError').textContent='';$('treatmentCatalogError').classList.remove('catalog-warning');
     renderTreatmentCatalog();
   }catch(error){
@@ -944,12 +1008,12 @@ async function openTreatmentCatalog(){
   }
 }
 function collectTreatmentCatalog(){
-  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);delete item.price});
+  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);item.requiresLab=Boolean(row.querySelector('[data-catalog-requires-lab]')?.checked);delete item.price});
 }
 async function saveTreatmentCatalog(){
   collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').classList.remove('catalog-warning');$('treatmentCatalogError').textContent='جارٍ الحفظ…';
-  localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(items));
-  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');treatmentCatalog=data.items||items;localStorage.setItem(treatmentCatalogLocalKey(),JSON.stringify(treatmentCatalog));$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والأسعار','حُفظت القائمة مركزيًا وستظهر تلقائيًا داخل الخطط العلاجية لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent='حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
+  setTreatmentCatalog(items);
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');setTreatmentCatalog(data.items||items);if($('paymentModal').classList.contains('open'))renderPaymentProcedureOptions(true);$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والخدمات','حُفظت القائمة مركزيًا وستظهر تلقائيًا في الخطط العلاجية وأوامر الدفع لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent='حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
 }
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
 async function logoutApp(){
@@ -1771,7 +1835,7 @@ async function runAutomaticSync(){
     }else{
       await pullState(false);
     }
-    await Promise.all([refreshTreatmentPlanRegistry(false),refreshManualAlert(false)]);
+    await Promise.all([refreshTreatmentPlanRegistry(false),refreshManualAlert(false),refreshLabCases()]);
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
@@ -1840,6 +1904,56 @@ function paymentBadgeMarkup(p){
   const stage=paymentStage(p);if(!stage)return'';
   const labels=lang==='en'?{requested:'Payment requested',received:'Request received',completed:'Payment completed'}:{requested:'بانتظار استلام طلب الدفع',received:'تم استلام طلب الدفع',completed:'✓ تم تنفيذ الدفع'};
   return `<span class="payment-row-badge ${stage}">${escapeHtml(labels[stage])}</span>`;
+}
+function normalizedPatientPhone(patient){return String(patient?.phone||patient?.mobile||'').replace(/\D/g,'')}
+function labCaseMatchesPatient(item,patient){
+  if(!item||!patient)return false;
+  if(item.patient?.id&&patient.id&&String(item.patient.id)===String(patient.id))return true;
+  const caseFile=String(item.patient?.file||'').trim().toLowerCase(),patientFile=String(patient.file||'').trim().toLowerCase();
+  if(caseFile&&patientFile&&caseFile===patientFile)return true;
+  const casePhone=normalizedPatientPhone(item.patient),patientPhone=normalizedPatientPhone(patient);
+  return Boolean(casePhone&&patientPhone&&casePhone===patientPhone);
+}
+function patientLabCases(patient,{activeOnly=true}={}){
+  const terminal=new Set(['delivered_patient','cancelled']);
+  return labCasesState.cases
+    .filter(item=>labCaseMatchesPatient(item,patient)&&(!activeOnly||!terminal.has(item.status)))
+    .sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
+}
+function labCaseIsLate(item){return !['delivered_patient','cancelled'].includes(item?.status)&&Number(item?.expectedAt)>0&&Date.now()>Number(item.expectedAt)}
+function labStatusText(status){
+  return ({pending_send:'بانتظار الإرسال',sent:'أُرسلت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||'حالة معمل';
+}
+function labCaseBadgeMarkup(patient){
+  const active=patientLabCases(patient);
+  if(!active.length)return'';
+  const lead=active[0],tone=labCaseIsLate(lead)?'late':lead.status==='received_clinic'?'received':'';
+  const label=active.length>1?`${active.length} حالات بالمعمل`:`${labStatusText(lead.status)}${lead.sentAt?` · ${Math.max(0,Math.floor((Date.now()-Number(lead.sentAt))/86400000))} يوم`:''}`;
+  return `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="فتح حالات معمل الأسنان">${escapeHtml(label)}</button>`;
+}
+async function refreshLabCases({force=false}={}){
+  const cadence=syncCadence().workHours?120000:600000;
+  if(labCasesState.loading||(!force&&labCasesState.lastFetchedAt&&Date.now()-labCasesState.lastFetchedAt<cadence))return labCasesState.cases;
+  labCasesState.loading=true;
+  try{
+    const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`);
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'تعذر تحميل حالات المعمل');
+    labCasesState.cases=Array.isArray(data.cases)?data.cases:[];
+    labCasesState.revision=Number(data.revision||0);
+    labCasesState.updatedAt=Number(data.updatedAt||0);
+    labCasesState.lastFetchedAt=Date.now();
+    renderTable();
+    return labCasesState.cases;
+  }catch(error){
+    console.warn('Dental lab cases unavailable',error);
+    return labCasesState.cases;
+  }finally{labCasesState.loading=false}
+}
+function openLabCasesPage(patient=null){
+  const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID});
+  if(patient)params.set('patient',String(patient.file||patient.phone||patient.name||''));
+  location.href=`./lab.html?${params.toString()}`;
 }
 function reviewRequestMessage(patient,url){
   const name=firstName(patient?.name);
@@ -2126,7 +2240,7 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p);return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><strong>${escapeHtml(firstName(p.name))}</strong>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}</td>
+        <td><strong>${escapeHtml(firstName(p.name))}</strong>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(p.file)}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -2286,13 +2400,169 @@ function startActualTreatment(id){
   mutate(()=>{p.status='active';p.actualStartedAt=Date.now();p.lastCalledAt=p.lastCalledAt||Date.now()});
   toast('بدأ الوقت الفعلي',`${firstName(p.name)} — دون تغيير وقت الموعد الأصلي`);
 }
-function renderPaymentProcedureOptions(){
+function currentPaymentSelections(){
+  const selections=new Map();
+  document.querySelectorAll('[data-payment-row]').forEach(row=>{
+    const id=String(row.dataset.paymentRow||'');
+    if(!id)return;
+    selections.set(id,{
+      selected:Boolean(row.querySelector('[data-payment-select]')?.checked),
+      quantity:Math.max(1,Math.min(99,Number(row.querySelector('[data-payment-quantity]')?.value||1))),
+      free:Boolean(row.querySelector('[data-payment-free]')?.checked)
+    });
+  });
+  return selections;
+}
+function renderPaymentProcedureOptions(preserve=false){
   const list=$('paymentProcedureList');if(!list)return;
-  list.innerHTML=PAYMENT_PROCEDURES.map(item=>`<div class="payment-procedure-row" data-payment-row="${item.id}"><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${item.id}"><span>${escapeHtml(lang==='en'?item.en:item.ar)}</span></label><div class="payment-quantity"><small>${lang==='en'?'Qty':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${item.id}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="1" data-payment-quantity="${item.id}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${item.id}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${item.id}"><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`).join('');
+  const saved=preserve?currentPaymentSelections():new Map();
+  const items=paymentProcedureCatalog();
+  const favorites=new Set(paymentCatalogProfile.favorites||[]);
+  const doctorName=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
+  if($('paymentCatalogDoctor'))$('paymentCatalogDoctor').textContent=doctorName
+    ?(lang==='en'?`Personalized for Dr. ${doctorName}`:`مرتبة حسب مفضلة واستخدام د. ${doctorName}`)
+    :(lang==='en'?'Personalized for this clinic':'مرتبة حسب مفضلة واستخدام هذه العيادة');
+  list.innerHTML=items.length?items.map(item=>{
+    const state=saved.get(item.id)||{selected:false,quantity:1,free:false};
+    const isFavorite=favorites.has(item.id),usage=Number(paymentCatalogProfile.usage?.[item.id]||0);
+    const badges=`${isFavorite?`<span class="payment-procedure-badge favorite">${lang==='en'?'★ Favorite':'★ مفضل'}</span>`:''}${usage?`<span class="payment-procedure-badge popular">${lang==='en'?`Used ${usage}`:`استخدم ${usage}`}</span>`:''}${item.requiresLab?`<span class="lab-procedure-badge">${lang==='en'?'◆ Dental lab':'◆ يحتاج معمل'}</span>`:''}`;
+    return `<div class="payment-procedure-row${isFavorite?' is-favorite':''}" data-payment-row="${escapeHtml(item.id)}"><button class="payment-favorite-toggle${isFavorite?' is-favorite':''}" type="button" data-payment-favorite="${escapeHtml(item.id)}" aria-pressed="${isFavorite}" aria-label="${isFavorite?(lang==='en'?'Remove from favorites':'إزالة من المفضلة'):(lang==='en'?'Add to favorites':'إضافة إلى المفضلة')}" title="${isFavorite?(lang==='en'?'Remove from favorites':'إزالة من المفضلة'):(lang==='en'?'Add to favorites':'إضافة إلى المفضلة')}">${isFavorite?'★':'☆'}</button><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${escapeHtml(item.id)}" ${state.selected?'checked':''}><span class="payment-procedure-copy"><span>${escapeHtml(item.name)}</span>${badges?`<small class="payment-procedure-meta">${badges}</small>`:''}</span></label><div class="payment-quantity"><small>${lang==='en'?'Quantity':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="${state.quantity}" data-payment-quantity="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${escapeHtml(item.id)}" ${state.free?'checked':''}><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`;
+  }).join(''):`<div class="payment-empty">${lang==='en'?'No services are available. Add them from Settings.':'لا توجد خدمات متاحة. أضفها من الإعدادات ← الإجراءات والخدمات والأسعار.'}</div>`;
+  updateLabPaymentPanel();
+}
+async function updatePaymentPreference(body){
+  const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&doctor=${encodeURIComponent(paymentDoctorKey())}`,{
+    method:'PATCH',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({doctorKey:paymentDoctorKey(),...body})
+  });
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'تعذر حفظ تفضيلات الإجراءات');
+  return setPaymentProfile(data.profile);
+}
+async function togglePaymentFavorite(procedureId,button){
+  const previous=normalizePaymentProfile(paymentCatalogProfile);
+  const favorites=new Set(previous.favorites);
+  const favorite=!favorites.has(procedureId);
+  if(favorite)favorites.add(procedureId);else favorites.delete(procedureId);
+  setPaymentProfile({...previous,favorites:[...favorites]});
+  renderPaymentProcedureOptions(true);
+  const currentButton=document.querySelector(`[data-payment-favorite="${procedureId}"]`);
+  currentButton?.classList.add('is-saving');
+  try{
+    await updatePaymentPreference({action:'favorite',procedureId,favorite});
+    renderPaymentProcedureOptions(true);
+    toast(favorite?(lang==='en'?'Added to favorites':'تمت الإضافة للمفضلة'):(lang==='en'?'Removed from favorites':'تمت الإزالة من المفضلة'),favorite?(lang==='en'?'This procedure will appear first for this doctor.':'سيظهر الإجراء في مقدمة القائمة لهذا الطبيب.'):(lang==='en'?'Automatic usage order remains active.':'سيستمر الترتيب التلقائي حسب الاستخدام.'));
+  }catch(error){
+    setPaymentProfile(previous);
+    renderPaymentProcedureOptions(true);
+    toast(lang==='en'?'Could not save favorite':'تعذر حفظ المفضلة',lang==='en'?'The previous order was restored.':'تمت إعادة الترتيب السابق.');
+    console.warn('Payment favorite update failed',error);
+  }finally{button?.classList.remove('is-saving')}
+}
+async function trackPaymentProcedureUsage(items){
+  const tracked=(Array.isArray(items)?items:[]).filter(item=>item.code&&item.code!=='other');
+  if(!tracked.length)return;
+  const optimistic=normalizePaymentProfile(paymentCatalogProfile);
+  tracked.forEach(item=>optimistic.usage[item.code]=Number(optimistic.usage[item.code]||0)+Math.max(1,Number(item.quantity||1)));
+  setPaymentProfile(optimistic);
+  try{await updatePaymentPreference({action:'usage',items:tracked})}
+  catch(error){console.warn('Payment usage tracking failed',error)}
 }
 function changePaymentQuantity(input,delta){
   if(!input)return;
   input.value=String(Math.max(1,Math.min(99,Number(input.value||1)+delta)));
+}
+let labUnitsManuallyChanged=false;
+function selectedLabPaymentItems(){
+  return paymentProcedureCatalog().flatMap(item=>{
+    const selected=document.querySelector(`[data-payment-select="${item.id}"]`)?.checked;
+    if(!selected||!item.requiresLab)return[];
+    return [{code:item.id,name:item.name,quantity:Math.max(1,Math.min(99,Number(document.querySelector(`[data-payment-quantity="${item.id}"]`)?.value||1)))}];
+  });
+}
+function updateLabPaymentPanel(){
+  const box=$('labPaymentBox');if(!box)return;
+  const items=$('paymentRequiredCheck')?.checked?selectedLabPaymentItems():[];
+  box.hidden=!items.length;
+  const assignment=$('labAssignedDoctor');
+  if(!items.length){
+    if(assignment)assignment.textContent='';
+    return;
+  }
+  if(assignment){
+    const doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
+    const clinic=String(currentClinic?.name||'').trim();
+    const room=String(currentClinic?.roomNumber||'').trim();
+    const doctorLabel=doctor
+      ?(/^(?:د\.?|الدكتور)\s*/i.test(doctor)?doctor:`د. ${doctor}`)
+      :'الطبيب غير محدد';
+    assignment.textContent=[doctorLabel,clinic,room?`غرفة ${room}`:''].filter(Boolean).join(' · ');
+  }
+  if(!labUnitsManuallyChanged)$('labUnitsInput').value=String(Math.max(1,items.reduce((sum,item)=>sum+Number(item.quantity||1),0)));
+  if(!$('labExpectedDate').value){
+    const expected=new Date(Date.now()+7*86400000);
+    $('labExpectedDate').value=`${expected.getFullYear()}-${String(expected.getMonth()+1).padStart(2,'0')}-${String(expected.getDate()).padStart(2,'0')}`;
+  }
+}
+function changeLabUnits(delta){
+  labUnitsManuallyChanged=true;
+  $('labUnitsInput').value=String(Math.max(1,Math.min(99,Number($('labUnitsInput').value||1)+delta)));
+}
+function resetLabPaymentEditor(){
+  labUnitsManuallyChanged=false;
+  $('labNameSelect').value='';
+  $('labCustomNameInput').value='';
+  $('labCustomNameLabel').hidden=true;
+  $('labUnitsInput').value='1';
+  $('labExpectedDate').value='';
+  $('labMaterialInput').value='';
+  $('labShadeInput').value='';
+  $('labSentNowCheck').checked=false;
+  if($('labAssignedDoctor'))$('labAssignedDoctor').textContent='';
+  $('labPaymentBox').hidden=true;
+}
+function collectLabCaseDraft(){
+  const items=selectedLabPaymentItems();
+  if(!items.length)return null;
+  const labName=$('labNameSelect').value,customLabName=$('labCustomNameInput').value.trim();
+  if(!labName)return{error:'اختر اسم معمل الأسنان.'};
+  if(labName==='other'&&!customLabName)return{error:'اكتب اسم المعمل الآخر.'};
+  const expectedValue=$('labExpectedDate').value;
+  return {
+    labName,
+    customLabName:labName==='other'?customLabName:'',
+    items,
+    units:Math.max(1,Math.min(99,Number($('labUnitsInput').value||1))),
+    material:$('labMaterialInput').value.trim(),
+    shade:$('labShadeInput').value.trim(),
+    expectedAt:expectedValue?new Date(`${expectedValue}T12:00:00`).getTime():0,
+    status:$('labSentNowCheck').checked?'sent':'pending_send',
+    sentAt:$('labSentNowCheck').checked?Date.now():0
+  };
+}
+async function createLabCaseForPayment(patient,draft,paymentOrderId){
+  const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({
+      ...draft,
+      clinicId:ACTIVE_CLINIC_ID,
+      clinicName:currentClinic?.name||'',
+      roomNumber:currentClinic?.roomNumber||'',
+      doctorName:currentClinic?.doctorName||authUser?.displayName||'',
+      patient:{id:patient.id,name:patient.name,file:patient.file,phone:patient.phone},
+      paymentOrderId,
+      sourceDate:selectedDate
+    })
+  });
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'تعذر إنشاء حالة المعمل');
+  if(data.case)labCasesState.cases=[data.case,...labCasesState.cases.filter(item=>item.id!==data.case.id)];
+  labCasesState.revision=Number(data.revision||labCasesState.revision);
+  labCasesState.updatedAt=Number(data.updatedAt||Date.now());
+  labCasesState.lastFetchedAt=Date.now();
+  return data.case;
 }
 function resetPaymentProcedureEditor(){
   renderPaymentProcedureOptions();
@@ -2301,13 +2571,14 @@ function resetPaymentProcedureEditor(){
   $('paymentOtherQuantity').value='1';
   $('paymentOtherFree').checked=false;
   $('paymentDiscountInput').value='';
+  resetLabPaymentEditor();
 }
 function collectPaymentItems(){
-  const items=PAYMENT_PROCEDURES.flatMap(item=>{
+  const items=paymentProcedureCatalog().flatMap(item=>{
     if(!document.querySelector(`[data-payment-select="${item.id}"]`)?.checked)return[];
     const quantity=Math.max(1,Math.min(99,Number(document.querySelector(`[data-payment-quantity="${item.id}"]`)?.value||1)));
     const free=Boolean(document.querySelector(`[data-payment-free="${item.id}"]`)?.checked);
-    return [{code:item.id,name:item.ar,quantity,free}];
+    return [{code:item.id,name:item.name,quantity,free}];
   });
   if($('paymentOtherCheck').checked){
     const name=$('paymentOtherInput').value.trim();
@@ -2315,6 +2586,22 @@ function collectPaymentItems(){
     items.push({code:'other',name,quantity:Math.max(1,Math.min(99,Number($('paymentOtherQuantity').value||1))),free:$('paymentOtherFree').checked});
   }
   return {items,discount:$('paymentDiscountInput').value.trim()};
+}
+async function updatePaymentCatalogFromSettings({notify=true}={}){
+  const button=$('paymentCatalogRefreshBtn');
+  button?.classList.add('is-loading');
+  if(button)button.textContent=lang==='en'?'Updating…':'جارٍ التحديث…';
+  try{
+    await refreshTreatmentCatalog({force:true});
+    renderPaymentProcedureOptions(true);
+    if(notify)toast(lang==='en'?'Services updated':'تم تحديث الإجراءات والخدمات',lang==='en'?'The payment order now uses the latest settings.':'يستخدم أمر الدفع الآن آخر قائمة محفوظة في الإعدادات.');
+  }catch(error){
+    if(notify)toast(lang==='en'?'Could not update services':'تعذر تحديث قائمة الخدمات',lang==='en'?'The locally saved list is still available.':'ستبقى القائمة المحفوظة على هذا الجهاز متاحة.');
+    console.warn('Payment catalog refresh failed',error);
+  }finally{
+    button?.classList.remove('is-loading');
+    if(button)button.textContent=lang==='en'?'↻ Update list':'↻ تحديث القائمة';
+  }
 }
 function paymentItemsSummary(items,discount=''){
   const parts=(Array.isArray(items)?items:[]).map(item=>`${item.name} ×${item.quantity}${item.free?' (مجاني)':''}`);
@@ -2330,6 +2617,7 @@ function finishPatient(id){
   $('paymentActionField').hidden=true;
   resetPaymentProcedureEditor();
   openModal('paymentModal');
+  updatePaymentCatalogFromSettings({notify:false});
 }
 async function confirmPatientCompletion(){
   const p=patientById(pendingCompletionId);if(!p)return;
@@ -2338,8 +2626,24 @@ async function confirmPatientCompletion(){
   const selection=collectPaymentItems();
   if(selection.error){toast(lang==='en'?'Payment action required':'بيانات الإجراء ناقصة',selection.error);$('paymentOtherInput').focus();return}
   if(paymentRequired&&!selection.items.length){toast(lang==='en'?'Payment action required':'اختر إجراء الدفع',lang==='en'?'Select at least one procedure.':'اختر إجراءً واحدًا على الأقل لإرساله إلى الإدارة.');return}
+  const labDraft=paymentRequired?collectLabCaseDraft():null;
+  if(labDraft?.error){
+    toast(lang==='en'?'Dental lab details required':'بيانات المعمل مطلوبة',labDraft.error);
+    (labDraft.error.includes('اسم المعمل الآخر')?$('labCustomNameInput'):$('labNameSelect'))?.focus();
+    return;
+  }
   const paymentAction=paymentRequired?paymentItemsSummary(selection.items,selection.discount):'';
-  mutate(()=>{
+  const confirmButton=$('confirmCompletionBtn');
+  const originalConfirmText=confirmButton.textContent;
+  confirmButton.disabled=true;
+  confirmButton.textContent=lang==='en'?'Saving…':'جارٍ الحفظ…';
+  let labCase=null;
+  try{
+    if(labDraft){
+      const paymentOrderId=`payment-${String(p.id).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50)}-${Date.now()}`;
+      labCase=await createLabCaseForPayment(p,labDraft,paymentOrderId);
+    }
+    mutate(()=>{
     p.status='done';
     p.completedAt=Date.now();
     p.adminUpdatedAt=Date.now();
@@ -2355,17 +2659,26 @@ async function confirmPatientCompletion(){
       p.treatmentPlanUpdatedAt=Date.now();
     }
     if(paymentRequired)updateAlert={active:true,message:lang==='en'?`New payment order for ${firstName(p.name)}`:`أمر دفع جديد للمريض ${firstName(p.name)}`,updatedAt:Date.now(),kind:'payment-request'};
-  });
-  closeModal('paymentModal');
-  pendingCompletionId=null;
-  if(createPlanDraft){
-    await pushState();
-    toast(lang==='en'?'Treatment plan draft created':'تم إنشاء مسودة الخطة',lang==='en'?'Complete the plan, confirm the doctor approval, then send it to administration.':'أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
-    openTreatmentPlan(p.id);
-    return;
+    });
+    if(paymentRequired)await trackPaymentProcedureUsage(selection.items);
+    closeModal('paymentModal');
+    pendingCompletionId=null;
+    if(createPlanDraft){
+      await pushState();
+      toast(lang==='en'?'Treatment plan draft created':'تم إنشاء مسودة الخطة',labCase?(lang==='en'?'The treatment plan and dental lab case are ready for follow-up.':'أُنشئت الخطة وحالة المعمل وأصبحتا جاهزتين للمتابعة.'):(lang==='en'?'Complete the plan, confirm the doctor approval, then send it to administration.':'أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.'));
+      openTreatmentPlan(p.id);
+      return;
+    }
+    const upcoming=flowLeadPatient();
+    const labNote=labCase?(lang==='en'?' Dental lab tracking has started.':' وتم إنشاء متابعة المعمل.'):'';
+    toast(paymentRequired?(lang==='en'?'Payment sent to administration':'تم إرسال إجراء الدفع للإدارة'):(lang==='en'?'Treatment completed':'اكتمل العلاج'),`${paymentRequired?paymentAction:(upcoming?`${lang==='en'?'Next': 'أصبح'} ${firstName(upcoming.name)} ${lang==='en'?'is now first in queue':'في مقدمة الانتظار'}`:(lang==='en'?'No next patient':'لا يوجد مريض تالٍ'))}${labNote}`);
+  }catch(error){
+    console.error('Patient completion failed',error);
+    toast(lang==='en'?'Could not complete the request':'تعذر إكمال الطلب',lang==='en'?'No patient status was changed. Please try again.':'لم تتغير حالة المريض. تحقق من الاتصال ثم حاول مرة أخرى.');
+  }finally{
+    confirmButton.disabled=false;
+    confirmButton.textContent=originalConfirmText;
   }
-  const upcoming=flowLeadPatient();
-  toast(paymentRequired?(lang==='en'?'Payment sent to administration':'تم إرسال إجراء الدفع للإدارة'):(lang==='en'?'Treatment completed':'اكتمل العلاج'),paymentRequired?paymentAction:(upcoming?`${lang==='en'?'Next': 'أصبح'} ${firstName(upcoming.name)} ${lang==='en'?'is now first in queue':'في مقدمة الانتظار'}`:(lang==='en'?'No next patient':'لا يوجد مريض تالٍ')));
 }
 function renderCompactTimeline(cur){
   const sorted=patients.slice().sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')));
@@ -2384,7 +2697,7 @@ function queueCardMarkup(p,index){
   const lastCall=called&&p.lastCalledAt?` · ${tr('lastCall')} ${new Date(Number(p.lastCalledAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
   return `<article class="queue-card rank-${position} queue-${position}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
     <div class="queue-card-top"><div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div><span class="queue-orbit" aria-hidden="true">#${position+1}</span></div>
-    <div class="queue-name">${escapeHtml(firstName(p.name))}${treatmentPlanBadgeMarkup(p)}</div>
+    <div class="queue-name">${escapeHtml(firstName(p.name))}${treatmentPlanBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</div>
     <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
     <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
     <span class="queue-proximity-meter" aria-hidden="true"><i></i></span>
@@ -2476,7 +2789,7 @@ function renderLive(updateStructure=true){
   $('currentVisualIcon').textContent=activelyTreating?'●':['arrived','early_arrival'].includes(leadStatus)?'✓':lead?'➜':'○';
   $('currentVisualIcon').classList.toggle('arrival-pulse',['arrived','early_arrival'].includes(leadStatus));
   $('currentLabel').textContent=activelyTreating?tr('currentPatient'):['arrived','early_arrival'].includes(leadStatus)?statusText(leadStatus):tr('nextToCall');
-  $('currentName').innerHTML=lead?`${escapeHtml(firstName(lead.name))}<span class="current-plan-mark">${treatmentPlanBadgeMarkup(lead)}</span>`:escapeHtml(tr('noCurrent'));
+  $('currentName').innerHTML=lead?`${escapeHtml(firstName(lead.name))}<span class="current-plan-mark">${treatmentPlanBadgeMarkup(lead)}${labCaseBadgeMarkup(lead)}</span>`:escapeHtml(tr('noCurrent'));
   $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.start}–${lead.end} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
   $('currentCountdown').textContent=lead?fmtMs((activelyTreating?timeDate(lead.end):timeDate(lead.start))-new Date()):'--:--:--';
   $('actualTimer').textContent=lead?.actualStartedAt?fmtMs(Date.now()-Number(lead.actualStartedAt)):'--:--:--';
@@ -3293,6 +3606,10 @@ function applyLang(){
   $('completionFlowNote').innerHTML=lang==='en'?'<strong>Workflow:</strong> The doctor completes and approves the draft, then administration receives it to finish the process.':'<strong>المسار:</strong> يُكمل الطبيب المسودة ويعتمدها، ثم تستلمها الإدارة لاستكمال الإجراءات.';
   setText('#confirmCompletionBtn',lang==='en'?'Confirm completion and continue':'اعتماد إكمال العلاج والمتابعة');
   setText('#paymentItemsLabel',lang==='en'?'Payment order procedures':'إجراءات أمر الدفع');
+  setText('#paymentCatalogSourceTitle',lang==='en'?'Central procedures and services list':'قائمة الإجراءات والخدمات المركزية');
+  setText('#paymentCatalogSourceHelp',lang==='en'?'Managed from Settings; saved changes appear here automatically.':'تُدار من الإعدادات، ويظهر أي تعديل محفوظ هنا تلقائيًا.');
+  setText('#paymentOrderingNote',lang==='en'?'★ Favorites first, followed by this doctor’s most-used procedures.':'★ المفضلة أولًا، ثم الإجراءات الأكثر استخدامًا لهذا الطبيب.');
+  setText('#paymentCatalogRefreshBtn',lang==='en'?'↻ Update list':'↻ تحديث القائمة');
   setText('#paymentOtherLabel',lang==='en'?'Other procedure':'إجراء آخر');
   setText('#paymentDiscountLabel',lang==='en'?'Discount (written note)':'الخصم (كتابة)');
   $('paymentOtherInput').placeholder=lang==='en'?'Write the other procedure':'اكتب الإجراء الآخر';
@@ -3401,6 +3718,7 @@ $('clinicSwitcher').addEventListener('change',event=>switchClinic(event.target.v
 $('addCatalogItemBtn').addEventListener('click',()=>{collectTreatmentCatalog();treatmentCatalog.push({id:`custom-${Date.now()}`,name:'',beforePrice:'',afterPrice:''});renderTreatmentCatalog();$('treatmentCatalogList').lastElementChild?.querySelector('[data-catalog-name]')?.focus()});
 $('treatmentCatalogList').addEventListener('click',event=>{const button=event.target.closest('[data-catalog-delete]');if(!button)return;collectTreatmentCatalog();treatmentCatalog.splice(Number(button.dataset.catalogDelete),1);renderTreatmentCatalog()});
 $('saveTreatmentCatalogBtn').addEventListener('click',saveTreatmentCatalog);
+$('paymentCatalogRefreshBtn').addEventListener('click',()=>updatePaymentCatalogFromSettings({notify:true}));
 $('syncTestBtn').addEventListener('click',syncTest);
 $('logoutBtn').addEventListener('click',logoutApp);
 $('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
@@ -3426,10 +3744,13 @@ $('authRequestBtn')?.addEventListener('click',()=>requestAuthOtp());
 $('authVerifyBtn')?.addEventListener('click',verifyAuthOtp);
 $('authBackBtn')?.addEventListener('click',()=>{$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;authErrorMessage('')});
 $('usersBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);openUsersModal()});
+$('labCasesBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);openLabCasesPage()});
 if(!$('newEmail')){const base=$('newPhone')?.parentElement;if(base){const label=document.createElement('label');label.innerHTML='البريد الإلكتروني (للدخول بالرمز)<input id="newEmail" type="email" autocomplete="email" placeholder="name@example.com">';base.parentElement.insertBefore(label,base.nextSibling)}}
 saveUser=async function(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),email:($('newEmail')?.value||'').trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول بالبريد الإلكتروني أو الجوال حسب الخيار المتاح.')}catch(error){$('usersError').textContent=error.message}};
 $('saveUserBtn').addEventListener('click',saveUser);
 $('flowStage').addEventListener('click',event=>{
+  const labPatientId=event.target.closest('[data-lab-patient]')?.dataset.labPatient;
+  if(labPatientId){openLabCasesPage(patientById(labPatientId));return}
   const button=event.target.closest('button');if(!button)return;
   if(button.dataset.callId)callPatient(button.dataset.callId);
   if(button.dataset.actualId)startActualTreatment(button.dataset.actualId);
@@ -3463,7 +3784,8 @@ els.patientRows.addEventListener('change',async event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
-  const review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId,labPatientId=event.target.closest('[data-lab-patient]')?.dataset.labPatient;
+  if(labPatientId){openLabCasesPage(patientById(labPatientId));return}
   if(review)openReviewComposer(review);
   if(plan)openTreatmentPlan(plan);
   if(completion&&VIEW_MODE==='clinic')finishPatient(completion);
@@ -3520,13 +3842,17 @@ document.addEventListener('keydown',event=>{
 });
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal&&modal.id!=='roleModal')closeModal(modal.id)}));
-$('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions()});
-$('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[type="number"],input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true});
+$('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions();updateLabPaymentPanel()});
+$('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[type="number"],input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true;updateLabPaymentPanel()});
+$('paymentProcedureList').addEventListener('change',event=>{if(event.target.matches('[data-payment-select],[data-payment-free]'))updateLabPaymentPanel()});
 $('paymentProcedureList').addEventListener('click',event=>{
+  const favoriteButton=event.target.closest('[data-payment-favorite]');
+  if(favoriteButton){togglePaymentFavorite(favoriteButton.dataset.paymentFavorite,favoriteButton);return}
   const button=event.target.closest('[data-payment-step]');if(!button)return;
   const row=button.closest('[data-payment-row]'),input=row?.querySelector('[data-payment-quantity]');
   changePaymentQuantity(input,button.dataset.paymentStep==='increase'?1:-1);
   if(row?.querySelector('[data-payment-select]'))row.querySelector('[data-payment-select]').checked=true;
+  updateLabPaymentPanel();
 });
 $('paymentModal').addEventListener('click',event=>{
   const button=event.target.closest('[data-payment-other-step]');if(!button)return;
@@ -3535,6 +3861,9 @@ $('paymentModal').addEventListener('click',event=>{
 });
 $('paymentOtherInput').addEventListener('input',()=>{if($('paymentOtherInput').value.trim())$('paymentOtherCheck').checked=true});
 [$('paymentOtherQuantity'),$('paymentOtherFree')].forEach(input=>input.addEventListener('change',()=>{$('paymentOtherCheck').checked=true}));
+$('labNameSelect').addEventListener('change',()=>{$('labCustomNameLabel').hidden=$('labNameSelect').value!=='other';if(!$('labCustomNameLabel').hidden)$('labCustomNameInput').focus()});
+$('labUnitsMinus').addEventListener('click',()=>changeLabUnits(-1));
+$('labUnitsPlus').addEventListener('click',()=>changeLabUnits(1));
 $('confirmCompletionBtn').addEventListener('click',confirmPatientCompletion);
 $('paymentQueue').addEventListener('click',event=>{
   const ackId=event.target.closest('[data-payment-ack-id]')?.dataset.paymentAckId;
