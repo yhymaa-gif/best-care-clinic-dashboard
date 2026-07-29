@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260730-lab-button-polish';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260730-alerts-compact-floating-lab';
 const APP_SHELL=[
   './',
   './index.html',
