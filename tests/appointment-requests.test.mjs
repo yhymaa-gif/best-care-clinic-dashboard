@@ -18,6 +18,10 @@ test('public request record strips unsupported values and excessive text', () =>
     source: 'dr-yahyahadi',
     note: 'a'.repeat(300),
     status: 'unsupported',
+    history: [
+      { status: 'contacted', note: ' تم   التواصل ', at: 100, by: ' الإدارة ' },
+      { status: 'unsupported', note: 'x'.repeat(300), at: 200, by: 'الموظف' },
+    ],
   });
   assert.equal(record.id.length, 80);
   assert.equal(record.name, 'اسم المريض');
@@ -27,4 +31,8 @@ test('public request record strips unsupported values and excessive text', () =>
   assert.equal(record.source, 'dr-yahyahadi');
   assert.equal(record.status, 'new');
   assert.equal(record.note.length, 220);
+  assert.equal(record.history.length, 2);
+  assert.deepEqual(record.history[0], { status: 'contacted', note: 'تم التواصل', at: 100, by: 'الإدارة' });
+  assert.equal(record.history[1].status, 'new');
+  assert.equal(record.history[1].note.length, 220);
 });

@@ -18,6 +18,15 @@ const cleanPhone = value => {
   return phone.slice(0, 10);
 };
 const cleanIdentity = value => String(value || '').replace(/\D/g, '').slice(0, 10);
+const cleanHistory = value => (Array.isArray(value) ? value : [])
+  .slice(-50)
+  .map(entry => ({
+    status: statusValues.includes(entry?.status) ? entry.status : 'new',
+    note: cleanText(entry?.note, 220),
+    at: Number(entry?.at || 0),
+    by: cleanText(entry?.by, 80),
+  }))
+  .filter(entry => entry.at > 0);
 const requestIp = request => String(request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
 const ipKey = value => createHash('sha256').update(value).digest('hex');
 
@@ -59,6 +68,8 @@ const publicRecord = value => ({
   createdAt: Number(value?.createdAt || 0),
   updatedAt: Number(value?.updatedAt || 0),
   handledBy: cleanText(value?.handledBy, 80),
+  lastActionNote: cleanText(value?.lastActionNote, 220),
+  history: cleanHistory(value?.history),
 });
 
 export default async request => {
@@ -90,14 +101,27 @@ export default async request => {
 
     const now = Date.now();
     const id = `${now}-${randomUUID()}`;
-    const record = publicRecord({ id, name, phone, identity, service, serviceOther, note, source, status: 'new', createdAt: now, updatedAt: now });
+    const record = publicRecord({
+      id,
+      name,
+      phone,
+      identity,
+      service,
+      serviceOther,
+      note,
+      source,
+      status: 'new',
+      createdAt: now,
+      updatedAt: now,
+      history: [{ status: 'new', note: 'تم استلام الطلب من رابط المواعيد', at: now, by: 'النظام' }],
+    });
     await store.setJSON(`requests/${id}`, record);
     await sendPushNotifications({
       type: 'appointment_request',
       title: 'طلب موعد جديد',
       body: `طلب جديد من ${name} — يحتاج تواصل الإدارة.`,
       tag: `appointment-request-${id}`,
-      url: '/?view=admin#appointmentRequestCenter',
+      url: `/appointment-requests.html?focus=${encodeURIComponent(id)}`,
     });
     return reply({ ok: true, requestId: id, message: 'سيتم التواصل معك لتحديد أقرب موعد مناسب للفحص والتشخيص.' }, 201);
   }
@@ -129,11 +153,21 @@ export default async request => {
   if (request.method === 'PATCH') {
     const status = statusValues.includes(body?.status) ? body.status : '';
     if (!status) return reply({ error: 'Invalid status' }, 400);
+    const actionNote = cleanText(body?.note, 220);
+    const actor = auth.user?.displayName || auth.user?.username || '';
+    const now = Date.now();
+    const previous = publicRecord(existing);
+    const changed = status !== previous.status || Boolean(actionNote);
+    const history = changed
+      ? [...previous.history, { status, note: actionNote || 'تم تحديث حالة الطلب', at: now, by: actor }]
+      : previous.history;
     const updated = publicRecord({
       ...existing,
       status,
-      updatedAt: Date.now(),
-      handledBy: auth.user?.displayName || auth.user?.username || '',
+      updatedAt: changed ? now : Number(existing.updatedAt || now),
+      handledBy: actor,
+      lastActionNote: actionNote || previous.lastActionNote,
+      history,
     });
     await store.setJSON(key, updated);
     return reply({ ok: true, request: updated });

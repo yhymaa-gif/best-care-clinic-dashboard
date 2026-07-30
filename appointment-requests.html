@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#174d3a">
+  <title>متابعة طلبات المواعيد | أفضل عناية</title>
+  <link rel="icon" href="./assets/icons/icon-192.png">
+  <style>
+    @font-face{font-family:BCArabic;src:url("./assets/fonts/IBMPlexSansArabic-Regular.ttf")}@font-face{font-family:BCArabic;src:url("./assets/fonts/IBMPlexSansArabic-Bold.ttf");font-weight:700 950}
+    :root{--green:#176344;--green-2:#2b8b64;--ink:#183d31;--muted:#6a7d75;--line:#d7e6df;--soft:#f3f9f6;--red:#b61d39;--gold:#bd8a1d;--blue:#286b8f}
+    *{box-sizing:border-box}[hidden]{display:none!important}html{background:#eef6f2}body{margin:0;min-width:320px;min-height:100vh;font-family:BCArabic,Tahoma,Arial,sans-serif;color:var(--ink);background:linear-gradient(145deg,#f9fcfa,#eef6f2)}
+    button,input,select,textarea{font:inherit}.shell{width:min(1380px,calc(100% - 30px));margin:0 auto;padding:20px 0 56px}
+    .topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;padding:16px 18px;border:1px solid #d0e3da;border-radius:22px;background:rgba(255,255,255,.94);box-shadow:0 13px 34px rgba(25,76,57,.11);backdrop-filter:blur(16px)}
+    .brand{display:flex;align-items:center;gap:13px;min-width:0}.brand img{width:58px;height:58px;padding:5px;border:1px solid var(--line);border-radius:17px;background:#fff;object-fit:contain}.brand h1,.brand p{margin:0}.brand h1{font-size:clamp(20px,3vw,30px)}.brand p{margin-top:3px;color:var(--muted);font-size:11px}
+    .top-actions{display:flex;gap:8px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:43px;padding:9px 14px;border:1px solid #cbded5;border-radius:12px;background:#fff;color:var(--green);font-weight:900;text-decoration:none;cursor:pointer}.btn.primary{border-color:var(--green);background:var(--green);color:#fff}.btn:disabled{opacity:.55;cursor:wait}
+    .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}.stat{position:relative;overflow:hidden;padding:17px;border:1px solid var(--line);border-radius:19px;background:#fff;box-shadow:0 8px 25px rgba(31,75,59,.07)}.stat::after{content:"";position:absolute;inset-inline-end:-23px;bottom:-29px;width:82px;height:82px;border-radius:999px;background:var(--tone,#dff1e8);opacity:.72}.stat span,.stat strong{position:relative;z-index:1;display:block}.stat span{color:var(--muted);font-size:11px;font-weight:800}.stat strong{margin-top:5px;font-size:28px}.stat.new{--tone:#ffe1e6;border-color:#efc5cc}.stat.contacted{--tone:#e0eff6}.stat.booked{--tone:#daf0e3}.stat.closed{--tone:#eee9df}
+    .filters{display:grid;grid-template-columns:minmax(220px,2fr) repeat(2,minmax(150px,1fr)) auto;gap:10px;margin-bottom:16px;padding:14px;border:1px solid var(--line);border-radius:19px;background:#fff}.filters input,.filters select{width:100%;min-height:45px;padding:9px 12px;border:1px solid #cbded5;border-radius:12px;background:#fff;color:var(--ink)}
+    .progress{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px;padding:13px 15px;border:1px solid #cfe4da;border-radius:16px;background:#edf8f2}.progress p{margin:0;color:#527064;font-size:11px}.progress strong{color:var(--green)}.progress time{color:var(--muted);font-size:10px}
+    .request-list{display:grid;gap:12px}.request-card{scroll-margin-top:105px;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:#fff;box-shadow:0 9px 26px rgba(22,69,51,.07)}.request-card.is-new{border-color:#e7a8b4;box-shadow:inset -5px 0 var(--red),0 9px 26px rgba(152,31,53,.08)}
+    .request-main{display:grid;grid-template-columns:minmax(230px,1.35fr) minmax(170px,.8fr) minmax(270px,1.3fr);gap:16px;padding:17px}.patient h2,.patient p,.request-meta p{margin:0}.patient h2{font-size:18px}.patient .contact{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}.pill{display:inline-flex;align-items:center;min-height:29px;padding:5px 9px;border-radius:999px;background:#eef6f2;color:#315d4c;font-size:10px;font-weight:850;text-decoration:none}.pill.phone{background:#e7f7ee;color:#176344}.patient .note{margin-top:9px;color:#576f65;font-size:11px;line-height:1.65}
+    .request-meta{display:grid;align-content:start;gap:6px;padding:11px;border-radius:14px;background:#f6faf8}.request-meta p{color:#587067;font-size:10px}.request-meta strong{display:block;margin-top:2px;color:var(--ink);font-size:12px}.source{color:var(--blue)!important}
+    .action-box{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(150px,1.3fr) auto;align-items:end;gap:8px}.action-box label{display:grid;gap:5px;color:#526b61;font-size:10px;font-weight:850}.action-box select,.action-box input{width:100%;min-height:42px;padding:8px 10px;border:1px solid #cbded5;border-radius:11px;background:#fff;color:var(--ink)}.save{min-height:42px;padding:8px 15px;border:1px solid var(--green);border-radius:11px;background:linear-gradient(135deg,var(--green),var(--green-2));color:#fff;font-weight:900;cursor:pointer}.save:disabled{opacity:.55;cursor:wait}
+    .timeline{border-top:1px solid #e4eee9;background:#fbfdfc}.timeline summary{padding:11px 17px;color:#3d6253;font-size:11px;font-weight:900;cursor:pointer}.timeline ol{display:grid;gap:9px;margin:0;padding:2px 38px 16px 17px;list-style:none}.timeline li{position:relative;padding:8px 11px;border:1px solid #e0ebe6;border-radius:11px;background:#fff;font-size:10px;line-height:1.6}.timeline li::before{content:"";position:absolute;right:-21px;top:13px;width:9px;height:9px;border:3px solid #d8ebe2;border-radius:999px;background:var(--green)}.timeline time{color:#75857e}.empty,.error{padding:46px 20px;border:1px dashed #bfd5cb;border-radius:20px;background:#fff;text-align:center;color:#687e75}.error{border-color:#e6b5be;background:#fff5f6;color:#9e2c42}
+    .status-new{color:var(--red)}.status-contacted{color:var(--blue)}.status-booked{color:var(--green)}.status-closed{color:#6d665d}
+    @media(max-width:980px){.summary{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:1fr 1fr}.filters input{grid-column:1/-1}.request-main{grid-template-columns:1fr 1fr}.action-box{grid-column:1/-1}}
+    @media(max-width:650px){.shell{width:calc(100% - 16px);padding-top:8px}.topbar{position:relative;align-items:flex-start;padding:13px;border-radius:17px}.brand img{width:48px;height:48px}.brand h1{font-size:19px}.brand p{font-size:9px}.top-actions{display:grid}.top-actions .btn{min-height:38px;padding:7px 10px;font-size:10px}.summary{grid-template-columns:repeat(2,1fr);gap:8px}.stat{padding:13px}.stat strong{font-size:23px}.filters{grid-template-columns:1fr;padding:10px}.filters input{grid-column:auto}.progress{align-items:flex-start;flex-direction:column}.request-main{grid-template-columns:1fr;padding:14px;gap:10px}.action-box{grid-template-columns:1fr 1fr}.action-box .save{grid-column:1/-1}.timeline ol{padding-right:34px}.request-card{border-radius:17px}}
+  </style>
+</head>
+<body>
+<main class="shell">
+  <header class="topbar">
+    <div class="brand"><img src="./best-care-logo.png" alt="شعار أفضل عناية"><div><h1>متابعة طلبات المواعيد</h1><p>حصر الطلبات ومتابعة كل إجراء حتى اكتماله</p></div></div>
+    <div class="top-actions"><a class="btn" href="./?view=admin">العودة للإدارة</a><button id="refreshBtn" class="btn primary" type="button">تحديث</button></div>
+  </header>
+
+  <section class="summary" aria-label="ملخص طلبات المواعيد">
+    <article class="stat"><span>إجمالي الطلبات</span><strong id="totalCount">0</strong></article>
+    <article class="stat new"><span>جديد</span><strong id="newCount">0</strong></article>
+    <article class="stat contacted"><span>تم التواصل</span><strong id="contactedCount">0</strong></article>
+    <article class="stat booked"><span>تم الحجز</span><strong id="bookedCount">0</strong></article>
+    <article class="stat closed"><span>مغلق</span><strong id="closedCount">0</strong></article>
+  </section>
+
+  <section class="filters" aria-label="خيارات البحث والتصفية">
+    <input id="searchInput" type="search" placeholder="بحث بالاسم أو الجوال أو الهوية">
+    <select id="statusFilter" aria-label="تصفية حسب الحالة"><option value="all">كل الحالات</option><option value="new">جديد</option><option value="contacted">تم التواصل</option><option value="booked">تم الحجز</option><option value="closed">مغلق</option></select>
+    <select id="sourceFilter" aria-label="تصفية حسب المصدر"><option value="all">كل المصادر</option><option value="dr-yahyahadi">الموقع الشخصي</option><option value="direct">الرابط المباشر</option></select>
+    <button id="openRequestPage" class="btn" type="button">فتح رابط الطلب</button>
+  </section>
+
+  <div class="progress"><p><strong id="visibleCount">0</strong> طلب ظاهر حاليًا — تحفظ كل خطوة في سجل الطلب.</p><time id="updatedAt">لم يتم التحديث بعد</time></div>
+  <p id="errorBox" class="error" hidden></p>
+  <section id="requestList" class="request-list" aria-live="polite"><p class="empty">جارٍ تحميل طلبات المواعيد…</p></section>
+</main>
+<script>
+(()=>{
+  const $=id=>document.getElementById(id);
+  const STATUS={new:'جديد',contacted:'تم التواصل',booked:'تم الحجز',closed:'مغلق'};
+  const SERVICE={examination:'فحص وتشخيص',pain:'ألم أو حالة عاجلة',restorative:'حشوات وعلاج تحفظي',root_canal:'علاج عصب',prosthodontics:'تركيبات وعدسات',implants:'زراعة أسنان',cosmetic:'تجميل الأسنان والابتسامة',cleaning:'تنظيف الأسنان',other:'خدمة أخرى'};
+  const SOURCE={'dr-yahyahadi':'الموقع الشخصي',direct:'الرابط المباشر'};
+  const state={items:[],busy:false,timer:null};
+  const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const format=value=>value?new Date(value).toLocaleString('ar-SA',{timeZone:'Asia/Riyadh',dateStyle:'medium',timeStyle:'short'}):'—';
+  const waPhone=value=>`966${String(value||'').replace(/\D/g,'').replace(/^0/,'')}`;
+  const service=item=>item.service==='other'?(item.serviceOther||SERVICE.other):(SERVICE[item.service]||SERVICE.other);
+  const latestHistory=item=>Array.isArray(item.history)&&item.history.length?item.history[item.history.length-1]:null;
+  function render(){
+    const query=$('searchInput').value.trim().toLowerCase(),status=$('statusFilter').value,source=$('sourceFilter').value;
+    const filtered=state.items.filter(item=>(status==='all'||item.status===status)&&(source==='all'||item.source===source)&&(!query||[item.name,item.phone,item.identity].some(value=>String(value||'').toLowerCase().includes(query))));
+    $('totalCount').textContent=state.items.length;
+    Object.keys(STATUS).forEach(key=>$(key+'Count').textContent=state.items.filter(item=>item.status===key).length);
+    $('visibleCount').textContent=filtered.length;
+    $('requestList').innerHTML=filtered.length?filtered.map(item=>{
+      const history=Array.isArray(item.history)?[...item.history].reverse():[];
+      const latest=latestHistory(item);
+      const focus=new URLSearchParams(location.search).get('focus')===item.id;
+      return `<article class="request-card ${item.status==='new'?'is-new':''}" id="request-${escape(item.id)}" ${focus?'data-focus="true"':''}>
+        <div class="request-main">
+          <section class="patient"><h2>${escape(item.name)}</h2><div class="contact"><a class="pill phone" href="https://wa.me/${waPhone(item.phone)}" target="_blank" rel="noopener">واتساب ${escape(item.phone)}</a><span class="pill">هوية ${escape(item.identity)}</span><span class="pill status-${escape(item.status)}">${escape(STATUS[item.status]||STATUS.new)}</span></div>${item.note?`<p class="note">${escape(item.note)}</p>`:''}</section>
+          <section class="request-meta"><p>الخدمة<strong>${escape(service(item))}</strong></p><p class="source">المصدر<strong>${escape(SOURCE[item.source]||'رابط خارجي')}</strong></p><p>تاريخ الطلب<strong>${escape(format(item.createdAt))}</strong></p>${latest?`<p>آخر إجراء<strong>${escape(STATUS[latest.status]||'تحديث')} · ${escape(latest.by||'النظام')}</strong></p>`:''}</section>
+          <section class="action-box">
+            <label>حالة الطلب<select data-status="${escape(item.id)}">${Object.entries(STATUS).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select></label>
+            <label>ملاحظة الإجراء<input data-note="${escape(item.id)}" maxlength="220" placeholder="مثال: تم الاتصال وتأكيد الوقت"></label>
+            <button class="save" type="button" data-save="${escape(item.id)}">حفظ الإجراء</button>
+          </section>
+        </div>
+        <details class="timeline"><summary>سجل المتابعة (${history.length})</summary><ol>${history.length?history.map(entry=>`<li><strong class="status-${escape(entry.status)}">${escape(STATUS[entry.status]||'تحديث')}</strong>${entry.note?` — ${escape(entry.note)}`:''}<br><time>${escape(format(entry.at))} · ${escape(entry.by||'النظام')}</time></li>`).join(''):'<li>لا يوجد سجل سابق لهذا الطلب.</li>'}</ol></details>
+      </article>`;
+    }).join(''):'<p class="empty">لا توجد طلبات تطابق البحث الحالي.</p>';
+    const focused=document.querySelector('[data-focus="true"]');
+    if(focused){focused.scrollIntoView({block:'center'});focused.querySelector('details').open=true}
+  }
+  async function load({silent=false}={}){
+    if(state.busy)return;state.busy=true;$('refreshBtn').disabled=true;
+    try{
+      const response=await fetch('/api/appointment-requests?limit=200',{headers:{accept:'application/json'},cache:'no-store',credentials:'include'});
+      const data=await response.json();
+      if(response.status===401){location.href='./?view=admin';return}
+      if(!response.ok)throw new Error(data.error||'تعذر تحميل الطلبات');
+      state.items=Array.isArray(data.requests)?data.requests:[];
+      $('updatedAt').textContent=`آخر تحديث ${format(data.updatedAt||Date.now())}`;$('errorBox').hidden=true;render();
+    }catch(error){$('errorBox').textContent='تعذر تحديث طلبات المواعيد الآن. تحقق من الاتصال ثم أعد المحاولة.';$('errorBox').hidden=false;if(!silent)$('requestList').innerHTML='<p class="empty">تعذر تحميل البيانات.</p>'}
+    finally{state.busy=false;$('refreshBtn').disabled=false;schedule()}
+  }
+  async function save(id,button){
+    const status=document.querySelector(`[data-status="${CSS.escape(id)}"]`).value;
+    const note=document.querySelector(`[data-note="${CSS.escape(id)}"]`).value.trim();
+    button.disabled=true;button.textContent='جارٍ الحفظ…';
+    try{
+      const response=await fetch('/api/appointment-requests',{method:'PATCH',headers:{'content-type':'application/json'},credentials:'include',body:JSON.stringify({id,status,note})});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||'تعذر الحفظ');
+      const index=state.items.findIndex(item=>item.id===id);if(index>=0)state.items[index]=data.request;
+      try{new BroadcastChannel('bestcare-appointment-requests').postMessage({type:'updated',id})}catch{}
+      render();
+    }catch{$('errorBox').textContent='تعذر حفظ الإجراء. حاول مرة أخرى.';$('errorBox').hidden=false}
+    finally{button.disabled=false;button.textContent='حفظ الإجراء'}
+  }
+  function cadence(){
+    const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',weekday:'short',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date()),read=type=>parts.find(part=>part.type===type)?.value||'',working=read('weekday')!=='Fri'&&Number(read('hour'))>=14&&Number(read('hour'))<23;
+    return working?(document.hidden?120000:30000):(document.hidden?900000:180000);
+  }
+  function schedule(){clearTimeout(state.timer);state.timer=setTimeout(()=>load({silent:true}),cadence())}
+  $('refreshBtn').addEventListener('click',()=>load());
+  $('searchInput').addEventListener('input',render);$('statusFilter').addEventListener('change',render);$('sourceFilter').addEventListener('change',render);
+  $('openRequestPage').addEventListener('click',()=>window.open('./appointment-request.html','_blank','noopener'));
+  $('requestList').addEventListener('click',event=>{const button=event.target.closest('[data-save]');if(button)save(button.dataset.save,button)});
+  document.addEventListener('visibilitychange',()=>{schedule();if(!document.hidden)load({silent:true})});
+  load();
+})();
+</script>
+</body>
+</html>

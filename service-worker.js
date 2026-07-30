@@ -1,10 +1,11 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260730-statistics-session-review';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260730-appointment-tracking';
 const APP_SHELL=[
   './',
   './index.html',
   './treatment-plan.html',
   './statistics.html',
   './appointment-request.html',
+  './appointment-requests.html',
   './offline.html',
   './lab.html',
   './manifest.webmanifest',
@@ -54,6 +55,8 @@ self.addEventListener('fetch',event=>{
         ?'./statistics.html'
         :url.pathname.endsWith('/appointment-request.html')
           ?'./appointment-request.html'
+          :url.pathname.endsWith('/appointment-requests.html')
+            ?'./appointment-requests.html'
           :url.pathname.endsWith('/lab.html')
             ?'./lab.html'
             :'./index.html';
