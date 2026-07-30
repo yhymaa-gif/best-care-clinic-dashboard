@@ -12,6 +12,12 @@
   force = true
 
 [[redirects]]
+  from = "/book"
+  to = "/appointment-request.html?source=dr-yahyahadi"
+  status = 302
+  force = true
+
+[[redirects]]
   from = "/api/state"
   to = "/.netlify/functions/state"
   status = 200

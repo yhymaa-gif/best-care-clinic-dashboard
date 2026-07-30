@@ -3722,7 +3722,7 @@ function appointmentRequestCadence(){
   const hour=Number(read('hour')),working=read('weekday')!=='Fri'&&hour>=14&&hour<23;
   return working?(document.hidden?2*60*1000:45*1000):(document.hidden?15*60*1000:3*60*1000);
 }
-function appointmentRequestLink(){return `${location.origin}/appointment-request.html`}
+function appointmentRequestLink(){return `${location.origin}/book`}
 function renderAppointmentRequests(){
   const center=$('appointmentRequestCenter');if(!center)return;
   center.hidden=VIEW_MODE!=='admin'||authUser?.role!=='admin';
