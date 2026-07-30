@@ -36,3 +36,26 @@ test('public request record strips unsupported values and excessive text', () =>
   assert.equal(record.history[1].status, 'new');
   assert.equal(record.history[1].note.length, 220);
 });
+
+test('duplicate-request fingerprint is stable across formatted identifiers', () => {
+  const first = appointments.submissionFingerprint({
+    phone: '+966 55 000 0001',
+    identity: '1-234-567-890',
+    service: 'examination',
+    serviceOther: '',
+  });
+  const same = appointments.submissionFingerprint({
+    phone: '0550000001',
+    identity: '1234567890',
+    service: 'examination',
+    serviceOther: '',
+  });
+  const different = appointments.submissionFingerprint({
+    phone: '0550000001',
+    identity: '1234567890',
+    service: 'implants',
+    serviceOther: '',
+  });
+  assert.equal(first, same);
+  assert.notEqual(first, different);
+});

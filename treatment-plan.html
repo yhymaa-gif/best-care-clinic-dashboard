@@ -32,6 +32,7 @@
     #authGate{display:none;position:fixed;inset:0;z-index:1000;place-items:center;background:#f1f8f5;padding:24px}
     body.auth-locked #authGate{display:grid}
     body.auth-locked .app{visibility:hidden}
+    body.auth-checking #floatingPlanActions,body.auth-locked #floatingPlanActions{display:none!important}
     .auth-card{width:min(440px,100%);background:#fff;border:1px solid #cfe0d8;border-radius:24px;padding:28px;box-shadow:var(--shadow);text-align:center}
     .auth-mark{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 14px;border-radius:18px;background:var(--ink);color:#fff;font-weight:900;font-size:20px}
     .auth-card h1{margin:0 0 8px;font-size:24px}.auth-card p{margin:0 0 20px;color:var(--ink-2)}
@@ -226,16 +227,16 @@
   </style>
 </head>
 <body class="auth-checking">
-  <div id="authGate">
+  <div id="authGate" role="dialog" aria-modal="true" aria-hidden="false">
     <div class="auth-card">
       <span class="auth-mark">BC</span>
       <h1>الجلسة مطلوبة</h1>
       <p>سجّل الدخول إلى لوحة أفضل عناية أولًا، ثم افتح الخطة العلاجية من صف المريض.</p>
-      <button class="primary" type="button" onclick="location.href='./?view=admin'">العودة إلى تسجيل الدخول</button>
+      <button id="returnToLoginBtn" class="primary" type="button">العودة إلى تسجيل الدخول</button>
     </div>
   </div>
 
-  <main class="app">
+  <main class="app" inert aria-hidden="true">
     <nav class="topbar no-print" aria-label="أدوات الخطة العلاجية">
       <div class="topbar-group">
         <a class="brand" href="./?view=admin"><img src="./best-care-logo.png" alt=""><span>أفضل عناية</span></a>
@@ -493,7 +494,7 @@
       </div>
     </div>
   </main>
-  <aside id="floatingPlanActions" class="floating-plan-actions no-print" aria-label="إجراءات الخطة السريعة">
+  <aside id="floatingPlanActions" class="floating-plan-actions no-print" aria-label="إجراءات الخطة السريعة" inert aria-hidden="true">
     <button id="floatingWhatsappBtn" class="floating-plan-action whatsapp" type="button" aria-label="مشاركة الخطة PDF عبر واتساب">
       <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93a7.898 7.898 0 0 0-2.327-5.607m-5.607 12.2a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.25a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.066-.315-.099-.445.099-.132.197-.513.646-.627.775-.115.132-.231.148-.429.05-.197-.099-.834-.307-1.588-.981-.587-.523-.984-1.17-1.098-1.367-.115-.198-.012-.304.086-.403.09-.088.198-.23.297-.346.1-.116.132-.198.198-.33.066-.132.033-.248-.016-.347-.05-.099-.445-1.073-.61-1.47-.16-.389-.323-.336-.445-.342-.114-.006-.247-.007-.379-.007a.729.729 0 0 0-.528.247c-.182.198-.693.677-.693 1.654 0 .977.71 1.916.81 2.049.098.132 1.394 2.132 3.38 2.992.47.205.84.326 1.13.418.475.151.907.13 1.25.079.38-.058 1.171-.48 1.338-.943.164-.462.164-.858.114-.943-.049-.084-.182-.132-.38-.23"/></svg></span>
       <span id="floatingWhatsappLabel" class="action-label">واتساب PDF</span>
@@ -534,6 +535,7 @@
     const viewMode=params.get('view')==='clinic'?'clinic':'admin';
     const SOURCE_KEY=`bestcare_treatment_source_${patientId}`;
     const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}`;
+    const LOCAL_DRAFT_TTL_MS=12*60*60*1000;
     const PLAN_API='/api/treatment-plan';
     const moneyFormatter=new Intl.NumberFormat('ar-SA-u-nu-latn',{minimumFractionDigits:2,maximumFractionDigits:2});
     const dateFormatter=new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn',{day:'2-digit',month:'2-digit',year:'numeric'});
@@ -544,6 +546,7 @@
     let saveTimer=0;
     let source={};
     let currentUser={role:viewMode};
+    let hasUnsyncedChanges=false;
 
     const nowLocal=()=>{
       const d=new Date(),offset=d.getTimezoneOffset()*60000;
@@ -631,7 +634,25 @@
     function toCents(value){if(value===''||value===null||value===undefined)return null;const n=Number(value);return Number.isFinite(n)?Math.round(n*100):null}
     function formatMoney(cents){return cents===null||cents===undefined?'—':`${moneyFormatter.format(cents/100)} ر.س`}
     function sourceFromLocal(){
-      try{return JSON.parse(localStorage.getItem(SOURCE_KEY)||'{}')||{}}catch{return{}}
+      try{
+        const saved=JSON.parse(localStorage.getItem(SOURCE_KEY)||'{}')||{};
+        if(saved.__bestcareSource===1){
+          if(Date.now()>Number(saved.expiresAt||0)){localStorage.removeItem(SOURCE_KEY);return{}}
+          return saved.source&&typeof saved.source==='object'?saved.source:{};
+        }
+        return saved;
+      }catch{return{}}
+    }
+    function persistLocalPlan(){
+      localStorage.setItem(LOCAL_KEY,JSON.stringify({
+        __bestcareDraft:1,
+        expiresAt:Date.now()+LOCAL_DRAFT_TTL_MS,
+        state
+      }));
+    }
+    function clearLocalPlanCache(){
+      localStorage.removeItem(LOCAL_KEY);
+      localStorage.removeItem(SOURCE_KEY);
     }
     function normalizeState(input){
       const next=input&&typeof input==='object'?input:{},fallback=defaultState(next.meta?.planNo||'');
@@ -652,6 +673,16 @@
       };
     }
     async function verifyAuth(){
+      const setLocked=locked=>{
+        const app=document.querySelector('main.app');
+        const actions=$('floatingPlanActions');
+        [app,actions].forEach(element=>{
+          if(!element)return;
+          element.toggleAttribute('inert',locked);
+          element.setAttribute('aria-hidden',locked?'true':'false');
+        });
+        $('authGate')?.setAttribute('aria-hidden',locked?'false':'true');
+      };
       try{
         const response=await fetch('/api/auth?action=session',{credentials:'include',cache:'no-store'});
         if(!response.ok)throw new Error();
@@ -667,10 +698,12 @@
           return false;
         }
         document.body.classList.remove('auth-checking','auth-locked');
+        setLocked(false);
         return true;
       }catch{
         document.body.classList.remove('auth-checking');
         document.body.classList.add('auth-locked');
+        setLocked(true);
         return false;
       }
     }
@@ -724,11 +757,25 @@
             }
           }));
         }
-        if(changed&&rerender&&state){render();if(planChanged){localStorage.setItem(LOCAL_KEY,JSON.stringify(state));await savePlan(true)}}
+        if(changed&&rerender&&state){render();if(planChanged){hasUnsyncedChanges=true;persistLocalPlan();await savePlan(true)}}
         return changed;
       }catch{return false}
     }
-    function loadLocalPlan(){try{return JSON.parse(localStorage.getItem(LOCAL_KEY)||'null')}catch{return null}}
+    function loadLocalPlan(){
+      try{
+        const saved=JSON.parse(localStorage.getItem(LOCAL_KEY)||'null');
+        if(!saved)return null;
+        if(saved.__bestcareDraft===1){
+          if(Date.now()>Number(saved.expiresAt||0)){localStorage.removeItem(LOCAL_KEY);return null}
+          return saved.state&&typeof saved.state==='object'?saved.state:null;
+        }
+        localStorage.setItem(LOCAL_KEY,JSON.stringify({__bestcareDraft:1,expiresAt:Date.now()+LOCAL_DRAFT_TTL_MS,state:saved}));
+        return saved;
+      }catch{
+        localStorage.removeItem(LOCAL_KEY);
+        return null;
+      }
+    }
     function collectHeaderFields(){
       state.patient.fullName=$('patientName').value.trim();
       state.patient.fileNo=$('patientFile').value.trim();
@@ -929,13 +976,15 @@
       }
       $('paper').classList.remove('approved');
       $('saveStatus').classList.remove('saved');$('saveStatus').textContent='تعديلات غير محفوظة';
-      localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
+      hasUnsyncedChanges=true;
+      persistLocalPlan();
       clearTimeout(saveTimer);saveTimer=setTimeout(()=>savePlan(true),900);
       renderDocMeta();renderFinancials();renderProgress();renderWorkflow();
     }
     async function savePlan(silent=false){
       collectHeaderFields();
-      localStorage.setItem(LOCAL_KEY,JSON.stringify(state));
+      hasUnsyncedChanges=true;
+      persistLocalPlan();
       if(patientId&&appointmentDate){
         try{
           const url=`${PLAN_API}?patientId=${encodeURIComponent(patientId)}&date=${encodeURIComponent(appointmentDate)}&clinic=${encodeURIComponent(clinicId)}`;
@@ -943,6 +992,8 @@
           if(!response.ok)throw new Error('تعذر الحفظ المركزي');
         }catch(error){$('saveStatus').classList.remove('saved');$('saveStatus').textContent='محفوظ على هذا الجهاز فقط';if(!silent)toast('تعذر الحفظ المركزي',error.message);return false}
       }
+      hasUnsyncedChanges=false;
+      clearLocalPlanCache();
       $('saveStatus').classList.add('saved');$('saveStatus').textContent='محفوظ ومؤرشف';
       if(!silent)toast('تم حفظ الخطة','يمكنك الرجوع إليها من صف المريض نفسه.');
       return true;
@@ -1366,6 +1417,7 @@
       $('fixSignatureBtn').addEventListener('click',()=>{state.signatures.patientSignature=canvas.toDataURL('image/png');signatureFixed=true;markDirty();toast('تم تثبيت التوقيع')});
     }
     function bindEvents(){
+      $('returnToLoginBtn').addEventListener('click',()=>location.href='./?view=admin');
       document.querySelectorAll('[data-scroll]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})));
       $('backBtn').addEventListener('click',()=>location.href=source.returnUrl||`./?view=admin${appointmentDate?`&date=${encodeURIComponent(appointmentDate)}`:''}`);
       $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',saveDraftPlan);$('previewBtn').addEventListener('click',togglePreview);
@@ -1431,7 +1483,7 @@
           renderDocMeta();renderPhases();
         }
       });
-      window.addEventListener('beforeunload',()=>{collectHeaderFields();localStorage.setItem(LOCAL_KEY,JSON.stringify(state))});
+      window.addEventListener('beforeunload',()=>{if(!state||!hasUnsyncedChanges)return;collectHeaderFields();persistLocalPlan()});
     }
     async function init(){
       if(!(await verifyAuth()))return;

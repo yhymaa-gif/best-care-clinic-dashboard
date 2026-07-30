@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260730-appointment-tracking';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260731-security-review';
 const APP_SHELL=[
   './',
   './index.html',
@@ -7,6 +7,7 @@ const APP_SHELL=[
   './appointment-request.html',
   './appointment-requests.html',
   './offline.html',
+  './offline.js',
   './lab.html',
   './manifest.webmanifest',
   './best-care-logo.png',

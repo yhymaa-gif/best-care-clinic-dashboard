@@ -29,6 +29,9 @@ const cleanHistory = value => (Array.isArray(value) ? value : [])
   .filter(entry => entry.at > 0);
 const requestIp = request => String(request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
 const ipKey = value => createHash('sha256').update(value).digest('hex');
+const submissionFingerprint = ({ phone, identity, service, serviceOther }) => createHash('sha256')
+  .update([cleanPhone(phone), cleanIdentity(identity), cleanText(service, 40), cleanText(serviceOther, 100).toLowerCase()].join('|'))
+  .digest('hex');
 
 async function allowSubmission(request) {
   const key = `limits/${ipKey(requestIp(request))}`;
@@ -100,6 +103,17 @@ export default async request => {
     if (service === 'other' && serviceOther.length < 2) return reply({ error: 'Service details are required' }, 400);
 
     const now = Date.now();
+    const duplicateStore = rateStore();
+    const duplicateKey = `duplicates/${submissionFingerprint({ phone, identity, service, serviceOther })}`;
+    const duplicate = await duplicateStore.get(duplicateKey, { type: 'json', consistency: 'strong' });
+    if (duplicate && now - Number(duplicate.createdAt || 0) < 10 * 60 * 1000) {
+      return reply({
+        ok: true,
+        duplicate: true,
+        requestId: cleanText(duplicate.requestId, 80),
+        message: 'تم استلام طلبك مسبقًا، وسيتم التواصل معك لتحديد الموعد.',
+      });
+    }
     const id = `${now}-${randomUUID()}`;
     const record = publicRecord({
       id,
@@ -116,6 +130,7 @@ export default async request => {
       history: [{ status: 'new', note: 'تم استلام الطلب من رابط المواعيد', at: now, by: 'النظام' }],
     });
     await store.setJSON(`requests/${id}`, record);
+    await duplicateStore.setJSON(duplicateKey, { requestId: id, createdAt: now });
     await sendPushNotifications({
       type: 'appointment_request',
       title: 'طلب موعد جديد',
@@ -181,4 +196,4 @@ export default async request => {
   return reply({ error: 'Method not allowed' }, 405);
 };
 
-export const __test = { cleanPhone, cleanIdentity, publicRecord, statusValues, serviceValues };
+export const __test = { cleanPhone, cleanIdentity, publicRecord, submissionFingerprint, statusValues, serviceValues };
