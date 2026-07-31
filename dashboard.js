@@ -2968,6 +2968,7 @@ function applyLang(){
   setText('#adminViewLink',lang==='en'?'🗓️ Administration page':'🗓️ صفحة الإدارة');
   setText('#statisticsTopLink strong',lang==='en'?'Statistics':'الإحصائيات');
   setText('#appointmentRequestsPageBtn',lang==='en'?'📅 Appointment request tracking':'📅 متابعة طلبات المواعيد');
+  setText('#appointmentRequestLabel',lang==='en'?'Appointment requests':'طلبات المواعيد');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
   setText('#roleModalTitle',lang==='en'?'Choose your task':'اختر مهمتك');
   setText('#roleModalHelp',lang==='en'?'A focused workspace will open for your role.':'ستفتح لك واجهة مستقلة بالأدوات المرتبطة بعملك.');
@@ -3123,6 +3124,7 @@ function applyLang(){
   renderAlertUI();
   renderClinicSwitcher();
   render();
+  renderAppointmentRequests();
   updateClock();
 }
 function toggleLang(){lang=lang==='ar'?'en':'ar';localStorage.setItem('bestcare_lang',lang);applyLang()}
@@ -3140,8 +3142,19 @@ function renderAppointmentRequests(){
   center.hidden=VIEW_MODE!=='admin'||authUser?.role!=='admin';
   if(center.hidden)return;
   const openItems=appointmentRequests.items.filter(item=>item.status==='new');
+  center.classList.toggle('has-new',openItems.length>0);
+  center.classList.toggle('is-clear',openItems.length===0);
   $('appointmentRequestCount').textContent=String(openItems.length);
-  $('appointmentRequestButton').title=openItems.length?`${openItems.length} طلب موعد جديد`:'طلبات المواعيد';
+  $('appointmentRequestButton').title=lang==='en'
+    ?(openItems.length?`${openItems.length} new appointment request${openItems.length===1?'':'s'}`:'Appointment requests')
+    :(openItems.length?`${openItems.length} طلب موعد جديد`:'طلبات المواعيد');
+  $('appointmentRequestButton').setAttribute('aria-label',lang==='en'
+    ?(openItems.length?`Appointment requests: ${openItems.length} new`:'Appointment requests: no new requests')
+    :(openItems.length?`طلبات المواعيد: ${openItems.length} طلب جديد`:'طلبات المواعيد: لا توجد طلبات جديدة'));
+  const requestState=$('appointmentRequestState');
+  if(requestState)requestState.textContent=lang==='en'
+    ?(openItems.length?(openItems.length===1?'new request':'new requests'):'no new requests')
+    :(openItems.length?(openItems.length===1?'طلب جديد':'طلبات جديدة'):'لا طلبات جديدة');
   $('appointmentRequestList').innerHTML=appointmentRequests.items.length?appointmentRequests.items.map(item=>{
     const service=item.service==='other'?(item.serviceOther||APPOINTMENT_SERVICE_LABELS.other):(APPOINTMENT_SERVICE_LABELS[item.service]||APPOINTMENT_SERVICE_LABELS.other);
     const created=item.createdAt?new Date(item.createdAt).toLocaleString('ar-SA',{timeZone:'Asia/Riyadh',dateStyle:'short',timeStyle:'short'}):'—';

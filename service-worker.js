@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260731-shell-split';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260731-header-appointments';
 const APP_SHELL=[
   './',
   './index.html',

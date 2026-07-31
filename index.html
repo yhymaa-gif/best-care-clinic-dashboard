@@ -43,13 +43,27 @@
 </div>
 <div class="app" inert aria-hidden="true">
 <header class="card header">
-  <div>
+  <div class="header-main">
     <div class="brand"><img class="logo" src="./assets/best-care-logo-header.png" width="181" height="260" alt="Best Care"><div><h1 id="pageTitle">عيادات أفضل عناية الاستشارية للأسنان</h1><p id="pageSubtitle">شاشة استقبال ومتابعة المرضى — مزامنة مباشرة بين الأجهزة</p></div></div>
     <div id="currentClinicContext" class="clinic-context-line">العيادة 1 · رقم 1</div>
     <div class="toolbar hide-screen">
       <input id="datePicker" type="date" aria-label="التاريخ">
       <button id="syncBadge" class="sync-badge connecting" type="button">جارٍ الاتصال</button>
       <button id="presenceBadge" class="presence-badge" type="button" aria-haspopup="dialog" aria-controls="presenceModal"><span class="presence-dot" aria-hidden="true"></span><strong id="presenceCount">—</strong><small id="presenceLabel">أجهزة متصلة</small></button>
+      <aside id="appointmentRequestCenter" class="appointment-request-center admin-only" hidden aria-live="polite">
+        <button id="appointmentRequestButton" class="appointment-request-button" type="button" aria-haspopup="dialog" aria-controls="appointmentRequestPanel" aria-expanded="false" title="طلبات المواعيد الجديدة">
+          <span class="appointment-request-icon" aria-hidden="true"><span>📅</span><i></i></span>
+          <span class="appointment-request-copy"><small id="appointmentRequestLabel">طلبات المواعيد</small><span><strong id="appointmentRequestCount" class="appointment-request-count">0</strong><em id="appointmentRequestState">لا طلبات جديدة</em></span></span>
+          <span class="appointment-request-live" aria-hidden="true"></span>
+        </button>
+        <div id="appointmentRequestPeek" class="appointment-request-peek" hidden>طلب موعد جديد يحتاج تواصل الإدارة.</div>
+        <section id="appointmentRequestPanel" class="appointment-request-panel" role="dialog" aria-modal="false" aria-labelledby="appointmentRequestTitle" hidden>
+          <header class="appointment-request-head"><span aria-hidden="true">📞</span><div><h2 id="appointmentRequestTitle">طلبات المواعيد</h2><p>طلبات الرابط العام التي تحتاج تواصل الإدارة.</p></div><button id="appointmentRequestClose" type="button" aria-label="إغلاق">×</button></header>
+          <div class="appointment-request-tools"><a href="./appointment-requests.html">متابعة كل الطلبات</a><a href="./appointment-request.html" target="_blank" rel="noopener">فتح رابط الطلب</a><button id="copyAppointmentRequestLink" type="button">نسخ الرابط</button><button id="refreshAppointmentRequests" type="button">تحديث</button></div>
+          <p id="appointmentRequestError" class="appointment-request-error" hidden></p>
+          <div id="appointmentRequestList" class="appointment-request-list"></div>
+        </section>
+      </aside>
       <button id="patientIdentitySearchBtn" class="primary" type="button">البحث بهوية المريض</button>
       <button id="addBtn" type="button">إضافة مريض</button>
       <a id="statisticsTopLink" class="top-icon-link admin-only" href="./statistics.html" title="فتح مركز الإحصائيات"><span aria-hidden="true">▥</span><strong>الإحصائيات</strong></a>
@@ -110,16 +124,6 @@
     <div class="doctor-metric"><span aria-hidden="true">📋</span><div><strong id="doctorSubmittedCount">0</strong><small id="doctorSubmittedLabel">خطط لدى الإدارة</small></div></div>
   </div>
   <div id="doctorActionQueue" class="doctor-action-queue"></div>
-  </section>
-</aside>
-<aside id="appointmentRequestCenter" class="appointment-request-center admin-only" hidden aria-live="polite">
-  <button id="appointmentRequestButton" class="appointment-request-button" type="button" aria-haspopup="dialog" aria-controls="appointmentRequestPanel" aria-expanded="false" title="طلبات المواعيد الجديدة">📅<strong id="appointmentRequestCount" class="appointment-request-count">0</strong></button>
-  <div id="appointmentRequestPeek" class="appointment-request-peek" hidden>طلب موعد جديد يحتاج تواصل الإدارة.</div>
-  <section id="appointmentRequestPanel" class="appointment-request-panel" role="dialog" aria-modal="false" aria-labelledby="appointmentRequestTitle" hidden>
-    <header class="appointment-request-head"><span aria-hidden="true">📞</span><div><h2 id="appointmentRequestTitle">طلبات المواعيد</h2><p>طلبات الرابط العام التي تحتاج تواصل الإدارة.</p></div><button id="appointmentRequestClose" type="button" aria-label="إغلاق">×</button></header>
-    <div class="appointment-request-tools"><a href="./appointment-requests.html">متابعة كل الطلبات</a><a href="./appointment-request.html" target="_blank" rel="noopener">فتح رابط الطلب</a><button id="copyAppointmentRequestLink" type="button">نسخ الرابط</button><button id="refreshAppointmentRequests" type="button">تحديث</button></div>
-    <p id="appointmentRequestError" class="appointment-request-error" hidden></p>
-    <div id="appointmentRequestList" class="appointment-request-list"></div>
   </section>
 </aside>
 <details id="adminPatientHub" class="card admin-patient-hub admin-only">
