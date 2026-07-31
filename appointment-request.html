@@ -7,7 +7,7 @@
   <title>طلب موعد | عيادات أفضل عناية الاستشارية</title>
   <link rel="icon" href="./assets/icons/icon-192.png">
   <style>
-    @font-face{font-family:BCArabic;src:url("./assets/fonts/IBMPlexSansArabic-Regular.ttf")}@font-face{font-family:BCArabic;src:url("./assets/fonts/IBMPlexSansArabic-Bold.ttf");font-weight:700 950}
+    @font-face{font-family:BCArabic;src:url("./assets/fonts/IBMPlexSansArabic-Regular.ttf");font-display:swap}@font-face{font-family:BCArabic;src:url("./assets/fonts/IBMPlexSansArabic-Bold.ttf");font-weight:700 950;font-display:swap}
     :root{--green:#176344;--green-2:#2b8b64;--ink:#173d30;--muted:#667b72;--line:#d4e5dd;--soft:#edf7f2;--danger:#a82940}
     *{box-sizing:border-box}[hidden]{display:none!important}
     html{min-width:320px;background:#eef7f2}
@@ -41,7 +41,7 @@
 <body>
 <main>
   <section class="card">
-    <header class="hero"><img src="./best-care-logo.png" alt="شعار عيادات أفضل عناية"><div><h1>طلب موعد</h1><p>عيادات أفضل عناية الاستشارية للأسنان</p></div></header>
+    <header class="hero"><img src="./best-care-logo.png" width="613" height="900" alt="شعار عيادات أفضل عناية"><div><h1>طلب موعد</h1><p>عيادات أفضل عناية الاستشارية للأسنان</p></div></header>
     <div class="steps" aria-label="خطوات طلب الموعد">
       <span class="step"><b>١</b>أدخل بياناتك</span>
       <span class="step"><b>٢</b>أرسل الطلب</span>
@@ -63,29 +63,6 @@
     <footer>تُستخدم بياناتك لتنسيق الموعد فقط، ويتم التعامل معها ضمن نطاق العمل الإداري للعيادة.</footer>
   </section>
 </main>
-<script>
-(()=>{
-  const isMobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-  document.documentElement.classList.toggle('mobile-device',isMobile);
-  const $=id=>document.getElementById(id),startedAt=Date.now(),source=new URLSearchParams(location.search).get('source')||'direct',form=$('requestForm'),button=$('submitBtn'),message=$('message');
-  $('service').addEventListener('change',()=>{$('serviceOtherField').hidden=$('service').value!=='other'});
-  form.addEventListener('submit',async event=>{
-    event.preventDefault();message.className='message';
-    if(!form.reportValidity())return;
-    button.disabled=true;button.textContent='جارٍ إرسال الطلب…';
-    try{
-      const response=await fetch('/api/appointment-requests',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:$('name').value,phone:$('phone').value,identity:$('identity').value,service:$('service').value,serviceOther:$('serviceOther').value,note:$('note').value,website:$('website').value,source,startedAt})});
-      const data=await response.json();
-      if(!response.ok)throw new Error(data.error||'تعذر إرسال الطلب');
-      message.textContent='تم استلام طلبك بنجاح. سيتواصل معك فريق العيادة لتحديد الموعد المناسب.';
-      message.className='message show ok';form.reset();$('serviceOtherField').hidden=true;button.textContent='تم إرسال الطلب';
-      message.scrollIntoView({behavior:'smooth',block:'center'});
-    }catch(error){
-      message.textContent=error.message.includes('mobile')?'تحقق من رقم الجوال بصيغة 05xxxxxxxx.':error.message.includes('identity')?'تحقق من رقم الهوية أو الإقامة (10 أرقام).':'تعذر إرسال الطلب الآن. حاول مرة أخرى بعد قليل.';
-      message.className='message show error';button.disabled=false;button.textContent='إرسال طلب الموعد';
-    }
-  });
-})();
-</script>
+<script src="./appointment-request.js"></script>
 </body>
 </html>

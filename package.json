@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "check": "node --check service-worker.js && node --check offline.js && node --check netlify/functions/auth.mjs && node --check netlify/functions/statistics.mjs && node --check netlify/functions/appointment-requests.mjs && node --test tests/*.test.mjs"
+    "check": "node scripts/check-syntax.mjs && node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^10.0.0",
