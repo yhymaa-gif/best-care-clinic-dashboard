@@ -1736,7 +1736,7 @@ function treatmentPlanButtonText(patient){
 }
 function openTreatmentPlan(id){
   const patient=patientById(id);if(!patient)return;
-  const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),procedure:String(patient.procedure||''),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
+  const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),nationalId:String(patient.nationalId||''),procedure:String(patient.procedure||''),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
   cacheTreatmentSource(patient.id,source);
   location.href=`./treatment-plan.html?patientId=${encodeURIComponent(patient.id)}&date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&view=${encodeURIComponent(VIEW_MODE)}`;
 }
@@ -2429,6 +2429,7 @@ function resetPatientForm(focusName=false){
   $('fName').value='';
   $('fFile').value='';
   $('fPhone').value='';
+  $('fNationalId').value='';
   $('fStart').value=suggested.start;
   $('fEnd').value=suggested.end;
   $('fProcedure').value='';
@@ -2454,6 +2455,7 @@ function openPatient(id=null){
   $('fName').value=p.name||'';
   $('fFile').value=p.file||'';
   $('fPhone').value=p.phone||'';
+  $('fNationalId').value=p.nationalId||'';
   $('fStart').value=p.start||'08:00';
   $('fEnd').value=p.end||'08:30';
   $('fProcedure').value=p.procedure||'';
@@ -2615,6 +2617,7 @@ async function savePatient(){
     name:firstName(rawName),
     file:$('fFile').value.trim(),
     phone:$('fPhone').value.replace(/[^\d+]/g,'').slice(0,20),
+    nationalId:$('fNationalId').value.replace(/\D/g,'').slice(0,10),
     start,
     end,
     procedure:$('fProcedure').value.trim(),
@@ -2637,7 +2640,7 @@ async function savePatient(){
   patientFormSavedFeedback(wasEditing,item);
   resetPatientForm(false);
 }
-function exportCsv(){const rows=[['الاسم','رقم الملف','رقم الجوال','البداية','النهاية','الإجراء','الحالة'],...patients.map(p=>[p.name,p.file,p.phone||'',p.start,p.end,p.procedure,STATUS[p.status]])];const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`bestcare_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href)}
+function exportCsv(){const rows=[['الاسم','رقم الملف','رقم الجوال','رقم الهوية','البداية','النهاية','الإجراء','الحالة'],...patients.map(p=>[p.name,p.file,p.phone||'',p.nationalId||'',p.start,p.end,p.procedure,STATUS[p.status]])];const csv='﻿'+rows.map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`bestcare_${selectedDate}.csv`;a.click();URL.revokeObjectURL(a.href)}
 function detectCsvDelimiter(text){
   const firstLine=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).find(line=>line.trim())||'';
   const counts={',':0,';':0,'\t':0};
@@ -3034,6 +3037,8 @@ function applyLang(){
   $('fName').placeholder=tr('namePlaceholder');
   $('fFile').placeholder=tr('filePlaceholder');
   $('fPhone').placeholder=lang==='en'?'05xxxxxxxx':'05xxxxxxxx';
+  $('fNationalId').placeholder=lang==='en'?'10 digits (optional)':'10 أرقام (اختياري)';
+  setText('#newLabCaseShortcutLabel',lang==='en'?'New lab case':'حالة معمل جديدة');
   $('fProcedure').placeholder=tr('procedurePlaceholder');
   setText('#resetPatientBtn',tr('resetFields'));
   setText('#cancelEditBtn',tr('cancelEdit'));
@@ -3454,6 +3459,7 @@ $('labNameSelect').addEventListener('change',()=>{$('labCustomNameLabel').hidden
 $('labWorkType').addEventListener('change',()=>{$('labCustomWorkLabel').hidden=$('labWorkType').value!=='other';if(!$('labCustomWorkLabel').hidden)$('labCustomWorkInput').focus()});
 $('saveLabCaseBtn').addEventListener('click',saveLabCase);
 $('openLabCasesPageBtn').addEventListener('click',()=>openLabCasesPage(patientById(pendingLabPatientId)));
+$('newLabCaseShortcutBtn').addEventListener('click',()=>{const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,create:'1'});location.href=`./lab.html?${params.toString()}`});
 $('confirmCompletionBtn').addEventListener('click',confirmPatientCompletion);
 $('paymentQueue').addEventListener('click',event=>{
   const ackId=event.target.closest('[data-payment-ack-id]')?.dataset.paymentAckId;

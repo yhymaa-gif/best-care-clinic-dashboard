@@ -24,11 +24,13 @@ const normalizePhone = value => {
   return digits;
 };
 const identityKeys = patient => {
-  const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/\s+/g, '');
+  const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/[\s-]+/g, '');
   const mobile = normalizePhone(patient?.mobile ?? patient?.phone);
+  const nationalId = cleanText(patient?.nationalId, 20).replace(/\D/g, '').slice(0, 10);
   return [...new Set([
     file ? `file:${file}` : '',
-    mobile ? `phone:${mobile}` : ''
+    mobile ? `phone:${mobile}` : '',
+    nationalId.length === 10 ? `national:${nationalId}` : ''
   ].filter(Boolean))];
 };
 const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
@@ -153,7 +155,8 @@ export default async request => {
     let carriedForward = false;
     const lookupPatient = {
       fileNo: url.searchParams.get('fileNo') || '',
-      mobile: url.searchParams.get('mobile') || ''
+      mobile: url.searchParams.get('mobile') || '',
+      nationalId: url.searchParams.get('nationalId') || ''
     };
     const keys = identityKeys(lookupPatient);
     if (!record && keys.length) {

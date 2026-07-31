@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260731-header-appointments';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260731-lab-patient-link';
 const APP_SHELL=[
   './',
   './index.html',

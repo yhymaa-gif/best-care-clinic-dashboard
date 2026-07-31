@@ -13,6 +13,7 @@ const cleanPatient=p=>({
  name:String(p?.name||'').slice(0,80),
  file:String(p?.file||'').slice(0,40),
  phone:String(p?.phone||'').replace(/[^\d+]/g,'').slice(0,20),
+ nationalId:String(p?.nationalId||'').replace(/\D/g,'').slice(0,10),
  start:String(p?.start||'').slice(0,8),
  end:String(p?.end||'').slice(0,8),
  procedure:String(p?.procedure||'').slice(0,180),

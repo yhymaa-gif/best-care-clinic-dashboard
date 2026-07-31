@@ -14,11 +14,13 @@ const normalizePhone = value => {
   return digits;
 };
 const identityKeys = patient => {
-  const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/\s+/g, '');
+  const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/[\s-]+/g, '');
   const mobile = normalizePhone(patient?.mobile ?? patient?.phone);
+  const nationalId = cleanText(patient?.nationalId, 20).replace(/\D/g, '').slice(0, 10);
   return [...new Set([
     file ? `file:${file}` : '',
-    mobile ? `phone:${mobile}` : ''
+    mobile ? `phone:${mobile}` : '',
+    nationalId.length === 10 ? `national:${nationalId}` : ''
   ].filter(Boolean))];
 };
 
@@ -91,6 +93,7 @@ export default async request => {
       fullName: cleanText(body.patient?.fullName ?? body.patient?.name, 120),
       fileNo: cleanText(body.patient?.fileNo ?? body.patient?.file, 40),
       mobile: normalizePhone(body.patient?.mobile ?? body.patient?.phone),
+      nationalId: cleanText(body.patient?.nationalId, 20).replace(/\D/g, '').slice(0, 10),
       status,
       rejectionReason: status === 'rejected' ? cleanText(body?.rejectionReason, 500) : '',
       planNo: cleanText(body?.planNo, 40),

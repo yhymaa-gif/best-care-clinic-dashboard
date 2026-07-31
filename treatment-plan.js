@@ -54,7 +54,7 @@
     const defaultState=planNo=>({
       meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''},
       clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
-      patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:'',nationality:'saudi',age:'',mobile:source.phone||''},
+      patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:source.nationalId||'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
       clinical:{diagnosis:DEFAULT_DIAGNOSIS,radiographs:'',notes:''},
       phases:[blankPhase(0)],
@@ -190,6 +190,7 @@
         });
         if(source?.file)identityParams.set('fileNo',source.file);
         if(source?.phone)identityParams.set('mobile',source.phone);
+        if(source?.nationalId)identityParams.set('nationalId',source.nationalId);
         const url=`${PLAN_API}?${identityParams.toString()}`;
         const response=await fetch(url,{credentials:'include',cache:'no-store'});
         if(!response.ok)return null;
