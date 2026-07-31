@@ -13,6 +13,60 @@
   "background_color": "#f3f7f5",
   "theme_color": "#135f47",
   "categories": ["medical", "productivity", "business"],
+  "shortcuts": [
+    {
+      "name": "صفحة الإدارة",
+      "short_name": "الإدارة",
+      "description": "فتح لوحة الإدارة والمتابعة",
+      "url": "./?source=pwa&view=admin",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "صفحة الطبيب",
+      "short_name": "الطبيب",
+      "description": "فتح شاشة الطبيب والعيادة",
+      "url": "./?source=pwa&view=clinic",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "طلبات المواعيد",
+      "short_name": "المواعيد",
+      "description": "متابعة طلبات المواعيد الجديدة",
+      "url": "./appointment-requests.html?source=pwa",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "حالات المعمل",
+      "short_name": "المعمل",
+      "description": "متابعة حالات معامل الأسنان",
+      "url": "./lab.html?source=pwa",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
   "icons": [
     {
       "src": "./assets/icons/icon-192.png",
