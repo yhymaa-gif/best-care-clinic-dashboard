@@ -69,9 +69,9 @@ export default async request => {
   if (request.method === 'PUT') {
     let body;
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
-    const status = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(body?.status) ? body.status : '';
+    const status = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'].includes(body?.status) ? body.status : '';
     if (!status) return reply({ error: 'Invalid status' }, 400);
-    if (['patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(status) && user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
+    if (['patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'].includes(status) && user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
     const keys = patientIdentityKeys(body?.patient);
     if (!keys.length) return reply({ error: 'Patient identity required' }, 400);
 
@@ -88,6 +88,9 @@ export default async request => {
       nationalId: normalizePatientNationalId(body.patient?.nationalId),
       status,
       rejectionReason: status === 'rejected' ? cleanText(body?.rejectionReason, 500) : '',
+      cancellationReason: status === 'cancelled' ? cleanText(body?.cancellationReason, 500) : '',
+      cancelledAt: status === 'cancelled' ? Number(body?.cancelledAt || Date.now()) : 0,
+      cancelledBy: status === 'cancelled' ? cleanText(body?.cancelledBy || user.displayName || user.username, 120) : '',
       planNo: cleanText(body?.planNo, 40),
       sourcePatientId: cleanText(body?.sourcePatientId, 100),
       sourceDate: cleanText(body?.sourceDate, 10),

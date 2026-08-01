@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260801-plan-status-colors';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260801-plan-cancelled';
 const APP_SHELL=[
   './',
   './index.html',

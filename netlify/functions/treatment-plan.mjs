@@ -54,7 +54,7 @@ const cleanPlan = plan => ({
     validityDays: Math.max(1, Math.min(90, Number(plan?.meta?.validityDays || 15))),
     copyType: plan?.meta?.copyType === 'file' ? 'file' : 'patient',
     revision: Math.max(1, Number(plan?.meta?.revision || 1)),
-    status: ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(plan?.meta?.status) ? plan.meta.status : 'draft',
+    status: ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'].includes(plan?.meta?.status) ? plan.meta.status : 'draft',
     doctorApprovedAt: cleanNumber(plan?.meta?.doctorApprovedAt, 0, Number.MAX_SAFE_INTEGER),
     doctorApprovedBy: cleanText(plan?.meta?.doctorApprovedBy, 120),
     submittedAt: cleanNumber(plan?.meta?.submittedAt, 0, Number.MAX_SAFE_INTEGER),
@@ -64,7 +64,10 @@ const cleanPlan = plan => ({
     approvedBy: cleanText(plan?.meta?.approvedBy, 120),
     rejectedAt: cleanNumber(plan?.meta?.rejectedAt, 0, Number.MAX_SAFE_INTEGER),
     rejectedBy: cleanText(plan?.meta?.rejectedBy, 120),
-    rejectionReason: cleanText(plan?.meta?.rejectionReason, 500)
+    rejectionReason: cleanText(plan?.meta?.rejectionReason, 500),
+    cancelledAt: cleanNumber(plan?.meta?.cancelledAt, 0, Number.MAX_SAFE_INTEGER),
+    cancelledBy: cleanText(plan?.meta?.cancelledBy, 120),
+    cancellationReason: cleanText(plan?.meta?.cancellationReason, 500)
   },
   clinic: {
     nameAr: cleanText(plan?.clinic?.nameAr, 100),
@@ -179,7 +182,7 @@ export default async request => {
     if (auth.user?.role !== 'admin' && !['draft', 'submitted', 'rejected'].includes(plan.meta.status)) {
       return reply({ error: 'Administration approval is required for this plan status' }, 403);
     }
-    if (auth.user?.role !== 'admin' && ['approved', 'approved_signed'].includes(existing?.plan?.meta?.status)) {
+    if (auth.user?.role !== 'admin' && ['approved', 'approved_signed', 'cancelled'].includes(existing?.plan?.meta?.status)) {
       return reply({ error: 'An approved plan can only be changed by administration' }, 403);
     }
     const record = { patientId, clinicId, date, plan, revision: Number(existing?.revision || 0) + 1, updatedAt: Date.now(), updatedBy: String(auth.user?.displayName || auth.user?.username || '').slice(0, 120) };

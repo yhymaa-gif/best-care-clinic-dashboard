@@ -40,7 +40,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.43-treatment-plan-status-colors';
+const DASHBOARD_BUILD='7.44-treatment-plan-cancelled';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -58,7 +58,7 @@ const DEVICE_ID=(()=>{
 })();
 const STATUS={waiting:'بانتظار الموعد',arrived:'وصل المريض',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
 const EN={waiting:'Waiting',arrived:'Patient arrived',early_arrival:'Early arrival',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
-const PLAN_STATUS_VALUES=['draft','submitted','patient_accepted','approved','approved_signed','rejected'];
+const PLAN_STATUS_VALUES=['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'];
 const I18N={
   ar:{documentTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageSubtitle:'شاشة استقبال ومتابعة المرضى — مزامنة مباشرة بين الأجهزة',updateToday:'تحديث قائمة اليوم',addPatient:'إضافة مريض',screenMode:'وضع الشاشة',installApp:'تثبيت التطبيق',settings:'الإعدادات ▾',imageOcr:'📷 قراءة صورة المواعيد',importCsv:'📥 استيراد CSV',exportCsv:'📤 تصدير CSV',testSync:'🧪 اختبار المزامنة',clearToday:'🗑 مسح قائمة اليوم',alertTitle:'تنبيه تعديل',alertInactiveHint:'إرسال ملاحظة للطبيب',alertActiveHint:'تنبيه فعّال — اضغط للإدارة',defaultAlert:'يوجد تعديل جديد على قائمة المواعيد',updateAvailable:'يتوفر تحديث جديد للتطبيق.',updateNow:'تحديث الآن',totalPatients:'إجمالي المرضى',completed:'تم الإنجاز',inTreatment:'قيد العلاج',remaining:'المتبقي',cancelled:'الملغاة',completionRate:'نسبة الإنجاز',originalTime:'وقت الموعد الأصلي',originalHint:'يبقى محفوظًا حسب جدول الموعد',actualDuration:'مدة العلاج الفعلية',actualStartHint:'يبدأ عند دخول المريض',upcomingPatients:'المرضى القادمون',upcomingHint:'خريطة أحجام حسب ترتيب الموعد',addNewPatient:'إضافة مريض جديد',editPatient:'تعديل بيانات المريض',add:'إضافة',editing:'تعديل',formIntro:'أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.',firstName:'الاسم الأول',fileNumber:'رقم الملف',appointmentDate:'تاريخ الموعد',startTime:'وقت البداية',endTime:'وقت النهاية',procedure:'الإجراء العلاجي',status:'الحالة',namePlaceholder:'اسم المريض',filePlaceholder:'رقم الملف',procedurePlaceholder:'مثال: مراجعة، كشف جديد',resetFields:'تفريغ الحقول',cancelEdit:'إلغاء التعديل',saveAdd:'حفظ وإضافة المريض',saveChanges:'حفظ التعديل',patientUpdated:'تم حفظ التعديل',patientAdded:'تمت إضافة المريض',movingPatient:'جارٍ نقل الموعد…',dateMoveFailed:'تعذر تغيير تاريخ الموعد',sourceSaveFailed:'تعذر حفظ قائمة اليوم القديم',targetLoadFailed:'تعذر قراءة قائمة اليوم الجديد',targetSaveFailed:'تعذر حفظ المريض في اليوم الجديد',patientList:'قائمة المرضى اليومية',searchPlaceholder:'بحث بالاسم أو رقم الملف',allStatuses:'كل الحالات',name:'الاسم',start:'البداية',end:'النهاية',action:'إجراء',todayNotes:'ملاحظات اليوم',notesPlaceholder:'اكتب ملاحظات اليوم...',exitFullscreen:'⤢ إلغاء ملء الشاشة',bulkTitle:'تحديث قائمة اليوم',bulkHelp:'كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء',cancel:'إلغاء',saveList:'حفظ القائمة',alertModalTitle:'🔔 إرسال تنبيه تعديل',alertModalHelp:'اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.',alertMessage:'رسالة التنبيه',alertPlaceholder:'مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة',alertTip:'يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.',close:'إغلاق',clearAlert:'إلغاء التنبيه الحالي',publishAlert:'نشر التنبيه',noAppointments:'لا توجد مواعيد لهذا اليوم',noUpcoming:'لا يوجد مرضى قادمون',edit:'تعديل',delete:'حذف',currentPatient:'المريض الحالي',nextToCall:'التالي للاستدعاء',noCurrent:'لا يوجد مريض قيد العلاج',noSchedule:'أضف قائمة المرضى لبدء المتابعة',fileLabel:'رقم الملف',nextDirect:'التالي مباشرة',patientNumber:'المريض رقم',lastCall:'آخر استدعاء',recall:'🔔 إعادة الاستدعاء',callNext:'🔔 استدعاء التالي',callPatient:'🔔 استدعاء المريض',startActual:'▶ بدء وقت الدخول الفعلي',actualRunning:'✓ الوقت الفعلي يعمل',finishPatient:'✓ إنهاء المريض',startedAt:'بدأ',developerRights:'جميع الحقوق محفوظة — تطوير يحيى هادي',ocrTitle:'📷 تحويل صورة المواعيد إلى قائمة مرضى',ocrHelp:'تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.',ocrPrivacy:'🔒 معالجة محلية — لا تُرفع الصورة',ocrChoose:'اختيار صورة من الجهاز',ocrDrop:'أو اسحب صورة جدول المواعيد هنا',ocrDropHint:'JPG أو PNG أو WEBP — حتى 20 MB',ocrNoFile:'لم يتم اختيار صورة',ocrRotate:'↻ تدوير الصورة 90°',ocrReady:'جاهز للاستخراج',ocrInitialHint:'اختر صورة واضحة يظهر فيها الجدول كاملًا.',ocrReviewTitle:'مسودة المراجعة',ocrReviewCaption:'يمكنك تعديل أي خانة قبل الدمج',ocrConfidence:'دقة القراءة',ocrStart:'بدء الاستخراج',ocrDownload:'تنزيل CSV',ocrMerge:'دمج في قائمة اليوم'},
   en:{documentTitle:'Best Care Clinic Reception Dashboard',pageTitle:'Best Care Dental Clinics',pageSubtitle:'Patient reception and tracking — live sync across devices',updateToday:"Update today's list",addPatient:'Add patient',screenMode:'Screen mode',installApp:'Install app',settings:'Settings ▾',imageOcr:'📷 Read appointment image',importCsv:'📥 Import CSV',exportCsv:'📤 Export CSV',testSync:'🧪 Test sync',clearToday:"🗑 Clear today's list",alertTitle:'Update alert',alertInactiveHint:'Send a note to the doctor',alertActiveHint:'Alert active — tap to manage',defaultAlert:'A new update was made to the appointment list',updateAvailable:'A new app update is available.',updateNow:'Update now',totalPatients:'Total patients',completed:'Completed',inTreatment:'In treatment',remaining:'Remaining',cancelled:'Cancelled',completionRate:'Completion rate',originalTime:'Original appointment',originalHint:'Kept according to the appointment schedule',actualDuration:'Actual treatment duration',actualStartHint:'Starts when the patient enters',upcomingPatients:'Upcoming patients',upcomingHint:'Cards resize automatically as appointments approach',addNewPatient:'Add new patient',editPatient:'Edit patient',add:'Add',editing:'Editing',formIntro:'Enter the appointment details and save; changes sync automatically across devices.',firstName:'First name',fileNumber:'File number',appointmentDate:'Appointment date',startTime:'Start time',endTime:'End time',procedure:'Procedure',status:'Status',namePlaceholder:'Patient name',filePlaceholder:'File number',procedurePlaceholder:'Example: Review, new consultation',resetFields:'Clear fields',cancelEdit:'Cancel editing',saveAdd:'Save and add patient',saveChanges:'Save changes',patientUpdated:'Patient updated',patientAdded:'Patient added',movingPatient:'Moving appointment…',dateMoveFailed:'Could not change appointment date',sourceSaveFailed:'Could not save the original day list',targetLoadFailed:'Could not load the new day list',targetSaveFailed:'Could not save the patient on the new day',patientList:'Daily patient list',searchPlaceholder:'Search by name or file number',allStatuses:'All statuses',name:'Name',start:'Start',end:'End',action:'Actions',todayNotes:"Today's notes",notesPlaceholder:"Write today's notes...",exitFullscreen:'⤢ Exit fullscreen',bulkTitle:"Update today's list",bulkHelp:'One patient per line: name, file number, start, end, procedure',cancel:'Cancel',saveList:'Save list',alertModalTitle:'🔔 Send update alert',alertModalHelp:'Write a short, clear note to appear immediately on connected devices.',alertMessage:'Alert message',alertPlaceholder:'Example: The next appointment was updated; please review the list',alertTip:'The alert appears in red and syncs live. Clear it after the doctor has reviewed it.',close:'Close',clearAlert:'Clear current alert',publishAlert:'Publish alert',noAppointments:'No appointments for this day',noUpcoming:'No upcoming patients',edit:'Edit',delete:'Delete',currentPatient:'Current patient',nextToCall:'Next to call',noCurrent:'No patient currently in treatment',noSchedule:'Add patients to start tracking',fileLabel:'File number',nextDirect:'Next',patientNumber:'Patient number',lastCall:'Last call',recall:'🔔 Recall',callNext:'🔔 Call next',callPatient:'🔔 Call patient',startActual:'▶ Start actual entry time',actualRunning:'✓ Actual timer running',finishPatient:'✓ Finish patient',startedAt:'Started',developerRights:'All rights reserved — Developed by Yahya Hadi',ocrTitle:'📷 Convert appointment image to patient list',ocrHelp:'The image is read on this device. Review the draft, then merge valid rows into today’s list.',ocrPrivacy:'🔒 Local processing — image is not uploaded',ocrChoose:'Choose image',ocrDrop:'or drop the appointment image here',ocrDropHint:'JPG, PNG, or WEBP — up to 20 MB',ocrNoFile:'No image selected',ocrRotate:'↻ Rotate image 90°',ocrReady:'Ready to extract',ocrInitialHint:'Choose a clear image showing the full table.',ocrReviewTitle:'Review draft',ocrReviewCaption:'Edit any field before merging',ocrConfidence:'Reading confidence',ocrStart:'Start extraction',ocrDownload:'Download CSV',ocrMerge:"Merge into today's list"}
@@ -1516,8 +1516,8 @@ function effectiveTreatmentPlanStatus(patient){
 }
 function planStatusLabels(){
   return lang==='en'
-    ?{draft:'Unapproved draft',submitted:'Doctor approved · with admin',patient_accepted:'Patient signed',approved:'Plan approved',approved_signed:'Approved & signed',rejected:'Needs revision'}
-    :{draft:'مسودة غير معتمدة',submitted:'اعتمدها الطبيب · لدى الإدارة',patient_accepted:'وافق ووقّع',approved:'خطة معتمدة',approved_signed:'خطة معتمدة وموقعة',rejected:'تحتاج تعديل'};
+    ?{draft:'Unapproved draft',submitted:'Doctor approved · with admin',patient_accepted:'Patient signed',approved:'Plan approved',approved_signed:'Approved & signed',rejected:'Needs revision',cancelled:'Plan cancelled'}
+    :{draft:'مسودة غير معتمدة',submitted:'اعتمدها الطبيب · لدى الإدارة',patient_accepted:'وافق ووقّع',approved:'خطة معتمدة',approved_signed:'خطة معتمدة وموقعة',rejected:'تحتاج تعديل',cancelled:'خطة ملغاة'};
 }
 function planStatusText(status){return planStatusLabels()[status]||String(status||'')}
 function treatmentPlanBadgeMarkup(patient){
@@ -1525,12 +1525,14 @@ function treatmentPlanBadgeMarkup(patient){
   const status=effectiveTreatmentPlanStatus(patient);
   if(!PLAN_STATUS_VALUES.includes(status))return'';
   const labels=planStatusLabels();
-  const detail=status==='rejected'&&record?.status===status&&record?.rejectionReason?` — ${record.rejectionReason}`:'';
+  const detail=status==='rejected'&&record?.status===status&&record?.rejectionReason?` — ${record.rejectionReason}`:status==='cancelled'&&record?.status===status&&record?.cancellationReason?` — ${record.cancellationReason}`:'';
   return`<span class="plan-status-badge plan-status-${status}" title="${escapeHtml(labels[status]+detail)}">${escapeHtml(labels[status])}</span>`;
 }
 function canChangePlanStatus(current,next){
   if(current===next)return true;
   if(VIEW_MODE==='clinic')return ['draft','rejected'].includes(current)&&next==='submitted';
+  if(next==='cancelled')return current!=='cancelled';
+  if(current==='cancelled')return next==='draft';
   const transitions={
     draft:['submitted'],
     submitted:['patient_accepted','rejected'],
@@ -1546,7 +1548,7 @@ function treatmentPlanStatusControlMarkup(patient){
   if(!PLAN_STATUS_VALUES.includes(status))return'';
   const labels=planStatusLabels();
   const options=PLAN_STATUS_VALUES.map(value=>`<option value="${value}" ${value===status?'selected':''} ${canChangePlanStatus(status,value)?'':'disabled'}>${escapeHtml(labels[value])}</option>`).join('');
-  const warning=!['approved','approved_signed'].includes(status)?`<span class="unapproved-plan-warning">⚠ ${lang==='en'?'Unapproved plan':'خطة غير معتمدة'}</span>`:'';
+  const warning=planCenterIsUnapproved(status)?`<span class="unapproved-plan-warning">⚠ ${lang==='en'?'Unapproved plan':'خطة غير معتمدة'}</span>`:'';
   return`<div class="plan-status-stack"><label class="plan-status-control plan-status-control-${status}" data-label="${lang==='en'?'Plan':'خطة'}" title="${lang==='en'?'Change treatment plan status':'تعديل حالة اعتماد الخطة'}"><select class="plan-status-select" data-plan-status-id="${escapeHtml(patient.id)}" aria-label="${lang==='en'?'Treatment plan status':'حالة اعتماد الخطة'}">${options}</select></label>${warning}</div>`;
 }
 async function refreshTreatmentPlanRegistry(force=false){
@@ -1585,7 +1587,7 @@ function planCenterEntries(){
   return Object.entries(records||{}).map(([canonical,record])=>({canonical,record})).sort((a,b)=>Number(b.record?.updatedAt||0)-Number(a.record?.updatedAt||0));
 }
 function planCenterIsFinal(status){return status==='approved_signed'}
-function planCenterIsUnapproved(status){return !['approved','approved_signed'].includes(status)}
+function planCenterIsUnapproved(status){return ['draft','submitted','patient_accepted','rejected'].includes(status)}
 function operationClinicLabel(clinicId){
   const clinic=clinicDirectory.find(item=>item.id===clinicId)||defaultClinic(clinicNumber(clinicId));
   return clinicDisplayName(clinic);
@@ -1724,13 +1726,17 @@ function openPlanCenterRecord(canonical){
 }
 async function changePlanCenterStatus(canonical,nextStatus,select){
   const record=treatmentPlanCenter.records?.[canonical],previous=record?.status;if(!record||!PLAN_STATUS_VALUES.includes(nextStatus)){if(select)select.value=previous||'draft';return}
-  if(!confirm(`تغيير حالة خطة ${record.fullName||'المريض'} إلى «${planStatusText(nextStatus)}»؟`)){if(select)select.value=previous;return}
+  let cancellationReason='';
+  if(nextStatus==='cancelled'){
+    cancellationReason=prompt(`سبب إلغاء خطة ${record.fullName||'المريض'}:`,`أُلغيت الخطة بقرار الإدارة.`);
+    if(cancellationReason===null){if(select)select.value=previous;return}
+  }else if(!confirm(`تغيير حالة خطة ${record.fullName||'المريض'} إلى «${planStatusText(nextStatus)}»؟`)){if(select)select.value=previous;return}
   select.disabled=true;
   try{
     const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,clinic:record.clinicId||'clinic-1'}),loaded=await request(`/api/treatment-plan?${params.toString()}`),data=await loaded.json();if(!loaded.ok||!data.exists||!data.plan)throw new Error('تعذر العثور على ملف الخطة الكامل');
-    applyPlanStatusMetadata(data.plan,nextStatus);
+    applyPlanStatusMetadata(data.plan,nextStatus,'',cancellationReason);
     const saved=await request(`/api/treatment-plan?${params.toString()}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:data.plan})});if(!saved.ok)throw new Error('تعذر حفظ حالة الخطة');
-    const registry=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(record.clinicId||'clinic-1')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({patient:{fullName:record.fullName,fileNo:record.fileNo,mobile:record.mobile,nationalId:record.nationalId},status:nextStatus,planNo:record.planNo,sourcePatientId:record.sourcePatientId,sourceDate:record.sourceDate})});if(!registry.ok)throw new Error('حُفظت الخطة وتعذر تحديث الفهرس');
+    const registry=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(record.clinicId||'clinic-1')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({patient:{fullName:record.fullName,fileNo:record.fileNo,mobile:record.mobile,nationalId:record.nationalId},status:nextStatus,planNo:record.planNo,sourcePatientId:record.sourcePatientId,sourceDate:record.sourceDate,cancelledAt:data.plan.meta?.cancelledAt||0,cancelledBy:data.plan.meta?.cancelledBy||'',cancellationReason:data.plan.meta?.cancellationReason||''})});if(!registry.ok)throw new Error('حُفظت الخطة وتعذر تحديث الفهرس');
     await refreshTreatmentPlanCenter();treatmentPlanRegistry.lastFetchedAt=0;await refreshTreatmentPlanRegistry(true);toast('تم تحديث حالة الخطة',`${record.fullName||'المريض'} — ${planStatusText(nextStatus)}`)
   }catch(error){select.value=previous;toast('تعذر تحديث الخطة',String(error.message||error))}finally{select.disabled=false}
 }
@@ -1920,10 +1926,11 @@ function openTreatmentPlan(id){
   cacheTreatmentSource(patient.id,source);
   location.href=`./treatment-plan.html?patientId=${encodeURIComponent(patient.id)}&date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&view=${encodeURIComponent(VIEW_MODE)}`;
 }
-function applyPlanStatusMetadata(plan,nextStatus,rejectionReason=''){
+function applyPlanStatusMetadata(plan,nextStatus,rejectionReason='',cancellationReason=''){
   const now=Date.now(),actor=VIEW_MODE==='clinic'?'الطبيب':'الإدارة';
   plan.meta=plan.meta&&typeof plan.meta==='object'?plan.meta:{};
   plan.meta.status=nextStatus;
+  if(nextStatus!=='cancelled')Object.assign(plan.meta,{cancelledAt:0,cancelledBy:'',cancellationReason:''});
   if(nextStatus==='draft'){
     Object.assign(plan.meta,{doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(nextStatus==='submitted'){
@@ -1934,6 +1941,8 @@ function applyPlanStatusMetadata(plan,nextStatus,rejectionReason=''){
     Object.assign(plan.meta,{approvedAt:now,approvedBy:actor,rejectedAt:0,rejectedBy:'',rejectionReason:'',revision:Math.max(1,Number(plan.meta.revision||1)+1)});
   }else if(nextStatus==='rejected'){
     Object.assign(plan.meta,{rejectedAt:now,rejectedBy:actor,rejectionReason:String(rejectionReason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500),patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:''});
+  }else if(nextStatus==='cancelled'){
+    Object.assign(plan.meta,{cancelledAt:now,cancelledBy:actor,cancellationReason:String(cancellationReason||'أُلغيت الخطة بقرار الإدارة.').trim().slice(0,500)});
   }
 }
 async function changeTreatmentPlanStatus(id,nextStatus,select){
@@ -1945,7 +1954,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
   }
   if(nextStatus===currentStatus)return;
 
-  let rejectionReason='';
+  let rejectionReason='',cancellationReason='';
   const confirmations={
     submitted:'هل تؤكد أن الطبيب راجع المسودة واعتمد إرسالها إلى الإدارة؟',
     patient_accepted:'هل تؤكد أن المريض أو الوصي وافق على الخطة ووقّع عليها؟',
@@ -1956,6 +1965,9 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
   if(nextStatus==='rejected'){
     rejectionReason=prompt('اكتب سبب إعادة الخطة للتعديل:','تحتاج الخطة إلى مراجعة الإجراءات أو الأسعار.');
     if(rejectionReason===null){select.value=currentStatus;return}
+  }else if(nextStatus==='cancelled'){
+    cancellationReason=prompt('اكتب سبب إلغاء الخطة:','أُلغيت الخطة بقرار الإدارة.');
+    if(cancellationReason===null){select.value=currentStatus;return}
   }else if(confirmations[nextStatus]&&!confirm(confirmations[nextStatus])){
     select.value=currentStatus;
     return;
@@ -1973,7 +1985,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
     if(!loaded.ok||!loadedData.exists||!loadedData.plan)throw new Error(lang==='en'?'Open and save the treatment plan first.':'افتح الخطة العلاجية واحفظها أولًا.');
     originalPlan=loadedData.plan;
     const updatedPlan=JSON.parse(JSON.stringify(originalPlan));
-    applyPlanStatusMetadata(updatedPlan,nextStatus,rejectionReason);
+    applyPlanStatusMetadata(updatedPlan,nextStatus,rejectionReason,cancellationReason);
 
     const saved=await request(planUrl,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:updatedPlan})});
     if(!saved.ok)throw new Error(lang==='en'?'Could not save the treatment plan.':'تعذر حفظ الخطة العلاجية.');
@@ -1981,12 +1993,14 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
     const registryResponse=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{
       method:'PUT',headers:{'content-type':'application/json'},
       body:JSON.stringify({
-        patient:updatedPlan.patient,status:nextStatus,rejectionReason,
+        patient:updatedPlan.patient,status:nextStatus,rejectionReason,cancellationReason,
         planNo:updatedPlan.meta?.planNo||'',sourcePatientId,sourceDate,
         patientAcceptedAt:updatedPlan.meta?.patientAcceptedAt||0,
         patientAcceptedBy:updatedPlan.meta?.patientAcceptedBy||'',
         approvedAt:updatedPlan.meta?.approvedAt||0,
-        approvedBy:updatedPlan.meta?.approvedBy||''
+        approvedBy:updatedPlan.meta?.approvedBy||'',
+        cancelledAt:updatedPlan.meta?.cancelledAt||0,
+        cancelledBy:updatedPlan.meta?.cancelledBy||''
       })
     });
     if(!registryResponse.ok){

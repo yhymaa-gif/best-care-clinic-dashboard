@@ -8,7 +8,7 @@ const clinicPattern = /^clinic-([1-9]|1[0-5])$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RANGE_DAYS = 366;
 const statusKeys = ['waiting', 'arrived', 'early_arrival', 'active', 'done', 'late', 'cancel', 'left', 'asks_delay'];
-const planStatusKeys = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected'];
+const planStatusKeys = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'];
 const labStatusKeys = ['pending_send', 'sent', 'in_production', 'ready_at_lab', 'received_clinic', 'delivered_patient', 'needs_adjustment', 'returned_lab', 'cancelled'];
 
 const defaultClinics = () => Array.from({ length: 15 }, (_, index) => ({

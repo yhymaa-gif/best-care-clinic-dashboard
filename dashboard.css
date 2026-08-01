@@ -386,3 +386,9 @@ body.view-admin.role-admin .plan-center-trigger{position:fixed!important;z-index
   .header-side{grid-template-columns:1fr 1fr;padding-top:10px}.alert-trigger{grid-column:1/-1;width:100%}
 }
 @media(prefers-reduced-motion:reduce){.header .appointment-request-center.has-new .appointment-request-icon,.header .appointment-request-center.has-new .appointment-request-live{animation:none!important}}
+/* Treatment plan cancellation is an archived state, distinct from rejection or deletion. */
+.plan-status-cancelled{background:#eef1f2;border-color:#bac4c9;color:#44535b}
+.plan-status-control-cancelled{background:#eef1f2;border-color:#bac4c9}
+.plan-status-control-cancelled .plan-status-select{color:#44535b}
+.treatment-plan-center-item.status-cancelled{border-color:#bac4c9;background:linear-gradient(145deg,#eef1f2,#fff 84%)}
+.treatment-plan-center-item.status-cancelled::before{background:#59656c}

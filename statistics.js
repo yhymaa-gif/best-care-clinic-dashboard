@@ -2,7 +2,7 @@ const $=id=>document.getElementById(id);
     const nf=new Intl.NumberFormat('ar-SA');
     const df=new Intl.DateTimeFormat('ar-SA',{month:'short',day:'numeric'});
     const statusLabels={waiting:'بانتظار الموعد',arrived:'وصل المريض',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'غادر',asks_delay:'يستفسر عن التأخير'};
-    const planLabels={draft:'مسودة',submitted:'معتمدة من الطبيب',patient_accepted:'وافق المريض',approved:'معتمدة من الإدارة',approved_signed:'معتمدة وموقعة',rejected:'مرفوضة'};
+    const planLabels={draft:'مسودة',submitted:'معتمدة من الطبيب',patient_accepted:'وافق المريض',approved:'معتمدة من الإدارة',approved_signed:'معتمدة وموقعة',rejected:'مرفوضة',cancelled:'ملغاة'};
     const labLabels={pending_send:'بانتظار الإرسال',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة بالمعمل',received_clinic:'وصلت للعيادة',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'};
     const colors=['#2f8c67','#54ae7f','#3f7f98','#c79b3d','#d56b78','#8a72ba','#da8b36','#69887a','#c24d5e'];
     let latest=null;

@@ -52,7 +52,7 @@
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
       clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:source.nationalId||'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -384,8 +384,8 @@
     }
     function workflowRole(){return viewMode==='clinic'?'clinic':'admin'}
     function renderWorkflow(){
-      const status=['draft','submitted','patient_accepted','approved','approved_signed','rejected'].includes(state.meta.status)?state.meta.status:'draft';
-      const labels={draft:'مسودة غير معتمدة لدى الطبيب',submitted:'اعتمدها الطبيب — بانتظار استكمال الإدارة',patient_accepted:'المريض وافق ووقّع — بانتظار الاعتماد النهائي',approved:'معتمدة نهائيًا',approved_signed:'خطة معتمدة وموقعة',rejected:'أعادتها الإدارة — تحتاج تعديل الطبيب'};
+      const status=['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'].includes(state.meta.status)?state.meta.status:'draft';
+      const labels={draft:'مسودة غير معتمدة لدى الطبيب',submitted:'اعتمدها الطبيب — بانتظار استكمال الإدارة',patient_accepted:'المريض وافق ووقّع — بانتظار الاعتماد النهائي',approved:'معتمدة نهائيًا',approved_signed:'خطة معتمدة وموقعة',rejected:'أعادتها الإدارة — تحتاج تعديل الطبيب',cancelled:'الخطة ملغاة — محفوظة في السجل'};
       $('workflowStatus').textContent=labels[status];$('workflowStatus').className=`workflow-pill ${status}`;
       const progressStatus=status==='approved'?'approved_signed':status;
       const order=['draft','submitted','patient_accepted','approved_signed'],position=order.indexOf(progressStatus);
@@ -408,7 +408,7 @@
       shareGroup.hidden=workflowRole()!=='admin'||!['submitted','patient_accepted','approved','approved_signed'].includes(status)||!state.phases.some(phase=>phase.items.some(item=>item.service));
       $('floatingWhatsappBtn').hidden=false;
       resetShareButtonLabels();
-      const locked=workflowRole()==='clinic'&&['submitted','patient_accepted','approved','approved_signed'].includes(status);
+      const locked=status==='cancelled'||workflowRole()==='clinic'&&['submitted','patient_accepted','approved','approved_signed'].includes(status);
       document.body.classList.toggle('workflow-locked',locked);
       $('paper').classList.toggle('approved',['approved','approved_signed'].includes(status));
       const isReturnedRevision=workflowRole()==='clinic'&&status==='rejected';
@@ -435,6 +435,7 @@
       renderDocMeta();renderPhases();renderFinancials();renderProgress();renderWorkflow();
     }
     function markDirty(){
+      if(state.meta.status==='cancelled')return;
       collectHeaderFields();
       cachedSharePdf=null;cachedShareImage=null;cachedShareSignature='';
       resetShareButtonLabels();
@@ -506,7 +507,10 @@
             patientAcceptedAt:state.meta.patientAcceptedAt||0,
             patientAcceptedBy:state.meta.patientAcceptedBy||'',
             approvedAt:state.meta.approvedAt||0,
-            approvedBy:state.meta.approvedBy||''
+            approvedBy:state.meta.approvedBy||'',
+            cancelledAt:state.meta.cancelledAt||0,
+            cancelledBy:state.meta.cancelledBy||'',
+            cancellationReason:state.meta.cancellationReason||''
           })
         });
         return response.ok;
@@ -862,7 +866,8 @@
           draft:workflowRole()==='clinic'?'اضغط «حفظ وإرسال للإدارة» أولًا.':'الخطة ما زالت مسودة لدى العيادة ولم تُرسل للإدارة.',
           submitted:workflowRole()==='admin'?'أرسل مسودة PDF للمريض، ثم اضغط «تأكيد موافقة وتوقيع المريض».':'الخطة لدى الإدارة بانتظار إرسال المسودة وموافقة المريض.',
           patient_accepted:workflowRole()==='admin'?'اضغط «اعتماد نهائي للخطة الموقعة».':'تم توثيق موافقة المريض والخطة بانتظار اعتماد الإدارة.',
-          rejected:'الخطة تحتاج تعديلًا ثم إعادة إرسالها للإدارة.'
+          rejected:'الخطة تحتاج تعديلًا ثم إعادة إرسالها للإدارة.',
+          cancelled:'هذه الخطة ملغاة ومحفوظة في السجل. يمكن للإدارة إعادتها إلى مسودة من مركز الخطط.'
         };
         toast('النسخة غير معتمدة',guidance[state.meta.status]||'يجب اعتماد الخطة من الإدارة قبل الطباعة.');
         $('workflowTrack').scrollIntoView({behavior:'smooth',block:'start'});
@@ -979,7 +984,7 @@
       hydrateFields();setupSignature();bindEvents();render();
       $('saveStatus').textContent=remoteResult?.carriedForward?'تم استرجاع خطة المريض من موعد سابق':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote));
-      if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
+      if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected','cancelled'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
       setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},15000);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));
     }
