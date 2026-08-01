@@ -40,7 +40,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.41-unified-operations-center';
+const DASHBOARD_BUILD='7.42-operations-top-left';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
