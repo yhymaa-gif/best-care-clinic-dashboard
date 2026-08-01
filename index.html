@@ -64,7 +64,7 @@
           <div id="appointmentRequestList" class="appointment-request-list"></div>
         </section>
       </aside>
-      <button id="patientIdentitySearchBtn" class="primary" type="button">البحث بهوية المريض</button>
+      <button id="patientIdentitySearchBtn" class="primary patient-record-trigger" type="button"><span aria-hidden="true">⌕</span><span><strong>ملف المريض</strong><small>بحث · تعديل · متابعة</small></span></button>
       <button id="addBtn" type="button">إضافة مريض</button>
       <a id="statisticsTopLink" class="top-icon-link admin-only" href="./statistics.html" title="فتح مركز الإحصائيات"><span aria-hidden="true">▥</span><strong>الإحصائيات</strong></a>
       <button id="treatmentPlanCenterBtn" class="plan-center-trigger admin-only" type="button" aria-haspopup="dialog" aria-controls="treatmentPlanCenterModal" title="فتح مركز العمليات"><span class="plan-center-trigger-icon" aria-hidden="true">◎</span><span><strong>مركز العمليات</strong><small>المواعيد · الخطط · المعمل</small></span><b id="treatmentPlanCenterCount">0</b></button>
@@ -231,7 +231,33 @@
     <div id="treatmentPlanCenterList" class="treatment-plan-center-list"><div class="treatment-plan-center-empty">اضغط تحديث لعرض الخطط العلاجية.</div></div>
   </div>
 </div></div>
-<div id="patientIdentitySearchModal" class="modal"><div class="modal-card patient-identity-card" role="dialog" aria-modal="true" aria-labelledby="patientIdentitySearchTitle"><div class="patient-identity-head"><span aria-hidden="true">⌕</span><div><h3 id="patientIdentitySearchTitle">البحث بهوية المريض</h3><p id="patientIdentitySearchHelp">ابحث برقم الملف أو رقم الجوال أو الاسم للوصول إلى سجل المريض وخطته الدائمة.</p></div></div><div class="patient-identity-body"><div class="patient-identity-search"><input id="patientIdentitySearchInput" type="search" autocomplete="off" placeholder="رقم الملف، رقم الجوال، أو اسم المريض" aria-label="البحث بهوية المريض"></div><p id="patientIdentitySearchHint" class="patient-identity-hint">تستمر الخطة العلاجية وإجراءاتها مرتبطة بهوية المريض عند إضافته إلى موعد مستقبلي.</p><div id="patientIdentitySearchResults" class="patient-identity-results"><div class="patient-identity-empty">اكتب رقم الملف أو الجوال أو الاسم لبدء البحث.</div></div><div class="modal-actions"><button type="button" data-close="patientIdentitySearchModal">إغلاق</button></div></div></div></div>
+<div id="patientIdentitySearchModal" class="modal"><div class="modal-card patient-identity-card" role="dialog" aria-modal="true" aria-labelledby="patientIdentitySearchTitle">
+  <div class="patient-identity-head"><span aria-hidden="true">⌕</span><div><h3 id="patientIdentitySearchTitle">ملف المريض</h3><p id="patientIdentitySearchHelp">ابحث بالاسم أو رقم الملف أو الجوال أو الهوية، ثم استعرض بيانات المريض وجميع إجراءاته.</p></div><button type="button" data-close="patientIdentitySearchModal" aria-label="إغلاق">×</button></div>
+  <div class="patient-identity-body">
+    <section id="patientIdentitySearchView">
+      <div class="patient-identity-search"><input id="patientIdentitySearchInput" type="search" autocomplete="off" placeholder="الاسم، رقم الملف، الجوال، أو الهوية" aria-label="البحث عن المريض"></div>
+      <p id="patientIdentitySearchHint" class="patient-identity-hint">ترتبط الخطط والدفع وحالات المعمل والمواعيد بهوية المريض وتبقى متاحة عند عودته.</p>
+      <div id="patientIdentitySearchResults" class="patient-identity-results"><div class="patient-identity-empty">اكتب الاسم أو إحدى بيانات الهوية لبدء البحث.</div></div>
+    </section>
+    <section id="patientProfileView" class="patient-profile-view" hidden>
+      <div class="patient-profile-toolbar"><button id="patientProfileBack" type="button">← العودة للنتائج</button><span id="patientProfileSyncState">سجل المريض المركزي</span></div>
+      <div id="patientProfileLoading" class="patient-identity-loading" hidden>جارٍ تحميل ملف المريض وإجراءاته…</div>
+      <div id="patientProfileContent" hidden>
+        <div class="patient-profile-hero"><div class="patient-profile-avatar" aria-hidden="true">♙</div><div><small>ملف المريض</small><h4 id="patientProfileName">—</h4><p id="patientProfileIdentity">—</p></div><span id="patientProfileClinic">—</span></div>
+        <form id="patientProfileForm" class="patient-profile-form">
+          <label>اسم المريض<input id="patientProfileNameInput" type="text" maxlength="100" autocomplete="off" required></label>
+          <label>رقم الملف<input id="patientProfileFileInput" type="text" maxlength="40" autocomplete="off" required></label>
+          <label>رقم الجوال<input id="patientProfilePhoneInput" type="tel" maxlength="20" inputmode="tel" autocomplete="off" required></label>
+          <label>رقم الهوية<input id="patientProfileNationalInput" type="text" maxlength="10" inputmode="numeric" autocomplete="off"></label>
+          <div class="patient-profile-save"><button id="patientProfileSave" class="primary" type="submit">حفظ وتحديث السجلات المرتبطة</button><small>يتم تحديث المواعيد والخطة وحالات المعمل المرتبطة بالمريض.</small></div>
+        </form>
+        <div class="patient-profile-summary" aria-label="ملخص إجراءات المريض"><button type="button" data-profile-tab="appointments" class="active"><b id="patientProfileAppointmentCount">0</b><span>المواعيد</span></button><button type="button" data-profile-tab="plans"><b id="patientProfilePlanCount">0</b><span>الخطط</span></button><button type="button" data-profile-tab="payments"><b id="patientProfilePaymentCount">0</b><span>الدفع</span></button><button type="button" data-profile-tab="labs"><b id="patientProfileLabCount">0</b><span>المعمل</span></button></div>
+        <div id="patientProfileTimeline" class="patient-profile-timeline"></div>
+      </div>
+      <p id="patientProfileError" class="patient-profile-error" hidden></p>
+    </section>
+  </div>
+</div></div>
 <div id="alertModal" class="modal"><div class="modal-card alert-modal-card" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle"><div class="alert-modal-head"><h3 id="alertModalTitle">🔔 إرسال تنبيه تعديل</h3><p>اكتب ملاحظة مختصرة وحدد الجهة المستلمة؛ العام هو الخيار الافتراضي.</p></div><div class="alert-modal-body"><div class="alert-target-box"><span id="alertTargetTitle" class="alert-target-title">جهة التنبيه</span><div class="alert-target-options" role="radiogroup" aria-labelledby="alertTargetTitle"><label class="alert-target-option"><input id="alertScopeAll" type="radio" name="alertScope" value="all" checked><span>كل العيادات</span></label><label class="alert-target-option"><input id="alertScopeClinic" type="radio" name="alertScope" value="clinic"><span>عيادة محددة</span></label></div><label id="alertClinicPicker" class="alert-clinic-picker" hidden>اختر العيادة<select id="alertTargetClinic"></select></label><p id="alertTargetSummary" class="alert-target-summary"><span aria-hidden="true">📣</span><span>سيصل التنبيه إلى جميع العيادات.</span></p></div><label for="alertMessageInput">رسالة التنبيه</label><textarea id="alertMessageInput" maxlength="220" placeholder="مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة"></textarea><div class="alert-preview"><span aria-hidden="true">💡</span><span>يظهر التنبيه فورًا في الشاشات المحددة مع نغمة تنبيه واضحة.</span></div></div><div class="modal-actions"><button type="button" data-close="alertModal">إغلاق</button><button id="clearAlertBtn" type="button" class="danger alert-clear" hidden>إلغاء التنبيه الحالي</button><button id="sendAlertBtn" type="button" class="alert-send">نشر التنبيه</button></div></div></div>
 <div id="usersModal" class="modal"><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="usersModalTitle"><h3 id="usersModalTitle">إضافة مستخدم للنظام</h3><p>يتم الدخول باسم المستخدم ورقم الجوال عبر رمز تحقق لمرة واحدة.</p><div class="grid"><label>اسم المستخدم<input id="newUsername" type="text" autocomplete="off" maxlength="48"></label><label>الاسم الظاهر<input id="newDisplayName" type="text" autocomplete="off" maxlength="80"></label><label>رقم الجوال<input id="newPhone" type="tel" inputmode="tel" placeholder="05xxxxxxxx"></label><label>الدور<select id="newRole"><option value="clinic">العيادة</option><option value="admin">الإدارة</option></select></label><label class="full">رقم العيادة (اختياري)<input id="newClinicId" type="text" placeholder="clinic-1"></label></div><p id="usersError" class="auth-error"></p><div class="modal-actions"><button type="button" data-close="usersModal">إلغاء</button><button id="saveUserBtn" type="button" class="primary">حفظ المستخدم</button></div></div></div>
 <div id="clinicsModal" class="modal"><div class="modal-card clinic-directory-card" role="dialog" aria-modal="true" aria-labelledby="clinicsModalTitle">
@@ -320,6 +346,7 @@
   </div>
   <div class="modal-actions"><button id="presenceRefreshBtn" type="button">تحديث الآن</button><button id="presenceCloseBtn" type="button" data-close="presenceModal">إغلاق</button></div>
 </div></div>
+<button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
 <script src="./dashboard.js"></script>
 </body></html>

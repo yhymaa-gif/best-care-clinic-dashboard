@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260801-plan-cancelled';
+const CACHE_NAME='bestcare-dashboard-v1-20260802-patient-record-theme';
 const APP_SHELL=[
   './',
   './index.html',
