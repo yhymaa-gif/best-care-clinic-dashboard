@@ -72,6 +72,7 @@
       <button id="installBtn" type="button" hidden>تثبيت التطبيق</button>
       <button id="langBtn" type="button">English</button>
       <div class="settings"><button id="settingsBtn" type="button">الإعدادات ▾</button><div id="settingsMenu" class="settings-menu">
+        <button id="adminLayoutModeBtn" class="admin-layout-mode-btn admin-only" type="button" aria-pressed="false" title="التبديل بين واجهة الإدارة الحديثة والكلاسيكية"><span aria-hidden="true">▦</span><span><strong>الواجهة الحديثة</strong><small>تنظيم جانبي للعمل</small></span></button>
         <button id="iosInstallGuideBtn" type="button">📱 تثبيت التطبيق على iPhone</button>
         <button id="imageOcrBtn" type="button">📷 قراءة صورة المواعيد</button><input id="imageOcrInput" type="file" accept="image/jpeg,image/png,image/webp,image/bmp" hidden>
         <button id="importBtn" type="button">📥 استيراد CSV / Excel</button><input id="csvInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
@@ -100,6 +101,57 @@
     <span id="viewIdentityHelp">اعتمادات الخطط وطلبات الدفع ومتابعة العلاج.</span>
   </div>
   <button id="viewIdentityChange" type="button">تغيير المهمة</button>
+</section>
+<aside id="modernAdminSidebar" class="modern-admin-sidebar admin-only hide-screen" aria-label="التنقل في واجهة الإدارة الحديثة" hidden>
+  <header class="modern-sidebar-head">
+    <span class="modern-sidebar-logo" aria-hidden="true">BC</span>
+    <div class="modern-sidebar-brand"><strong>إدارة أفضل عناية</strong><small>مساحة العمل الحديثة</small></div>
+    <button id="modernSidebarCollapseBtn" class="modern-sidebar-collapse" type="button" aria-label="تصغير القائمة الجانبية" title="تصغير القائمة">‹</button>
+  </header>
+  <button class="modern-sidebar-home active" type="button" data-modern-action="overview" title="نظرة عامة"><span aria-hidden="true">⌂</span><span>نظرة عامة</span></button>
+  <div class="modern-sidebar-scroll">
+    <details class="modern-sidebar-group" open>
+      <summary><span aria-hidden="true">◫</span><strong>الطلبات والمتابعة</strong><b id="modernRequestsTotal">0</b></summary>
+      <div class="modern-sidebar-items">
+        <button type="button" data-modern-action="appointments"><span aria-hidden="true">◷</span><span><strong>طلبات المواعيد</strong><small>طلبات الرابط العام</small></span><b id="modernAppointmentsCount">0</b></button>
+        <button type="button" data-modern-action="payments"><span aria-hidden="true">◈</span><span><strong>إجراءات الدفع</strong><small>بانتظار تدخل الإدارة</small></span><b id="modernPaymentsCount">0</b></button>
+        <button type="button" data-modern-action="plans"><span aria-hidden="true">▤</span><span><strong>الخطط العلاجية</strong><small>اعتماد ومراجعة الخطط</small></span><b id="modernPlansCount">0</b></button>
+        <button type="button" data-modern-action="labs"><span aria-hidden="true">◇</span><span><strong>حالات المعمل</strong><small>متابعة الحالات النشطة</small></span><b id="modernLabsCount">0</b></button>
+      </div>
+    </details>
+    <details class="modern-sidebar-group" open>
+      <summary><span aria-hidden="true">⌕</span><strong>المرضى والمواعيد</strong></summary>
+      <div class="modern-sidebar-items">
+        <button type="button" data-modern-action="patient-record"><span aria-hidden="true">◎</span><span><strong>ملف المريض</strong><small>بحث وتعديل وتتبع</small></span></button>
+        <button type="button" data-modern-action="patients"><span aria-hidden="true">≡</span><span><strong>مرضى اليوم</strong><small>القائمة والتحديثات</small></span><b id="modernPatientsCount">0</b></button>
+        <button type="button" data-modern-action="add-patient"><span aria-hidden="true">＋</span><span><strong>إضافة مريض</strong><small>موعد جديد</small></span></button>
+        <button type="button" data-modern-action="alert"><span aria-hidden="true">!</span><span><strong>إرسال تنبيه</strong><small>عام أو لعيادة محددة</small></span></button>
+      </div>
+    </details>
+    <details class="modern-sidebar-group">
+      <summary><span aria-hidden="true">⚙</span><strong>الإعدادات والإدارة</strong></summary>
+      <div class="modern-sidebar-items">
+        <button type="button" data-modern-action="statistics"><span aria-hidden="true">▥</span><span><strong>الإحصائيات</strong><small>مؤشرات الأداء</small></span></button>
+        <button type="button" data-modern-action="clinics"><span aria-hidden="true">⌂</span><span><strong>العيادات والأطباء</strong><small>إدارة حتى 15 عيادة</small></span></button>
+        <button type="button" data-modern-action="catalog"><span aria-hidden="true">☷</span><span><strong>الخدمات والأسعار</strong><small>إجراءات الدفع والخطط</small></span></button>
+        <button type="button" data-modern-action="import"><span aria-hidden="true">⇩</span><span><strong>استيراد قائمة</strong><small>CSV أو Excel</small></span></button>
+        <button type="button" data-modern-action="settings"><span aria-hidden="true">•••</span><span><strong>كل الإعدادات</strong><small>أدوات النظام</small></span></button>
+      </div>
+    </details>
+  </div>
+  <footer class="modern-sidebar-footer">
+    <button id="modernPresenceBtn" type="button" data-modern-action="presence"><span class="modern-live-dot" aria-hidden="true"></span><span><strong id="modernPresenceCount">0 أجهزة متصلة</strong><small id="modernSyncLabel">المزامنة المباشرة</small></span></button>
+    <button type="button" data-modern-action="classic"><span aria-hidden="true">↶</span><span><strong>الواجهة الكلاسيكية</strong><small>العودة للتصميم السابق</small></span></button>
+  </footer>
+</aside>
+<button id="modernSidebarMobileBtn" class="modern-sidebar-mobile-btn admin-only hide-screen" type="button" aria-controls="modernAdminSidebar" aria-expanded="false" hidden><span aria-hidden="true">☰</span><span>قائمة الإدارة</span></button>
+<section id="modernAdminOverview" class="modern-admin-overview admin-only hide-screen" hidden aria-label="ملخص الإدارة">
+  <div class="modern-overview-copy"><small>مساحة العمل الحديثة</small><h2>الأولوية الآن</h2><p>الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.</p></div>
+  <div class="modern-overview-metrics">
+    <button type="button" data-modern-action="appointments"><span>◷</span><b id="modernOverviewAppointments">0</b><small>مواعيد جديدة</small></button>
+    <button type="button" data-modern-action="payments"><span>◈</span><b id="modernOverviewPayments">0</b><small>طلبات دفع</small></button>
+    <button type="button" data-modern-action="plans"><span>▤</span><b id="modernOverviewPlans">0</b><small>خطط تحتاج مراجعة</small></button>
+  </div>
 </section>
 <div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span><button id="alertRowDismissBtn" class="alert-row-dismiss" type="button" hidden>إلغاء التنبيه</button></div>
 <div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>

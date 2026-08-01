@@ -2,12 +2,73 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const THEME_KEY='bestcare_dashboard_theme_v1';
+const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1';
+const ADMIN_SIDEBAR_KEY='bestcare_admin_sidebar_compact_v1';
 function preferredTheme(){try{const stored=localStorage.getItem(THEME_KEY);if(['light','dark'].includes(stored))return stored}catch{}return matchMedia?.('(prefers-color-scheme: dark)')?.matches?'dark':'light'}
 let currentTheme=preferredTheme();
+let adminLayoutMode=(()=>{try{return localStorage.getItem(ADMIN_LAYOUT_KEY)==='modern'?'modern':'classic'}catch{return'classic'}})();
+let adminSidebarCollapsed=(()=>{try{return localStorage.getItem(ADMIN_SIDEBAR_KEY)==='1'}catch{return false}})();
 function applyTheme(theme,{save=false}={}){
   currentTheme=theme==='dark'?'dark':'light';document.documentElement.dataset.theme=currentTheme;document.body?.classList.toggle('dark-theme',currentTheme==='dark');
   const button=$('themeToggleBtn'),icon=$('themeToggleIcon');if(icon)icon.textContent=currentTheme==='dark'?'☀':'☾';if(button){const label=currentTheme==='dark'?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن';button.setAttribute('aria-label',label);button.title=label;button.setAttribute('aria-pressed',String(currentTheme==='dark'))}
   if(save)try{localStorage.setItem(THEME_KEY,currentTheme)}catch{}
+}
+function applyAdminLayout(mode,{save=false}={}){
+  adminLayoutMode=mode==='modern'?'modern':'classic';
+  const active=VIEW_MODE==='admin'&&adminLayoutMode==='modern';
+  document.body.classList.toggle('admin-layout-modern',active);
+  document.body.classList.toggle('admin-sidebar-collapsed',active&&adminSidebarCollapsed);
+  document.body.classList.remove('admin-sidebar-mobile-open');
+  const sidebar=$('modernAdminSidebar'),overview=$('modernAdminOverview'),mobile=$('modernSidebarMobileBtn'),button=$('adminLayoutModeBtn');
+  if(sidebar)sidebar.hidden=!active;
+  if(overview)overview.hidden=!active;
+  if(mobile){mobile.hidden=!active;mobile.setAttribute('aria-expanded','false')}
+  if(button){
+    button.setAttribute('aria-pressed',String(active));
+    button.classList.toggle('is-modern',active);
+    const strong=button.querySelector('strong'),small=button.querySelector('small');
+    if(strong)strong.textContent=active?(lang==='en'?'Classic interface':'الواجهة الكلاسيكية'):(lang==='en'?'Modern interface':'الواجهة الحديثة');
+    if(small)small.textContent=active?(lang==='en'?'Return to the familiar layout':'العودة للتصميم المعتاد'):(lang==='en'?'Organized administration workspace':'تنظيم جانبي للعمل');
+  }
+  updateModernAdminSidebar();
+  renderModernAdminCopy();
+  if(save)try{localStorage.setItem(ADMIN_LAYOUT_KEY,adminLayoutMode)}catch{}
+}
+function setAdminSidebarCollapsed(collapsed,{save=true}={}){
+  adminSidebarCollapsed=Boolean(collapsed);
+  document.body.classList.toggle('admin-sidebar-collapsed',adminLayoutMode==='modern'&&adminSidebarCollapsed);
+  const button=$('modernSidebarCollapseBtn');
+  if(button){button.textContent=adminSidebarCollapsed?'›':'‹';button.setAttribute('aria-label',adminSidebarCollapsed?'توسيع القائمة الجانبية':'تصغير القائمة الجانبية');button.title=button.getAttribute('aria-label')}
+  if(save)try{localStorage.setItem(ADMIN_SIDEBAR_KEY,adminSidebarCollapsed?'1':'0')}catch{}
+}
+const MODERN_ADMIN_COPY={
+  ar:{brand:'إدارة أفضل عناية',workspace:'مساحة العمل الحديثة',home:'نظرة عامة',groups:['الطلبات والمتابعة','المرضى والمواعيد','الإعدادات والإدارة'],overviewKicker:'مساحة العمل الحديثة',overviewTitle:'الأولوية الآن',overviewHelp:'الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.',metrics:['مواعيد جديدة','طلبات دفع','خطط تحتاج مراجعة'],actions:{appointments:['طلبات المواعيد','طلبات الرابط العام'],payments:['إجراءات الدفع','بانتظار تدخل الإدارة'],plans:['الخطط العلاجية','اعتماد ومراجعة الخطط'],labs:['حالات المعمل','متابعة الحالات النشطة'],'patient-record':['ملف المريض','بحث وتعديل وتتبع'],patients:['مرضى اليوم','القائمة والتحديثات'],'add-patient':['إضافة مريض','موعد جديد'],alert:['إرسال تنبيه','عام أو لعيادة محددة'],statistics:['الإحصائيات','مؤشرات الأداء'],clinics:['العيادات والأطباء','إدارة حتى 15 عيادة'],catalog:['الخدمات والأسعار','إجراءات الدفع والخطط'],import:['استيراد قائمة','CSV أو Excel'],settings:['كل الإعدادات','أدوات النظام'],classic:['الواجهة الكلاسيكية','العودة للتصميم السابق']}},
+  en:{brand:'Best Care Administration',workspace:'Modern workspace',home:'Overview',groups:['Requests and follow-up','Patients and appointments','Settings and management'],overviewKicker:'Modern workspace',overviewTitle:'Priority now',overviewHelp:'Reach every request that needs action without leaving today’s dashboard.',metrics:['New appointments','Payment requests','Plans to review'],actions:{appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Review and approval'],labs:['Dental lab cases','Track active cases'],'patient-record':['Patient record','Search, edit, and follow up'],patients:["Today’s patients",'List and updates'],'add-patient':['Add patient','New appointment'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payments and plans'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],classic:['Classic interface','Return to previous design']}}
+};
+function renderModernAdminCopy(){
+  const copy=MODERN_ADMIN_COPY[lang]||MODERN_ADMIN_COPY.ar,sidebar=$('modernAdminSidebar');if(!sidebar)return;
+  const brand=sidebar.querySelector('.modern-sidebar-brand');if(brand){brand.querySelector('strong').textContent=copy.brand;brand.querySelector('small').textContent=copy.workspace}
+  const home=sidebar.querySelector('.modern-sidebar-home span:last-child');if(home)home.textContent=copy.home;
+  sidebar.querySelectorAll('.modern-sidebar-group>summary strong').forEach((node,index)=>{if(copy.groups[index])node.textContent=copy.groups[index]});
+  Object.entries(copy.actions).forEach(([action,values])=>sidebar.querySelectorAll(`[data-modern-action="${action}"]`).forEach(button=>{const strong=button.querySelector('strong'),small=button.querySelector('small');if(strong)strong.textContent=values[0];if(small)small.textContent=values[1]}));
+  setText('#modernAdminOverview .modern-overview-copy small',copy.overviewKicker);setText('#modernAdminOverview .modern-overview-copy h2',copy.overviewTitle);setText('#modernAdminOverview .modern-overview-copy p',copy.overviewHelp);
+  document.querySelectorAll('#modernAdminOverview .modern-overview-metrics small').forEach((node,index)=>{if(copy.metrics[index])node.textContent=copy.metrics[index]});
+  const mobile=$('modernSidebarMobileBtn')?.querySelector('span:last-child');if(mobile)mobile.textContent=lang==='en'?'Admin menu':'قائمة الإدارة';
+}
+function numericNodeValue(id){const value=Number(String($(id)?.textContent||'0').replace(/[^0-9]/g,''));return Number.isFinite(value)?value:0}
+function updateModernAdminSidebar(){
+  const appointments=numericNodeValue('appointmentRequestCount'),payments=numericNodeValue('paymentCount'),plans=numericNodeValue('operationPlansCount'),labs=numericNodeValue('floatingLabCount'),patientsCount=numericNodeValue('statTotal'),presenceCount=numericNodeValue('presenceCount');
+  const values={modernAppointmentsCount:appointments,modernPaymentsCount:payments,modernPlansCount:plans,modernLabsCount:labs,modernPatientsCount:patientsCount,modernOverviewAppointments:appointments,modernOverviewPayments:payments,modernOverviewPlans:plans,modernRequestsTotal:appointments+payments+plans+labs};
+  Object.entries(values).forEach(([id,value])=>{const node=$(id);if(node){node.textContent=String(value);node.closest('button,summary')?.classList.toggle('has-work',value>0)}});
+  const presence=$('modernPresenceCount');if(presence)presence.textContent=lang==='en'?`${presenceCount} devices online`:`${presenceCount} أجهزة متصلة`;
+  const sync=$('modernSyncLabel');if(sync)sync.textContent=$('syncBadge')?.textContent||syncCadenceCopy();
+}
+function setupModernAdminMetrics(){
+  const sources=['appointmentRequestCount','paymentCount','operationPlansCount','floatingLabCount','statTotal','presenceCount','syncBadge'].map($).filter(Boolean);
+  if(!sources.length)return;
+  const observer=new MutationObserver(updateModernAdminSidebar);
+  sources.forEach(node=>observer.observe(node,{childList:true,subtree:true,characterData:true,attributes:true}));
+  updateModernAdminSidebar();
 }
 const API='/api/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
@@ -49,7 +110,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.45-unified-patient-record';
+const DASHBOARD_BUILD='7.46-modern-admin-workspace';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -2659,6 +2720,7 @@ function render(){
   renderAdminPatientHub();
   renderPaymentPanel();
   renderDoctorWorkspace();
+  updateModernAdminSidebar();
 }
 function viewUrl(mode,clinicId=ACTIVE_CLINIC_ID){
   const params=new URLSearchParams(location.search);
@@ -2674,6 +2736,33 @@ function applyViewMode(){
   $('adminViewLink').classList.toggle('active',VIEW_MODE==='admin');
   $('clinicViewLink').href=viewUrl('clinic');
   $('adminViewLink').href=viewUrl('admin');
+  applyAdminLayout(adminLayoutMode);
+}
+function scrollAdminTarget(id,{open=false}={}){
+  const target=$(id);if(!target)return;
+  if(open&&target.tagName==='DETAILS')target.open=true;
+  target.scrollIntoView({behavior:matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'auto':'smooth',block:'start'});
+  target.classList.remove('modern-target-flash');requestAnimationFrame(()=>target.classList.add('modern-target-flash'));setTimeout(()=>target.classList.remove('modern-target-flash'),1200);
+}
+function closeModernMobileSidebar(){document.body.classList.remove('admin-sidebar-mobile-open');$('modernSidebarMobileBtn')?.setAttribute('aria-expanded','false')}
+function handleModernAdminAction(action){
+  closeModernMobileSidebar();
+  if(action==='overview'){window.scrollTo({top:0,behavior:matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'auto':'smooth'});return}
+  if(action==='appointments'){location.href='./appointment-requests.html';return}
+  if(action==='payments'){scrollAdminTarget('paymentPanel');return}
+  if(action==='plans'){openTreatmentPlanCenter();operationsCenter.filter='plans';renderOperationsCenter();return}
+  if(action==='labs'){openLabCasesPage();return}
+  if(action==='patient-record'){$('patientIdentitySearchBtn')?.click();return}
+  if(action==='patients'){scrollAdminTarget('adminPatientHub',{open:true});return}
+  if(action==='add-patient'){$('addBtn')?.click();return}
+  if(action==='alert'){$('alertBtn')?.click();return}
+  if(action==='statistics'){location.href='./statistics.html';return}
+  if(action==='clinics'){$('clinicsBtn')?.click();return}
+  if(action==='catalog'){$('treatmentCatalogBtn')?.click();return}
+  if(action==='import'){$('importBtn')?.click();return}
+  if(action==='presence'){$('presenceBadge')?.click();return}
+  if(action==='settings'){const menu=$('settingsMenu');if(menu){menu.classList.add('open');$('settingsBtn')?.focus()}return}
+  if(action==='classic'){applyAdminLayout('classic',{save:true});toast(lang==='en'?'Classic interface':'الواجهة الكلاسيكية',lang==='en'?'The previous administration layout is active.':'تمت العودة إلى تصميم الإدارة المعتاد.')}
 }
 function renderPaymentPanel(){
   if(!$('paymentQueue'))return;
@@ -3543,6 +3632,14 @@ document.querySelector('.patient-profile-summary').addEventListener('click',even
 $('patientProfileTimeline').addEventListener('click',event=>{const button=event.target.closest('[data-profile-open-plan]');if(button)openPatientProfilePlan(button.dataset.profileOpenPlan)});
 applyTheme(currentTheme);
 $('themeToggleBtn').addEventListener('click',()=>applyTheme(currentTheme==='dark'?'light':'dark',{save:true}));
+$('adminLayoutModeBtn')?.addEventListener('click',event=>{
+  event.stopPropagation();setSettingsMenuOpen(false);
+  const next=adminLayoutMode==='modern'?'classic':'modern';applyAdminLayout(next,{save:true});
+  toast(next==='modern'?(lang==='en'?'Modern interface':'الواجهة الحديثة'):(lang==='en'?'Classic interface':'الواجهة الكلاسيكية'),next==='modern'?(lang==='en'?'The organized administration workspace is now active.':'تم تفعيل مساحة الإدارة المنظمة مع بقاء التصميم الكلاسيكي متاحًا.'):(lang==='en'?'The familiar administration layout is now active.':'تمت العودة إلى تصميم الإدارة المعتاد.'));
+});
+$('modernSidebarCollapseBtn')?.addEventListener('click',()=>setAdminSidebarCollapsed(!adminSidebarCollapsed));
+$('modernSidebarMobileBtn')?.addEventListener('click',()=>{const open=!document.body.classList.contains('admin-sidebar-mobile-open');document.body.classList.toggle('admin-sidebar-mobile-open',open);$('modernSidebarMobileBtn').setAttribute('aria-expanded',String(open))});
+[$('modernAdminSidebar'),$('modernAdminOverview')].filter(Boolean).forEach(container=>container.addEventListener('click',event=>{const button=event.target.closest('[data-modern-action]');if(!button)return;if(button.dataset.modernAction==='settings')event.stopPropagation();handleModernAdminAction(button.dataset.modernAction)}));
 function setSettingsMenuOpen(open){
   const isOpen=Boolean(open);
   els.settingsMenu.classList.toggle('open',isOpen);
@@ -3552,6 +3649,7 @@ els.settingsBtn.setAttribute('aria-haspopup','menu');
 els.settingsBtn.setAttribute('aria-expanded','false');
 $('settingsBtn').addEventListener('click',event=>{event.stopPropagation();setSettingsMenuOpen(!els.settingsMenu.classList.contains('open'))});
 document.addEventListener('click',()=>setSettingsMenuOpen(false));
+document.addEventListener('click',event=>{if(!document.body.classList.contains('admin-sidebar-mobile-open'))return;if($('modernAdminSidebar')?.contains(event.target)||$('modernSidebarMobileBtn')?.contains(event.target))return;closeModernMobileSidebar()});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&els.settingsMenu.classList.contains('open')){setSettingsMenuOpen(false);els.settingsBtn.focus()}});
 $('imageOcrBtn').addEventListener('click',openOcrImporter);
 $('importBtn').addEventListener('click',()=>els.csvInput.click());
@@ -3826,6 +3924,8 @@ window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true;toast('�
 selectedDate=new URLSearchParams(location.search).get('date')||today();
 els.datePicker.value=selectedDate;
 applyViewMode();
+setAdminSidebarCollapsed(adminSidebarCollapsed,{save:false});
+setupModernAdminMetrics();
 applyLang();
 initAuth();
 if(isIosDevice()&&!isStandalone())$('installBtn').hidden=false;
