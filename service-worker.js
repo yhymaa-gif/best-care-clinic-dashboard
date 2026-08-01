@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-treatment-plan-v1-20260731-lab-patient-link';
+const CACHE_NAME='bestcare-treatment-plan-v1-20260801-operations-center';
 const APP_SHELL=[
   './',
   './index.html',
@@ -7,6 +7,8 @@ const APP_SHELL=[
   './splash.js',
   './treatment-plan.html',
   './treatment-plan.js',
+  './treatment-plans.html',
+  './treatment-plans.js',
   './statistics.html',
   './statistics.js',
   './appointment-request.html',
@@ -59,7 +61,9 @@ self.addEventListener('fetch',event=>{
   }
 
   if(request.mode==='navigate'){
-    const shellPage=url.pathname.endsWith('/treatment-plan.html')
+    const shellPage=url.pathname.endsWith('/treatment-plans.html')
+      ?'./treatment-plans.html'
+      :url.pathname.endsWith('/treatment-plan.html')
       ?'./treatment-plan.html'
       :url.pathname.endsWith('/statistics.html')
         ?'./statistics.html'

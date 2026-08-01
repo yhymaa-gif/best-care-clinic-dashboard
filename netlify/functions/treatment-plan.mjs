@@ -1,6 +1,7 @@
 import { getStore } from '@netlify/blobs';
 import { createHash } from 'node:crypto';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
+import { patientIdentityKeys } from './lib/patient-identity.mjs';
 
 const headers = apiHeaders('GET,PUT,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -16,23 +17,6 @@ const cleanNumber = (value, min = 0, max = 10_000_000) => {
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const validPatientId = value => /^[a-zA-Z0-9._:-]{1,80}$/.test(value || '');
-const normalizePhone = value => {
-  const digits = cleanText(value, 20).replace(/\D/g, '');
-  if (/^009665\d{8}$/.test(digits)) return `0${digits.slice(5)}`;
-  if (/^9665\d{8}$/.test(digits)) return `0${digits.slice(3)}`;
-  if (/^5\d{8}$/.test(digits)) return `0${digits}`;
-  return digits;
-};
-const identityKeys = patient => {
-  const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/[\s-]+/g, '');
-  const mobile = normalizePhone(patient?.mobile ?? patient?.phone);
-  const nationalId = cleanText(patient?.nationalId, 20).replace(/\D/g, '').slice(0, 10);
-  return [...new Set([
-    file ? `file:${file}` : '',
-    mobile ? `phone:${mobile}` : '',
-    nationalId.length === 10 ? `national:${nationalId}` : ''
-  ].filter(Boolean))];
-};
 const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
 const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
 
@@ -158,7 +142,7 @@ export default async request => {
       mobile: url.searchParams.get('mobile') || '',
       nationalId: url.searchParams.get('nationalId') || ''
     };
-    const keys = identityKeys(lookupPatient);
+    const keys = patientIdentityKeys(lookupPatient);
     if (!record && keys.length) {
       const matches = await Promise.all(keys.map(identity => store.get(permanentPlanKey(clinicId, identity), { type: 'json', consistency: 'strong' })));
       record = matches.filter(Boolean).sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0))[0] || null;
@@ -200,7 +184,7 @@ export default async request => {
     }
     const record = { patientId, clinicId, date, plan, revision: Number(existing?.revision || 0) + 1, updatedAt: Date.now(), updatedBy: String(auth.user?.displayName || auth.user?.username || '').slice(0, 120) };
     await store.setJSON(key, record);
-    const keys = identityKeys(plan.patient);
+    const keys = patientIdentityKeys(plan.patient);
     await Promise.all(keys.map(identity => store.setJSON(permanentPlanKey(clinicId, identity), record)));
     return reply({ ok: true, revision: record.revision, updatedAt: record.updatedAt });
   }

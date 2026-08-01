@@ -54,6 +54,19 @@
       ]
     },
     {
+      "name": "الخطط العلاجية",
+      "short_name": "الخطط",
+      "description": "متابعة واعتماد الخطط العلاجية",
+      "url": "./treatment-plans.html?source=pwa",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "حالات المعمل",
       "short_name": "المعمل",
       "description": "متابعة حالات معامل الأسنان",

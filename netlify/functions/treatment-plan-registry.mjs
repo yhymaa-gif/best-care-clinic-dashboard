@@ -1,28 +1,20 @@
 import { getStore } from '@netlify/blobs';
+import { createHash } from 'node:crypto';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
+import { isPlaceholderFileAlias, normalizePatientNationalId, normalizePatientPhone, patientIdentityKeys } from './lib/patient-identity.mjs';
 
-const headers = apiHeaders('GET,POST,PUT,OPTIONS');
+const headers = apiHeaders('GET,POST,PUT,DELETE,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const store = getStore({ name: 'clinic-treatment-plan-registry', consistency: 'strong' });
+const planStore = getStore({ name: 'clinic-treatment-plans', consistency: 'strong' });
+const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
-const normalizePhone = value => {
-  const digits = cleanText(value, 20).replace(/\D/g, '');
-  if (/^009665\d{8}$/.test(digits)) return `0${digits.slice(5)}`;
-  if (/^9665\d{8}$/.test(digits)) return `0${digits.slice(3)}`;
-  if (/^5\d{8}$/.test(digits)) return `0${digits}`;
-  return digits;
-};
-const identityKeys = patient => {
-  const file = cleanText(patient?.fileNo ?? patient?.file, 40).toUpperCase().replace(/[\s-]+/g, '');
-  const mobile = normalizePhone(patient?.mobile ?? patient?.phone);
-  const nationalId = cleanText(patient?.nationalId, 20).replace(/\D/g, '').slice(0, 10);
-  return [...new Set([
-    file ? `file:${file}` : '',
-    mobile ? `phone:${mobile}` : '',
-    nationalId.length === 10 ? `national:${nationalId}` : ''
-  ].filter(Boolean))];
-};
+const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
+const validPatientId = value => /^[a-zA-Z0-9._:-]{1,80}$/.test(value || '');
+const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
+const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
+const withoutPlaceholderAliases = aliases => Object.fromEntries(Object.entries(aliases || {}).filter(([alias]) => !isPlaceholderFileAlias(alias)));
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
@@ -42,7 +34,7 @@ export default async request => {
     return reply({
       clinicId,
       records: data?.records || {},
-      aliases: data?.aliases || {},
+      aliases: withoutPlaceholderAliases(data?.aliases),
       revision: Number(data?.revision || 0),
       updatedAt: Number(data?.updatedAt || 0)
     });
@@ -53,7 +45,7 @@ export default async request => {
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
     const requestedKeys = [...new Set((Array.isArray(body?.keys) ? body.keys : [])
       .map(value => cleanText(value, 180))
-      .filter(value => /^(file|phone):/.test(value))
+      .filter(value => /^(file|phone|national):/.test(value) && !isPlaceholderFileAlias(value))
       .slice(0, 500))];
     if (!requestedKeys.length) return reply({ clinicId, records: {}, aliases: {}, revision: 0, updatedAt: 0 });
     const data = await store.get(key, { type: 'json', consistency: 'strong' }) || {};
@@ -80,20 +72,20 @@ export default async request => {
     const status = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(body?.status) ? body.status : '';
     if (!status) return reply({ error: 'Invalid status' }, 400);
     if (['patient_accepted', 'approved', 'approved_signed', 'rejected'].includes(status) && user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
-    const keys = identityKeys(body?.patient);
+    const keys = patientIdentityKeys(body?.patient);
     if (!keys.length) return reply({ error: 'Patient identity required' }, 400);
 
     const current = await store.get(key, { type: 'json', consistency: 'strong' }) || {};
     const records = current.records && typeof current.records === 'object' ? { ...current.records } : {};
-    const aliases = current.aliases && typeof current.aliases === 'object' ? { ...current.aliases } : {};
+    const aliases = withoutPlaceholderAliases(current.aliases && typeof current.aliases === 'object' ? current.aliases : {});
     const existingCanonical = keys.map(alias => aliases[alias]).find(Boolean);
     const canonical = existingCanonical || keys[0];
     const record = {
       clinicId,
       fullName: cleanText(body.patient?.fullName ?? body.patient?.name, 120),
       fileNo: cleanText(body.patient?.fileNo ?? body.patient?.file, 40),
-      mobile: normalizePhone(body.patient?.mobile ?? body.patient?.phone),
-      nationalId: cleanText(body.patient?.nationalId, 20).replace(/\D/g, '').slice(0, 10),
+      mobile: normalizePatientPhone(body.patient?.mobile ?? body.patient?.phone),
+      nationalId: normalizePatientNationalId(body.patient?.nationalId),
       status,
       rejectionReason: status === 'rejected' ? cleanText(body?.rejectionReason, 500) : '',
       planNo: cleanText(body?.planNo, 40),
@@ -121,6 +113,31 @@ export default async request => {
     };
     await store.setJSON(key, result);
     return reply({ ok: true, record, revision: result.revision, updatedAt: result.updatedAt });
+  }
+
+  if (request.method === 'DELETE') {
+    if (user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
+    let body;
+    try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
+    const canonical = cleanText(body?.canonical, 180);
+    if (!canonical) return reply({ error: 'Treatment plan reference required' }, 400);
+    const current = await store.get(key, { type: 'json', consistency: 'strong' }) || {};
+    const record = current.records?.[canonical];
+    if (!record) return reply({ error: 'Treatment plan not found' }, 404);
+    if (!validClinic(record.clinicId) || !canAccessClinic(user, record.clinicId)) return reply({ error: 'Clinic access denied' }, 403);
+    const records = { ...(current.records || {}) };
+    const aliases = withoutPlaceholderAliases(current.aliases);
+    const linkedAliases = Object.entries(aliases).filter(([, target]) => target === canonical).map(([alias]) => alias);
+    delete records[canonical];
+    linkedAliases.forEach(alias => { delete aliases[alias]; });
+    const deletions = linkedAliases.map(alias => planStore.delete(permanentPlanKey(record.clinicId, alias)));
+    if (validDate(record.sourceDate) && validPatientId(record.sourcePatientId)) {
+      deletions.push(planStore.delete(legacyPlanKey(record.clinicId, record.sourceDate, record.sourcePatientId)));
+    }
+    await Promise.allSettled(deletions);
+    const result = { records, aliases, revision: Number(current.revision || 0) + 1, updatedAt: Date.now() };
+    await store.setJSON(key, result);
+    return reply({ ok: true, deleted: canonical, revision: result.revision, updatedAt: result.updatedAt });
   }
 
   return reply({ error: 'Method not allowed' }, 405);
