@@ -296,6 +296,10 @@
       <div id="patientProfileLoading" class="patient-identity-loading" hidden>جارٍ تحميل ملف المريض وإجراءاته…</div>
       <div id="patientProfileContent" hidden>
         <div class="patient-profile-hero"><div class="patient-profile-avatar" aria-hidden="true">♙</div><div><small>ملف المريض</small><h4 id="patientProfileName">—</h4><p id="patientProfileIdentity">—</p></div><span id="patientProfileClinic">—</span></div>
+        <section class="patient-communication-counters" aria-label="متابعة التواصل مع المريض">
+          <article class="patient-communication-counter plan"><span aria-hidden="true">▤</span><div><small>الخطط المرسلة عبر واتساب</small><strong><b id="patientProfilePlanWhatsappCount">0</b> مرة</strong><p id="patientProfileLastPlanWhatsapp">لم ترسل خطة بعد</p></div></article>
+          <article class="patient-communication-counter review"><span aria-hidden="true">★</span><div><small>طلبات التقييم المرسلة</small><strong><b id="patientProfileReviewWhatsappCount">0</b> مرة</strong><p id="patientProfileLastReviewWhatsapp">لم يرسل طلب تقييم بعد</p></div></article>
+        </section>
         <form id="patientProfileForm" class="patient-profile-form">
           <label>اسم المريض<input id="patientProfileNameInput" type="text" maxlength="100" autocomplete="off" required></label>
           <label>رقم الملف<input id="patientProfileFileInput" type="text" maxlength="40" autocomplete="off" required></label>
@@ -303,7 +307,7 @@
           <label>رقم الهوية<input id="patientProfileNationalInput" type="text" maxlength="10" inputmode="numeric" autocomplete="off"></label>
           <div class="patient-profile-save"><button id="patientProfileSave" class="primary" type="submit">حفظ وتحديث السجلات المرتبطة</button><small>يتم تحديث المواعيد والخطة وحالات المعمل المرتبطة بالمريض.</small></div>
         </form>
-        <div class="patient-profile-summary" aria-label="ملخص إجراءات المريض"><button type="button" data-profile-tab="appointments" class="active"><b id="patientProfileAppointmentCount">0</b><span>المواعيد</span></button><button type="button" data-profile-tab="plans"><b id="patientProfilePlanCount">0</b><span>الخطط</span></button><button type="button" data-profile-tab="payments"><b id="patientProfilePaymentCount">0</b><span>الدفع</span></button><button type="button" data-profile-tab="labs"><b id="patientProfileLabCount">0</b><span>المعمل</span></button></div>
+        <div class="patient-profile-summary" aria-label="ملخص إجراءات المريض"><button type="button" data-profile-tab="appointments" class="active"><b id="patientProfileAppointmentCount">0</b><span>المواعيد</span></button><button type="button" data-profile-tab="plans"><b id="patientProfilePlanCount">0</b><span>الخطط</span></button><button type="button" data-profile-tab="payments"><b id="patientProfilePaymentCount">0</b><span>الدفع</span></button><button type="button" data-profile-tab="labs"><b id="patientProfileLabCount">0</b><span>المعمل</span></button><button type="button" data-profile-tab="communications"><b id="patientProfileCommunicationCount">0</b><span>التواصل</span></button></div>
         <div id="patientProfileTimeline" class="patient-profile-timeline"></div>
       </div>
       <p id="patientProfileError" class="patient-profile-error" hidden></p>

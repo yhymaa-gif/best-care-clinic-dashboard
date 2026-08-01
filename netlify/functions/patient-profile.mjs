@@ -3,7 +3,7 @@ import { getStore } from '@netlify/blobs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { normalizePatientFile, normalizePatientNationalId, normalizePatientPhone, patientIdentityKeys } from './lib/patient-identity.mjs';
 
-const headers = apiHeaders('GET,PATCH,OPTIONS');
+const headers = apiHeaders('GET,PATCH,POST,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const clinicPattern = /^clinic-([1-9]|1[0-5])$/;
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
@@ -25,6 +25,7 @@ const parseDayKey = key => {
 };
 const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
 const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
+const communicationKinds = new Set(['plan_whatsapp', 'review_whatsapp']);
 
 async function listKeys(store, prefix, maxPages = 60) {
   const keys = [];
@@ -109,10 +110,10 @@ async function loadLabMatches(scope, aliases) {
     .map(item => ({ ...item, clinicId })));
 }
 
-function primaryPatient(dayMatches, plans, labs) {
+function primaryPatient(dayMatches, plans, labs, communications = []) {
   const latestAppointment = dayMatches.flatMap(day => day.matches.map(patient => ({ patient, date: day.date })))
     .sort((left, right) => right.date.localeCompare(left.date))[0]?.patient;
-  const sources = [latestAppointment, plans[0]?.record, labs[0]?.patient].filter(Boolean).map(patientView);
+  const sources = [latestAppointment, plans[0]?.record, labs[0]?.patient, communications[0]?.record?.patient].filter(Boolean).map(patientView);
   return sources.reduce((merged, item) => ({
     id: merged.id || item.id,
     name: merged.name || item.name,
@@ -122,7 +123,29 @@ function primaryPatient(dayMatches, plans, labs) {
   }), { id: '', name: '', file: '', phone: '', nationalId: '' });
 }
 
-function profilePayload(patient, dayMatches, plans, labs) {
+function communicationMatches(registry, aliases, scope) {
+  const canonicalKeys = new Set([...aliases].map(alias => registry.aliases?.[alias]).filter(Boolean));
+  return [...canonicalKeys].map(canonical => ({ canonical, record: registry.records?.[canonical] }))
+    .filter(item => item.record && (scope.all || !item.record.clinicIds?.length || item.record.clinicIds.includes(scope.clinicId)));
+}
+
+function communicationPayload(matches) {
+  const events = matches.flatMap(({ record }) => Array.isArray(record?.events) ? record.events : [])
+    .sort((left, right) => Number(right.at || 0) - Number(left.at || 0));
+  const counts = matches.reduce((total, { record }) => ({
+    planWhatsapp: total.planWhatsapp + Number(record?.counts?.planWhatsapp || 0),
+    reviewWhatsapp: total.reviewWhatsapp + Number(record?.counts?.reviewWhatsapp || 0)
+  }), { planWhatsapp: 0, reviewWhatsapp: 0 });
+  return {
+    planWhatsappCount: counts.planWhatsapp,
+    reviewWhatsappCount: counts.reviewWhatsapp,
+    lastPlanWhatsappAt: Math.max(0, ...matches.map(({ record }) => Number(record?.lastAt?.planWhatsapp || 0))),
+    lastReviewWhatsappAt: Math.max(0, ...matches.map(({ record }) => Number(record?.lastAt?.reviewWhatsapp || 0))),
+    events: events.slice(0, 100)
+  };
+}
+
+function profilePayload(patient, dayMatches, plans, labs, communications = []) {
   const appointments = dayMatches.flatMap(day => day.matches.map(item => ({
     id: cleanText(item.id, 100), clinicId: day.clinicId, date: day.date, start: cleanText(item.start, 8), end: cleanText(item.end, 8),
     procedure: cleanText(item.procedure, 180), status: cleanText(item.status, 30), statusLabel: statusLabel(item.status),
@@ -133,27 +156,76 @@ function profilePayload(patient, dayMatches, plans, labs) {
   const planItems = plans.map(({ canonical, record }) => ({ canonical, ...record }));
   const labItems = labs.sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0));
   const openPayments = appointments.filter(item => item.paymentRequired && !item.paymentCompletedAt).length;
+  const communication = communicationPayload(communications);
   return {
     patient,
-    summary: { appointments: appointments.length, plans: planItems.length, labs: labItems.length, openPayments },
+    summary: { appointments: appointments.length, plans: planItems.length, labs: labItems.length, openPayments, communications: communication.planWhatsappCount + communication.reviewWhatsappCount },
     appointments,
     plans: planItems,
     labs: labItems,
+    communications: communication,
     updatedAt: Date.now()
   };
 }
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  if (!['GET', 'PATCH'].includes(request.method)) return reply({ error: 'Method not allowed' }, 405);
-  if (request.method === 'PATCH' && !sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
+  if (!['GET', 'PATCH', 'POST'].includes(request.method)) return reply({ error: 'Method not allowed' }, 405);
+  if (['PATCH', 'POST'].includes(request.method) && !sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
   const auth = await requireUser(request);
   if (!auth.ok) return reply({ error: auth.error }, auth.status);
   const url = new URL(request.url);
   let body = {};
-  if (request.method === 'PATCH') {
-    if (auth.user?.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
+  if (['PATCH', 'POST'].includes(request.method)) {
+    if (request.method === 'PATCH' && auth.user?.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
+  }
+  if (request.method === 'POST') {
+    const kind = cleanText(body?.kind, 30);
+    const clinicId = clinicPattern.test(body?.clinicId) ? body.clinicId : (clinicPattern.test(auth.user?.clinicId) ? auth.user.clinicId : 'clinic-1');
+    if (!communicationKinds.has(kind)) return reply({ error: 'Unsupported communication kind' }, 400);
+    if (!canAccessClinic(auth.user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
+    const patient = patientView(body?.patient || {});
+    const aliases = patientIdentityKeys(patient);
+    if (!aliases.length) return reply({ error: 'Patient identity is required' }, 400);
+    const eventId = cleanText(body?.eventId, 100) || hash(`${kind}:${clinicId}:${Date.now()}:${Math.random()}`);
+    const communicationsStore = store('clinic-patient-communications');
+    const registry = await communicationsStore.get('registry/global', { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {}, revision: 0 };
+    const existingCanonicals = aliases.map(alias => registry.aliases?.[alias]).filter(Boolean);
+    const canonical = existingCanonicals[0] || hash(aliases.slice().sort()[0]);
+    const existing = registry.records?.[canonical] || {};
+    const existingEvents = Array.isArray(existing.events) ? existing.events : [];
+    if (existingEvents.some(event => event.id === eventId)) return reply({ ok: true, duplicate: true, communications: communicationPayload([{ canonical, record: existing }]) });
+    const at = Date.now();
+    const countKey = kind === 'plan_whatsapp' ? 'planWhatsapp' : 'reviewWhatsapp';
+    const event = {
+      id: eventId, kind, at, clinicId,
+      planNo: cleanText(body?.details?.planNo, 80),
+      planStatus: cleanText(body?.details?.planStatus, 40),
+      copyType: cleanText(body?.details?.copyType, 30),
+      actor: cleanText(auth.user?.displayName || auth.user?.username, 120)
+    };
+    const previousPatient = patientView(existing.patient || {});
+    const record = {
+      ...existing,
+      patient: {
+        id: patient.id || previousPatient.id,
+        name: patient.name || previousPatient.name,
+        file: patient.file || previousPatient.file,
+        phone: patient.phone || previousPatient.phone,
+        nationalId: patient.nationalId || previousPatient.nationalId
+      },
+      aliases: [...new Set([...(Array.isArray(existing.aliases) ? existing.aliases : []), ...aliases])],
+      clinicIds: [...new Set([...(Array.isArray(existing.clinicIds) ? existing.clinicIds : []), clinicId])],
+      counts: { planWhatsapp: Number(existing?.counts?.planWhatsapp || 0), reviewWhatsapp: Number(existing?.counts?.reviewWhatsapp || 0), [countKey]: Number(existing?.counts?.[countKey] || 0) + 1 },
+      lastAt: { ...(existing.lastAt || {}), [countKey]: at },
+      events: [event, ...existingEvents].slice(0, 200),
+      updatedAt: at
+    };
+    const next = { records: { ...(registry.records || {}), [canonical]: record }, aliases: { ...(registry.aliases || {}) }, revision: Number(registry.revision || 0) + 1, updatedAt: at };
+    record.aliases.forEach(alias => { next.aliases[alias] = canonical; });
+    await communicationsStore.setJSON('registry/global', next);
+    return reply({ ok: true, communications: communicationPayload([{ canonical, record }]) });
   }
   const type = cleanText(request.method === 'GET' ? url.searchParams.get('type') : body?.lookup?.type, 20);
   const normalized = normalizeLookup(type, request.method === 'GET' ? url.searchParams.get('value') : body?.lookup?.value);
@@ -162,20 +234,23 @@ export default async request => {
   if (!scope.all && !canAccessClinic(auth.user, scope.clinicId)) return reply({ error: 'Clinic access denied' }, 403);
   const lookupAliases = new Set([lookupAlias(type, normalized)]);
   const registryStore = store('clinic-treatment-plan-registry');
+  const communicationsStore = store('clinic-patient-communications');
   const daysStore = store('clinic-dashboard-days');
   const labsStore = store('clinic-lab-cases');
   const plansStore = store('clinic-treatment-plans');
   const registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {} };
+  const communicationRegistry = await communicationsStore.get('registry/global', { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {} };
   const initialPlans = registryMatches(registry, lookupAliases, scope);
   initialPlans.forEach(({ record }) => patientIdentityKeys(record).forEach(alias => lookupAliases.add(alias)));
   const dayMatches = await loadMatchedDays(scope, lookupAliases);
   dayMatches.forEach(day => day.matches.forEach(patient => patientIdentityKeys(patient).forEach(alias => lookupAliases.add(alias))));
   const plans = registryMatches(registry, lookupAliases, scope);
   const labs = await loadLabMatches(scope, lookupAliases);
-  const patient = primaryPatient(dayMatches, plans, labs);
+  const communications = communicationMatches(communicationRegistry, lookupAliases, scope);
+  const patient = primaryPatient(dayMatches, plans, labs, communications);
   if (!patient.name && !patient.file && !patient.phone && !patient.nationalId) return reply({ found: false, patient: null, appointments: [], plans: [], labs: [] }, 404);
 
-  if (request.method === 'GET') return reply({ found: true, ...profilePayload(patient, dayMatches, plans, labs) });
+  if (request.method === 'GET') return reply({ found: true, ...profilePayload(patient, dayMatches, plans, labs, communications) });
 
   const next = {
     name: cleanText(body?.patient?.name, 100),
@@ -209,6 +284,15 @@ export default async request => {
     await registryStore.setJSON('registry/global', updatedRegistry);
   }
 
+  if (communications.length) {
+    const nextCommunicationRegistry = { records: { ...(communicationRegistry.records || {}) }, aliases: { ...(communicationRegistry.aliases || {}) }, revision: Number(communicationRegistry.revision || 0) + 1, updatedAt: Date.now() };
+    communications.forEach(({ canonical, record }) => {
+      nextCommunicationRegistry.records[canonical] = { ...record, patient: next, aliases: [...new Set([...(record.aliases || []), ...nextAliases])], updatedAt: Date.now() };
+      nextAliases.forEach(alias => { nextCommunicationRegistry.aliases[alias] = canonical; });
+    });
+    await communicationsStore.setJSON('registry/global', nextCommunicationRegistry);
+  }
+
   let labUpdates = 0;
   const labClinics = [...new Set(labs.map(item => item.clinicId))];
   await Promise.all(labClinics.map(async clinicId => {
@@ -239,4 +323,4 @@ export default async request => {
   return reply({ ok: true, patient: next, updated: { appointments: appointmentUpdates, plans: planUpdates, labs: labUpdates } });
 };
 
-export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel };
+export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel, communicationMatches, communicationPayload };

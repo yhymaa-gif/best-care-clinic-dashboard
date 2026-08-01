@@ -110,7 +110,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.46-modern-admin-workspace';
+const DASHBOARD_BUILD='7.47-patient-communication-tracking';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -1504,6 +1504,12 @@ function normalizeWhatsappNumber(value){
 function patientWhatsappNumber(patient){
   return normalizeWhatsappNumber(patient?.phone??patient?.mobile??patient?.contactPhone??'');
 }
+function recordPatientCommunication(patient,kind,details={}){
+  const eventId=crypto.randomUUID?.()||`${kind}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  request(PATIENT_PROFILE_API,{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({eventId,kind,clinicId:ACTIVE_CLINIC_ID,patient:{name:patient?.name||patient?.fullName||'',file:patient?.file||patient?.fileNo||'',phone:patient?.phone||patient?.mobile||'',nationalId:patient?.nationalId||''},details})},12000)
+    .then(async response=>{if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر حفظ سجل التواصل')}})
+    .catch(error=>console.warn('Patient communication tracking unavailable',error));
+}
 function openReviewComposer(id){
   const patient=patientById(id);if(!patient)return;
   pendingReviewId=patient.id;
@@ -1532,6 +1538,7 @@ function sendReviewWhatsapp(){
   const phone=normalizeWhatsappNumber($('reviewPhoneInput').value)||patientWhatsappNumber(patient);
   const whatsappUrl=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;
   window.open(whatsappUrl,'_blank','noopener');
+  recordPatientCommunication(patient,'review_whatsapp',{source:'dashboard'});
   closeModal('reviewModal');
   toast(lang==='en'?'WhatsApp opened':'تم فتح واتساب',phone?(lang==='en'?'The message is ready to send.':'الرسالة جاهزة للإرسال.'):(lang==='en'?'Choose the patient contact, then send.':'اختر جهة اتصال المريض ثم أرسل الرسالة.'));
 }
@@ -1953,6 +1960,10 @@ function patientProfileDate(value){
   if(!value)return'—';
   try{return new Date(`${value}T12:00:00`).toLocaleDateString(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'short',day:'numeric'})}catch{return value}
 }
+function patientProfileDateTime(value){
+  const timestamp=Number(value||0);if(!timestamp)return'—';
+  try{return new Date(timestamp).toLocaleString(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return'—'}
+}
 function patientProfileEmpty(message){return`<div class="patient-profile-empty"><span aria-hidden="true">◎</span><p>${escapeHtml(message)}</p></div>`}
 function renderPatientProfileTimeline(){
   const target=$('patientProfileTimeline'),profile=patientProfileState.profile;if(!target||!profile)return;
@@ -1974,6 +1985,12 @@ function renderPatientProfileTimeline(){
     target.innerHTML=items.length?items.map(item=>{const stage=patientProfilePaymentStage(item);return`<article class="patient-profile-event payment ${stage}"><span class="patient-event-mark" aria-hidden="true">﷼</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(patientProfileDate(item.date))}</small><strong>${escapeHtml(item.paymentAction||'أمر دفع')}</strong><p>${escapeHtml(labels[stage]||'')}</p></div><span class="patient-profile-status">${escapeHtml(labels[stage]||'')}</span></article>`}).join(''):patientProfileEmpty('لا توجد أوامر دفع مسجلة للمريض.');
     return;
   }
+  if(tab==='communications'){
+    const items=profile.communications?.events||[];
+    const labels={plan_whatsapp:'إرسال خطة علاجية عبر واتساب',review_whatsapp:'إرسال طلب تقييم عبر واتساب'};
+    target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event communication ${escapeHtml(item.kind||'')}"><span class="patient-event-mark" aria-hidden="true">${item.kind==='review_whatsapp'?'★':'▤'}</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId||'clinic-1'))} · ${escapeHtml(patientProfileDateTime(item.at))}</small><strong>${escapeHtml(labels[item.kind]||'تواصل مع المريض')}</strong><p>${item.planNo?`${escapeHtml(item.planNo)} · `:''}${escapeHtml(item.actor||'مستخدم النظام')}</p></div><span class="patient-profile-status">${item.kind==='review_whatsapp'?'تقييم':'خطة'}</span></article>`).join(''):patientProfileEmpty('لم تسجل مشاركات واتساب لهذا المريض بعد.');
+    return;
+  }
   const items=profile.labs||[];
   target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event lab"><span class="patient-event-mark" aria-hidden="true">🦷</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(item.labName==='other'?(item.customLabName||'معمل آخر'):(item.labName||'المعمل'))}</small><strong>${escapeHtml((item.items||[]).map(entry=>`${entry.name} ×${entry.quantity}`).join('، ')||'حالة معمل')}</strong><p>${escapeHtml(labStatusText(item.status))}</p></div><a href="./lab.html?${new URLSearchParams({clinic:item.clinicId||'clinic-1',patient:profile.patient.file||profile.patient.phone||profile.patient.name}).toString()}">فتح الحالة</a></article>`).join(''):patientProfileEmpty('لا توجد حالات معمل مرتبطة بالمريض.');
 }
@@ -1989,7 +2006,11 @@ function renderPatientProfile(){
   const editable=authUser?.role==='admin';
   $('patientProfileForm').classList.toggle('read-only',!editable);$('patientProfileForm').querySelectorAll('input,button').forEach(control=>control.disabled=!editable);
   $('patientProfileSave').textContent=editable?'حفظ وتحديث السجلات المرتبطة':'التعديل متاح لصفحة الإدارة';
-  $('patientProfileAppointmentCount').textContent=String(profile.summary?.appointments||0);$('patientProfilePlanCount').textContent=String(profile.summary?.plans||0);$('patientProfilePaymentCount').textContent=String((profile.appointments||[]).filter(item=>item.paymentRequired).length);$('patientProfileLabCount').textContent=String(profile.summary?.labs||0);
+  const communication=profile.communications||{};
+  $('patientProfileAppointmentCount').textContent=String(profile.summary?.appointments||0);$('patientProfilePlanCount').textContent=String(profile.summary?.plans||0);$('patientProfilePaymentCount').textContent=String((profile.appointments||[]).filter(item=>item.paymentRequired).length);$('patientProfileLabCount').textContent=String(profile.summary?.labs||0);$('patientProfileCommunicationCount').textContent=String(Number(communication.planWhatsappCount||0)+Number(communication.reviewWhatsappCount||0));
+  $('patientProfilePlanWhatsappCount').textContent=String(communication.planWhatsappCount||0);$('patientProfileReviewWhatsappCount').textContent=String(communication.reviewWhatsappCount||0);
+  $('patientProfileLastPlanWhatsapp').textContent=communication.lastPlanWhatsappAt?`آخر إرسال: ${patientProfileDateTime(communication.lastPlanWhatsappAt)}`:'لم ترسل خطة بعد';
+  $('patientProfileLastReviewWhatsapp').textContent=communication.lastReviewWhatsappAt?`آخر إرسال: ${patientProfileDateTime(communication.lastReviewWhatsappAt)}`:'لم يرسل طلب تقييم بعد';
   renderPatientProfileTimeline();
 }
 async function loadPatientProfile(lookup){

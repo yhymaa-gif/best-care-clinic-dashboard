@@ -10,6 +10,7 @@
     const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}`;
     const LOCAL_DRAFT_TTL_MS=12*60*60*1000;
     const PLAN_API='/api/treatment-plan';
+    const PATIENT_PROFILE_API='/api/patient-profile';
     const moneyFormatter=new Intl.NumberFormat('ar-SA-u-nu-latn',{minimumFractionDigits:2,maximumFractionDigits:2});
     const dateFormatter=new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn',{day:'2-digit',month:'2-digit',year:'numeric'});
     const dateTimeFormatter=new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
@@ -103,6 +104,12 @@
         ?'مرفق لكم الخطة العلاجية المقترحة (نسخة نهائية).\nنرجو التكرم بإفادتنا بقبول الخطة لنتمكن من إكمال إجراءات حجز المواعيد لكم.'
         :'مرفق لكم الخطة العلاجية المقترحة (مسودة للاطلاع).';
       return `${greeting}\n\n${planDescription}\n\nمع تمنياتنا لكم بدوام الصحة والعافية،\nعيادات أفضل عناية الاستشارية للأسنان`;
+    }
+    function recordPlanWhatsappCommunication(){
+      const eventId=crypto.randomUUID?.()||`plan-whatsapp-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      fetch(PATIENT_PROFILE_API,{method:'POST',keepalive:true,headers:{'content-type':'application/json','accept':'application/json'},body:JSON.stringify({eventId,kind:'plan_whatsapp',clinicId,patient:{name:state.patient.fullName,file:state.patient.fileNo,phone:state.patient.mobile,nationalId:state.patient.nationalId},details:{planNo:state.meta.planNo,planStatus:state.meta.status,copyType:preparedShareIsFinal?'final':'draft'}})})
+        .then(async response=>{if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر حفظ سجل إرسال الخطة')}})
+        .catch(error=>console.warn('Treatment plan communication tracking unavailable',error));
     }
     function toCents(value){if(value===''||value===null||value===undefined)return null;const n=Number(value);return Number.isFinite(n)?Math.round(n*100):null}
     function formatMoney(cents){return cents===null||cents===undefined?'—':`${moneyFormatter.format(cents/100)} ر.س`}
@@ -739,6 +746,7 @@
         if(navigator.canShare?.({files:[preparedShareFile]})){
           document.documentElement.dataset.pdfShareState=`sharing-${preparedShareFormat}:${preparedShareFile.size}`;
           await navigator.share({title,text,files:[preparedShareFile]});
+          recordPlanWhatsappCommunication();
           document.documentElement.dataset.pdfShareState='shared';closeShareReady();
           toast('تم فتح المشاركة',`اختر واتساب ثم محادثة المريض على الرقم ${state.patient.mobile}.`);
         }else{
@@ -748,6 +756,7 @@
           const whatsappLink=document.createElement('a');
           whatsappLink.href=whatsappUrl;whatsappLink.target='_blank';whatsappLink.rel='noopener noreferrer';
           document.body.appendChild(whatsappLink);whatsappLink.click();whatsappLink.remove();
+          recordPlanWhatsappCommunication();
           document.documentElement.dataset.pdfShareState=`opened-whatsapp:${patientPhone}`;
           closeShareReady();
           toast('تم فتح محادثة المريض','تم تنزيل ملف الخطة وفتح واتساب على رقم المريض؛ أرفق الملف الذي تم تنزيله.');

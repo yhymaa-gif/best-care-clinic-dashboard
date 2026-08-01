@@ -23,6 +23,22 @@ test('patient profile parses both legacy and clinic-scoped appointment keys', ()
   assert.equal(profile.parseDayKey('clinics/clinic-16/days/2026-08-03'), null);
 });
 
+test('patient profile summarizes WhatsApp plan and review communication events', () => {
+  const summary = profile.communicationPayload([{ canonical: 'patient-1', record: {
+    counts: { planWhatsapp: 3, reviewWhatsapp: 2 },
+    lastAt: { planWhatsapp: 300, reviewWhatsapp: 250 },
+    events: [
+      { id: 'p-3', kind: 'plan_whatsapp', at: 300 },
+      { id: 'r-2', kind: 'review_whatsapp', at: 250 }
+    ]
+  } }]);
+  assert.equal(summary.planWhatsappCount, 3);
+  assert.equal(summary.reviewWhatsappCount, 2);
+  assert.equal(summary.lastPlanWhatsappAt, 300);
+  assert.equal(summary.lastReviewWhatsappAt, 250);
+  assert.deepEqual(summary.events.map(event => event.id), ['p-3', 'r-2']);
+});
+
 test('dashboard exposes a unified patient record and local theme control', async () => {
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   assert.match(html, /id="patientProfileForm"/);
@@ -31,4 +47,15 @@ test('dashboard exposes a unified patient record and local theme control', async
   assert.match(html, /data-profile-tab="payments"/);
   assert.match(html, /data-profile-tab="labs"/);
   assert.match(html, /id="themeToggleBtn"/);
+  assert.match(html, /id="patientProfilePlanWhatsappCount"/);
+  assert.match(html, /id="patientProfileReviewWhatsappCount"/);
+  assert.match(html, /data-profile-tab="communications"/);
+});
+
+test('successful WhatsApp actions record central patient communication', async () => {
+  const dashboard = await readFile(new URL('../dashboard.js', import.meta.url), 'utf8');
+  const plan = await readFile(new URL('../treatment-plan.js', import.meta.url), 'utf8');
+  assert.match(dashboard, /recordPatientCommunication\(patient,'review_whatsapp'/);
+  assert.match(plan, /recordPlanWhatsappCommunication\(\)/);
+  assert.match(plan, /kind:'plan_whatsapp'/);
 });

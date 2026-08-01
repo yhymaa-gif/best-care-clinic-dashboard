@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260802-modern-admin-workspace';
+const CACHE_NAME='bestcare-dashboard-v1-20260802-patient-communication-tracking';
 const APP_SHELL=[
   './',
   './index.html',
