@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260802-sidebar-safe-dialogs';
+const CACHE_NAME='bestcare-dashboard-v1-20260802-persistent-modern-actions';
 const APP_SHELL=[
   './',
   './index.html',

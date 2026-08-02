@@ -114,7 +114,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.53-sidebar-safe-dialogs';
+const DASHBOARD_BUILD='7.54-persistent-modern-actions';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -2796,15 +2796,15 @@ function scrollAdminTarget(id,{open=false}={}){
 }
 function handleModernAdminAction(action){
   if(action==='overview'){window.scrollTo({top:0,behavior:matchMedia?.('(prefers-reduced-motion: reduce)')?.matches?'auto':'smooth'});return}
-  if(action==='appointments'){location.href='./appointment-requests.html';return}
+  if(action==='appointments'){openTreatmentPlanCenter();operationsCenter.filter='appointments';renderOperationsCenter();return}
   if(action==='payments'){scrollAdminTarget('paymentPanel');return}
   if(action==='plans'){openTreatmentPlanCenter();operationsCenter.filter='plans';renderOperationsCenter();return}
-  if(action==='labs'){openLabCasesPage();return}
+  if(action==='labs'){openTreatmentPlanCenter();operationsCenter.filter='labs';renderOperationsCenter();return}
   if(action==='patient-record'){$('patientIdentitySearchBtn')?.click();return}
   if(action==='patients'){scrollAdminTarget('adminPatientHub',{open:true});return}
   if(action==='add-patient'){$('addBtn')?.click();return}
   if(action==='alert'){$('alertBtn')?.click();return}
-  if(action==='statistics'){location.href='./statistics.html';return}
+  if(action==='statistics'){window.open('./statistics.html','bestcare-statistics','noopener');return}
   if(action==='clinics'){$('clinicsBtn')?.click();return}
   if(action==='catalog'){$('treatmentCatalogBtn')?.click();return}
   if(action==='import'){$('importBtn')?.click();return}

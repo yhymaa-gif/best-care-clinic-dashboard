@@ -34,6 +34,9 @@ test('modern workspace state is local-only and reuses existing actions', async (
   assert.match(script, /function applyModernSidebarCollapsed\(/);
   assert.match(script, /localStorage\.setItem\(ADMIN_LAYOUT_KEY/);
   assert.match(script, /if\(action==='payments'\)\{scrollAdminTarget\('paymentPanel'\)/);
+  assert.match(script, /if\(action==='appointments'\)\{openTreatmentPlanCenter\(\);operationsCenter\.filter='appointments'/);
+  assert.match(script, /if\(action==='labs'\)\{openTreatmentPlanCenter\(\);operationsCenter\.filter='labs'/);
+  assert.match(script, /if\(action==='statistics'\)\{window\.open\('\.\/statistics\.html','bestcare-statistics','noopener'\)/);
   assert.match(script, /if\(action==='patient-record'\)\{\$\('patientIdentitySearchBtn'\)\?\.click\(\)/);
   assert.match(script, /if\(action==='theme'\)\{\$\('themeToggleBtn'\)\?\.click\(\)/);
   assert.match(script, /if\(action==='logout'\)\{\$\('logoutBtn'\)\?\.click\(\)/);
@@ -59,6 +62,7 @@ test('modern workspace keeps a fixed and optionally collapsible right sidebar', 
   assert.match(css, /V7\.53:[^\n]*dialogs stay inside the workspace/);
   assert.match(css, /body\.admin-layout-modern \.modal\{z-index:1195;right:316px/);
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modal\{right:88px/);
+  assert.doesNotMatch(css, /\.modern-tool-panel/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);
   assert.match(css, /body\.admin-layout-modern \.toolbar>#appointmentRequestCenter/);
   assert.match(css, /body\.admin-layout-modern \.card:not\(\.header\)/);
