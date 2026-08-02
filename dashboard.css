@@ -595,3 +595,13 @@ body.admin-layout-modern .modern-sidebar-scroll{overflow-x:hidden!important;over
 body.admin-layout-modern.admin-sidebar-collapsed .modern-sidebar-collapse{position:absolute!important;top:50%!important;left:-20px!important;transform:translateY(-50%)!important}
 body.admin-layout-modern.admin-sidebar-collapsed .modern-sidebar-collapse:hover{transform:translate(-2px,-50%)!important}
 @media(max-width:760px){body.admin-layout-modern .modern-admin-sidebar{overflow:hidden!important}body.admin-layout-modern .modern-sidebar-collapse{display:none!important}}
+
+/* V7.53: modern dialogs stay inside the workspace while the blue menu remains fixed. */
+body.admin-layout-modern .modal{z-index:1195;right:316px;padding:20px;overflow-y:auto}
+body.admin-layout-modern.admin-sidebar-collapsed .modal{right:88px}
+body.admin-layout-modern .modal-card{max-width:calc(100vw - 356px);margin:auto}
+body.admin-layout-modern.admin-sidebar-collapsed .modal-card{max-width:calc(100vw - 128px)}
+@media(max-width:760px){
+  body.admin-layout-modern .modal,body.admin-layout-modern.admin-sidebar-collapsed .modal{right:76px;padding:10px}
+  body.admin-layout-modern .modal-card,body.admin-layout-modern.admin-sidebar-collapsed .modal-card{max-width:calc(100vw - 96px);max-height:calc(100dvh - 20px)}
+}

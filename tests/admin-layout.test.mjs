@@ -56,6 +56,9 @@ test('modern workspace keeps a fixed and optionally collapsible right sidebar', 
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?body\.admin-layout-modern \.modern-sidebar-collapse\{display:none!important/);
   assert.match(css, /V7\.52:[^\n]*visible edge handle/);
   assert.match(css, /\.modern-sidebar-collapse\{position:absolute!important;[^}]*left:-20px!important/);
+  assert.match(css, /V7\.53:[^\n]*dialogs stay inside the workspace/);
+  assert.match(css, /body\.admin-layout-modern \.modal\{z-index:1195;right:316px/);
+  assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modal\{right:88px/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);
   assert.match(css, /body\.admin-layout-modern \.toolbar>#appointmentRequestCenter/);
   assert.match(css, /body\.admin-layout-modern \.card:not\(\.header\)/);
