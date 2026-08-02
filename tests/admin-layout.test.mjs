@@ -46,6 +46,7 @@ test('modern workspace state is local-only and reuses existing actions', async (
 test('modern workspace keeps a fixed and optionally collapsible right sidebar', async () => {
   const html = await readFile(new URL('index.html', root), 'utf8');
   const css = await readFile(new URL('dashboard.css', root), 'utf8');
+  const script = await readFile(new URL('dashboard.js', root), 'utf8');
   assert.match(css, /\.modern-admin-sidebar\{position:fixed/);
   assert.match(css, /body\.admin-layout-modern>\.app/);
   assert.match(css, /V7\.49:[^\n]*always anchored to the right/);
@@ -53,6 +54,7 @@ test('modern workspace keeps a fixed and optionally collapsible right sidebar', 
   assert.match(css, /\.modern-admin-sidebar\{right:0!important;left:auto!important;[^}]*transform:none!important/);
   assert.doesNotMatch(html, /id="modernSidebarMobileBtn"/);
   assert.match(html, /id="modernSidebarCollapseBtn"[^>]*aria-expanded="true"/);
+  assert.match(html, /class="modern-sidebar-scroll"[^>]*tabindex="0"[^>]*role="region"/);
   assert.match(css, /V7\.51:[^\n]*right-side collapse/);
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed>\.app\{padding-right:88px!important/);
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modern-admin-sidebar\{width:72px!important/);
@@ -62,6 +64,9 @@ test('modern workspace keeps a fixed and optionally collapsible right sidebar', 
   assert.match(css, /V7\.53:[^\n]*dialogs stay inside the workspace/);
   assert.match(css, /body\.admin-layout-modern \.modal\{z-index:1195;right:316px/);
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modal\{right:88px/);
+  assert.match(css, /V7\.55:[^\n]*independent, reliable scrolling/);
+  assert.match(css, /body\.admin-layout-modern \.modern-sidebar-scroll\{flex:1 1 0;min-height:0!important;[^}]*overflow-y:auto!important;[^}]*touch-action:pan-y/);
+  assert.match(script, /function setupModernSidebarScroll\(\)/);
   assert.doesNotMatch(css, /\.modern-tool-panel/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);
   assert.match(css, /body\.admin-layout-modern \.toolbar>#appointmentRequestCenter/);

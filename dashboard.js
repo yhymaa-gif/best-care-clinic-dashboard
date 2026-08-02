@@ -74,6 +74,17 @@ function setupModernAdminMetrics(){
   sources.forEach(node=>observer.observe(node,{childList:true,subtree:true,characterData:true,attributes:true}));
   updateModernAdminSidebar();
 }
+function setupModernSidebarScroll(){
+  const sidebar=$('modernAdminSidebar'),scroller=sidebar?.querySelector('.modern-sidebar-scroll');
+  if(!sidebar||!scroller||sidebar.dataset.scrollReady==='1')return;
+  sidebar.dataset.scrollReady='1';
+  sidebar.addEventListener('wheel',event=>{
+    if(event.ctrlKey||!event.deltaY||event.target.closest('.modern-sidebar-scroll'))return;
+    const previous=scroller.scrollTop;
+    scroller.scrollTop+=event.deltaY;
+    if(scroller.scrollTop!==previous)event.preventDefault();
+  },{passive:false});
+}
 const API='/api/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
 const PUSH_API='/api/push';
@@ -114,7 +125,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.54-persistent-modern-actions';
+const DASHBOARD_BUILD='7.55-scrollable-modern-sidebar';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -3978,6 +3989,7 @@ selectedDate=new URLSearchParams(location.search).get('date')||today();
 els.datePicker.value=selectedDate;
 applyViewMode();
 setupModernAdminMetrics();
+setupModernSidebarScroll();
 applyLang();
 initAuth();
 if(isIosDevice()&&!isStandalone())$('installBtn').hidden=false;

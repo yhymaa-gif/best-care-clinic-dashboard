@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260802-persistent-modern-actions';
+const CACHE_NAME='bestcare-dashboard-v1-20260802-scrollable-modern-sidebar';
 const APP_SHELL=[
   './',
   './index.html',
