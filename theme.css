@@ -1,0 +1,43 @@
+/* Shared Best Care theme. Printable treatment-plan paper intentionally stays light. */
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1714;--screen-bg:#0d1714;--surface:#17241f;--paper:#17241f;--white:#17241f;
+  --ink:#e5efe9;--ink-2:#b7c8bf;--text:#e5efe9;--muted:#9db0a6;--line:#34483f;--soft:#1a2a23;
+  --rule:#3a5046;--rule-strong:#6e9784;--shadow:0 16px 42px rgba(0,0,0,.3)
+}
+html[data-theme="dark"],html[data-theme="dark"] body{background:#0d1714;color:#e5efe9}
+html[data-theme="dark"] body{background-image:radial-gradient(circle at 88% 0,rgba(44,111,82,.17),transparent 31%),linear-gradient(145deg,#0d1714,#111e19)}
+html[data-theme="dark"] :where(.topbar,.card,.panel,.stat,.filters,.controls,.progress,.request-card,.request-meta,.timeline,.timeline li,.case,.empty,.shell-card,.auth-card,.modal-card,.share-ready-card,.editor-panel,.workspace-hero,.lookup-box,.lookup-result,.selected-patient,.new-case-card,.status-key span){border-color:#34483f;background-color:#17241f;color:#e5efe9;box-shadow:0 12px 32px rgba(0,0,0,.22)}
+html[data-theme="dark"] :where(input,select,textarea){border-color:#3d554a!important;background:#1b2b24!important;color:#edf5f1!important}
+html[data-theme="dark"] :where(input,textarea)::placeholder{color:#82978d}
+html[data-theme="dark"] option{background:#17241f;color:#edf5f1}
+html[data-theme="dark"] :where(.btn,.ghost,.secondary,button:not(.primary):not(.danger):not(.save):not(.share-action)){border-color:#3b5147;background-color:#1b2b24;color:#dceae3}
+html[data-theme="dark"] :where(.btn,.ghost,.secondary,button:not(.primary):not(.danger):not(.save):not(.share-action)):hover{border-color:#5f7b6e;background-color:#24372f}
+html[data-theme="dark"] :where(h1,h2,h3,h4,strong,.brand h1,.patient h2){color:#e9f3ee}
+html[data-theme="dark"] :where(p,small,.muted,.brand p,.patient .note,.request-meta p,.timeline time,.list-head p){color:#a6b8af}
+html[data-theme="dark"] :where(table,thead,tbody,tr,th,td){border-color:#33483e}
+html[data-theme="dark"] th{background:#20342b;color:#d7e8df}
+html[data-theme="dark"] td{background:#17241f;color:#dce9e2}
+html[data-theme="dark"] tr:hover td{background:#1d3028}
+html[data-theme="dark"] :where(.pill,.clinic-pill,.doctor-pill,.list-count){border-color:#3a5548;background:#20392e;color:#9fddbd}
+html[data-theme="dark"] :where(.intro,.consent,.progress,.patient-identity-empty,.patient-profile-empty){border-color:#365044;background:#192b23;color:#b8c9c1}
+html[data-theme="dark"] .request-card.is-new{border-color:#82414d;background:#251b1e}
+html[data-theme="dark"] .case.is-pending{background:#17241f}html[data-theme="dark"] .case.is-received{background:#14291f}html[data-theme="dark"] .case.is-adjust{background:#2a2518}html[data-theme="dark"] .case.is-done{background:#17231e}
+html[data-theme="dark"] .error{border-color:#743d47;background:#2a181c;color:#f1a8b4}
+html[data-theme="dark"] .hero{box-shadow:0 20px 48px rgba(0,0,0,.3)}
+html[data-theme="dark"] .share-image-preview{border-color:#3b5247;background:#0f1915}
+html[data-theme="dark"] .share-pdf-preview{border-color:#6d5e31;background:#2a2517;color:#e8c867}
+html[data-theme="dark"] .share-ready-close{border-color:#40574d;background:#1b2b24;color:#e5efe9}
+
+/* Treatment-plan document and exported PDF remain paper-white and print-safe. */
+html[data-theme="dark"] body:not(.preview-mode) .paper-wrap{background:transparent}
+html[data-theme="dark"] .paper,html[data-theme="dark"] .paper *{color-scheme:light}
+html[data-theme="dark"] .paper{--paper:#fff;--ink:#173d34;--ink-2:#566a64;--rule:#d9e1e3;--rule-strong:#264653;background:#fff;color:#173d34}
+html[data-theme="dark"] .paper :where(input,select,textarea){background:#fff!important;color:#173d34!important;border-color:#d9e1e3!important}
+html[data-theme="dark"] .paper :where(button,.qty-stepper){background:#fff!important;color:#173d34!important;border-color:#d9e1e3!important}
+html[data-theme="dark"] .paper :where(th,td){background:transparent;color:#173d34;border-color:#d9e1e3}
+
+@media print{
+  html,html[data-theme="dark"],html[data-theme="dark"] body{color-scheme:light;background:#fff!important}
+  html[data-theme="dark"] .paper{box-shadow:none}
+}

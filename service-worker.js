@@ -1,9 +1,11 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260802-review-request-state';
+const CACHE_NAME='bestcare-dashboard-v1-20260802-fixed-sidebar-dark-theme';
 const APP_SHELL=[
   './',
   './index.html',
   './dashboard.css',
   './dashboard.js',
+  './theme.css',
+  './theme-boot.js',
   './splash.js',
   './treatment-plan.html',
   './treatment-plan.js',

@@ -13,7 +13,9 @@
 <link rel="icon" href="./assets/icons/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
 <title>عيادات أفضل عناية الاستشارية للأسنان</title>
+<script src="./theme-boot.js"></script>
 <link rel="stylesheet" href="./dashboard.css">
+<link rel="stylesheet" href="./theme.css">
 </head>
 <body class="auth-checking">
 <div id="appSplash" role="status" aria-live="polite" aria-label="جاري فتح تطبيق أفضل عناية">
@@ -106,7 +108,6 @@
   <header class="modern-sidebar-head">
     <span class="modern-sidebar-logo" aria-hidden="true">BC</span>
     <div class="modern-sidebar-brand"><strong>إدارة أفضل عناية</strong><small>مساحة العمل الحديثة</small></div>
-    <button id="modernSidebarCollapseBtn" class="modern-sidebar-collapse" type="button" aria-label="تصغير القائمة الجانبية" title="تصغير القائمة">‹</button>
   </header>
   <button class="modern-sidebar-home active" type="button" data-modern-action="overview" title="نظرة عامة"><span aria-hidden="true">⌂</span><span>نظرة عامة</span></button>
   <div class="modern-sidebar-scroll">
@@ -128,7 +129,7 @@
         <button type="button" data-modern-action="alert"><span aria-hidden="true">!</span><span><strong>إرسال تنبيه</strong><small>عام أو لعيادة محددة</small></span></button>
       </div>
     </details>
-    <details class="modern-sidebar-group">
+    <details class="modern-sidebar-group" open>
       <summary><span aria-hidden="true">⚙</span><strong>الإعدادات والإدارة</strong></summary>
       <div class="modern-sidebar-items">
         <button type="button" data-modern-action="statistics"><span aria-hidden="true">▥</span><span><strong>الإحصائيات</strong><small>مؤشرات الأداء</small></span></button>
@@ -138,7 +139,7 @@
         <button type="button" data-modern-action="settings"><span aria-hidden="true">•••</span><span><strong>كل الإعدادات</strong><small>أدوات النظام</small></span></button>
       </div>
     </details>
-    <details class="modern-sidebar-group">
+    <details class="modern-sidebar-group" open>
       <summary><span aria-hidden="true">◐</span><strong>الوصول والتفضيلات</strong></summary>
       <div class="modern-sidebar-items">
         <button type="button" data-modern-action="doctor"><span aria-hidden="true">🩺</span><span><strong>صفحة الطبيب</strong><small>فتح العيادة المحددة</small></span></button>
@@ -156,7 +157,6 @@
     <button type="button" data-modern-action="classic"><span aria-hidden="true">↶</span><span><strong>الواجهة الكلاسيكية</strong><small>العودة للتصميم السابق</small></span></button>
   </footer>
 </aside>
-<button id="modernSidebarMobileBtn" class="modern-sidebar-mobile-btn admin-only hide-screen" type="button" aria-controls="modernAdminSidebar" aria-expanded="false" hidden><span aria-hidden="true">☰</span><span>قائمة الإدارة</span></button>
 <section id="modernAdminOverview" class="modern-admin-overview admin-only hide-screen" hidden aria-label="ملخص الإدارة">
   <div class="modern-overview-copy"><small>مساحة العمل الحديثة</small><h2>الأولوية الآن</h2><p>الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.</p></div>
   <div class="modern-overview-metrics">
