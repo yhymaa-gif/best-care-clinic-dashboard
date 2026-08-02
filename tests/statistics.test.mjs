@@ -42,6 +42,13 @@ test('summary counts appointments, unique patients, payments, plans and lab case
     ],
     plans: [{ clinicId: 'clinic-1', status: 'submitted', updatedAt: Date.UTC(2026, 6, 30, 9) }],
     labCases: [{ clinicId: 'clinic-2', status: 'in_production', createdAt: Date.UTC(2026, 6, 30, 9) }],
+    communicationEvents: [
+      { id: 'review-1', kind: 'review_whatsapp', clinicId: 'clinic-1', at: Date.UTC(2026, 6, 30, 9) },
+      { id: 'review-2', kind: 'review_whatsapp', clinicId: 'clinic-2', at: Date.UTC(2026, 6, 30, 10) },
+      { id: 'plan-1', kind: 'plan_whatsapp', clinicId: 'clinic-1', at: Date.UTC(2026, 6, 30, 11) },
+      { id: 'review-outside', kind: 'review_whatsapp', clinicId: 'clinic-1', at: Date.UTC(2026, 6, 29, 9) },
+      { id: 'review-1', kind: 'review_whatsapp', clinicId: 'clinic-1', at: Date.UTC(2026, 6, 30, 9) },
+    ],
   });
   assert.equal(output.summary.appointments, 3);
   assert.equal(output.summary.uniquePatients, 2);
@@ -51,6 +58,25 @@ test('summary counts appointments, unique patients, payments, plans and lab case
   assert.equal(output.summary.planTotal, 1);
   assert.equal(output.summary.labActive, 1);
   assert.equal(output.summary.averageDelayMinutes, 10);
+  assert.equal(output.summary.reviewWhatsappShares, 2);
+  assert.deepEqual(output.communicationCounts, { planWhatsapp: 1, reviewWhatsapp: 2 });
+});
+
+test('WhatsApp communication statistics respect clinic and Riyadh date filters', () => {
+  const output = stats.summarize({
+    from: '2026-07-30',
+    to: '2026-07-30',
+    clinicFilter: 'clinic-1',
+    clinics: [{ id: 'clinic-1', name: 'العيادة 1', doctorName: '', roomNumber: '1' }],
+    records: [], plans: [], labCases: [],
+    communicationEvents: [
+      { id: 'one', kind: 'review_whatsapp', clinicId: 'clinic-1', at: Date.UTC(2026, 6, 29, 21, 30) },
+      { id: 'two', kind: 'review_whatsapp', clinicId: 'clinic-2', at: Date.UTC(2026, 6, 29, 22) },
+      { id: 'three', kind: 'plan_whatsapp', clinicId: 'clinic-1', at: Date.UTC(2026, 6, 30, 8) },
+    ],
+  });
+  assert.equal(output.summary.reviewWhatsappShares, 1);
+  assert.deepEqual(output.communicationCounts, { planWhatsapp: 1, reviewWhatsapp: 1 });
 });
 
 test('empty summary remains finite and zeroed', () => {
@@ -66,4 +92,5 @@ test('empty summary remains finite and zeroed', () => {
   assert.equal(output.summary.appointments, 0);
   assert.equal(output.summary.completionRate, 0);
   assert.equal(output.summary.averageDelayMinutes, 0);
+  assert.equal(output.summary.reviewWhatsappShares, 0);
 });

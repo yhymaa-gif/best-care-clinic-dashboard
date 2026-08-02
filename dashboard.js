@@ -42,8 +42,8 @@ function setAdminSidebarCollapsed(collapsed,{save=true}={}){
   if(save)try{localStorage.setItem(ADMIN_SIDEBAR_KEY,adminSidebarCollapsed?'1':'0')}catch{}
 }
 const MODERN_ADMIN_COPY={
-  ar:{brand:'إدارة أفضل عناية',workspace:'مساحة العمل الحديثة',home:'نظرة عامة',groups:['الطلبات والمتابعة','المرضى والمواعيد','الإعدادات والإدارة'],overviewKicker:'مساحة العمل الحديثة',overviewTitle:'الأولوية الآن',overviewHelp:'الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.',metrics:['مواعيد جديدة','طلبات دفع','خطط تحتاج مراجعة'],actions:{appointments:['طلبات المواعيد','طلبات الرابط العام'],payments:['إجراءات الدفع','بانتظار تدخل الإدارة'],plans:['الخطط العلاجية','اعتماد ومراجعة الخطط'],labs:['حالات المعمل','متابعة الحالات النشطة'],'patient-record':['ملف المريض','بحث وتعديل وتتبع'],patients:['مرضى اليوم','القائمة والتحديثات'],'add-patient':['إضافة مريض','موعد جديد'],alert:['إرسال تنبيه','عام أو لعيادة محددة'],statistics:['الإحصائيات','مؤشرات الأداء'],clinics:['العيادات والأطباء','إدارة حتى 15 عيادة'],catalog:['الخدمات والأسعار','إجراءات الدفع والخطط'],import:['استيراد قائمة','CSV أو Excel'],settings:['كل الإعدادات','أدوات النظام'],classic:['الواجهة الكلاسيكية','العودة للتصميم السابق']}},
-  en:{brand:'Best Care Administration',workspace:'Modern workspace',home:'Overview',groups:['Requests and follow-up','Patients and appointments','Settings and management'],overviewKicker:'Modern workspace',overviewTitle:'Priority now',overviewHelp:'Reach every request that needs action without leaving today’s dashboard.',metrics:['New appointments','Payment requests','Plans to review'],actions:{appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Review and approval'],labs:['Dental lab cases','Track active cases'],'patient-record':['Patient record','Search, edit, and follow up'],patients:["Today’s patients",'List and updates'],'add-patient':['Add patient','New appointment'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payments and plans'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],classic:['Classic interface','Return to previous design']}}
+  ar:{brand:'إدارة أفضل عناية',workspace:'مساحة العمل الحديثة',home:'نظرة عامة',groups:['الطلبات والمتابعة','المرضى والمواعيد','الإعدادات والإدارة','الوصول والتفضيلات'],overviewKicker:'مساحة العمل الحديثة',overviewTitle:'الأولوية الآن',overviewHelp:'الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.',metrics:['مواعيد جديدة','طلبات دفع','خطط تحتاج مراجعة'],actions:{appointments:['طلبات المواعيد','طلبات الرابط العام'],payments:['إجراءات الدفع','بانتظار تدخل الإدارة'],plans:['الخطط العلاجية','اعتماد ومراجعة الخطط'],labs:['حالات المعمل','متابعة الحالات النشطة'],'patient-record':['ملف المريض','بحث وتعديل وتتبع'],patients:['مرضى اليوم','القائمة والتحديثات'],'add-patient':['إضافة مريض','موعد جديد'],alert:['إرسال تنبيه','عام أو لعيادة محددة'],statistics:['الإحصائيات','مؤشرات الأداء'],clinics:['العيادات والأطباء','إدارة حتى 15 عيادة'],catalog:['الخدمات والأسعار','إجراءات الدفع والخطط'],import:['استيراد قائمة','CSV أو Excel'],settings:['كل الإعدادات','أدوات النظام'],doctor:['صفحة الطبيب','فتح العيادة المحددة'],language:['تبديل اللغة','العربية أو الإنجليزية'],theme:['مظهر التطبيق','فاتح أو داكن'],notifications:['إشعارات النظام','تفعيل أو إيقاف الإشعارات'],sound:['التنبيهات الصوتية','التحكم بصوت التنبيه'],export:['تصدير القائمة','تنزيل ملف CSV'],logout:['تسجيل الخروج','إنهاء الجلسة بأمان'],classic:['الواجهة الكلاسيكية','العودة للتصميم السابق']}},
+  en:{brand:'Best Care Administration',workspace:'Modern workspace',home:'Overview',groups:['Requests and follow-up','Patients and appointments','Settings and management','Access and preferences'],overviewKicker:'Modern workspace',overviewTitle:'Priority now',overviewHelp:'Reach every request that needs action without leaving today’s dashboard.',metrics:['New appointments','Payment requests','Plans to review'],actions:{appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Review and approval'],labs:['Dental lab cases','Track active cases'],'patient-record':['Patient record','Search, edit, and follow up'],patients:["Today’s patients",'List and updates'],'add-patient':['Add patient','New appointment'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payments and plans'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],doctor:['Doctor page','Open selected clinic'],language:['Switch language','Arabic or English'],theme:['App appearance','Light or dark'],notifications:['System notifications','Enable or disable notifications'],sound:['Sound alerts','Control alert sound'],export:['Export list','Download CSV file'],logout:['Sign out','End the session securely'],classic:['Classic interface','Return to previous design']}}
 };
 function renderModernAdminCopy(){
   const copy=MODERN_ADMIN_COPY[lang]||MODERN_ADMIN_COPY.ar,sidebar=$('modernAdminSidebar');if(!sidebar)return;
@@ -110,7 +110,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.47-patient-communication-tracking';
+const DASHBOARD_BUILD='7.48-modern-blue-and-review-statistics';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -1504,11 +1504,13 @@ function normalizeWhatsappNumber(value){
 function patientWhatsappNumber(patient){
   return normalizeWhatsappNumber(patient?.phone??patient?.mobile??patient?.contactPhone??'');
 }
-function recordPatientCommunication(patient,kind,details={}){
-  const eventId=crypto.randomUUID?.()||`${kind}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  request(PATIENT_PROFILE_API,{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({eventId,kind,clinicId:ACTIVE_CLINIC_ID,patient:{name:patient?.name||patient?.fullName||'',file:patient?.file||patient?.fileNo||'',phone:patient?.phone||patient?.mobile||'',nationalId:patient?.nationalId||''},details})},12000)
-    .then(async response=>{if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر حفظ سجل التواصل')}})
-    .catch(error=>console.warn('Patient communication tracking unavailable',error));
+async function recordPatientCommunication(patient,kind,details={},eventId=''){
+  const stableEventId=eventId||(crypto.randomUUID?.()||`${kind}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  try{
+    const response=await request(PATIENT_PROFILE_API,{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({eventId:stableEventId,kind,clinicId:ACTIVE_CLINIC_ID,patient:{name:patient?.name||patient?.fullName||'',file:patient?.file||patient?.fileNo||'',phone:patient?.phone||patient?.mobile||'',nationalId:patient?.nationalId||''},details})},12000);
+    if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر حفظ سجل التواصل')}
+    return true;
+  }catch(error){console.warn('Patient communication tracking unavailable',error);return false}
 }
 function openReviewComposer(id){
   const patient=patientById(id);if(!patient)return;
@@ -1528,19 +1530,33 @@ function refreshReviewMessageFromUrl(){
   $('reviewLinkPreview').href=url;
   $('reviewMessageInput').value=reviewRequestMessage(patient,url);
 }
-function sendReviewWhatsapp(){
+async function sendReviewWhatsapp(){
   const patient=patientById(pendingReviewId);if(!patient)return;
+  const sendButton=$('sendReviewWhatsappBtn');
+  if(sendButton?.disabled)return;
   const url=$('reviewUrlInput').value.trim();
   if(!/^https:\/\//i.test(url)){toast(lang==='en'?'Invalid review link':'رابط التقييم غير صالح',lang==='en'?'Use a secure Google review URL.':'أدخل رابط Google يبدأ بـ https://');$('reviewUrlInput').focus();return}
   const message=$('reviewMessageInput').value.trim();
   if(!message){toast(lang==='en'?'Message required':'الرسالة مطلوبة',lang==='en'?'Write the WhatsApp message first.':'اكتب رسالة واتساب أولًا.');return}
+  const originalLabel=sendButton?.textContent||'';
+  if(sendButton){sendButton.disabled=true;sendButton.textContent=lang==='en'?'Opening WhatsApp…':'جارٍ فتح واتساب…'}
   localStorage.setItem('bestcare_google_review_url',url);
   const phone=normalizeWhatsappNumber($('reviewPhoneInput').value)||patientWhatsappNumber(patient);
   const whatsappUrl=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;
-  window.open(whatsappUrl,'_blank','noopener');
-  recordPatientCommunication(patient,'review_whatsapp',{source:'dashboard'});
-  closeModal('reviewModal');
-  toast(lang==='en'?'WhatsApp opened':'تم فتح واتساب',phone?(lang==='en'?'The message is ready to send.':'الرسالة جاهزة للإرسال.'):(lang==='en'?'Choose the patient contact, then send.':'اختر جهة اتصال المريض ثم أرسل الرسالة.'));
+  try{
+    window.open(whatsappUrl,'_blank','noopener');
+    const requestedAt=Date.now();
+    const eventId=crypto.randomUUID?.()||`review_whatsapp-${requestedAt}-${Math.random().toString(36).slice(2)}`;
+    mutate(()=>{patient.reviewRequestedAt=requestedAt;patient.reviewRequestCount=Number(patient.reviewRequestCount||0)+1;patient.reviewLastEventId=eventId});
+    await pushState().catch(()=>false);
+    let tracked=await recordPatientCommunication(patient,'review_whatsapp',{source:'dashboard'},eventId);
+    if(!tracked)tracked=await recordPatientCommunication(patient,'review_whatsapp',{source:'dashboard',retry:true},eventId);
+    closeModal('reviewModal');
+    renderTable();
+    toast(lang==='en'?'Review request recorded':'تم تسجيل طلب التقييم',tracked?(lang==='en'?'WhatsApp opened and the statistics counter was updated.':'تم فتح واتساب وتحديث عداد الإحصائيات.'):(lang==='en'?'WhatsApp opened; statistics tracking will need another attempt.':'تم فتح واتساب، وتعذر تحديث الإحصائية بعد محاولتين.'));
+  }finally{
+    if(sendButton){sendButton.disabled=false;sendButton.textContent=originalLabel}
+  }
 }
 async function copyReviewMessage(){
   const message=$('reviewMessageInput').value.trim();if(!message)return;
@@ -2078,6 +2094,15 @@ function renderTable(){
         </td>
       </tr>`}).join('')
     : `<tr><td colspan="8" class="empty">${escapeHtml(tr('noAppointments'))}</td></tr>`;
+  visible.forEach(patient=>{
+    if(!patient.reviewRequestedAt)return;
+    const button=els.patientRows.querySelector(`[data-review-id="${CSS.escape(String(patient.id))}"]`);if(!button)return;
+    button.classList.add('review-requested');
+    const label=button.querySelector('b');if(label)label.textContent=lang==='en'?'Review requested':'تم طلب التقييم';
+    button.querySelectorAll('.review-star').forEach(star=>star.remove());
+    const when=new Date(Number(patient.reviewRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA',{dateStyle:'short',timeStyle:'short'});
+    button.title=lang==='en'?`Review requested ${when}. Click to request again.`:`تم طلب التقييم ${when}. اضغط لإعادة الطلب.`;
+  });
   $('statusLegend').innerHTML=
     Object.keys(STATUS).map(key=>`<span class="legend-chip legend-${key}">${escapeHtml(statusText(key))}</span>`).join('');
 }
@@ -2783,6 +2808,13 @@ function handleModernAdminAction(action){
   if(action==='import'){$('importBtn')?.click();return}
   if(action==='presence'){$('presenceBadge')?.click();return}
   if(action==='settings'){const menu=$('settingsMenu');if(menu){menu.classList.add('open');$('settingsBtn')?.focus()}return}
+  if(action==='doctor'){location.href=viewUrl('clinic');return}
+  if(action==='language'){$('langBtn')?.click();return}
+  if(action==='theme'){$('themeToggleBtn')?.click();return}
+  if(action==='notifications'){$('notificationsBtn')?.click();return}
+  if(action==='sound'){$('soundAlertsBtn')?.click();return}
+  if(action==='export'){$('exportBtn')?.click();return}
+  if(action==='logout'){$('logoutBtn')?.click();return}
   if(action==='classic'){applyAdminLayout('classic',{save:true});toast(lang==='en'?'Classic interface':'الواجهة الكلاسيكية',lang==='en'?'The previous administration layout is active.':'تمت العودة إلى تصميم الإدارة المعتاد.')}
 }
 function renderPaymentPanel(){

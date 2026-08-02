@@ -54,8 +54,15 @@ test('dashboard exposes a unified patient record and local theme control', async
 
 test('successful WhatsApp actions record central patient communication', async () => {
   const dashboard = await readFile(new URL('../dashboard.js', import.meta.url), 'utf8');
+  const state = await readFile(new URL('../netlify/functions/state.mjs', import.meta.url), 'utf8');
   const plan = await readFile(new URL('../treatment-plan.js', import.meta.url), 'utf8');
   assert.match(dashboard, /recordPatientCommunication\(patient,'review_whatsapp'/);
+  assert.match(dashboard, /patient\.reviewRequestedAt=requestedAt/);
+  assert.match(dashboard, /if\(sendButton\?\.disabled\)return/);
+  assert.match(dashboard, /review-requested/);
+  assert.match(state, /reviewRequestedAt:Number/);
+  assert.match(state, /reviewRequestCount:Math\.max/);
+  assert.match(state, /reviewLastEventId:String/);
   assert.match(plan, /recordPlanWhatsappCommunication\(\)/);
   assert.match(plan, /kind:'plan_whatsapp'/);
 });

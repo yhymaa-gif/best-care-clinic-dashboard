@@ -112,7 +112,7 @@ function buildDateSeries(from, to) {
   return series;
 }
 
-function summarize({ records, clinics, from, to, clinicFilter, plans, labCases }) {
+function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, communicationEvents = [] }) {
   const statusCounts = emptyCounts(statusKeys);
   const planStatusCounts = emptyCounts(planStatusKeys);
   const labStatusCounts = emptyCounts(labStatusKeys);
@@ -186,6 +186,22 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases }
     labStatusCounts[status] += 1;
   });
 
+  const communicationCounts = { planWhatsapp: 0, reviewWhatsapp: 0 };
+  const countedCommunicationEvents = new Set();
+  communicationEvents.forEach(event => {
+    const kind = String(event?.kind || '');
+    if (!['plan_whatsapp', 'review_whatsapp'].includes(kind)) return;
+    if (clinicFilter !== 'all' && event?.clinicId !== clinicFilter) return;
+    const at = numeric(event?.at);
+    if (at <= 0) return;
+    const eventDate = riyadhDate(at);
+    if (eventDate < from || eventDate > to) return;
+    const eventKey = String(event?.id || `${kind}:${event?.clinicId || ''}:${at}`);
+    if (countedCommunicationEvents.has(eventKey)) return;
+    countedCommunicationEvents.add(eventKey);
+    communicationCounts[kind === 'plan_whatsapp' ? 'planWhatsapp' : 'reviewWhatsapp'] += 1;
+  });
+
   const completed = statusCounts.done;
   const cancelled = statusCounts.cancel;
   const activeAppointments = Math.max(0, appointments - cancelled);
@@ -202,11 +218,13 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases }
       paymentPending: payments.pending,
       planTotal,
       labActive: labTotal - numeric(labStatusCounts.delivered_patient) - numeric(labStatusCounts.cancelled),
+      reviewWhatsappShares: communicationCounts.reviewWhatsapp,
     },
     statusCounts,
     planStatusCounts,
     paymentCounts: payments,
     labStatusCounts,
+    communicationCounts,
     daily,
     clinics: [...clinicMetrics.values()].filter(item => clinicFilter === 'all' || item.clinicId === clinicFilter),
   };
@@ -244,11 +262,12 @@ export default async request => {
   const dayStore = store('clinic-dashboard-days');
   const registryStore = store('clinic-treatment-plan-registry');
   const labStore = store('clinic-lab-cases');
+  const communicationStore = store('clinic-patient-communications');
   const savedClinics = await configStore.get('clinics', { type: 'json', consistency: 'strong' });
   const clinics = activeClinics(savedClinics);
   const allowedClinics = new Set(clinics.map(clinic => clinic.id));
 
-  const [primaryKeys, scopedKeys, registry, labRecords] = await Promise.all([
+  const [primaryKeys, scopedKeys, registry, labRecords, communicationRegistry] = await Promise.all([
     clinicFilter === 'all' || clinicFilter === 'clinic-1' ? listKeys(dayStore, 'days/') : [],
     clinicFilter === 'all' ? listKeys(dayStore, 'clinics/') : clinicFilter !== 'clinic-1' ? listKeys(dayStore, `clinics/${clinicFilter}/days/`) : [],
     registryStore.get('registry/global', { type: 'json', consistency: 'strong' }),
@@ -257,6 +276,7 @@ export default async request => {
         .filter(clinic => clinicFilter === 'all' || clinic.id === clinicFilter)
         .map(clinic => labStore.get(`clinics/${clinic.id}`, { type: 'json', consistency: 'strong' })),
     ),
+    communicationStore.get('registry/global', { type: 'json', consistency: 'strong' }),
   ]);
 
   const dayKeys = [...new Set([...primaryKeys, ...scopedKeys])]
@@ -272,7 +292,9 @@ export default async request => {
 
   const plans = Object.values(registry?.records && typeof registry.records === 'object' ? registry.records : {});
   const labCases = labRecords.flatMap(record => Array.isArray(record?.cases) ? record.cases : []);
-  const result = summarize({ records, clinics, from, to, clinicFilter, plans, labCases });
+  const communicationEvents = Object.values(communicationRegistry?.records && typeof communicationRegistry.records === 'object' ? communicationRegistry.records : {})
+    .flatMap(record => Array.isArray(record?.events) ? record.events : []);
+  const result = summarize({ records, clinics, from, to, clinicFilter, plans, labCases, communicationEvents });
   return reply({
     from,
     to,

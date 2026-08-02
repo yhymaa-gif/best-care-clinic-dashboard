@@ -18,6 +18,10 @@ test('modern admin workspace is optional and switched from Settings', async () =
   assert.match(html, /data-modern-action="payments"/);
   assert.match(html, /data-modern-action="plans"/);
   assert.match(html, /data-modern-action="labs"/);
+  assert.match(html, /data-modern-action="language"/);
+  assert.match(html, /data-modern-action="theme"/);
+  assert.match(html, /data-modern-action="notifications"/);
+  assert.match(html, /data-modern-action="logout"/);
   assert.match(html, /id="viewIdentity"/i, 'classic workspace remains available');
 });
 
@@ -28,6 +32,8 @@ test('modern workspace state is local-only and reuses existing actions', async (
   assert.match(script, /localStorage\.setItem\(ADMIN_LAYOUT_KEY/);
   assert.match(script, /if\(action==='payments'\)\{scrollAdminTarget\('paymentPanel'\)/);
   assert.match(script, /if\(action==='patient-record'\)\{\$\('patientIdentitySearchBtn'\)\?\.click\(\)/);
+  assert.match(script, /if\(action==='theme'\)\{\$\('themeToggleBtn'\)\?\.click\(\)/);
+  assert.match(script, /if\(action==='logout'\)\{\$\('logoutBtn'\)\?\.click\(\)/);
   assert.doesNotMatch(script, /fetch\([^\n]*admin-layout/i, 'layout preference does not alter server sync');
 });
 
@@ -37,5 +43,7 @@ test('modern workspace has desktop, mobile, dark and print styling', async () =>
   assert.match(css, /body\.admin-layout-modern>\.app/);
   assert.match(css, /@media\(max-width:1100px\)[\s\S]*?body\.admin-sidebar-mobile-open \.modern-admin-sidebar/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);
+  assert.match(css, /body\.admin-layout-modern \.toolbar>#appointmentRequestCenter/);
+  assert.match(css, /body\.admin-layout-modern \.card:not\(\.header\)/);
   assert.match(css, /@media print\{\.modern-admin-sidebar/);
 });

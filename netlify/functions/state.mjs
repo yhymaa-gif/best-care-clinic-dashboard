@@ -32,6 +32,9 @@ const cleanPatient=p=>({
  paymentCompletedAt:Number(p?.paymentCompletedAt||0),
  treatmentPlanStatus:['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
  treatmentPlanUpdatedAt:Number(p?.treatmentPlanUpdatedAt||0),
+ reviewRequestedAt:Number(p?.reviewRequestedAt||0),
+ reviewRequestCount:Math.max(0,Math.min(9999,Number(p?.reviewRequestCount||0))),
+ reviewLastEventId:String(p?.reviewLastEventId||'').slice(0,120),
  adminUpdatedAt:Number(p?.adminUpdatedAt||0)
 });
 const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
