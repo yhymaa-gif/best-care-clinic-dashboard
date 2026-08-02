@@ -7,7 +7,7 @@ const ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1';
 function preferredTheme(){try{const stored=localStorage.getItem(THEME_KEY);if(['light','dark'].includes(stored))return stored}catch{}return matchMedia?.('(prefers-color-scheme: dark)')?.matches?'dark':'light'}
 let currentTheme=preferredTheme();
 let adminLayoutMode=(()=>{try{return localStorage.getItem(ADMIN_LAYOUT_KEY)==='modern'?'modern':'classic'}catch{return'classic'}})();
-let modernSidebarCollapsed=(()=>{try{return localStorage.getItem(ADMIN_SIDEBAR_COLLAPSED_KEY)==='1'}catch{return false}})();
+let modernSidebarCollapsed=(()=>{try{const stored=localStorage.getItem(ADMIN_SIDEBAR_COLLAPSED_KEY);return stored===null?Boolean(matchMedia?.('(max-width: 1400px)')?.matches):stored==='1'}catch{return false}})();
 function applyTheme(theme,{save=false}={}){
   currentTheme=theme==='dark'?'dark':'light';document.documentElement.dataset.theme=currentTheme;document.body?.classList.toggle('dark-theme',currentTheme==='dark');
   const button=$('themeToggleBtn'),icon=$('themeToggleIcon');if(icon)icon.textContent=currentTheme==='dark'?'☀':'☾';if(button){const label=currentTheme==='dark'?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن';button.setAttribute('aria-label',label);button.title=label;button.setAttribute('aria-pressed',String(currentTheme==='dark'))}
@@ -114,7 +114,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.51-collapsible-modern-sidebar';
+const DASHBOARD_BUILD='7.52-responsive-sidebar-rail';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{

@@ -29,6 +29,7 @@ test('modern workspace state is local-only and reuses existing actions', async (
   const script = await readFile(new URL('dashboard.js', root), 'utf8');
   assert.match(script, /ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1'/);
   assert.match(script, /ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1'/);
+  assert.match(script, /stored===null\?Boolean\(matchMedia\?\.\('\(max-width: 1400px\)'\)/);
   assert.match(script, /function applyAdminLayout\(/);
   assert.match(script, /function applyModernSidebarCollapsed\(/);
   assert.match(script, /localStorage\.setItem\(ADMIN_LAYOUT_KEY/);
@@ -53,6 +54,8 @@ test('modern workspace keeps a fixed and optionally collapsible right sidebar', 
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed>\.app\{padding-right:88px!important/);
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modern-admin-sidebar\{width:72px!important/);
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?body\.admin-layout-modern \.modern-sidebar-collapse\{display:none!important/);
+  assert.match(css, /V7\.52:[^\n]*visible edge handle/);
+  assert.match(css, /\.modern-sidebar-collapse\{position:absolute!important;[^}]*left:-20px!important/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);
   assert.match(css, /body\.admin-layout-modern \.toolbar>#appointmentRequestCenter/);
   assert.match(css, /body\.admin-layout-modern \.card:not\(\.header\)/);

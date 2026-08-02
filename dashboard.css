@@ -585,3 +585,13 @@ body.admin-layout-modern.admin-sidebar-collapsed .modern-live-dot{display:block!
   body.admin-layout-modern.admin-sidebar-collapsed .modern-admin-sidebar{width:68px!important;padding:max(9px,env(safe-area-inset-top)) 6px max(9px,env(safe-area-inset-bottom))!important}
 }
 @media(prefers-reduced-motion:reduce){body.admin-layout-modern .modern-admin-sidebar,body.admin-layout-modern .modern-sidebar-collapse{transition:none!important}}
+
+/* V7.52: visible edge handle and a space-saving rail on medium screens. */
+body.admin-layout-modern .modern-admin-sidebar{overflow:visible!important}
+body.admin-layout-modern .modern-sidebar-head{position:relative;grid-template-columns:46px minmax(0,1fr)!important}
+body.admin-layout-modern .modern-sidebar-collapse{position:absolute!important;z-index:3;top:50%!important;left:-20px!important;width:40px!important;height:64px!important;margin:0!important;border:2px solid #d7e7ef!important;border-radius:16px 0 0 16px!important;background:linear-gradient(180deg,#347da4,#173f5c)!important;color:#fff!important;font-size:27px!important;box-shadow:-8px 6px 22px rgba(16,51,73,.22)!important;transform:translateY(-50%)!important}
+body.admin-layout-modern .modern-sidebar-collapse:hover{background:linear-gradient(180deg,#438eb5,#1d4d6b)!important;transform:translate(-2px,-50%)!important}
+body.admin-layout-modern .modern-sidebar-scroll{overflow-x:hidden!important;overflow-y:auto!important}
+body.admin-layout-modern.admin-sidebar-collapsed .modern-sidebar-collapse{position:absolute!important;top:50%!important;left:-20px!important;transform:translateY(-50%)!important}
+body.admin-layout-modern.admin-sidebar-collapsed .modern-sidebar-collapse:hover{transform:translate(-2px,-50%)!important}
+@media(max-width:760px){body.admin-layout-modern .modern-admin-sidebar{overflow:hidden!important}body.admin-layout-modern .modern-sidebar-collapse{display:none!important}}

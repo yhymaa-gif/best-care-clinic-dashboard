@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260802-collapsible-modern-sidebar';
+const CACHE_NAME='bestcare-dashboard-v1-20260802-responsive-sidebar-rail';
 const APP_SHELL=[
   './',
   './index.html',
