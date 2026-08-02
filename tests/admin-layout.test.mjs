@@ -28,7 +28,9 @@ test('modern admin workspace is optional and switched from Settings', async () =
 test('modern workspace state is local-only and reuses existing actions', async () => {
   const script = await readFile(new URL('dashboard.js', root), 'utf8');
   assert.match(script, /ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1'/);
+  assert.match(script, /ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1'/);
   assert.match(script, /function applyAdminLayout\(/);
+  assert.match(script, /function applyModernSidebarCollapsed\(/);
   assert.match(script, /localStorage\.setItem\(ADMIN_LAYOUT_KEY/);
   assert.match(script, /if\(action==='payments'\)\{scrollAdminTarget\('paymentPanel'\)/);
   assert.match(script, /if\(action==='patient-record'\)\{\$\('patientIdentitySearchBtn'\)\?\.click\(\)/);
@@ -37,7 +39,7 @@ test('modern workspace state is local-only and reuses existing actions', async (
   assert.doesNotMatch(script, /fetch\([^\n]*admin-layout/i, 'layout preference does not alter server sync');
 });
 
-test('modern workspace keeps a fixed right sidebar on desktop and mobile', async () => {
+test('modern workspace keeps a fixed and optionally collapsible right sidebar', async () => {
   const html = await readFile(new URL('index.html', root), 'utf8');
   const css = await readFile(new URL('dashboard.css', root), 'utf8');
   assert.match(css, /\.modern-admin-sidebar\{position:fixed/);
@@ -46,7 +48,11 @@ test('modern workspace keeps a fixed right sidebar on desktop and mobile', async
   assert.match(css, /@media\(max-width:760px\)[\s\S]*?padding-right:76px!important/);
   assert.match(css, /\.modern-admin-sidebar\{right:0!important;left:auto!important;[^}]*transform:none!important/);
   assert.doesNotMatch(html, /id="modernSidebarMobileBtn"/);
-  assert.doesNotMatch(html, /id="modernSidebarCollapseBtn"/);
+  assert.match(html, /id="modernSidebarCollapseBtn"[^>]*aria-expanded="true"/);
+  assert.match(css, /V7\.51:[^\n]*right-side collapse/);
+  assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed>\.app\{padding-right:88px!important/);
+  assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modern-admin-sidebar\{width:72px!important/);
+  assert.match(css, /@media\(max-width:760px\)[\s\S]*?body\.admin-layout-modern \.modern-sidebar-collapse\{display:none!important/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);
   assert.match(css, /body\.admin-layout-modern \.toolbar>#appointmentRequestCenter/);
   assert.match(css, /body\.admin-layout-modern \.card:not\(\.header\)/);

@@ -3,13 +3,28 @@
 const $=id=>document.getElementById(id);
 const THEME_KEY='bestcare_dashboard_theme_v1';
 const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1';
+const ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1';
 function preferredTheme(){try{const stored=localStorage.getItem(THEME_KEY);if(['light','dark'].includes(stored))return stored}catch{}return matchMedia?.('(prefers-color-scheme: dark)')?.matches?'dark':'light'}
 let currentTheme=preferredTheme();
 let adminLayoutMode=(()=>{try{return localStorage.getItem(ADMIN_LAYOUT_KEY)==='modern'?'modern':'classic'}catch{return'classic'}})();
+let modernSidebarCollapsed=(()=>{try{return localStorage.getItem(ADMIN_SIDEBAR_COLLAPSED_KEY)==='1'}catch{return false}})();
 function applyTheme(theme,{save=false}={}){
   currentTheme=theme==='dark'?'dark':'light';document.documentElement.dataset.theme=currentTheme;document.body?.classList.toggle('dark-theme',currentTheme==='dark');
   const button=$('themeToggleBtn'),icon=$('themeToggleIcon');if(icon)icon.textContent=currentTheme==='dark'?'☀':'☾';if(button){const label=currentTheme==='dark'?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن';button.setAttribute('aria-label',label);button.title=label;button.setAttribute('aria-pressed',String(currentTheme==='dark'))}
   if(save)try{localStorage.setItem(THEME_KEY,currentTheme)}catch{}
+}
+function applyModernSidebarCollapsed(collapsed,{save=false}={}){
+  modernSidebarCollapsed=Boolean(collapsed);
+  document.body.classList.toggle('admin-sidebar-collapsed',modernSidebarCollapsed);
+  const button=$('modernSidebarCollapseBtn');
+  if(button){
+    const isArabic=lang!=='en';
+    button.textContent=modernSidebarCollapsed?'‹':'›';
+    button.setAttribute('aria-expanded',String(!modernSidebarCollapsed));
+    const label=modernSidebarCollapsed?(isArabic?'فتح القائمة':'Expand menu'):(isArabic?'طي القائمة إلى اليمين':'Collapse menu to the right');
+    button.setAttribute('aria-label',label);button.title=label;
+  }
+  if(save)try{localStorage.setItem(ADMIN_SIDEBAR_COLLAPSED_KEY,modernSidebarCollapsed?'1':'0')}catch{}
 }
 function applyAdminLayout(mode,{save=false}={}){
   adminLayoutMode=mode==='modern'?'modern':'classic';
@@ -18,6 +33,7 @@ function applyAdminLayout(mode,{save=false}={}){
   const sidebar=$('modernAdminSidebar'),overview=$('modernAdminOverview'),button=$('adminLayoutModeBtn');
   if(sidebar)sidebar.hidden=!active;
   if(overview)overview.hidden=!active;
+  applyModernSidebarCollapsed(modernSidebarCollapsed);
   if(button){
     button.setAttribute('aria-pressed',String(active));
     button.classList.toggle('is-modern',active);
@@ -41,6 +57,7 @@ function renderModernAdminCopy(){
   Object.entries(copy.actions).forEach(([action,values])=>sidebar.querySelectorAll(`[data-modern-action="${action}"]`).forEach(button=>{const strong=button.querySelector('strong'),small=button.querySelector('small');if(strong)strong.textContent=values[0];if(small)small.textContent=values[1]}));
   setText('#modernAdminOverview .modern-overview-copy small',copy.overviewKicker);setText('#modernAdminOverview .modern-overview-copy h2',copy.overviewTitle);setText('#modernAdminOverview .modern-overview-copy p',copy.overviewHelp);
   document.querySelectorAll('#modernAdminOverview .modern-overview-metrics small').forEach((node,index)=>{if(copy.metrics[index])node.textContent=copy.metrics[index]});
+  applyModernSidebarCollapsed(modernSidebarCollapsed);
 }
 function numericNodeValue(id){const value=Number(String($(id)?.textContent||'0').replace(/[^0-9]/g,''));return Number.isFinite(value)?value:0}
 function updateModernAdminSidebar(){
@@ -97,7 +114,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.50-clean-responsive-header';
+const DASHBOARD_BUILD='7.51-collapsible-modern-sidebar';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -3675,6 +3692,7 @@ $('adminLayoutModeBtn')?.addEventListener('click',event=>{
   const next=adminLayoutMode==='modern'?'classic':'modern';applyAdminLayout(next,{save:true});
   toast(next==='modern'?(lang==='en'?'Modern interface':'الواجهة الحديثة'):(lang==='en'?'Classic interface':'الواجهة الكلاسيكية'),next==='modern'?(lang==='en'?'The organized administration workspace is now active.':'تم تفعيل مساحة الإدارة المنظمة مع بقاء التصميم الكلاسيكي متاحًا.'):(lang==='en'?'The familiar administration layout is now active.':'تمت العودة إلى تصميم الإدارة المعتاد.'));
 });
+$('modernSidebarCollapseBtn')?.addEventListener('click',event=>{event.stopPropagation();applyModernSidebarCollapsed(!modernSidebarCollapsed,{save:true})});
 [$('modernAdminSidebar'),$('modernAdminOverview')].filter(Boolean).forEach(container=>container.addEventListener('click',event=>{const button=event.target.closest('[data-modern-action]');if(!button)return;if(button.dataset.modernAction==='settings')event.stopPropagation();handleModernAdminAction(button.dataset.modernAction)}));
 function setSettingsMenuOpen(open){
   const isOpen=Boolean(open);
