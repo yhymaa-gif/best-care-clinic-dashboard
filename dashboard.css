@@ -526,3 +526,35 @@ body.admin-layout-modern::after{display:none!important}
 }
 @media(max-width:680px){body.admin-layout-modern .header{grid-template-columns:1fr;padding:14px 12px 13px;padding-inline-start:66px}body.admin-layout-modern .header-side{grid-template-columns:1fr auto;align-items:center;justify-items:stretch}body.admin-layout-modern .toolbar{grid-template-columns:1fr 1fr;padding:7px}body.admin-layout-modern .toolbar>#datePicker{grid-column:1/-1}body.admin-layout-modern .clock{font-size:23px}body.admin-layout-modern .modern-admin-overview{margin-top:3px}body.admin-layout-modern .stats .stat{min-height:78px}}
 @media print{body.admin-layout-modern{background:#fff}body.admin-layout-modern .header .toolbar{display:none!important}}
+
+/* V7.50: clean header that responds to the usable dashboard width. */
+.brand-copy{min-width:0;max-width:940px}.brand h1{word-break:keep-all;overflow-wrap:normal;text-wrap:balance}.brand p{text-wrap:pretty}
+body.admin-layout-modern .header{grid-template-columns:minmax(0,1fr)!important;gap:12px!important;padding:18px 20px 15px!important}
+body.admin-layout-modern .header-main{display:grid;min-width:0}
+body.admin-layout-modern .brand{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;gap:15px}
+body.admin-layout-modern .logo{width:72px;height:72px;flex-basis:auto;border-radius:18px}
+body.admin-layout-modern .brand h1{max-width:none;font-size:clamp(21px,2.15vw,31px);line-height:1.35}
+body.admin-layout-modern .brand p{margin-top:4px;font-size:11px;line-height:1.55}
+body.admin-layout-modern .clinic-context-line,body.admin-layout-modern.lang-en .clinic-context-line{justify-self:start;margin:7px 87px 0 0;padding:5px 11px}
+body.admin-layout-modern.lang-en .clinic-context-line{margin:7px 0 0 87px}
+body.admin-layout-modern .toolbar{display:grid;grid-template-columns:minmax(150px,1fr) minmax(190px,1.15fr) minmax(145px,.8fr);gap:8px;margin-top:13px;padding:11px;border:1px solid #dbe8e1;border-radius:16px;background:rgba(248,252,250,.78)}
+body.admin-layout-modern .toolbar>#datePicker,body.admin-layout-modern .toolbar>#syncBadge,body.admin-layout-modern .toolbar>#presenceBadge{width:100%;min-width:0;justify-content:center;margin:0}
+body.admin-layout-modern .header-side{display:flex;align-items:center;justify-content:flex-start;gap:9px;min-height:0!important;padding:10px 0 0!important;border-inline-start:0;border-top:1px solid #dbe8e1}
+body.admin-layout-modern .clock{min-width:148px;padding:7px 13px;border:1px solid #d6e6de;border-radius:13px;background:#fff;font-size:24px;line-height:1.25;text-align:center}
+body.admin-layout-modern .date-text{padding:8px 12px;border-radius:12px;background:#eef6f2;font-size:11px;text-align:center}
+html[data-theme="dark"] body.admin-layout-modern .toolbar{border-color:#344e5e;background:#172a35}
+html[data-theme="dark"] body.admin-layout-modern .clock{border-color:#3b596a;background:#1b303c;color:#a9d7ef}
+html[data-theme="dark"] body.admin-layout-modern .date-text{background:#203844;color:#b7d6e5}
+@media(max-width:760px){
+  body.admin-layout-modern .header{padding:13px 10px 12px!important;padding-inline-start:10px!important;gap:9px!important}
+  body.admin-layout-modern .brand{grid-template-columns:58px minmax(0,1fr);gap:10px;align-items:start}
+  body.admin-layout-modern .logo{width:58px;height:58px;border-radius:15px}
+  body.admin-layout-modern .brand h1{font-size:17px;line-height:1.45}
+  body.admin-layout-modern .brand p{font-size:9px;line-height:1.5}
+  body.admin-layout-modern .clinic-context-line,body.admin-layout-modern.lang-en .clinic-context-line{justify-self:stretch;margin:7px 0 0;padding:5px 8px;white-space:normal}
+  body.admin-layout-modern .toolbar{grid-template-columns:1fr;gap:6px;margin-top:9px;padding:7px}
+  body.admin-layout-modern .toolbar>#datePicker{grid-column:auto!important}
+  body.admin-layout-modern .header-side{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:8px!important}
+  body.admin-layout-modern .clock{min-width:0;padding:6px 8px;font-size:20px}
+  body.admin-layout-modern .date-text{display:grid;place-items:center;padding:6px 8px;font-size:9px}
+}
