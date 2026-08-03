@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260803-resilient-sync-patient-search-prescriptions';
+const CACHE_NAME='bestcare-dashboard-v1-20260803-prescriptions-full-name-sync';
 const APP_SHELL=[
   './',
   './index.html',

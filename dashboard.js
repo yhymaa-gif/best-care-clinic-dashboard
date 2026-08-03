@@ -126,7 +126,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.56-resilient-sync-patient-search';
+const DASHBOARD_BUILD='7.57-prescriptions-full-name-sync';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -1302,7 +1302,7 @@ async function pushState(){
 }
 function applyRemote(data){
   if(sync.dirty)return false;
-  patients=Array.isArray(data.patients)?data.patients.map(p=>({...p,name:firstName(p.name)})):[];
+  patients=Array.isArray(data.patients)?data.patients.map(p=>({...p,name:String(p.name||'').trim()})):[];
   notes=String(data.notes||'');
   updateAlert=data.updateAlert&&typeof data.updateAlert==='object'?{...data.updateAlert}:{active:false,message:'',updatedAt:0,kind:''};
   els.notes.value=notes;

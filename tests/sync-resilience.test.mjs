@@ -17,3 +17,8 @@ test('sync preserves field update timestamps through the server boundary', () =>
   assert.match(state, /recordUpdatedAt:Number/);
   assert.match(dashboard, /patient\.recordUpdatedAt=now/);
 });
+
+test('remote synchronization preserves the patient full name', () => {
+  assert.match(dashboard, /name:String\(p\.name\|\|''\)\.trim\(\)/);
+  assert.doesNotMatch(dashboard, /patients=Array\.isArray\(data\.patients\)\?data\.patients\.map\(p=>\(\{\.\.\.p,name:firstName\(p\.name\)\}\)\)/);
+});
