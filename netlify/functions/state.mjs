@@ -18,6 +18,8 @@ const cleanPatient=p=>({
  end:String(p?.end||'').slice(0,8),
  procedure:String(p?.procedure||'').slice(0,180),
  status:allowedStatuses.has(p?.status)?p.status:'waiting',
+ statusUpdatedAt:Number(p?.statusUpdatedAt||0),
+ recordUpdatedAt:Number(p?.recordUpdatedAt||p?.adminUpdatedAt||0),
  arrivedAt:Number(p?.arrivedAt||0),
  actualStartedAt:Number(p?.actualStartedAt||0),
  completedAt:Number(p?.completedAt||0),

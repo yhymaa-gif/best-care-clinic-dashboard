@@ -6,15 +6,17 @@ const reply = (data, status = 200) => new Response(JSON.stringify(data), { statu
 const clinicPattern = /^clinic-([1-9]|1[0-5])$/;
 
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
-const normalizeFile = value => cleanText(value, 40).toUpperCase().replace(/[\s-]+/g, '');
+const toLatinDigits = value => String(value ?? '').replace(/[٠-٩]/g, digit => '٠١٢٣٤٥٦٧٨٩'.indexOf(digit)).replace(/[۰-۹]/g, digit => '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit));
+const normalizeName = value => toLatinDigits(value).normalize('NFKD').replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '').replace(/\u0640/g, '').replace(/[إأآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').toLowerCase().replace(/\s+/g, ' ').trim();
+const normalizeFile = value => toLatinDigits(cleanText(value, 40)).toUpperCase().replace(/[\s-]+/g, '');
 const normalizePhone = value => {
-  const digits = cleanText(value, 24).replace(/\D/g, '');
+  const digits = toLatinDigits(cleanText(value, 24)).replace(/\D/g, '');
   if (/^009665\d{8}$/.test(digits)) return `0${digits.slice(5)}`;
   if (/^9665\d{8}$/.test(digits)) return `0${digits.slice(3)}`;
   if (/^5\d{8}$/.test(digits)) return `0${digits}`;
   return digits;
 };
-const normalizeNationalId = value => cleanText(value, 20).replace(/\D/g, '').slice(0, 10);
+const normalizeNationalId = value => toLatinDigits(cleanText(value, 20)).replace(/\D/g, '').slice(0, 10);
 
 const normalizeLookup = (type, value) => {
   if (type === 'file') return normalizeFile(value);
@@ -50,6 +52,10 @@ const patientMatches = (patient, type, normalized) => {
   if (type === 'phone') return normalizePhone(patient?.phone) === normalized;
   return normalizeNationalId(patient?.nationalId) === normalized;
 };
+const patientMatchesQuery = (patient, value) => {
+  const text=normalizeName(value),compact=text.replace(/[\s-]/g,''),digits=normalizePhone(value),name=normalizeName(patient?.name??patient?.fullName),file=normalizeFile(patient?.file??patient?.fileNo).toLowerCase(),phone=normalizePhone(patient?.phone??patient?.mobile),national=normalizeNationalId(patient?.nationalId);
+  return Boolean((text&&name.includes(text))||(compact&&file.includes(compact))||(digits&&(phone.includes(digits)||national.includes(digits))));
+};
 
 const publicMatch = ({ patient, clinicId, date, source }) => ({
   patient: {
@@ -64,7 +70,7 @@ const publicMatch = ({ patient, clinicId, date, source }) => ({
   source,
 });
 
-const matchKey = match => `${match.clinicId}:${normalizeFile(match.patient.file) || normalizePhone(match.patient.phone) || normalizeNationalId(match.patient.nationalId)}`;
+const matchKey = match => `${match.clinicId}:${normalizeFile(match.patient.file) || normalizePhone(match.patient.phone) || normalizeNationalId(match.patient.nationalId) || `${normalizeName(match.patient.name)}:${match.patient.id||match.sourceDate||''}`}`;
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
@@ -77,9 +83,10 @@ export default async request => {
 
   const url = new URL(request.url);
   const type = url.searchParams.get('type') || '';
-  const normalized = normalizeLookup(type, url.searchParams.get('value') || '');
-  if (!['file', 'phone', 'national'].includes(type)) return reply({ error: 'Invalid lookup type' }, 400);
-  if ((type === 'phone' && normalized.length < 9) || (type === 'national' && normalized.length !== 10) || (type === 'file' && normalized.length < 1)) {
+  const rawValue=url.searchParams.get('value')||'';
+  const normalized = type==='query'?normalizeName(rawValue):normalizeLookup(type,rawValue);
+  if (!['file', 'phone', 'national', 'query'].includes(type)) return reply({ error: 'Invalid lookup type' }, 400);
+  if ((type === 'query' && normalized.length < 2 && normalizePhone(rawValue).length < 3) || (type === 'phone' && normalized.length < 9) || (type === 'national' && normalized.length !== 10) || (type === 'file' && normalized.length < 1)) {
     return reply({ error: 'Invalid lookup value' }, 400);
   }
 
@@ -92,10 +99,12 @@ export default async request => {
 
   const matches = [];
   const registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || {};
-  const canonical = registry.aliases?.[lookupAlias(type, normalized)];
-  const registryPatient = canonical ? registry.records?.[canonical] : null;
-  if (registryPatient && clinicPattern.test(registryPatient.clinicId) && (searchAll || registryPatient.clinicId === scopedClinic)) {
-    matches.push(publicMatch({ patient: registryPatient, clinicId: registryPatient.clinicId, date: registryPatient.sourceDate, source: 'treatment-plan' }));
+  if(type==='query'){
+    Object.values(registry.records||{}).filter(patient=>clinicPattern.test(patient?.clinicId)&&(searchAll||patient.clinicId===scopedClinic)&&patientMatchesQuery(patient,rawValue)).slice(0,20).forEach(patient=>matches.push(publicMatch({patient,clinicId:patient.clinicId,date:patient.sourceDate,source:'treatment-plan'})));
+  }else{
+    const canonical = registry.aliases?.[lookupAlias(type, normalized)];
+    const registryPatient = canonical ? registry.records?.[canonical] : null;
+    if (registryPatient && clinicPattern.test(registryPatient.clinicId) && (searchAll || registryPatient.clinicId === scopedClinic)) matches.push(publicMatch({ patient: registryPatient, clinicId: registryPatient.clinicId, date: registryPatient.sourceDate, source: 'treatment-plan' }));
   }
 
   const prefixes = searchAll
@@ -106,7 +115,7 @@ export default async request => {
     .map(key => ({ key, ...parseDayKey(key) }))
     .filter(item => item.clinicId && (searchAll || item.clinicId === scopedClinic))
     .sort((left, right) => right.date.localeCompare(left.date))
-    .slice(0, 1500);
+    .slice(0, type==='query'?400:1500);
 
   for (let index = 0; index < dayKeys.length && matches.length < 12; index += 20) {
     const chunk = dayKeys.slice(index, index + 20);
@@ -116,10 +125,10 @@ export default async request => {
     })));
     states.forEach(item => {
       (Array.isArray(item.state?.patients) ? item.state.patients : [])
-        .filter(patient => patientMatches(patient, type, normalized))
+        .filter(patient => type==='query'?patientMatchesQuery(patient,rawValue):patientMatches(patient, type, normalized))
         .forEach(patient => matches.push(publicMatch({ patient, clinicId: item.clinicId, date: item.date, source: 'appointment' })));
     });
-    if (matches.length) break;
+    if (type!=='query'&&matches.length) break;
   }
 
   const unique = new Map();
@@ -133,8 +142,8 @@ export default async request => {
   return reply({
     found: unique.size > 0,
     type,
-    matches: [...unique.values()].slice(0, 8),
+    matches: [...unique.values()].slice(0, type==='query'?30:8),
   });
 };
 
-export const __test = { normalizeFile, normalizePhone, normalizeNationalId, normalizeLookup, patientMatches, parseDayKey };
+export const __test = { toLatinDigits, normalizeName, normalizeFile, normalizePhone, normalizeNationalId, normalizeLookup, patientMatches, patientMatchesQuery, parseDayKey };

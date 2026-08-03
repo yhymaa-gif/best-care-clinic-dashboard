@@ -7,6 +7,16 @@ test('patient lookup normalizes exact file, Saudi phone, and national ID values'
   assert.equal(lookup.normalizePhone('+966 50 123 4567'), '0501234567');
   assert.equal(lookup.normalizePhone('0501234567'), '0501234567');
   assert.equal(lookup.normalizeNationalId('1 234 567 890'), '1234567890');
+  assert.equal(lookup.normalizeFile('\u0661\u0662-\u0663\u0664'), '1234');
+  assert.equal(lookup.normalizePhone('\u0660\u0665\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667'), '0501234567');
+});
+
+test('patient lookup supports tolerant Arabic name, mobile, and file search', () => {
+  const patient = { name: '\u0625\u0633\u0631\u0627\u0621 \u0623\u062d\u0645\u062f', file: 'A-\u0661\u0660\u0662', phone: '+966501234567', nationalId: '1234567890' };
+  assert.equal(lookup.patientMatchesQuery(patient, '\u0627\u0633\u0631\u0627\u0621'), true);
+  assert.equal(lookup.patientMatchesQuery(patient, '050123'), true);
+  assert.equal(lookup.patientMatchesQuery(patient, 'A102'), true);
+  assert.equal(lookup.patientMatchesQuery(patient, '\u0645\u062d\u0645\u062f'), false);
 });
 
 test('patient lookup matches the selected identity type only', () => {
