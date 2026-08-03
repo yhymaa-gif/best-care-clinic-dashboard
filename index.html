@@ -254,9 +254,9 @@
     <div class="quick-add-head-actions"><button id="newLabCaseShortcutBtn" class="new-lab-case-shortcut" type="button"><span aria-hidden="true">🦷</span><span id="newLabCaseShortcutLabel">حالة معمل جديدة</span></button><span id="patientFormMode" class="form-mode">إضافة</span></div>
   </div>
   <div class="quick-add-grid">
-    <div><label for="fName">الاسم الأول</label><input id="fName" type="text" autocomplete="off" placeholder="اسم المريض"></div>
-    <div><label for="fFile">رقم الملف</label><input id="fFile" type="text" inputmode="numeric" autocomplete="off" placeholder="رقم الملف"></div>
-    <div><label for="fPhone">رقم الجوال</label><input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="05xxxxxxxx"></div>
+    <div><label for="fName">الاسم الكامل *</label><input id="fName" type="text" autocomplete="name" placeholder="الاسم الأول واسم العائلة" minlength="3" maxlength="120" required></div>
+    <div><label for="fFile">رقم الملف *</label><input id="fFile" type="text" inputmode="numeric" autocomplete="off" placeholder="رقم الملف" maxlength="40" required></div>
+    <div><label for="fPhone">رقم الجوال الصحيح *</label><input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="05xxxxxxxx" pattern="(?:\+?966|0)?5[0-9]{8}" required></div>
     <div><label for="fNationalId">رقم الهوية</label><input id="fNationalId" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="10 أرقام (اختياري)"></div>
     <div id="appointmentDateField" class="appointment-date-field" hidden><label id="appointmentDateLabel" for="fDate">تاريخ الموعد</label><input id="fDate" type="date"></div>
     <div><label for="fStart">وقت البداية</label><input id="fStart" type="time"></div>

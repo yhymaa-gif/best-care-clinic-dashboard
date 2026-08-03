@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ar-SA" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <script src="./theme-boot.js"></script>
+  <title>الوصفة الطبية — عيادات أفضل عناية</title>
+  <link rel="stylesheet" href="./prescription.css">
+  <link rel="stylesheet" href="./prescription-overrides.css">
+</head>
+<body>
+  <header class="topbar"><a id="backLink" href="./">← العودة</a><div><strong>الوصفة الطبية الإلكترونية</strong><small>عيادات أفضل عناية الاستشارية للأسنان</small></div><img src="./best-care-logo.png" alt="شعار العيادة"></header>
+  <main>
+    <section class="patient-card" aria-labelledby="patientTitle"><div><span>المريض</span><h1 id="patientTitle">جارٍ تحميل البيانات…</h1></div><div><span>رقم الملف</span><b id="patientFile">—</b></div><div><span>الجوال</span><b id="patientPhone">—</b></div><div><span>التاريخ</span><b id="visitDate">—</b></div></section>
+    <section class="notice"><strong>تنبيه سريري</strong><p>هذه القوالب تساعد على كتابة الوصفة ولا تُعد قرارًا علاجيًا تلقائيًا. يجب أن يراجع الطبيب التشخيص، الحساسية، الحمل، وظائف الكلى والكبد والتداخلات الدوائية قبل الإصدار.</p></section>
+    <form id="rxForm" novalidate>
+      <section class="panel"><h2>١. المراجعة الطبية</h2><label>التشخيص أو سبب الوصفة *<textarea id="diagnosis" rows="2" maxlength="500" required></textarea></label><label class="check"><input id="medicalReview" type="checkbox" required> راجعت التاريخ المرضي والحساسية الدوائية والحمل ووظائف الكلى والكبد والأدوية المتداخلة.</label></section>
+      <section class="panel"><h2>٢. الأدوية</h2>
+        <article class="medicine"><label class="medicine-title"><input id="augmentinEnabled" type="checkbox"> <b>قالب Augmentin — جميع الحقول قابلة للتعديل</b></label><div class="med-grid"><label>اسم الدواء<input id="augmentinName" value="Amoxicillin / Clavulanate (Augmentin)" maxlength="100"></label><label>الجرعة / التركيز<input id="augmentinStrength" value="500/125 mg (625 mg)" maxlength="60"></label><label>التكرار<input id="augmentinFrequency" value="كل 8 ساعات (TID)" maxlength="80"></label><label>المدة بالأيام<input id="augmentinDays" type="number" min="1" max="30" value="7"></label></div><label>تعليمات الاستخدام<input id="augmentinInstructions" value="يؤخذ مع بداية الوجبة حسب توجيه الطبيب." maxlength="300"></label><p class="drug-note">يُمنع اختياره عند وجود حساسية مؤكدة للبنسلين إلا بعد تقييم الطبيب.</p></article>
+        <article class="medicine"><label class="medicine-title"><input id="metronidazoleEnabled" type="checkbox"> <b>قالب Metronidazole — جميع الحقول قابلة للتعديل</b></label><div class="med-grid"><label>اسم الدواء<input id="metronidazoleName" value="Metronidazole" maxlength="100"></label><label>الجرعة / التركيز<input id="metronidazoleStrength" value="500 mg" maxlength="60"></label><label>التكرار<input id="metronidazoleFrequency" value="كل 8 ساعات (TID)" maxlength="80"></label><label>المدة بالأيام<input id="metronidazoleDays" type="number" min="1" max="30" value="7"></label></div><label>تعليمات الاستخدام<input id="metronidazoleInstructions" value="تجنب الكحول أثناء العلاج ولمدة 3 أيام بعد آخر جرعة." maxlength="300"></label><p class="drug-note">راجع التداخلات الدوائية، خصوصًا الوارفارين.</p></article>
+        <article class="medicine warning"><label class="medicine-title"><input id="prednisoloneEnabled" type="checkbox"> <b>قالب Prednisolone — جميع الحقول قابلة للتعديل</b></label><div class="med-grid"><label>اسم الدواء<input id="prednisoloneName" value="Prednisolone" maxlength="100"></label><label>الجرعة / التركيز<input id="prednisoloneStrength" value="20 mg" maxlength="60"></label><label>التكرار<input id="prednisoloneFrequency" value="نظام تنازلي حسب تعليمات الطبيب" maxlength="100"></label><label>المدة بالأيام<input id="prednisoloneDays" type="number" min="1" max="30" value="4"></label></div><label>تعليمات الطبيب<textarea id="prednisoloneInstructions" rows="3">اليوم الأول: 4 أقراص، اليوم الثاني: 3 أقراص، اليوم الثالث: قرصان، اليوم الرابع: قرص واحد. تؤخذ مع الطعام.</textarea></label><label class="check"><input id="steroidConfirm" type="checkbox"> راجعت جرعة الكورتيزون وملاءمتها للحالة؛ النظام أعلاه اقتراح الطبيب وليس جرعة افتراضية عامة.</label></article>
+        <article class="medicine"><label class="medicine-title"><input id="otherEnabled" type="checkbox"> <b>دواء آخر</b></label><div class="med-grid"><label>اسم الدواء<input id="otherName" maxlength="100"></label><label>الجرعة / التركيز<input id="otherStrength" maxlength="60"></label><label>التكرار<input id="otherFrequency" maxlength="100"></label><label>المدة بالأيام<input id="otherDays" type="number" min="1" max="30" value="3"></label></div><label>تعليمات الاستخدام<input id="otherInstructions" maxlength="300"></label></article>
+      </section>
+      <section class="panel"><h2>٣. تعليمات وإصدار</h2><label>ملاحظات إضافية<textarea id="notes" rows="2" maxlength="500"></textarea></label><label class="check confirm"><input id="doctorConfirm" type="checkbox" required> أؤكد أنني راجعت الوصفة وأن إصدارها تم بواسطة طبيب مخوّل.</label><p id="formError" role="alert"></p><div class="actions"><button id="saveBtn" type="submit">حفظ وإصدار الوصفة</button><button id="shareBtn" type="button">مشاركة عبر واتساب</button><button id="printBtn" type="button">طباعة / PDF</button></div></section>
+    </form>
+    <section id="printSheet" class="print-sheet" aria-label="معاينة الوصفة"><div class="print-head"><img src="./best-care-logo.png" alt=""><div><h2>عيادات أفضل عناية الاستشارية للأسنان</h2><p>وصفة طبية</p></div></div><div id="printPatient"></div><div id="printDiagnosis"></div><ol id="printMedicines"></ol><div id="printNotes"></div><footer>لا تُصرف هذه الوصفة إلا بعد اعتماد الطبيب · تاريخ الإصدار: <span id="issuedAt">—</span></footer></section>
+  </main>
+  <script src="./prescription.js" defer></script>
+</body>
+</html>

@@ -2179,6 +2179,7 @@ function renderTable(){
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
             <button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>
             <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>
+            <button class="mini prescription-row-btn" type="button" data-prescription-id="${escapeHtml(p.id)}" title="إنشاء وصفة طبية للمريض">💊 وصفة طبية</button>
             ${VIEW_MODE==='clinic'&&displayStatus==='done'?`<button class="mini" type="button" data-completion-id="${escapeHtml(p.id)}">${lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة'}</button>`:''}
             <button type="button" class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button type="button" class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
@@ -2217,6 +2218,11 @@ function openTreatmentPlan(id){
   const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),nationalId:String(patient.nationalId||''),procedure:String(patient.procedure||''),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
   cacheTreatmentSource(patient.id,source);
   location.href=`./treatment-plan.html?patientId=${encodeURIComponent(patient.id)}&date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&view=${encodeURIComponent(VIEW_MODE)}`;
+}
+function openPrescription(id){
+  const patient=patientById(id);if(!patient)return;
+  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE});
+  location.href=`./prescription.html?${params}`;
 }
 function applyPlanStatusMetadata(plan,nextStatus,rejectionReason='',cancellationReason=''){
   const now=Date.now(),actor=VIEW_MODE==='clinic'?'الطبيب':'الإدارة';
@@ -3127,16 +3133,22 @@ async function movePatientToDate(item,targetDate){
 }
 async function savePatient(){
   const rawName=$('fName').value.trim();
+  const normalizedName=rawName.replace(/\s+/g,' ');
+  const fileNumber=toLatinDigits($('fFile').value).replace(/\D/g,'').slice(0,40);
+  const phoneDigits=normalizeSearchPhone($('fPhone').value);
+  const requireComplete=VIEW_MODE==='admin'&&!editingId;
   const start=$('fStart').value,end=$('fEnd').value;
-  if(!rawName){toast('تعذر الحفظ','اكتب اسم المريض أولًا');$('fName').focus();return}
+  if(!normalizedName||(requireComplete&&normalizedName.split(' ').filter(Boolean).length<2)){toast('الاسم الكامل مطلوب','اكتب اسم المريض كاملًا من كلمتين على الأقل.');$('fName').focus();return}
+  if(requireComplete&&(!fileNumber||isZeroFileNumber(fileNumber))){toast('رقم الملف مطلوب','أدخل رقم ملف صحيحًا وغير صفري قبل الحفظ.');$('fFile').focus();return}
+  if(requireComplete&&!/^05\d{8}$/.test(phoneDigits)){toast('رقم الجوال غير صحيح','استخدم رقم جوال سعودي صحيحًا مثل 05xxxxxxxx.');$('fPhone').focus();return}
   if(!start||!end||mins(end)<=mins(start)){toast('وقت غير صحيح','يجب أن يكون وقت النهاية بعد وقت البداية');$('fStart').focus();return}
   const existing=editingId?patientById(editingId):null;
   const item={
     ...(existing||{}),
     id:editingId||(crypto.randomUUID?.()||`patient-${Date.now()}-${Math.random().toString(36).slice(2)}`),
-    name:firstName(rawName),
-    file:$('fFile').value.trim(),
-    phone:$('fPhone').value.replace(/[^\d+]/g,'').slice(0,20),
+    name:normalizedName.slice(0,120),
+    file:fileNumber,
+    phone:phoneDigits,
     nationalId:$('fNationalId').value.replace(/\D/g,'').slice(0,10),
     start,
     end,
@@ -3912,11 +3924,12 @@ els.patientRows.addEventListener('change',async event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
-  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
   if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
   if(review)openReviewComposer(review);
   if(plan)openTreatmentPlan(plan);
+  if(prescription)openPrescription(prescription);
   if(completion&&VIEW_MODE==='clinic')finishPatient(completion);
   if(edit)openPatient(edit);
   if(del&&confirm('حذف هذا المريض؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));

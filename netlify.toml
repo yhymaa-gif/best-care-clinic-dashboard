@@ -92,6 +92,11 @@
   to = "/.netlify/functions/lab-cases"
   status = 200
 
+[[redirects]]
+  from = "/api/prescriptions"
+  to = "/.netlify/functions/prescriptions"
+  status = 200
+
 [[headers]]
   for = "/manifest.webmanifest"
   [headers.values]

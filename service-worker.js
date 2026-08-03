@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260803-resilient-sync-patient-search';
+const CACHE_NAME='bestcare-dashboard-v1-20260803-resilient-sync-patient-search-prescriptions';
 const APP_SHELL=[
   './',
   './index.html',
@@ -21,6 +21,10 @@ const APP_SHELL=[
   './offline.js',
   './lab.html',
   './lab.js',
+  './prescription.html',
+  './prescription.css',
+  './prescription-overrides.css',
+  './prescription.js',
   './manifest.webmanifest',
   './best-care-logo.png',
   './assets/best-care-logo-header.png',
@@ -75,6 +79,8 @@ self.addEventListener('fetch',event=>{
             ?'./appointment-requests.html'
           :url.pathname.endsWith('/lab.html')
             ?'./lab.html'
+          :url.pathname.endsWith('/prescription.html')
+            ?'./prescription.html'
             :'./index.html';
     event.respondWith(
       fetch(request)

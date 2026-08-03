@@ -9,6 +9,7 @@ const rootScripts = [
   'appointment-request.js',
   'appointment-requests.js',
   'lab.js',
+  'prescription.js',
   'service-worker.js',
   'offline.js'
 ];
