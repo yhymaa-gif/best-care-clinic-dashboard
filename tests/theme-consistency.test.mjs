@@ -27,5 +27,5 @@ test('PWA shell includes shared theme assets', async () => {
   const sw = await readFile(new URL('service-worker.js', root), 'utf8');
   assert.match(sw, /'\.\/theme\.css'/);
   assert.match(sw, /'\.\/theme-boot\.js'/);
-  assert.match(sw, /prescriptions-full-name-sync/);
+  assert.match(sw, /prescription-center/);
 });

@@ -15,22 +15,32 @@ test('admin patient creation requires full name, non-zero file, and Saudi mobile
   assert.doesNotMatch(js, /name:firstName\(rawName\)/);
 });
 
-test('prescription flow is patient-linked, authenticated, and stored separately', async () => {
-  const [html, js, fn, toml, sw] = await Promise.all([
-    read('prescription.html'), read('prescription.js'), read('netlify/functions/prescriptions.mjs'), read('netlify.toml'), read('service-worker.js')
+test('prescription flow is patient-linked, categorized, recoverable, and stored separately', async () => {
+  const [html, js, fn, toml, sw, dashboard, index] = await Promise.all([
+    read('prescription.html'), read('prescription.js'), read('netlify/functions/prescriptions.mjs'), read('netlify.toml'), read('service-worker.js'), read('dashboard.js'), read('index.html')
   ]);
   assert.match(html, /id="medicalReview"[^>]+required/);
   assert.match(html, /id="doctorConfirm"[^>]+required/);
-  assert.match(html, /id="steroidConfirm"/);
-  for (const id of ['augmentinName', 'augmentinStrength', 'augmentinFrequency', 'metronidazoleName', 'prednisoloneName', 'otherFrequency']) {
+  assert.match(html, /DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
+  for (const id of ['medicineCategory', 'medicinePreset', 'medicineName', 'medicineDose', 'medicineFrequency', 'medicineDuration', 'prescriptionHistory']) {
     assert.match(html, new RegExp(`id="${id}"`));
   }
-  assert.doesNotMatch(html, /id="augmentinFrequency"[^>]+disabled/);
-  assert.match(js, /function medicineFrom\(prefix,template\)/);
+  assert.match(js, /antibiotic:'مضاد حيوي'/);
+  assert.match(js, /analgesic:'مسكن'/);
+  assert.match(js, /mouthwash:'مضمضة'/);
+  assert.match(js, /function renderHistory\(\)/);
   assert.match(js, /patientId=params\.get\('patientId'\)/);
   assert.match(fn, /requireUser\(request\)/);
   assert.match(fn, /sameOriginRequest\(request\)/);
   assert.match(fn, /clinic-prescriptions/);
+  assert.match(fn, /registry\/global/);
+  assert.match(fn, /permanentKey/);
+  assert.match(fn, /expectedRevision/);
+  assert.match(fn, /ready_for_admin/);
+  assert.match(dashboard, /patient-prescription-badge/);
+  assert.doesNotMatch(dashboard, /class="mini prescription-row-btn"/);
+  assert.match(index, /id="prescriptionCheck"/);
+  assert.match(index, /id="operationPrescriptionsCount"/);
   assert.match(toml, /from = "\/api\/prescriptions"/);
   assert.match(sw, /prescription\.html/);
 });

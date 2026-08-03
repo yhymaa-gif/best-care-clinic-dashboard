@@ -87,6 +87,7 @@ function setupModernSidebarScroll(){
 }
 const API='/api/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
+const PRESCRIPTIONS_API='/api/prescriptions';
 const PUSH_API='/api/push';
 const PRESENCE_API='/api/presence';
 const ALERTS_API='/api/alerts';
@@ -126,7 +127,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.57-prescriptions-full-name-sync';
+const DASHBOARD_BUILD='7.58-prescription-center';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -168,7 +169,7 @@ const alertFirstSeenAt=new Map();
 let lastDoctorFloatingAlertAt=Number(sessionStorage.getItem('bestcare_doctor_alert_seen_at')||0);
 let treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetchedAt:0};
 let treatmentPlanCenter={records:{},aliases:{},loading:false,error:'',loadedAt:0};
-let operationsCenter={filter:'all',labCases:[],labLoading:false,labError:'',labLoadedAt:0};
+let operationsCenter={filter:'all',labCases:[],labLoading:false,labError:'',labLoadedAt:0,prescriptions:[],prescriptionsLoading:false,prescriptionsError:'',prescriptionsLoadedAt:0,prescriptionsTimer:null,prescriptionsStarted:false};
 let patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
 let patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:0};
 let patientProfileState={lookup:null,profile:null,loading:false,error:'',tab:'appointments'};
@@ -232,7 +233,7 @@ function unlockApp(user=null){
   startPresence();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
-    if(VIEW_MODE==='admin'){startAdminPatientHub();startAppointmentRequests()}
+    if(VIEW_MODE==='admin'){startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling()}
     if(NEED_ROLE_CHOICE&&authUser?.role==='admin')requestAnimationFrame(()=>openRoleChoice());
   });
 }
@@ -240,6 +241,7 @@ function lockApp(message='انتهت الجلسة بسبب الخمول. سجّ�
   stopPresence(false);
   stopAdminPatientHub();
   stopAppointmentRequests();
+  stopOperationsPrescriptionPolling();
   authReady=false;
   authUser=null;
   purgeSensitiveLocalData();
@@ -1797,26 +1799,36 @@ function operationCenterItems(){
         source:`مركز المعمل · ${operationClinicLabel(item.clinicId)}`,tone:['needs_adjustment','returned_lab'].includes(item.status)?'urgent':['ready_at_lab','received_clinic'].includes(item.status)?'ready':'pending',href:`./lab.html?${params.toString()}`
       };
     });
-  return [...appointmentItems,...planItems,...labItems].sort((a,b)=>b.priority-a.priority||b.updatedAt-a.updatedAt);
+  const prescriptionItems=(operationsCenter.prescriptions||[])
+    .filter(item=>item?.status==='ready_for_admin')
+    .map(item=>({
+      id:`prescription:${item.canonical}`,type:'prescriptions',canonical:item.canonical,status:item.status,priority:84,updatedAt:Number(item.updatedAt||0),
+      title:'وصفة معتمدة بانتظار مشاركة الإدارة',patient:item.patient?.name||'مريض بدون اسم',identity:item.patient?.file?`ملف ${item.patient.file}`:(item.patient?.phone||''),
+      detail:`${Number(item.medicineCount||0)} علاج · معتمدة بواسطة ${item.updatedBy||'الطبيب'}`,source:`مركز الوصفات · ${operationClinicLabel(item.clinicId)}`,
+      tone:'prescription',href:`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||item.patient?.id||'',date:item.sourceDate||today(),clinic:item.clinicId||'clinic-1',view:'admin',patientName:item.patient?.name||'',file:item.patient?.file||'',phone:item.patient?.phone||'',nationalId:item.patient?.nationalId||''}).toString()}`
+    }));
+  return [...appointmentItems,...planItems,...labItems,...prescriptionItems].sort((a,b)=>b.priority-a.priority||b.updatedAt-a.updatedAt);
 }
 function renderOperationsCenter(){
   const list=$('operationsAlertList');if(!list)return;
   const items=operationCenterItems();
-  const counts={appointments:items.filter(item=>item.type==='appointments').length,plans:items.filter(item=>item.type==='plans').length,labs:items.filter(item=>item.type==='labs').length};
-  $('operationAllCount').textContent=String(items.length);$('operationAppointmentsCount').textContent=String(counts.appointments);$('operationPlansCount').textContent=String(counts.plans);$('operationLabsCount').textContent=String(counts.labs);
+  const counts={appointments:items.filter(item=>item.type==='appointments').length,plans:items.filter(item=>item.type==='plans').length,labs:items.filter(item=>item.type==='labs').length,prescriptions:items.filter(item=>item.type==='prescriptions').length};
+  $('operationAllCount').textContent=String(items.length);$('operationAppointmentsCount').textContent=String(counts.appointments);$('operationPlansCount').textContent=String(counts.plans);$('operationLabsCount').textContent=String(counts.labs);$('operationPrescriptionsCount').textContent=String(counts.prescriptions);
   document.querySelectorAll('[data-operation-filter]').forEach(button=>button.classList.toggle('active',button.dataset.operationFilter===operationsCenter.filter));
   const visible=operationsCenter.filter==='all'?items:items.filter(item=>item.type===operationsCenter.filter);
-  if((treatmentPlanCenter.loading||operationsCenter.labLoading)&&!visible.length){list.innerHTML='<div class="treatment-plan-center-empty">جارٍ تجميع التنبيهات التشغيلية…</div>';return}
+  if((treatmentPlanCenter.loading||operationsCenter.labLoading||operationsCenter.prescriptionsLoading)&&!visible.length){list.innerHTML='<div class="treatment-plan-center-empty">جارٍ تجميع التنبيهات التشغيلية…</div>';return}
   if(!visible.length){list.innerHTML='<div class="operations-center-clear"><span>✓</span><strong>لا توجد إجراءات معلقة في هذا القسم</strong><small>ستظهر التحديثات هنا تلقائيًا عند وصولها.</small></div>';return}
-  const icons={appointments:'📅',plans:'▤',labs:'🦷'};
+  const icons={appointments:'📅',plans:'▤',labs:'🦷',prescriptions:'💊'};
   const labLabels={pending_send:'بانتظار التسليم',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة بالمعمل',received_clinic:'وصلت للعيادة',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'};
   list.innerHTML=visible.slice(0,60).map(item=>{
     const control=item.type==='appointments'
       ?`<select data-operation-appointment-status="${escapeHtml(item.recordId)}" aria-label="تعديل حالة طلب الموعد">${Object.entries(APPOINTMENT_STATUS_LABELS).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`
       :item.type==='plans'
         ?`<select data-operation-plan-status="${escapeHtml(item.canonical)}" aria-label="تعديل حالة الخطة">${PLAN_STATUS_VALUES.map(value=>`<option value="${value}" ${item.status===value?'selected':''}>${escapeHtml(planStatusText(value))}</option>`).join('')}</select>`
-        :`<select data-operation-lab-status="${escapeHtml(item.recordId)}" data-operation-lab-clinic="${escapeHtml(item.clinicId)}" aria-label="تعديل حالة المعمل">${Object.entries(labLabels).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`;
-    return`<article class="operation-alert-item ${item.tone}" data-operation-type="${item.type}"><span class="operation-alert-icon" aria-hidden="true">${icons[item.type]}</span><div class="operation-alert-copy"><small>${escapeHtml(item.source)}</small><strong>${escapeHtml(item.title)}</strong><b>${escapeHtml(item.patient)}${item.identity?` · ${escapeHtml(item.identity)}`:''}</b><p>${escapeHtml(item.detail||'')}</p></div><div class="operation-alert-actions">${control}${item.type==='plans'?`<button type="button" data-operation-plan="${escapeHtml(item.canonical)}">فتح الخطة</button>`:`<a href="${escapeHtml(item.href)}">فتح المركز</a>`}</div></article>`;
+        :item.type==='labs'
+          ?`<select data-operation-lab-status="${escapeHtml(item.recordId)}" data-operation-lab-clinic="${escapeHtml(item.clinicId)}" aria-label="تعديل حالة المعمل">${Object.entries(labLabels).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`
+          :'<span class="prescription-admin-ready">جاهزة للمشاركة</span>';
+    return`<article class="operation-alert-item ${item.tone}" data-operation-type="${item.type}"><span class="operation-alert-icon" aria-hidden="true">${icons[item.type]}</span><div class="operation-alert-copy"><small>${escapeHtml(item.source)}</small><strong>${escapeHtml(item.title)}</strong><b>${escapeHtml(item.patient)}${item.identity?` · ${escapeHtml(item.identity)}`:''}</b><p>${escapeHtml(item.detail||'')}</p></div><div class="operation-alert-actions">${control}${item.type==='plans'?`<button type="button" data-operation-plan="${escapeHtml(item.canonical)}">فتح الخطة</button>`:`<a href="${escapeHtml(item.href)}">${item.type==='prescriptions'?'فتح الوصفة ومشاركتها':'فتح المركز'}</a>`}</div></article>`;
   }).join('');
 }
 function updateTreatmentPlanCenterTrigger(){
@@ -1869,6 +1881,29 @@ async function refreshOperationsLabCases(){
   finally{operationsCenter.labLoading=false;renderOperationsCenter();updateTreatmentPlanCenterTrigger()}
   return operationsCenter.labCases;
 }
+async function refreshOperationsPrescriptions(){
+  if(VIEW_MODE!=='admin'||authUser?.role!=='admin'||operationsCenter.prescriptionsLoading)return operationsCenter.prescriptions;
+  operationsCenter.prescriptionsLoading=true;operationsCenter.prescriptionsError='';renderOperationsCenter();
+  try{
+    const response=await request(`${PRESCRIPTIONS_API}?scope=all&_=${Date.now()}`,{},15000),data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'تعذر تحميل الوصفات');
+    operationsCenter.prescriptions=Array.isArray(data.records)?data.records:[];operationsCenter.prescriptionsLoadedAt=Date.now();
+  }catch(error){operationsCenter.prescriptionsError=String(error.message||error)}
+  finally{operationsCenter.prescriptionsLoading=false;renderOperationsCenter();updateTreatmentPlanCenterTrigger()}
+  return operationsCenter.prescriptions;
+}
+function scheduleOperationsPrescriptionPolling(){
+  clearTimeout(operationsCenter.prescriptionsTimer);if(!operationsCenter.prescriptionsStarted)return;
+  const cadence=syncCadence(),delay=document.hidden?Math.max(cadence.delay,120000):(cadence.workHours?30000:5*60*1000);
+  operationsCenter.prescriptionsTimer=setTimeout(async()=>{await refreshOperationsPrescriptions();scheduleOperationsPrescriptionPolling()},delay);
+}
+function startOperationsPrescriptionPolling(){
+  if(operationsCenter.prescriptionsStarted)return;operationsCenter.prescriptionsStarted=true;
+  refreshOperationsPrescriptions().finally(scheduleOperationsPrescriptionPolling);
+}
+function stopOperationsPrescriptionPolling(){
+  operationsCenter.prescriptionsStarted=false;clearTimeout(operationsCenter.prescriptionsTimer);operationsCenter.prescriptionsTimer=null;
+}
 async function changeOperationLabStatus(id,clinicId,status,select){
   const item=operationsCenter.labCases.find(entry=>String(entry.id)===String(id));
   if(!item||item.status===status)return;
@@ -1885,7 +1920,7 @@ async function changeOperationLabStatus(id,clinicId,status,select){
 }
 function openTreatmentPlanCenter(){
   operationsCenter.filter='all';openModal('treatmentPlanCenterModal');renderTreatmentPlanCenter();renderOperationsCenter();
-  Promise.allSettled([refreshTreatmentPlanCenter(),refreshAppointmentRequests({notify:false}),refreshOperationsLabCases()]);
+  Promise.allSettled([refreshTreatmentPlanCenter(),refreshAppointmentRequests({notify:false}),refreshOperationsLabCases(),refreshOperationsPrescriptions()]);
 }
 function openPlanCenterRecord(canonical){
   const record=treatmentPlanCenter.records?.[canonical];if(!record?.sourcePatientId||!record?.sourceDate)return;
@@ -2164,7 +2199,7 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p);return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><strong>${escapeHtml(firstName(p.name))}</strong>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td><strong>${escapeHtml(firstName(p.name))}</strong><button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(p.file)}${isZeroFileNumber(p.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -2179,7 +2214,6 @@ function renderTable(){
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
             <button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>
             <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>
-            <button class="mini prescription-row-btn" type="button" data-prescription-id="${escapeHtml(p.id)}" title="إنشاء وصفة طبية للمريض">💊 وصفة طبية</button>
             ${VIEW_MODE==='clinic'&&displayStatus==='done'?`<button class="mini" type="button" data-completion-id="${escapeHtml(p.id)}">${lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة'}</button>`:''}
             <button type="button" class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button type="button" class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
@@ -2546,6 +2580,7 @@ function finishPatient(id){
   $('paymentPatientText').textContent=lang==='en'?`Complete ${firstName(p.name)} and choose the required next actions.`:`اكتمل علاج ${firstName(p.name)} — اختر ما يلزم بعد الإكمال.`;
   $('paymentRequiredCheck').checked=false;
   $('planDraftCheck').checked=false;
+  $('prescriptionCheck').checked=false;
   $('paymentActionField').hidden=true;
   resetPaymentProcedureEditor();
   openModal('paymentModal');
@@ -2555,6 +2590,7 @@ async function confirmPatientCompletion(){
   const p=patientById(pendingCompletionId);if(!p)return;
   const paymentRequired=$('paymentRequiredCheck').checked;
   const createPlanDraft=$('planDraftCheck').checked;
+  const createPrescription=$('prescriptionCheck').checked;
   const selection=collectPaymentItems();
   if(selection.error){toast(lang==='en'?'Payment action required':'بيانات الإجراء ناقصة',selection.error);$('paymentOtherInput').focus();return}
   if(paymentRequired&&!selection.items.length){toast(lang==='en'?'Payment action required':'اختر إجراء الدفع',lang==='en'?'Select at least one procedure.':'اختر إجراءً واحدًا على الأقل لإرساله إلى الإدارة.');return}
@@ -2584,6 +2620,12 @@ async function confirmPatientCompletion(){
     if(paymentRequired)await trackPaymentProcedureUsage(selection.items);
     closeModal('paymentModal');
     pendingCompletionId=null;
+    if(createPrescription){
+      await pushState();
+      toast(createPlanDraft?'تم تجهيز المسودة والوصفة':'تم تجهيز الوصفة','اختر نوع العلاج وأكمل الحقول، ثم اعتمدها ليصل التنبيه إلى الإدارة.');
+      openPrescription(p.id);
+      return;
+    }
     if(createPlanDraft){
       await pushState();
       toast('تم إنشاء مسودة الخطة','أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
@@ -3605,6 +3647,8 @@ function applyLang(){
   setText('#paymentChoiceHelp',lang==='en'?'Send the completed procedures to administration for collection.':'إرسال الإجراءات المنفذة إلى الإدارة للتحصيل.');
   setText('#planDraftChoiceTitle',lang==='en'?'Treatment plan draft':'إنشاء مسودة خطة علاجية');
   setText('#planDraftChoiceHelp',lang==='en'?'Open the plan form, complete it, then approve it as the doctor.':'فتح نموذج الخطة وإكمالها ثم اعتمادها من الطبيب.');
+  setText('#prescriptionChoiceTitle',lang==='en'?'Prepare a prescription':'إعداد وصفة علاجية');
+  setText('#prescriptionChoiceHelp',lang==='en'?'Choose the category, complete the clinician-authored fields, then send it to administration.':'اختر نوع العلاج، ثم يعتمد الطبيب الوصفة لتصل إلى مركز الوصفات بالإدارة.');
   $('completionFlowNote').innerHTML=lang==='en'?'<strong>Workflow:</strong> The doctor completes and approves the draft, then administration receives it to finish the process.':'<strong>المسار:</strong> يُكمل الطبيب المسودة ويعتمدها، ثم تستلمها الإدارة لاستكمال الإجراءات.';
   setText('#confirmCompletionBtn',lang==='en'?'Confirm completion and continue':'اعتماد إكمال العلاج والمتابعة');
   setText('#paymentItemsLabel',lang==='en'?'Payment order procedures':'إجراءات أمر الدفع');
@@ -3882,7 +3926,7 @@ $('treatmentPlanCenterBtn')?.addEventListener('click',openTreatmentPlanCenter);
 $('treatmentPlanCenterSearch')?.addEventListener('input',renderTreatmentPlanCenter);
 $('treatmentPlanCenterClinic')?.addEventListener('change',renderTreatmentPlanCenter);
 $('treatmentPlanCenterStatus')?.addEventListener('change',renderTreatmentPlanCenter);
-$('treatmentPlanCenterRefresh')?.addEventListener('click',()=>Promise.allSettled([refreshTreatmentPlanCenter(),refreshAppointmentRequests({notify:false}),refreshOperationsLabCases()]));
+$('treatmentPlanCenterRefresh')?.addEventListener('click',()=>Promise.allSettled([refreshTreatmentPlanCenter(),refreshAppointmentRequests({notify:false}),refreshOperationsLabCases(),refreshOperationsPrescriptions()]));
 $('treatmentPlanCenterList')?.addEventListener('click',event=>{
   const open=event.target.closest('[data-plan-center-open]')?.dataset.planCenterOpen;
   const remove=event.target.closest('[data-plan-center-delete]')?.dataset.planCenterDelete;
@@ -3990,7 +4034,7 @@ document.addEventListener('click',event=>{
   $('doctorFloatingAlertPanel').hidden=true;
   $('doctorFloatingAlertBtn').setAttribute('aria-expanded','false');
 });
-document.addEventListener('visibilitychange',()=>{if(appointmentRequests.started){scheduleAppointmentRequests();if(!document.hidden)refreshAppointmentRequests()}});
+document.addEventListener('visibilitychange',()=>{if(appointmentRequests.started){scheduleAppointmentRequests();if(!document.hidden)refreshAppointmentRequests()}if(operationsCenter.prescriptionsStarted){scheduleOperationsPrescriptionPolling();if(!document.hidden)refreshOperationsPrescriptions()}});
 document.addEventListener('keydown',event=>{
   const modal=[...document.querySelectorAll('.modal.open')].at(-1);
   if(modal){
