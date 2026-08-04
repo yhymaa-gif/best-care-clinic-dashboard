@@ -7,9 +7,9 @@
   const $=id=>document.getElementById(id);
   const text={
     ar:{
-      choose:'اختر صورة جدول المواعيد أو اسحبها هنا',ready:'الصورة جاهزة — اضغط بدء الاستخراج',loading:'تحميل محرك القراءة المحلي…',recognizing:'قراءة الجدول…',parsing:'ترتيب أسماء المرضى والمواعيد…',matching:'مطابقة أحدث بيانات المرضى…',done:'اكتمل الاستخراج',badFile:'اختر ملف صورة بصيغة JPG أو PNG أو WEBP',tooLarge:'حجم الصورة أكبر من 20 ميجابايت',noRows:'لم تُكتشف صفوف مكتملة. جرّب صورة أوضح أو صحّح المسودة يدويًا.',needImage:'اختر صورة جدول المواعيد أولًا',mergeNone:'لا توجد صفوف صحيحة محددة للدمج',merged:'تم دمج قائمة الصورة',mergedDetail:n=>`أضيف ${n.added} مريض، وتجاوز النظام ${n.skipped} صف مكرر`,download:'تم تجهيز ملف CSV',failed:'تعذر قراءة الصورة',engineFailed:'تعذر تشغيل قارئ الصور على هذا الجهاز. تحقق من الاتصال أول مرة ثم أعد المحاولة.',matchFailed:'اكتمل استخراج الصورة، لكن تعذرت مطابقة سجل المرضى. يمكنك إعادة المحاولة.',review:'راجع الصفوف، خاصة المعلّمة بالأصفر أو الأحمر، ثم ادمجها في قائمة اليوم.',row:'صف',high:'ثقة عالية',medium:'يحتاج مراجعة',low:'يحتاج تصحيح',unnamed:'غير معروف',archiveExact:'مطابق ومحدّث',archiveSame:'مطابق بالسجل',archiveReview:'راجع التطابق',archiveAmbiguous:'أكثر من سجل',archiveNone:'غير موجود بالسجل',archiveSummary:(matched,corrected,total)=>`طابق السجل ${matched} من ${total} صفوف، وطُبّق ${corrected} تصحيح آمن.`},
+      choose:'اختر صورة جدول المواعيد أو اسحبها هنا',ready:'الصورة جاهزة — اضغط بدء الاستخراج',loading:'تحميل محرك القراءة المحلي…',recognizing:'قراءة الجدول…',retrying:'إعادة قراءة التنسيق المعقد…',parsing:'ترتيب أسماء المرضى والمواعيد…',matching:'مطابقة أحدث بيانات المرضى…',done:'اكتمل الاستخراج',badFile:'اختر ملف صورة بصيغة JPG أو PNG أو WEBP',tooLarge:'حجم الصورة أكبر من 20 ميجابايت',noRows:'لم تُكتشف صفوف مكتملة. تأكد أن الصورة تعرض أسماء المرضى والأوقات بوضوح.',needImage:'اختر صورة جدول المواعيد أولًا',mergeNone:'لا توجد صفوف صحيحة محددة للدمج',merged:'تم دمج قائمة الصورة',mergedDetail:n=>`أضيف ${n.added} مريض، وتجاوز النظام ${n.skipped} صف مكرر`,download:'تم تجهيز ملف CSV',failed:'تعذر قراءة الصورة',engineFailed:'تعذر تشغيل قارئ الصور على هذا الجهاز. تحقق من الاتصال أول مرة ثم أعد المحاولة.',matchFailed:'اكتمل استخراج الصورة، لكن تعذرت مطابقة سجل المرضى. يمكنك إعادة المحاولة.',review:'راجع الصفوف، خاصة المعلّمة بالأصفر أو الأحمر، ثم ادمجها في قائمة اليوم.',row:'صف',high:'ثقة عالية',medium:'يحتاج مراجعة',low:'يحتاج تصحيح',unnamed:'غير معروف',archiveExact:'مطابق ومحدّث',archiveSame:'مطابق بالسجل',archiveReview:'راجع التطابق',archiveAmbiguous:'أكثر من سجل',archiveNone:'غير موجود بالسجل',archiveSummary:(matched,corrected,total)=>`طابق السجل ${matched} من ${total} صفوف، وطُبّق ${corrected} تصحيح آمن.`},
     en:{
-      choose:'Choose an appointment image or drop it here',ready:'Image ready — start extraction',loading:'Loading the local reader…',recognizing:'Reading the appointment table…',parsing:'Organizing patients and times…',matching:'Matching the latest patient records…',done:'Extraction complete',badFile:'Choose a JPG, PNG, or WEBP image',tooLarge:'The image is larger than 20 MB',noRows:'No complete rows were detected. Try a clearer image or edit the draft manually.',needImage:'Choose an appointment image first',mergeNone:'No valid selected rows to merge',merged:'Image list merged',mergedDetail:n=>`${n.added} patients added; ${n.skipped} duplicate rows skipped`,download:'CSV file prepared',failed:'Image reading failed',engineFailed:'The image reader could not start on this device. Connect once and retry.',matchFailed:'Image extraction completed, but patient matching failed. You can retry.',review:'Review yellow or red rows, then merge them into today’s list.',row:'Row',high:'High confidence',medium:'Review',low:'Correction needed',unnamed:'Unknown',archiveExact:'Matched and updated',archiveSame:'Record matched',archiveReview:'Review match',archiveAmbiguous:'Multiple records',archiveNone:'Not in records',archiveSummary:(matched,corrected,total)=>`${matched} of ${total} rows matched; ${corrected} safe corrections applied.`}
+      choose:'Choose an appointment image or drop it here',ready:'Image ready — start extraction',loading:'Loading the local reader…',recognizing:'Reading the appointment table…',retrying:'Re-reading the complex layout…',parsing:'Organizing patients and times…',matching:'Matching the latest patient records…',done:'Extraction complete',badFile:'Choose a JPG, PNG, or WEBP image',tooLarge:'The image is larger than 20 MB',noRows:'No complete rows were detected. Make sure patient names and times are clearly visible.',needImage:'Choose an appointment image first',mergeNone:'No valid selected rows to merge',merged:'Image list merged',mergedDetail:n=>`${n.added} patients added; ${n.skipped} duplicate rows skipped`,download:'CSV file prepared',failed:'Image reading failed',engineFailed:'The image reader could not start on this device. Connect once and retry.',matchFailed:'Image extraction completed, but patient matching failed. You can retry.',review:'Review yellow or red rows, then merge them into today’s list.',row:'Row',high:'High confidence',medium:'Review',low:'Correction needed',unnamed:'Unknown',archiveExact:'Matched and updated',archiveSame:'Record matched',archiveReview:'Review match',archiveAmbiguous:'Multiple records',archiveNone:'Not in records',archiveSummary:(matched,corrected,total)=>`${matched} of ${total} rows matched; ${corrected} safe corrections applied.`}
   };
 
   let api=null,initialized=false;
@@ -72,14 +72,32 @@
 
   function timeMatches(value){
     const normalized=normalizeDigits(value)
-      .replace(/[؛;٫،,\.]/g,':')
+      .replace(/[؛;٫،,\.\/\\-]/g,':')
       .replace(/\s*:\s*/g,':');
     const matches=[];
-    const pattern=/(?:^|\D)([01]?\d|2[0-3]):([0-5]\d)(?:\D|$)/g;
+    const normalizeClock=(hour,minute,period='')=>{
+      let h=Number(hour),m=Number(minute);
+      const marker=String(period).toLowerCase();
+      if((marker==='م'||marker==='pm')&&h<12)h+=12;
+      if((marker==='ص'||marker==='am')&&h===12)h=0;
+      if(h>23||m>59)return'';
+      return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+    };
+    const pattern=/(?:^|\D)([01]?\d|2[0-3]):([0-5]\d)\s*(ص|م|am|pm)?(?=\D|$)/gi;
     let match;
     while((match=pattern.exec(normalized))){
-      matches.push(`${String(Number(match[1])).padStart(2,'0')}:${match[2]}`);
+      const parsed=normalizeClock(match[1],match[2],match[3]);
+      if(parsed)matches.push(parsed);
       if(pattern.lastIndex===match.index)pattern.lastIndex+=1;
+    }
+    const compact=/(?:^|\D)(\d{3,4})\s*(ص|م|am|pm)?(?=\D|$)/gi;
+    while((match=compact.exec(normalized))){
+      const digits=match[1];
+      if(/^19\d{2}$/.test(digits)||/^20\d{2}$/.test(digits))continue;
+      const hour=digits.slice(0,-2),minute=digits.slice(-2);
+      const parsed=normalizeClock(hour,minute,match[2]);
+      if(parsed)matches.push(parsed);
+      if(compact.lastIndex===match.index)compact.lastIndex+=1;
     }
     return [...new Set(matches)];
   }
@@ -101,7 +119,7 @@
     const clean=words.filter(word=>cleanText(word.text));
     const heights=clean.map(word=>word.height).filter(Boolean).sort((a,b)=>a-b);
     const medianHeight=heights[Math.floor(heights.length/2)]||28;
-    const tolerance=Math.max(14,medianHeight*.72);
+    const tolerance=Math.max(16,medianHeight*.95);
     const rows=[];
     clean.sort((a,b)=>a.y-b.y||a.left-b.left).forEach(word=>{
       let row=rows.find(item=>Math.abs(item.center-word.y)<=tolerance);
@@ -218,14 +236,21 @@
   }
 
   function parseTextFallback(rawText,startIndex=0){
-    return String(rawText||'').split(/\r?\n/).map(cleanText).filter(Boolean).map((line,index)=>{
-      const times=timeMatches(line).sort((a,b)=>minutes(a)-minutes(b));
+    const lines=String(rawText||'').split(/\r?\n/).map(cleanText).filter(Boolean);
+    return lines.map((line,index)=>{
+      let candidate=line;
+      let times=timeMatches(candidate).sort((a,b)=>minutes(a)-minutes(b));
+      const hasName=/[\u0600-\u06ff]{2,}|[a-z]{2,}/i.test(candidate.replace(/\b(?:am|pm)\b/gi,''));
+      if(!times.length||!hasName){
+        candidate=[lines[index-1],line,lines[index+1]].filter(Boolean).join(' ');
+        times=timeMatches(candidate).sort((a,b)=>minutes(a)-minutes(b));
+      }
       if(!times.length)return null;
       const start=times[0],end=times.find(value=>minutes(value)>minutes(start))||addMinutes(start,30);
-      const phone=normalizePhone(line.match(/(?:\+?966|0)?5\d{8}/)?.[0]||'');
-      const numbers=line.match(/\b\d{1,8}\b/g)||[];
+      const phone=normalizePhone(candidate.match(/(?:\+?966|0)?5\d{8}/)?.[0]||'');
+      const numbers=candidate.match(/\b\d{1,8}\b/g)||[];
       const file=numbers.find(value=>!/^20\d{2}$/.test(value)&&!/^19\d{2}$/.test(value)&&!times.some(time=>time.replace(':','')===value))||'';
-      const tokens=line.split(/\s+/).filter(token=>/[\u0600-\u06ff]{2,}|[a-z]{2,}/i.test(token)&&!stopWords.has(token.toLowerCase()));
+      const tokens=candidate.split(/\s+/).filter(token=>/[\u0600-\u06ff]{2,}|[a-z]{2,}/i.test(token)&&!stopWords.has(token.toLowerCase())&&!/^(?:am|pm|ص|م)$/i.test(token));
       const name=cleanText(tokens.slice(0,6).join(' ').replace(/[^\u0600-\u06ffA-Za-z' -]/g,''));
       if(!name)return null;
       return{id:uid(),sourceIndex:startIndex+index+1,include:true,name,file,phone,start,end,procedure:'',confidence:48,valid:true,archive:null};
@@ -369,12 +394,12 @@
     const sourceWidth=rotated?source.height:source.width;
     const sourceHeight=rotated?source.width:source.height;
     const mobile=matchMedia?.('(max-width: 900px)')?.matches||Number(navigator.deviceMemory||8)<=4;
-    const targetWidth=mobile?1350:1750;
-    const maxScale=mobile?1.65:2.1;
+    const targetWidth=mobile?1600:1900;
+    const maxScale=mobile?2.4:2.5;
     const scale=Math.min(maxScale,targetWidth/sourceWidth);
     const width=Math.max(1,Math.round(sourceWidth*scale));
     const totalHeight=Math.max(1,Math.round(sourceHeight*scale));
-    const segmentHeight=mobile?1700:2300;
+    const segmentHeight=mobile?1600:2200;
     const overlap=80;
     const canvases=[];
     for(let top=0,index=0;top<totalHeight;top+=segmentHeight-overlap,index+=1){
@@ -436,9 +461,20 @@
         status(`${t('recognizing')} ${index+1}/${canvases.length}`,48+(index/canvases.length)*48);
         const result=await worker.recognize(canvases[index],{}, {text:true,tsv:true});
         extracted.push(...parseRecognition(result.data||{}));
-        if(index>0){canvases[index].width=1;canvases[index].height=1}
         await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
       }
+      if(!extracted.length){
+        await worker.setParameters({tessedit_pageseg_mode:window.Tesseract.PSM?.SPARSE_TEXT??11,preserve_interword_spaces:'1'});
+        for(let index=0;index<canvases.length;index+=1){
+          state.chunkIndex=index;
+          status(`${t('retrying')} ${index+1}/${canvases.length}`,48+(index/canvases.length)*48);
+          const result=await worker.recognize(canvases[index],{}, {text:true,tsv:true});
+          extracted.push(...parseRecognition(result.data||{}));
+          await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+        }
+        await worker.setParameters({tessedit_pageseg_mode:window.Tesseract.PSM?.AUTO??3,preserve_interword_spaces:'1'});
+      }
+      canvases.slice(1).forEach(canvas=>{canvas.width=1;canvas.height=1});
       status(t('parsing'),97);
       state.rows=dedupeRows(extracted);
       renderRows();
@@ -533,5 +569,5 @@
     setBusy(false);
   }
 
-  window.BestCareOCR={init,open,version:'7.42.0'};
+  window.BestCareOCR={init,open,version:'7.43.0'};
 })();

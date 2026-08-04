@@ -55,8 +55,9 @@ test('mobile OCR uses a direct compatible worker and segmented canvases', async 
   const script = await read('ocr-import-v7-3-1.js');
   assert.match(script, /corePath:`\$\{base\}\/tesseract-core-lstm\.wasm\.js`/);
   assert.match(script, /workerBlobURL:false/);
-  assert.match(script, /const segmentHeight=mobile\?1700:2300/);
+  assert.match(script, /const segmentHeight=mobile\?1600:2200/);
   assert.match(script, /for\(let index=0;index<canvases\.length;index\+=1\)/);
+  assert.match(script, /SPARSE_TEXT\?\?11/);
 });
 
 test('every PWA application-shell asset exists', async () => {
