@@ -185,4 +185,68 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
   return { canonical, record: next, revision: nextRegistry.revision };
 }
 
+export async function importPatientDirectory(values, meta = {}) {
+  const input = Array.isArray(values) ? values.slice(0, 3000) : [];
+  const registry = await getPatientDirectory();
+  const aliases = { ...(registry.aliases || {}) };
+  const records = { ...(registry.records || {}) };
+  const now = Date.now();
+  const result = { received: input.length, created: 0, updated: 0, skipped: 0, conflicts: 0, errors: [] };
+
+  for (let index = 0; index < input.length; index += 1) {
+    const patient = directoryPatient(input[index]);
+    const identityAliases = aliasesFor(patient);
+    const fullNameParts = patient.fullName.split(/\s+/).filter(Boolean);
+    if (fullNameParts.length < 2 || !identityAliases.length) {
+      result.skipped += 1;
+      if (result.errors.length < 80) result.errors.push({ row: index + 2, reason: fullNameParts.length < 2 ? 'full_name_required' : 'identity_required' });
+      continue;
+    }
+    const linked = [...new Set(identityAliases.map(alias => aliases[alias]).filter(Boolean))];
+    if (linked.length > 1) {
+      result.conflicts += 1;
+      if (result.errors.length < 80) result.errors.push({ row: index + 2, reason: 'identity_conflict' });
+      continue;
+    }
+    const canonical = linked[0] || hash(identityAliases.slice().sort()[0]);
+    const existing = records[canonical] || {};
+    const clinicId = cleanText(input[index]?.clinicId || meta.clinicId, 20);
+    const next = {
+      ...existing,
+      canonical,
+      id: existing.id || patient.id,
+      fullName: patient.fullName,
+      fileNo: existing.fileNo || patient.fileNo,
+      mobile: existing.mobile || patient.mobile,
+      nationalId: existing.nationalId || patient.nationalId,
+      aliases: [...new Set([...(existing.aliases || []), ...identityAliases])],
+      clinicIds: [...new Set([...(existing.clinicIds || []), ...(clinicId ? [clinicId] : [])])],
+      latestClinicId: existing.latestClinicId || clinicId,
+      latestPatientId: existing.latestPatientId || patient.id,
+      lockedFields: [...new Set([...(existing.lockedFields || []), 'fullName'])],
+      firstSeenAt: Number(existing.firstSeenAt || now),
+      lastSeenAt: Math.max(Number(existing.lastSeenAt || 0), now),
+      updatedAt: now,
+      importedAt: now,
+      updatedBy: cleanText(meta.actor, 120)
+    };
+    records[canonical] = next;
+    next.aliases.forEach(alias => { aliases[alias] = canonical; });
+    if (Object.keys(existing).length) result.updated += 1;
+    else result.created += 1;
+  }
+
+  if (!result.created && !result.updated) return { ...result, revision: Number(registry.revision || 0), records: registry.records || {} };
+  const keep = Object.keys(records).sort((left, right) => Number(records[right]?.lastSeenAt || records[right]?.updatedAt || 0) - Number(records[left]?.lastSeenAt || records[left]?.updatedAt || 0)).slice(0, MAX_RECORDS);
+  const allowed = new Set(keep);
+  const nextRegistry = {
+    records: Object.fromEntries(keep.map(canonical => [canonical, records[canonical]])),
+    aliases: Object.fromEntries(Object.entries(aliases).filter(([, canonical]) => allowed.has(canonical))),
+    revision: Number(registry.revision || 0) + 1,
+    updatedAt: now
+  };
+  await directoryStore().setJSON(DIRECTORY_KEY, nextRegistry);
+  return { ...result, revision: nextRegistry.revision, records: nextRegistry.records };
+}
+
 export const __test = { directoryPatient, aliasesFor, nameScore, preferValue, appointmentSnapshot, mergeRecords };
