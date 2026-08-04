@@ -44,6 +44,7 @@ test('dashboard exposes a unified patient record and local theme control', async
   assert.match(html, /id="patientProfileForm"/);
   assert.match(html, /data-profile-tab="appointments"/);
   assert.match(html, /data-profile-tab="plans"/);
+  assert.match(html, /data-profile-tab="prescriptions"/);
   assert.match(html, /data-profile-tab="payments"/);
   assert.match(html, /data-profile-tab="labs"/);
   assert.match(html, /id="themeToggleBtn"/);

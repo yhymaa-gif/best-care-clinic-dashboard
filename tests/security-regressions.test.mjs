@@ -58,13 +58,13 @@ test('offline retry behavior is cached as part of the PWA shell', async () => {
   assert.match(offline, /<script src="\.\/offline\.js" defer><\/script>/);
 });
 
-test('mobile OCR uses a direct compatible worker and segmented canvases', async () => {
-  const script = await read('ocr-import-v7-3-1.js');
-  assert.match(script, /corePath:`\$\{base\}\/tesseract-core-lstm\.wasm\.js`/);
-  assert.match(script, /workerBlobURL:false/);
-  assert.match(script, /const segmentHeight=mobile\?1600:2200/);
-  assert.match(script, /for\(let index=0;index<canvases\.length;index\+=1\)/);
-  assert.match(script, /SPARSE_TEXT\?\?11/);
+test('smart image extraction is removed from the dashboard surface and runtime', async () => {
+  const html = await read('index.html');
+  const script = await read('dashboard.js');
+  const config = await read('netlify.toml');
+  assert.doesNotMatch(html, /extractorTopBtn|imageOcrBtn|ocrModal|استخراج ذكي/);
+  assert.doesNotMatch(script, /openOcrImporter|PATIENT_RECONCILE_API|ocr-import-v7/);
+  assert.doesNotMatch(config, /patient-reconcile/);
 });
 
 test('every PWA application-shell asset exists', async () => {

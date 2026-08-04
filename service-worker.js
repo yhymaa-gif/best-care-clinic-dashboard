@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260804-password-refresh';
+const CACHE_NAME='bestcare-dashboard-v1-20260805-realtime-sync';
 const APP_SHELL=[
   './',
   './index.html',
@@ -117,7 +117,12 @@ self.addEventListener('push',event=>{
     vibrate:[160,70,180],
     data:{url:payload.url||'./'}
   };
-  event.waitUntil(self.registration.showNotification(title,options));
+  const notify=self.registration.showNotification(title,options);
+  const wakeOpenPages=self.clients.matchAll({type:'window',includeUncontrolled:true}).then(openClients=>{
+    const message={type:'BESTCARE_REMOTE_SYNC',payload:{...payload,receivedAt:Date.now()}};
+    openClients.forEach(client=>client.postMessage(message));
+  });
+  event.waitUntil(Promise.allSettled([notify,wakeOpenPages]));
 });
 
 self.addEventListener('notificationclick',event=>{

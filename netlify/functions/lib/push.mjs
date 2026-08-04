@@ -62,6 +62,10 @@ export async function sendPushNotifications(event, { excludeClientId = '' } = {}
       body: `${event.body}${detail}`,
       type: event.type || 'patient',
       tag: event.tag || `bestcare-${event.type || 'update'}`,
+      clinicId: event.clinicId || '',
+      date: event.date || '',
+      revision: Number(event.revision || 0),
+      updatedAt: Number(event.updatedAt || Date.now()),
       url: event.url || (event.type === 'lab'
         ? `/lab.html?clinic=${encodeURIComponent(targetClinic)}`
         : `/?view=${event.type === 'payment' ? 'admin' : record.role}&clinic=${targetClinic}`),

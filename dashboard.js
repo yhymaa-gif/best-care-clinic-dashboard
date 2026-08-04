@@ -93,8 +93,8 @@ const PRESENCE_API='/api/presence';
 const ALERTS_API='/api/alerts';
 const ADMIN_PATIENTS_API='/api/admin-patients';
 const PATIENT_PROFILE_API='/api/patient-profile';
+const PATIENTS_API='/api/patients';
 const PATIENT_LOOKUP_API='/api/patient-lookup';
-const PATIENT_RECONCILE_API='/api/patient-reconcile';
 const ALERT_DISPLAY_MS=5*60*1000;
 const POLL_MS=5000;
 const SYNC_WORK_HIDDEN_MS=60000;
@@ -125,10 +125,10 @@ function presenceCadence(){
 }
 function adminHubCadence(){
   const cadence=syncCadence();
-  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
+  if(cadence.workHours)return document.hidden?5*60*1000:20*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.60-password-refresh';
+const DASHBOARD_BUILD='7.61-realtime-sync';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -148,8 +148,8 @@ const STATUS={waiting:'بانتظار الموعد',arrived:'وصل المريض
 const EN={waiting:'Waiting',arrived:'Patient arrived',early_arrival:'Early arrival',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
 const PLAN_STATUS_VALUES=['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'];
 const I18N={
-  ar:{documentTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageSubtitle:'شاشة استقبال ومتابعة المرضى — مزامنة مباشرة بين الأجهزة',updateToday:'تحديث قائمة اليوم',addPatient:'إضافة مريض',screenMode:'وضع الشاشة',installApp:'تثبيت التطبيق',settings:'الإعدادات ▾',imageOcr:'📷 قراءة صورة المواعيد',importCsv:'📥 استيراد CSV',exportCsv:'📤 تصدير CSV',testSync:'🧪 اختبار المزامنة',clearToday:'🗑 مسح قائمة اليوم',alertTitle:'تنبيه تعديل',alertInactiveHint:'إرسال ملاحظة للطبيب',alertActiveHint:'تنبيه فعّال — اضغط للإدارة',defaultAlert:'يوجد تعديل جديد على قائمة المواعيد',updateAvailable:'يتوفر تحديث جديد للتطبيق.',updateNow:'تحديث الآن',totalPatients:'إجمالي المرضى',completed:'تم الإنجاز',inTreatment:'قيد العلاج',remaining:'المتبقي',cancelled:'الملغاة',completionRate:'نسبة الإنجاز',originalTime:'وقت الموعد الأصلي',originalHint:'يبقى محفوظًا حسب جدول الموعد',actualDuration:'مدة العلاج الفعلية',actualStartHint:'يبدأ عند دخول المريض',upcomingPatients:'المرضى القادمون',upcomingHint:'خريطة أحجام حسب ترتيب الموعد',addNewPatient:'إضافة مريض جديد',editPatient:'تعديل بيانات المريض',add:'إضافة',editing:'تعديل',formIntro:'أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.',firstName:'الاسم الأول',fileNumber:'رقم الملف',appointmentDate:'تاريخ الموعد',startTime:'وقت البداية',endTime:'وقت النهاية',procedure:'الإجراء العلاجي',status:'الحالة',namePlaceholder:'اسم المريض',filePlaceholder:'رقم الملف',procedurePlaceholder:'مثال: مراجعة، كشف جديد',resetFields:'تفريغ الحقول',cancelEdit:'إلغاء التعديل',saveAdd:'حفظ وإضافة المريض',saveChanges:'حفظ التعديل',patientUpdated:'تم حفظ التعديل',patientAdded:'تمت إضافة المريض',movingPatient:'جارٍ نقل الموعد…',dateMoveFailed:'تعذر تغيير تاريخ الموعد',sourceSaveFailed:'تعذر حفظ قائمة اليوم القديم',targetLoadFailed:'تعذر قراءة قائمة اليوم الجديد',targetSaveFailed:'تعذر حفظ المريض في اليوم الجديد',patientList:'قائمة المرضى اليومية',searchPlaceholder:'بحث بالاسم أو الجوال أو رقم الملف',allStatuses:'كل الحالات',name:'الاسم',start:'البداية',end:'النهاية',action:'إجراء',todayNotes:'ملاحظات اليوم',notesPlaceholder:'اكتب ملاحظات اليوم...',exitFullscreen:'⤢ إلغاء ملء الشاشة',bulkTitle:'تحديث قائمة اليوم',bulkHelp:'كل مريض في سطر: الاسم، رقم الملف، البداية، النهاية، الإجراء',cancel:'إلغاء',saveList:'حفظ القائمة',alertModalTitle:'🔔 إرسال تنبيه تعديل',alertModalHelp:'اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.',alertMessage:'رسالة التنبيه',alertPlaceholder:'مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة',alertTip:'يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.',close:'إغلاق',clearAlert:'إلغاء التنبيه الحالي',publishAlert:'نشر التنبيه',noAppointments:'لا توجد مواعيد لهذا اليوم',noUpcoming:'لا يوجد مرضى قادمون',edit:'تعديل',delete:'حذف',currentPatient:'المريض الحالي',nextToCall:'التالي للاستدعاء',noCurrent:'لا يوجد مريض قيد العلاج',noSchedule:'أضف قائمة المرضى لبدء المتابعة',fileLabel:'رقم الملف',nextDirect:'التالي مباشرة',patientNumber:'المريض رقم',lastCall:'آخر استدعاء',recall:'🔔 إعادة الاستدعاء',callNext:'🔔 استدعاء التالي',callPatient:'🔔 استدعاء المريض',startActual:'▶ بدء وقت الدخول الفعلي',actualRunning:'✓ الوقت الفعلي يعمل',finishPatient:'✓ إنهاء المريض',startedAt:'بدأ',developerRights:'جميع الحقوق محفوظة — تطوير يحيى هادي',ocrTitle:'📷 تحويل صورة المواعيد إلى قائمة مرضى',ocrHelp:'تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.',ocrPrivacy:'🔒 معالجة محلية — لا تُرفع الصورة',ocrChoose:'اختيار صورة من الجهاز',ocrDrop:'أو اسحب صورة جدول المواعيد هنا',ocrDropHint:'JPG أو PNG أو WEBP — حتى 20 MB',ocrNoFile:'لم يتم اختيار صورة',ocrRotate:'↻ تدوير الصورة 90°',ocrReady:'جاهز للاستخراج',ocrInitialHint:'اختر صورة واضحة يظهر فيها الجدول كاملًا.',ocrReviewTitle:'مسودة المراجعة',ocrReviewCaption:'يمكنك تعديل أي خانة قبل الدمج',ocrConfidence:'دقة القراءة',ocrStart:'بدء الاستخراج',ocrDownload:'تنزيل CSV',ocrMerge:'دمج في قائمة اليوم'},
-  en:{documentTitle:'Best Care Clinic Reception Dashboard',pageTitle:'Best Care Dental Clinics',pageSubtitle:'Patient reception and tracking — live sync across devices',updateToday:"Update today's list",addPatient:'Add patient',screenMode:'Screen mode',installApp:'Install app',settings:'Settings ▾',imageOcr:'📷 Read appointment image',importCsv:'📥 Import CSV',exportCsv:'📤 Export CSV',testSync:'🧪 Test sync',clearToday:"🗑 Clear today's list",alertTitle:'Update alert',alertInactiveHint:'Send a note to the doctor',alertActiveHint:'Alert active — tap to manage',defaultAlert:'A new update was made to the appointment list',updateAvailable:'A new app update is available.',updateNow:'Update now',totalPatients:'Total patients',completed:'Completed',inTreatment:'In treatment',remaining:'Remaining',cancelled:'Cancelled',completionRate:'Completion rate',originalTime:'Original appointment',originalHint:'Kept according to the appointment schedule',actualDuration:'Actual treatment duration',actualStartHint:'Starts when the patient enters',upcomingPatients:'Upcoming patients',upcomingHint:'Cards resize automatically as appointments approach',addNewPatient:'Add new patient',editPatient:'Edit patient',add:'Add',editing:'Editing',formIntro:'Enter the appointment details and save; changes sync automatically across devices.',firstName:'First name',fileNumber:'File number',appointmentDate:'Appointment date',startTime:'Start time',endTime:'End time',procedure:'Procedure',status:'Status',namePlaceholder:'Patient name',filePlaceholder:'File number',procedurePlaceholder:'Example: Review, new consultation',resetFields:'Clear fields',cancelEdit:'Cancel editing',saveAdd:'Save and add patient',saveChanges:'Save changes',patientUpdated:'Patient updated',patientAdded:'Patient added',movingPatient:'Moving appointment…',dateMoveFailed:'Could not change appointment date',sourceSaveFailed:'Could not save the original day list',targetLoadFailed:'Could not load the new day list',targetSaveFailed:'Could not save the patient on the new day',patientList:'Daily patient list',searchPlaceholder:'Search by name, mobile, or file number',allStatuses:'All statuses',name:'Name',start:'Start',end:'End',action:'Actions',todayNotes:"Today's notes",notesPlaceholder:"Write today's notes...",exitFullscreen:'⤢ Exit fullscreen',bulkTitle:"Update today's list",bulkHelp:'One patient per line: name, file number, start, end, procedure',cancel:'Cancel',saveList:'Save list',alertModalTitle:'🔔 Send update alert',alertModalHelp:'Write a short, clear note to appear immediately on connected devices.',alertMessage:'Alert message',alertPlaceholder:'Example: The next appointment was updated; please review the list',alertTip:'The alert appears in red and syncs live. Clear it after the doctor has reviewed it.',close:'Close',clearAlert:'Clear current alert',publishAlert:'Publish alert',noAppointments:'No appointments for this day',noUpcoming:'No upcoming patients',edit:'Edit',delete:'Delete',currentPatient:'Current patient',nextToCall:'Next to call',noCurrent:'No patient currently in treatment',noSchedule:'Add patients to start tracking',fileLabel:'File number',nextDirect:'Next',patientNumber:'Patient number',lastCall:'Last call',recall:'🔔 Recall',callNext:'🔔 Call next',callPatient:'🔔 Call patient',startActual:'▶ Start actual entry time',actualRunning:'✓ Actual timer running',finishPatient:'✓ Finish patient',startedAt:'Started',developerRights:'All rights reserved — Developed by Yahya Hadi',ocrTitle:'📷 Convert appointment image to patient list',ocrHelp:'The image is read on this device. Review the draft, then merge valid rows into today’s list.',ocrPrivacy:'🔒 Local processing — image is not uploaded',ocrChoose:'Choose image',ocrDrop:'or drop the appointment image here',ocrDropHint:'JPG, PNG, or WEBP — up to 20 MB',ocrNoFile:'No image selected',ocrRotate:'↻ Rotate image 90°',ocrReady:'Ready to extract',ocrInitialHint:'Choose a clear image showing the full table.',ocrReviewTitle:'Review draft',ocrReviewCaption:'Edit any field before merging',ocrConfidence:'Reading confidence',ocrStart:'Start extraction',ocrDownload:'Download CSV',ocrMerge:"Merge into today's list"}
+  ar:{documentTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageSubtitle:'شاشة استقبال ومتابعة المرضى — مزامنة مباشرة بين الأجهزة',updateToday:'تحديث قائمة اليوم',addPatient:'إضافة مريض',screenMode:'وضع الشاشة',installApp:'تثبيت التطبيق',settings:'الإعدادات ▾',imageOcr:'📷 قراءة صورة المواعيد',importCsv:'📥 استيراد CSV',exportCsv:'📤 تصدير CSV',testSync:'🧪 اختبار المزامنة',clearToday:'🗑 مسح قائمة اليوم',alertTitle:'تنبيه تعديل',alertInactiveHint:'إرسال ملاحظة للطبيب',alertActiveHint:'تنبيه فعّال — اضغط للإدارة',defaultAlert:'يوجد تعديل جديد على قائمة المواعيد',updateAvailable:'يتوفر تحديث جديد للتطبيق.',updateNow:'تحديث الآن',totalPatients:'إجمالي المرضى',completed:'تم الإنجاز',inTreatment:'قيد العلاج',remaining:'المتبقي',cancelled:'الملغاة',completionRate:'نسبة الإنجاز',originalTime:'وقت الموعد الأصلي',originalHint:'يبقى محفوظًا حسب جدول الموعد',actualDuration:'مدة العلاج الفعلية',actualStartHint:'يبدأ عند دخول المريض',upcomingPatients:'المرضى القادمون',upcomingHint:'خريطة أحجام حسب ترتيب الموعد',addNewPatient:'إضافة مريض جديد',editPatient:'تعديل بيانات المريض',add:'إضافة',editing:'تعديل',formIntro:'أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.',firstName:'الاسم الكامل',fileNumber:'رقم الملف',appointmentDate:'تاريخ الموعد',startTime:'وقت البداية',endTime:'وقت النهاية',procedure:'الإجراء العلاجي',status:'الحالة',namePlaceholder:'اسم المريض الكامل',filePlaceholder:'رقم الملف',procedurePlaceholder:'مثال: مراجعة، كشف جديد',resetFields:'تفريغ الحقول',cancelEdit:'إلغاء التعديل',saveAdd:'حفظ وإضافة المريض',saveChanges:'حفظ التعديل',patientUpdated:'تم حفظ التعديل',patientAdded:'تمت إضافة المريض',movingPatient:'جارٍ نقل الموعد…',dateMoveFailed:'تعذر تغيير تاريخ الموعد',sourceSaveFailed:'تعذر حفظ قائمة اليوم القديم',targetLoadFailed:'تعذر قراءة قائمة اليوم الجديد',targetSaveFailed:'تعذر حفظ المريض في اليوم الجديد',patientList:'قائمة المرضى اليومية',searchPlaceholder:'بحث بالاسم أو الجوال أو رقم الملف',allStatuses:'كل الحالات',name:'الاسم',start:'البداية',end:'النهاية',action:'إجراء',todayNotes:'ملاحظات اليوم',notesPlaceholder:'اكتب ملاحظات اليوم...',exitFullscreen:'⤢ إلغاء ملء الشاشة',bulkTitle:'تحديث قائمة اليوم',bulkHelp:'كل مريض في سطر: الاسم الكامل، رقم الملف، البداية، النهاية، الإجراء',cancel:'إلغاء',saveList:'حفظ القائمة',alertModalTitle:'🔔 إرسال تنبيه تعديل',alertModalHelp:'اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.',alertMessage:'رسالة التنبيه',alertPlaceholder:'مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة',alertTip:'يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.',close:'إغلاق',clearAlert:'إلغاء التنبيه الحالي',publishAlert:'نشر التنبيه',noAppointments:'لا توجد مواعيد لهذا اليوم',noUpcoming:'لا يوجد مرضى قادمون',edit:'تعديل',delete:'حذف',currentPatient:'المريض الحالي',nextToCall:'التالي للاستدعاء',noCurrent:'لا يوجد مريض قيد العلاج',noSchedule:'أضف قائمة المرضى لبدء المتابعة',fileLabel:'رقم الملف',nextDirect:'التالي مباشرة',patientNumber:'المريض رقم',lastCall:'آخر استدعاء',recall:'🔔 إعادة الاستدعاء',callNext:'🔔 استدعاء التالي',callPatient:'🔔 استدعاء المريض',startActual:'▶ بدء وقت الدخول الفعلي',actualRunning:'✓ الوقت الفعلي يعمل',finishPatient:'✓ إنهاء المريض',startedAt:'بدأ',developerRights:'جميع الحقوق محفوظة — تطوير يحيى هادي',ocrTitle:'📷 تحويل صورة المواعيد إلى قائمة مرضى',ocrHelp:'تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.',ocrPrivacy:'🔒 معالجة محلية — لا تُرفع الصورة',ocrChoose:'اختيار صورة من الجهاز',ocrDrop:'أو اسحب صورة جدول المواعيد هنا',ocrDropHint:'JPG أو PNG أو WEBP — حتى 20 MB',ocrNoFile:'لم يتم اختيار صورة',ocrRotate:'↻ تدوير الصورة 90°',ocrReady:'جاهز للاستخراج',ocrInitialHint:'اختر صورة واضحة يظهر فيها الجدول كاملًا.',ocrReviewTitle:'مسودة المراجعة',ocrReviewCaption:'يمكنك تعديل أي خانة قبل الدمج',ocrConfidence:'دقة القراءة',ocrStart:'بدء الاستخراج',ocrDownload:'تنزيل CSV',ocrMerge:'دمج في قائمة اليوم'},
+  en:{documentTitle:'Best Care Clinic Reception Dashboard',pageTitle:'Best Care Dental Clinics',pageSubtitle:'Patient reception and tracking — live sync across devices',updateToday:"Update today's list",addPatient:'Add patient',screenMode:'Screen mode',installApp:'Install app',settings:'Settings ▾',imageOcr:'📷 Read appointment image',importCsv:'📥 Import CSV',exportCsv:'📤 Export CSV',testSync:'🧪 Test sync',clearToday:"🗑 Clear today's list",alertTitle:'Update alert',alertInactiveHint:'Send a note to the doctor',alertActiveHint:'Alert active — tap to manage',defaultAlert:'A new update was made to the appointment list',updateAvailable:'A new app update is available.',updateNow:'Update now',totalPatients:'Total patients',completed:'Completed',inTreatment:'In treatment',remaining:'Remaining',cancelled:'Cancelled',completionRate:'Completion rate',originalTime:'Original appointment',originalHint:'Kept according to the appointment schedule',actualDuration:'Actual treatment duration',actualStartHint:'Starts when the patient enters',upcomingPatients:'Upcoming patients',upcomingHint:'Cards resize automatically as appointments approach',addNewPatient:'Add new patient',editPatient:'Edit patient',add:'Add',editing:'Editing',formIntro:'Enter the appointment details and save; changes sync automatically across devices.',firstName:'Full name',fileNumber:'File number',appointmentDate:'Appointment date',startTime:'Start time',endTime:'End time',procedure:'Procedure',status:'Status',namePlaceholder:'Full patient name',filePlaceholder:'File number',procedurePlaceholder:'Example: Review, new consultation',resetFields:'Clear fields',cancelEdit:'Cancel editing',saveAdd:'Save and add patient',saveChanges:'Save changes',patientUpdated:'Patient updated',patientAdded:'Patient added',movingPatient:'Moving appointment…',dateMoveFailed:'Could not change appointment date',sourceSaveFailed:'Could not save the original day list',targetLoadFailed:'Could not load the new day list',targetSaveFailed:'Could not save the patient on the new day',patientList:'Daily patient list',searchPlaceholder:'Search by name, mobile, or file number',allStatuses:'All statuses',name:'Name',start:'Start',end:'End',action:'Actions',todayNotes:"Today's notes",notesPlaceholder:"Write today's notes...",exitFullscreen:'⤢ Exit fullscreen',bulkTitle:"Update today's list",bulkHelp:'One patient per line: full name, file number, start, end, procedure',cancel:'Cancel',saveList:'Save list',alertModalTitle:'🔔 Send update alert',alertModalHelp:'Write a short, clear note to appear immediately on connected devices.',alertMessage:'Alert message',alertPlaceholder:'Example: The next appointment was updated; please review the list',alertTip:'The alert appears in red and syncs live. Clear it after the doctor has reviewed it.',close:'Close',clearAlert:'Clear current alert',publishAlert:'Publish alert',noAppointments:'No appointments for this day',noUpcoming:'No upcoming patients',edit:'Edit',delete:'Delete',currentPatient:'Current patient',nextToCall:'Next to call',noCurrent:'No patient currently in treatment',noSchedule:'Add patients to start tracking',fileLabel:'File number',nextDirect:'Next',patientNumber:'Patient number',lastCall:'Last call',recall:'🔔 Recall',callNext:'🔔 Call next',callPatient:'🔔 Call patient',startActual:'▶ Start actual entry time',actualRunning:'✓ Actual timer running',finishPatient:'✓ Finish patient',startedAt:'Started',developerRights:'All rights reserved — Developed by Yahya Hadi',ocrTitle:'📷 Convert appointment image to patient list',ocrHelp:'The image is read on this device. Review the draft, then merge valid rows into today’s list.',ocrPrivacy:'🔒 Local processing — image is not uploaded',ocrChoose:'Choose image',ocrDrop:'or drop the appointment image here',ocrDropHint:'JPG, PNG, or WEBP — up to 20 MB',ocrNoFile:'No image selected',ocrRotate:'↻ Rotate image 90°',ocrReady:'Ready to extract',ocrInitialHint:'Choose a clear image showing the full table.',ocrReviewTitle:'Review draft',ocrReviewCaption:'Edit any field before merging',ocrConfidence:'Reading confidence',ocrStart:'Start extraction',ocrDownload:'Download CSV',ocrMerge:"Merge into today's list"}
 };
 const IOS_INSTALL_COPY={
   ar:{menu:'📱 تثبيت التطبيق على iPhone',title:'تثبيت التطبيق على iPhone',help:'أربع خطوات بسيطة من متصفح Safari — دون متجر التطبيقات.',steps:[['افتح الرابط في Safari','إذا كنت تستخدم Chrome، انسخ الرابط وافتحه في Safari أولًا.'],['اضغط زر المشاركة','اضغط رمز المربع والسهم ↑ أسفل شاشة Safari.'],['اختر «إضافة إلى الشاشة الرئيسية»','مرّر قائمة المشاركة إلى أسفل إذا لم يظهر الخيار مباشرة.'],['اضغط «إضافة»','ستظهر أيقونة Best Care على الشاشة الرئيسية وتفتح كتطبيق مستقل.']],note:'مهم: استخدم Safari للتثبيت. بعد التثبيت افتح التطبيق من الأيقونة الجديدة، وستبقى المزامنة مرتبطة بنفس رابط العيادة.',shareTitle:'مشاركة التطبيق مع جهاز آخر',shareText:'انسخ الرابط وأرسله لمستخدم iPhone، ثم يتبع الخطوات أعلاه.',copy:'نسخ رابط التطبيق',close:'تم، فهمت الخطوات',copiedTitle:'تم نسخ الرابط',copiedText:'أرسله الآن إلى مستخدم iPhone لفتح التطبيق وتثبيته.',alreadyTitle:'التطبيق مثبت',alreadyText:'أنت تستخدم التطبيق الآن من وضع الشاشة المستقلة.'},
@@ -173,6 +173,7 @@ let treatmentPlanCenter={records:{},aliases:{},loading:false,error:'',loadedAt:0
 let operationsCenter={filter:'all',labCases:[],labLoading:false,labError:'',labLoadedAt:0,prescriptions:[],prescriptionsLoading:false,prescriptionsError:'',prescriptionsLoadedAt:0,prescriptionsTimer:null,prescriptionsStarted:false};
 let patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
 let patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:0};
+let patientIdentityDisplayLimit=120;
 let patientProfileState={lookup:null,profile:null,loading:false,error:'',tab:'appointments'};
 let labCasesState={cases:[],revision:0,updatedAt:0,lastFetchedAt:0,loading:false};
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
@@ -755,7 +756,7 @@ async function ensurePushSubscription(){
     const {publicKey}=await response.json();
     subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
   }
-  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID})});
+  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID})});
   if(!saved.ok)throw new Error('Subscription save failed');
   localStorage.setItem('bestcare_push_registered','enabled');return true;
 }
@@ -1185,7 +1186,7 @@ function renderAdminPatientHub(){
     const hasPayment=item.reasons.some(reason=>reason.type==='payment');
     return `<article class="admin-patient-item priority-${tone}">
       <div class="admin-patient-main">
-        <strong>${escapeHtml(firstName(patient.name)||'—')}</strong>
+        <strong>${escapeHtml(String(patient.name||'').trim()||'—')}</strong>
         <small>${lang==='en'?'File':'ملف'} ${escapeHtml(patient.file||'—')}${patient.phone?` · ${escapeHtml(patient.phone)}`:''}</small>${isZeroFileNumber(patient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update file number on arrival':'تحديث رقم الملف عند الوصول'}</span>`:''}
       </div>
       <div class="admin-patient-clinic" style="--clinic-hue:${clinicHue}">
@@ -1596,10 +1597,26 @@ function receiveSyncSignal(message){
   if(sync.dirty||sync.pushing)return;
   scheduleAutomaticSync(80);
 }
+function receiveServiceWorkerSyncSignal(message){
+  if(message?.type!=='BESTCARE_REMOTE_SYNC')return;
+  const payload=message.payload&&typeof message.payload==='object'?message.payload:{};
+  const clinicMatches=!payload.clinicId||payload.clinicId===ACTIVE_CLINIC_ID;
+  const dateMatches=!payload.date||payload.date===selectedDate;
+  if(clinicMatches&&dateMatches&&!sync.dirty&&!sync.pushing)scheduleAutomaticSync(60);
+  if(VIEW_MODE!=='admin')return;
+  clearTimeout(adminPatientHub.timer);
+  adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub({force:true}),80);
+  const tag=String(payload.tag||''),type=String(payload.type||'');
+  if(type==='appointment_request')setTimeout(()=>refreshAppointmentRequests({notify:true}),100);
+  if(type==='lab')setTimeout(()=>refreshLabCases({force:true}),100);
+  if(type==='prescription')setTimeout(()=>refreshOperationsPrescriptions(),100);
+  if(type==='treatment_plan'||tag.includes('treatment-plan'))setTimeout(()=>refreshTreatmentPlanRegistry(true),100);
+}
 function setupCrossDeviceSyncSignals(){
   if(window.__bestcareSyncSignals)return;window.__bestcareSyncSignals=true;
   if('BroadcastChannel' in window){syncChannel=new BroadcastChannel('bestcare-dashboard-sync-v1');syncChannel.addEventListener('message',event=>receiveSyncSignal(event.data))}
   window.addEventListener('storage',event=>{if(event.key!=='bestcare_sync_signal_v1'||!event.newValue)return;try{receiveSyncSignal(JSON.parse(event.newValue))}catch{}});
+  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',event=>receiveServiceWorkerSyncSignal(event.data));
 }
 async function recordPatientCommunication(patient,kind,details={},eventId=''){
   const stableEventId=eventId||(crypto.randomUUID?.()||`${kind}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -1979,12 +1996,17 @@ function patientIdentityRows(){
       fileNo:String(record.fileNo||''),
       mobile:String(record.mobile||''),
       nationalId:String(record.nationalId||''),
-      clinicId:String(record.clinicId||'clinic-1'),
-      status:String(record.status||''),
-      patientId:String(record.sourcePatientId||''),
-      date:String(record.sourceDate||''),
-      updatedAt:Number(record.updatedAt||0),
-      hasPlan:true
+      clinicId:String(record.latestClinicId||record.clinicId||record.clinicIds?.[0]||'clinic-1'),
+      status:String(record.treatmentPlanStatus||record.status||''),
+      patientId:String(record.latestPatientId||record.sourcePatientId||''),
+      date:String(record.lastAppointmentDate||record.sourceDate||''),
+      start:String(record.latestStart||''),
+      updatedAt:Number(record.lastSeenAt||record.updatedAt||0),
+      hasPlan:Boolean(record.planCount||record.treatmentPlanStatus||record.status),
+      planCount:Number(record.planCount||0),
+      prescriptionCount:Number(record.prescriptionCount||0),
+      labCount:Number(record.labCount||0),
+      communicationCount:Number(record.communicationCount||0)
     });
   });
   adminHubAllPatients().forEach(item=>{
@@ -2031,11 +2053,8 @@ function renderPatientIdentitySearch(){
   }
   const query=String($('patientIdentitySearchInput')?.value||'').trim();
   const queryDigits=toLatinDigits(query).replace(/\D/g,'');
-  if(query.length<2&&queryDigits.length<3){
-    results.innerHTML=`<div class="patient-identity-empty">${lang==='en'?'Enter a file number, mobile number, or patient name.':'اكتب رقم الملف أو الجوال أو اسم المريض لبدء البحث.'}</div>`;
-    return;
-  }
-  const matches=patientIdentityRows().filter(record=>patientMatchesSearch(record,query)||(queryDigits&&toLatinDigits(record.nationalId||'').replace(/\D/g,'').includes(queryDigits))).slice(0,60);
+  const allMatches=patientIdentityRows().filter(record=>!query||patientMatchesSearch(record,query)||(queryDigits&&toLatinDigits(record.nationalId||'').replace(/\D/g,'').includes(queryDigits)));
+  const matches=allMatches.slice(0,patientIdentityDisplayLimit);
   if(!matches.length){
     results.innerHTML=`<div class="patient-identity-empty">${patientIdentityRemote.loading?(lang==='en'?'Searching all saved records…':'جارٍ البحث في جميع السجلات المحفوظة…'):patientIdentityRemote.error?escapeHtml(patientIdentityRemote.error):(lang==='en'?'No patient matched this search.':'لم يتم العثور على مريض مطابق للبحث.')}</div>`;
     return;
@@ -2053,11 +2072,11 @@ function renderPatientIdentitySearch(){
           ${record.nationalId?`<span>${lang==='en'?'ID':'هوية'}: ${escapeHtml(record.nationalId)}</span>`:''}
           <span>${escapeHtml(clinicDisplayName(clinic,{compact:true}))}</span>
         </div>
-        <span class="patient-identity-plan">${escapeHtml(status)}</span>
+        <div class="patient-identity-summary-badges"><span class="patient-identity-plan">${escapeHtml(status)}</span>${record.planCount?`<span>▤ ${record.planCount} ${lang==='en'?'plans':'خطط'}</span>`:''}${record.prescriptionCount?`<span>💊 ${record.prescriptionCount} ${lang==='en'?'prescriptions':'وصفات'}</span>`:''}${record.labCount?`<span>🦷 ${record.labCount} ${lang==='en'?'lab cases':'حالات معمل'}</span>`:''}${record.communicationCount?`<span>↗ ${record.communicationCount} ${lang==='en'?'messages':'مشاركات'}</span>`:''}</div>
       </div>
       <button type="button" data-identity-open="${escapeHtml(record.patientId)}" data-identity-date="${escapeHtml(record.date)}" data-identity-clinic="${escapeHtml(record.clinicId)}" data-identity-name="${escapeHtml(record.fullName)}" data-identity-file="${escapeHtml(record.fileNo)}" data-identity-phone="${escapeHtml(record.mobile)}" data-identity-national="${escapeHtml(record.nationalId||'')}" ${record.fileNo||record.mobile||record.nationalId?'':'disabled'}>${lang==='en'?'View patient record':'استعراض ملف المريض'}</button>
     </article>`;
-  }).join('');
+  }).join('')+(allMatches.length>matches.length?`<button class="patient-directory-more" type="button" data-identity-more>${lang==='en'?`Show more (${allMatches.length-matches.length})`:`عرض المزيد (${allMatches.length-matches.length})`}</button>`:'');
 }
 function schedulePatientIdentityRemoteSearch(){
   clearTimeout(patientIdentityRemote.timer);
@@ -2079,13 +2098,14 @@ async function openPatientIdentitySearch(){
   openModal('patientIdentitySearchModal');
   showPatientIdentitySearchView();
   $('patientIdentitySearchInput').value='';
+  patientIdentityDisplayLimit=120;
   clearTimeout(patientIdentityRemote.timer);patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:patientIdentityRemote.requestId+1};
   patientIdentityDirectory.loading=true;
   patientIdentityDirectory.error='';
   renderPatientIdentitySearch();
   try{
     if(authUser?.role!=='admin')throw new Error('clinic-local');
-    const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{cache:'no-store'});
+    const response=await request(`${PATIENTS_API}?clinic=${encodeURIComponent('all')}`,{cache:'no-store'},30000);
     const data=await response.json();
     if(!response.ok)throw new Error(data.error||'تعذر تحميل سجل المرضى');
     patientIdentityDirectory={
@@ -2143,6 +2163,15 @@ function renderPatientProfileTimeline(){
     target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event plan"><span class="patient-event-mark" aria-hidden="true">▤</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))}</small><strong>${escapeHtml(item.planNo||'خطة علاجية')}</strong><p>${escapeHtml(planStatusText(item.status))}</p></div>${item.sourcePatientId&&item.sourceDate?`<button type="button" data-profile-open-plan="${escapeHtml(item.canonical)}">فتح الخطة</button>`:''}</article>`).join(''):patientProfileEmpty('لا توجد خطة علاجية مرتبطة بالمريض.');
     return;
   }
+  if(tab==='prescriptions'){
+    const items=profile.prescriptions||[];
+    target.innerHTML=items.length?items.map(item=>{
+      const patient=item.patient||profile.patient||{};
+      const href=`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||patient.id||'',date:item.sourceDate||selectedDate,clinic:item.clinicId||'clinic-1',view:'admin',patientName:patient.name||'',file:patient.file||'',phone:patient.phone||'',nationalId:patient.nationalId||''}).toString()}`;
+      return `<article class="patient-profile-event prescription"><span class="patient-event-mark" aria-hidden="true">💊</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId||'clinic-1'))} · ${escapeHtml(patientProfileDateTime(item.updatedAt))}</small><strong>${escapeHtml(item.prescriptionNo||'وصفة علاجية')}</strong><p>${escapeHtml(`${Number(item.medicineCount||0)} علاج · ${item.statusLabel||item.status||'محفوظة'}`)}</p></div><a href="${escapeHtml(href)}">فتح الوصفة</a></article>`;
+    }).join(''):patientProfileEmpty('لا توجد وصفات علاجية مرتبطة بالمريض.');
+    return;
+  }
   if(tab==='payments'){
     const items=(profile.appointments||[]).filter(item=>item.paymentRequired);
     const labels={requested:'بانتظار استلام الإدارة',received:'بانتظار تنفيذ الدفع',completed:'تم تنفيذ الدفع'};
@@ -2171,7 +2200,7 @@ function renderPatientProfile(){
   $('patientProfileForm').classList.toggle('read-only',!editable);$('patientProfileForm').querySelectorAll('input,button').forEach(control=>control.disabled=!editable);
   $('patientProfileSave').textContent=editable?'حفظ وتحديث السجلات المرتبطة':'التعديل متاح لصفحة الإدارة';
   const communication=profile.communications||{};
-  $('patientProfileAppointmentCount').textContent=String(profile.summary?.appointments||0);$('patientProfilePlanCount').textContent=String(profile.summary?.plans||0);$('patientProfilePaymentCount').textContent=String((profile.appointments||[]).filter(item=>item.paymentRequired).length);$('patientProfileLabCount').textContent=String(profile.summary?.labs||0);$('patientProfileCommunicationCount').textContent=String(Number(communication.planWhatsappCount||0)+Number(communication.reviewWhatsappCount||0));
+  $('patientProfileAppointmentCount').textContent=String(profile.summary?.appointments||0);$('patientProfilePlanCount').textContent=String(profile.summary?.plans||0);$('patientProfilePrescriptionCount').textContent=String(profile.summary?.prescriptions||0);$('patientProfilePaymentCount').textContent=String((profile.appointments||[]).filter(item=>item.paymentRequired).length);$('patientProfileLabCount').textContent=String(profile.summary?.labs||0);$('patientProfileCommunicationCount').textContent=String(Number(communication.planWhatsappCount||0)+Number(communication.reviewWhatsappCount||0));
   $('patientProfilePlanWhatsappCount').textContent=String(communication.planWhatsappCount||0);$('patientProfileReviewWhatsappCount').textContent=String(communication.reviewWhatsappCount||0);
   $('patientProfileLastPlanWhatsapp').textContent=communication.lastPlanWhatsappAt?`آخر إرسال: ${patientProfileDateTime(communication.lastPlanWhatsappAt)}`:'لم ترسل خطة بعد';
   $('patientProfileLastReviewWhatsapp').textContent=communication.lastReviewWhatsappAt?`آخر إرسال: ${patientProfileDateTime(communication.lastReviewWhatsappAt)}`:'لم يرسل طلب تقييم بعد';
@@ -2220,13 +2249,13 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p);return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><strong>${escapeHtml(firstName(p.name))}</strong><button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td><strong>${escapeHtml(VIEW_MODE==='admin'?(String(p.name||'').trim()||'—'):firstName(p.name))}</strong><button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(p.file)}${isZeroFileNumber(p.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
         <td>${escapeHtml(p.procedure||'—')}</td>
         <td>
-          <select class="status-select" data-status-id="${escapeHtml(p.id)}" aria-label="${escapeHtml(`${lang==='en'?'Patient status':'حالة المريض'}: ${firstName(p.name)}`)}">
+          <select class="status-select" data-status-id="${escapeHtml(p.id)}" aria-label="${escapeHtml(`${lang==='en'?'Patient status':'حالة المريض'}: ${VIEW_MODE==='admin'?(String(p.name||'').trim()||'—'):firstName(p.name)}`)}">
             ${Object.keys(STATUS).map(k=>`<option value="${k}" ${p.status===k?'selected':''}>${escapeHtml(statusText(k))}</option>`).join('')}
           </select>
         </td>
@@ -2958,7 +2987,6 @@ function handleModernAdminAction(action){
   if(action==='plans'){openTreatmentPlanCenter();operationsCenter.filter='plans';renderOperationsCenter();return}
   if(action==='labs'){openTreatmentPlanCenter();operationsCenter.filter='labs';renderOperationsCenter();return}
   if(action==='patient-record'){$('patientIdentitySearchBtn')?.click();return}
-  if(action==='extractor'){openOcrImporter();return}
   if(action==='patients'){scrollAdminTarget('adminPatientHub',{open:true});return}
   if(action==='add-patient'){$('addBtn')?.click();return}
   if(action==='alert'){$('alertBtn')?.click();return}
@@ -3055,7 +3083,7 @@ function openPatient(id=null){
   setTimeout(()=>$('fName').focus(),250);
 }
 function applyAutomaticStatusAlert(p,status){
-  const name=firstName(p.name);
+  const name=String(p.name||'').trim();
   p.adminUpdatedAt=Date.now();
   const fileReminder=isZeroFileNumber(p.file)?' — يلزم تحديث رقم ملفه الآن':'';
   const messages={
@@ -3093,7 +3121,7 @@ async function movePatientToDate(item,targetDate){
     const targetData=await targetResponse.json();
     const targetPatients=(Array.isArray(targetData.patients)?targetData.patients:[])
       .filter(patient=>String(patient.id)!==String(item.id))
-      .map(patient=>({...patient,name:firstName(patient.name)}));
+      .map(patient=>({...patient,name:String(patient.name||'').trim()}));
     targetPatients.push(item);
     targetPatients.sort((a,b)=>a.start.localeCompare(b.start));
 
@@ -3330,7 +3358,7 @@ function parsePatientCsv(text){
     const appointmentDate=columns.date>=0?normalizeCsvDate(cells[columns.date]):'';
     if(appointmentDate)dates.add(appointmentDate);
     const rawName=String(cells[columns.name]||'').trim();
-    return{id:Date.now()+index,name:rawName?firstName(rawName):'',file:columns.file>=0?String(cells[columns.file]||'').trim():'',phone:columns.phone>=0?String(cells[columns.phone]||'').replace(/[^\d+]/g,'').slice(0,20):'',start,end,procedure:columns.procedure>=0?String(cells[columns.procedure]||'').trim():'',status:'waiting',adminUpdatedAt:Date.now()};
+    return{id:Date.now()+index,name:rawName?rawName.replace(/\s+/g,' ').trim().slice(0,120):'',file:columns.file>=0?String(cells[columns.file]||'').trim():'',phone:columns.phone>=0?String(cells[columns.phone]||'').replace(/[^\d+]/g,'').slice(0,20):'',start,end,procedure:columns.procedure>=0?String(cells[columns.procedure]||'').trim():'',status:'waiting',adminUpdatedAt:Date.now()};
   }).filter(patient=>patient.name&&patient.start&&patient.end&&mins(patient.end)>mins(patient.start));
   return{rows,date:dates.size===1?[...dates][0]:'',reason:rows.length?'':'rows'};
 }
@@ -3360,28 +3388,6 @@ function loadOptionalScript(src,ready){
   return pending;
 }
 const ensureExcelReader=()=>loadOptionalScript('./assets/vendor/xlsx.full.min.js?v=7.9',()=>Boolean(window.XLSX));
-async function reconcileOcrRows(rows){
-  const response=await request(PATIENT_RECONCILE_API,{
-    method:'POST',
-    headers:{'content-type':'application/json'},
-    body:JSON.stringify({
-      clinicId:authUser?.role==='admin'?'all':ACTIVE_CLINIC_ID,
-      rows:rows.map(row=>({id:row.id,name:row.name,file:row.file,phone:row.phone}))
-    })
-  },45000);
-  const data=await response.json().catch(()=>({}));
-  if(!response.ok)throw new Error(data.error||(lang==='en'?'Patient record matching failed':'تعذرت مطابقة سجل المرضى'));
-  return data;
-}
-const ocrApiOptions=()=>({escapeHtml,toast,openModal,closeModal,getLang:()=>lang,getDate:()=>selectedDate,mergeRows:mergeOcrRows,reconcileRows:reconcileOcrRows});
-async function openOcrImporter(){
-  setSettingsMenuOpen(false);
-  try{
-    await loadOptionalScript('./ocr-import-v7-3-1.js?v=7.58.3',()=>Boolean(window.BestCareOCR));
-    window.BestCareOCR.init(ocrApiOptions());
-    window.BestCareOCR.open();
-  }catch(error){toast(lang==='en'?'Image reader unavailable':'تعذر تشغيل قارئ الصور',String(error.message||error))}
-}
 async function importPatientFile(file){
   const extension=String(file.name||'').split('.').pop().toLowerCase();
   const reader=new FileReader();
@@ -3401,21 +3407,6 @@ async function importPatientFile(file){
   }
   reader.onload=()=>acceptPatientImport(parsePatientCsv(String(reader.result||'')));
   reader.readAsText(file,'utf-8');
-}
-function mergeOcrRows(rows){
-  const existing=new Set(patients.map(p=>`${String(p.file||'').trim()}|${p.start}`));
-  const unique=[];
-  let skipped=0;
-  rows.forEach(row=>{
-    const key=`${String(row.file||'').trim()}|${row.start}`;
-    if(existing.has(key)){skipped+=1;return}
-    existing.add(key);unique.push(row);
-  });
-  if(unique.length)mutate(()=>{
-    patients.push(...unique);
-    patients.sort((a,b)=>a.start.localeCompare(b.start));
-  });
-  return{added:unique.length,skipped};
 }
 async function syncTest(){
   setBadge('connecting',lang==='en'?'Testing sync…':'اختبار المزامنة…');
@@ -3579,8 +3570,6 @@ function applyLang(){
   setText('#clinicViewLink',lang==='en'?'🩺 Doctor page':'🩺 صفحة الطبيب');
   setText('#adminViewLink',lang==='en'?'🗓️ Administration page':'🗓️ صفحة الإدارة');
   setText('#statisticsTopLink strong',lang==='en'?'Statistics':'الإحصائيات');
-  setText('#extractorTopBtn strong',lang==='en'?'Smart extraction':'استخراج ذكي');
-  setText('#extractorTopBtn small',lang==='en'?'Image · match · CSV':'صورة · مطابقة · CSV');
   setText('#appointmentRequestsPageBtn',lang==='en'?'📅 Appointment request tracking':'📅 متابعة طلبات المواعيد');
   setText('#appointmentRequestLabel',lang==='en'?'Appointment requests':'طلبات المواعيد');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
@@ -3631,7 +3620,6 @@ function applyLang(){
   applyIosInstallLanguage();
   updateNotificationsButton();
   updateSoundButton();
-  setText('#imageOcrBtn',lang==='en'?'📷 Smart appointment image extraction':'📷 استخراج ذكي من صورة المواعيد');
   setText('#importBtn',lang==='en'?'📥 Import CSV / Excel':'📥 استيراد CSV / Excel');
   setText('#exportBtn',tr('exportCsv'));
   setText('#syncTestBtn',tr('testSync'));
@@ -3704,27 +3692,6 @@ function applyLang(){
   setText('#reviewLinkHint',lang==='en'?'Opens the Best Care Dental Clinics profile on Google Maps.':'يفتح ملف عيادات أفضل عناية الاستشارية للأسنان على Google Maps.');
   setText('#reviewLinkPreview',lang==='en'?'Preview link':'معاينة الرابط');
   setTexts('#reviewModal .modal-actions button',[lang==='en'?'Cancel':'إلغاء',lang==='en'?'Copy message':'نسخ الرسالة',lang==='en'?'Send via WhatsApp':'إرسال عبر واتساب']);
-  setText('#ocrModalTitle',lang==='en'?'📷 Extract appointments and match patient records':'📷 استخراج المواعيد ومطابقة سجل المرضى');
-  setText('#ocrModalHelp',lang==='en'?'The image stays on this device, then names, file numbers, and phones are matched against the latest dashboard corrections.':'تُقرأ الصورة داخل جهازك، ثم تُطابق الأسماء وأرقام الملفات والجوال مع أحدث تصحيحات الداشبورد.');
-  setText('#ocrPrivacy',lang==='en'?'🔒 Local image processing — matching uses authorized dashboard data only':'🔒 الصورة محلية — المطابقة تستخدم بيانات الداشبورد المصرح بها فقط');
-  setText('#chooseOcrImageBtn',tr('ocrChoose'));
-  setText('#ocrDropText',tr('ocrDrop'));
-  setText('#ocrDropHint',tr('ocrDropHint'));
-  if($('ocrModal').dataset.hasFile!=='true')setText('#ocrFileName',tr('ocrNoFile'));
-  setText('#rotateOcrBtn',tr('ocrRotate'));
-  if(!$('ocrProgressText').textContent||$('ocrProgress').hidden)setText('#ocrProgressText',tr('ocrReady'));
-  if($('ocrModal').dataset.hasFile!=='true')setText('#ocrReviewHint',tr('ocrInitialHint'));
-  setText('#ocrReviewTitle',tr('ocrReviewTitle'));
-  setText('#ocrReviewCaption',lang==='en'?'Review corrections before merging':'راجع التصحيحات قبل الدمج');
-  setText('#ocrThName',tr('name'));
-  setText('#ocrThFile',tr('fileNumber'));
-  setText('#ocrThPhone',lang==='en'?'Phone number':'رقم الجوال');
-  setText('#ocrThStart',tr('start'));
-  setText('#ocrThEnd',tr('end'));
-  setText('#ocrThProcedure',tr('procedure'));
-  setText('#ocrThConfidence',tr('ocrConfidence'));
-  setText('#ocrThArchive',lang==='en'?'Record match':'مطابقة السجل');
-  setTexts('#ocrModal .ocr-actions button',[tr('close'),tr('ocrStart'),lang==='en'?'Refresh from patient records':'تحديث من سجل المرضى',tr('ocrDownload'),tr('ocrMerge')]);
   rebuildStatusSelect($('fStatus'));
   rebuildStatusSelect($('filterStatus'),true);
   $('langBtn').textContent=lang==='en'?'العربية':'English';
@@ -3859,8 +3826,9 @@ $('savePatientBtn').addEventListener('click',savePatient);
 $('resetPatientBtn').addEventListener('click',()=>resetPatientForm(true));
 $('cancelEditBtn').addEventListener('click',()=>resetPatientForm(false));
 $('patientFormCard').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.tagName!=='SELECT'){event.preventDefault();savePatient()}});
-$('patientIdentitySearchInput').addEventListener('input',()=>{renderPatientIdentitySearch();schedulePatientIdentityRemoteSearch()});
+$('patientIdentitySearchInput').addEventListener('input',()=>{patientIdentityDisplayLimit=120;renderPatientIdentitySearch();schedulePatientIdentityRemoteSearch()});
 $('patientIdentitySearchResults').addEventListener('click',event=>{
+  if(event.target.closest('[data-identity-more]')){patientIdentityDisplayLimit+=120;renderPatientIdentitySearch();return}
   const button=event.target.closest('[data-identity-open]');
   if(button)openPatientIdentityResult(button);
 });
@@ -3887,8 +3855,6 @@ els.settingsBtn.setAttribute('aria-expanded','false');
 $('settingsBtn').addEventListener('click',event=>{event.stopPropagation();setSettingsMenuOpen(!els.settingsMenu.classList.contains('open'))});
 document.addEventListener('click',()=>setSettingsMenuOpen(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&els.settingsMenu.classList.contains('open')){setSettingsMenuOpen(false);els.settingsBtn.focus()}});
-$('imageOcrBtn').addEventListener('click',openOcrImporter);
-$('extractorTopBtn')?.addEventListener('click',openOcrImporter);
 $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
