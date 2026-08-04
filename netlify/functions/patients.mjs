@@ -1,9 +1,9 @@
 import { getStore } from '@netlify/blobs';
-import { apiHeaders, canAccessClinic, requireUser } from './lib/session.mjs';
-import { getPatientDirectory, upsertPatientDirectory } from './lib/patient-directory.mjs';
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
+import { getPatientDirectory, importPatientDirectory, upsertPatientDirectory } from './lib/patient-directory.mjs';
 import { patientIdentityKeys } from './lib/patient-identity.mjs';
 
-const headers = apiHeaders('GET,OPTIONS');
+const headers = apiHeaders('GET,POST,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const store = name => getStore({ name, consistency: 'strong' });
@@ -104,7 +104,6 @@ const countMatches = (record, index) => {
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  if (request.method !== 'GET') return reply({ error: 'Method not allowed' }, 405);
   const auth = await requireUser(request);
   if (!auth.ok) return reply({ error: auth.error }, auth.status);
   const url = new URL(request.url);
@@ -112,6 +111,23 @@ export default async request => {
   if (requestedClinic !== 'all' && !validClinic(requestedClinic)) return reply({ error: 'Invalid clinic' }, 400);
   if (requestedClinic === 'all' && auth.user?.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
   if (requestedClinic !== 'all' && !canAccessClinic(auth.user, requestedClinic)) return reply({ error: 'Clinic access denied' }, 403);
+
+  if (request.method === 'POST') {
+    if (auth.user?.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
+    if (!sameOriginRequest(request)) return reply({ error: 'Origin mismatch' }, 403);
+    let body;
+    try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
+    if (!Array.isArray(body?.patients) || !body.patients.length || body.patients.length > 3000) return reply({ error: 'Invalid patient import' }, 400);
+    const clinicId = validClinic(body.clinicId) ? body.clinicId : '';
+    const imported = await importPatientDirectory(body.patients, {
+      clinicId,
+      actor: String(auth.user?.displayName || auth.user?.username || 'admin').slice(0, 120)
+    });
+    const { records: _records, ...summary } = imported;
+    return reply({ ok: true, ...summary });
+  }
+
+  if (request.method !== 'GET') return reply({ error: 'Method not allowed' }, 405);
 
   let external = await externalPatients(false);
   let registry = await getPatientDirectory();

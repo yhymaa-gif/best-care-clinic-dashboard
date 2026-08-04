@@ -67,3 +67,34 @@ test('patient corrections propagate to appointments, plans, prescriptions, labs,
   assert.match(treatmentPlan, /state\.patient\.fullName\|\|'—'/);
   assert.match(toml, /from = "\/api\/patients"/);
 });
+
+test('central patient list import preserves full names and updates matched identities', async () => {
+  const [dashboard, html, endpoint, directorySource] = await Promise.all([
+    read('dashboard.js'),
+    read('index.html'),
+    read('netlify/functions/patients.mjs'),
+    read('netlify/functions/lib/patient-directory.mjs')
+  ]);
+  assert.match(html, /id="patientDirectoryImportShortcutBtn"/);
+  assert.match(html, /id="patientDirectoryFileInput"/);
+  assert.match(html, /استيراد قائمة مرضى كاملة/);
+  assert.match(dashboard, /function parsePatientDirectoryCsv\(/);
+  assert.match(dashboard, /function mergePatientDirectoryImportRows\(/);
+  assert.match(dashboard, /الاسم غير مكتمل/);
+  assert.match(dashboard, /جارٍ المطابقة والتحديث/);
+  assert.match(endpoint, /request\.method === 'POST'/);
+  assert.match(endpoint, /importPatientDirectory/);
+  assert.match(directorySource, /fullName: patient\.fullName/);
+  assert.match(directorySource, /const linked = \[\.\.\.new Set\(identityAliases/);
+  assert.match(directorySource, /result\.updated \+= 1/);
+});
+
+test('central patient directory visually distinguishes complete and incomplete records', async () => {
+  const [dashboard, styles] = await Promise.all([read('dashboard.js'), read('dashboard.css')]);
+  assert.match(dashboard, /recordComplete=completeName&&completeFile&&completeMobile/);
+  assert.match(dashboard, /patient-directory-table-head/);
+  assert.match(dashboard, /عرض التفاصيل/);
+  assert.match(styles, /patient-identity-result\.complete/);
+  assert.match(styles, /patient-identity-result\.incomplete/);
+  assert.match(styles, /patient-directory-table-row/);
+});

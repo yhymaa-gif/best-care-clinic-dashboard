@@ -174,6 +174,7 @@ let operationsCenter={filter:'all',labCases:[],labLoading:false,labError:'',labL
 let patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
 let patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:0};
 let patientIdentityDisplayLimit=120;
+let patientDirectoryImportDraft={fileName:'',rows:[],validRows:[],invalidRows:[]};
 let patientProfileState={lookup:null,profile:null,loading:false,error:'',tab:'appointments'};
 let labCasesState={cases:[],revision:0,updatedAt:0,lastFetchedAt:0,loading:false};
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
@@ -2059,22 +2060,18 @@ function renderPatientIdentitySearch(){
     results.innerHTML=`<div class="patient-identity-empty">${patientIdentityRemote.loading?(lang==='en'?'Searching all saved records…':'جارٍ البحث في جميع السجلات المحفوظة…'):patientIdentityRemote.error?escapeHtml(patientIdentityRemote.error):(lang==='en'?'No patient matched this search.':'لم يتم العثور على مريض مطابق للبحث.')}</div>`;
     return;
   }
-  results.innerHTML=(patientIdentityRemote.loading?`<div class="patient-identity-loading">${lang==='en'?'Searching saved records…':'جارٍ استكمال البحث في السجلات…'}</div>`:'')+matches.map(record=>{
+  const tableHead=`<div class="patient-directory-table-head" aria-hidden="true"><span>الاسم الكامل</span><span>رقم الملف</span><span>الجوال</span><span>الهوية</span><span>ملخص السجل</span><span>التفاصيل</span></div>`;
+  results.innerHTML=(patientIdentityRemote.loading?`<div class="patient-identity-loading">${lang==='en'?'Searching saved records…':'جارٍ استكمال البحث في السجلات…'}</div>`:'')+tableHead+matches.map(record=>{
     const clinic=clinicDirectory.find(item=>item.id===record.clinicId)||defaultClinic(clinicNumber(record.clinicId));
     const status=record.status?planStatusText(record.status):(lang==='en'?'No treatment plan yet':'لا توجد خطة علاجية بعد');
-    const canOpen=record.patientId&&record.date;
-    return `<article class="patient-identity-result">
-      <div>
-        <div class="patient-identity-name"><strong>${escapeHtml(record.fullName||'—')}</strong></div>
-        <div class="patient-identity-meta">
-          <span>${lang==='en'?'File':'ملف'}: ${escapeHtml(record.fileNo||'—')}</span>
-          <span>${lang==='en'?'Mobile':'جوال'}: ${escapeHtml(record.mobile||'—')}</span>
-          ${record.nationalId?`<span>${lang==='en'?'ID':'هوية'}: ${escapeHtml(record.nationalId)}</span>`:''}
-          <span>${escapeHtml(clinicDisplayName(clinic,{compact:true}))}</span>
-        </div>
-        <div class="patient-identity-summary-badges"><span class="patient-identity-plan">${escapeHtml(status)}</span>${record.planCount?`<span>▤ ${record.planCount} ${lang==='en'?'plans':'خطط'}</span>`:''}${record.prescriptionCount?`<span>💊 ${record.prescriptionCount} ${lang==='en'?'prescriptions':'وصفات'}</span>`:''}${record.labCount?`<span>🦷 ${record.labCount} ${lang==='en'?'lab cases':'حالات معمل'}</span>`:''}${record.communicationCount?`<span>↗ ${record.communicationCount} ${lang==='en'?'messages':'مشاركات'}</span>`:''}</div>
-      </div>
-      <button type="button" data-identity-open="${escapeHtml(record.patientId)}" data-identity-date="${escapeHtml(record.date)}" data-identity-clinic="${escapeHtml(record.clinicId)}" data-identity-name="${escapeHtml(record.fullName)}" data-identity-file="${escapeHtml(record.fileNo)}" data-identity-phone="${escapeHtml(record.mobile)}" data-identity-national="${escapeHtml(record.nationalId||'')}" ${record.fileNo||record.mobile||record.nationalId?'':'disabled'}>${lang==='en'?'View patient record':'استعراض ملف المريض'}</button>
+    const completeName=cleanDirectoryName(record.fullName).split(/\s+/).filter(Boolean).length>=2,completeFile=Boolean(normalizeDirectoryFile(record.fileNo)),completeMobile=/^05\d{8}$/.test(normalizeDirectoryPhone(record.mobile)),recordComplete=completeName&&completeFile&&completeMobile;
+    return `<article class="patient-identity-result patient-directory-table-row ${recordComplete?'complete':'incomplete'}">
+      <div class="patient-directory-name-cell"><strong class="patient-identity-field ${completeName?'complete':'missing'}">${escapeHtml(record.fullName||'الاسم ناقص')}</strong><small>${escapeHtml(clinicDisplayName(clinic,{compact:true}))}</small><span class="patient-identity-completeness ${recordComplete?'complete':'missing'}">${recordComplete?'✓ مكتملة':'! تحتاج استكمال'}</span></div>
+      <span class="patient-directory-cell patient-identity-field ${completeFile?'complete':'missing'}" data-label="رقم الملف">${escapeHtml(record.fileNo||'ناقص')}</span>
+      <span class="patient-directory-cell patient-identity-field ${completeMobile?'complete':'missing'}" data-label="الجوال">${escapeHtml(record.mobile||'ناقص')}</span>
+      <span class="patient-directory-cell patient-identity-field ${record.nationalId?'complete':'optional'}" data-label="الهوية">${escapeHtml(record.nationalId||'اختياري')}</span>
+      <div class="patient-identity-summary-badges"><span class="patient-identity-plan">${escapeHtml(status)}</span>${record.planCount?`<span>▤ ${record.planCount}</span>`:''}${record.prescriptionCount?`<span>💊 ${record.prescriptionCount}</span>`:''}${record.labCount?`<span>🦷 ${record.labCount}</span>`:''}${record.communicationCount?`<span>↗ ${record.communicationCount}</span>`:''}</div>
+      <button type="button" data-identity-open="${escapeHtml(record.patientId)}" data-identity-date="${escapeHtml(record.date)}" data-identity-clinic="${escapeHtml(record.clinicId)}" data-identity-name="${escapeHtml(record.fullName)}" data-identity-file="${escapeHtml(record.fileNo)}" data-identity-phone="${escapeHtml(record.mobile)}" data-identity-national="${escapeHtml(record.nationalId||'')}" ${record.fileNo||record.mobile||record.nationalId?'':'disabled'}>${lang==='en'?'View details':'عرض التفاصيل'}</button>
     </article>`;
   }).join('')+(allMatches.length>matches.length?`<button class="patient-directory-more" type="button" data-identity-more>${lang==='en'?`Show more (${allMatches.length-matches.length})`:`عرض المزيد (${allMatches.length-matches.length})`}</button>`:'');
 }
@@ -2094,12 +2091,7 @@ function schedulePatientIdentityRemoteSearch(){
   },400),requestId};
   renderPatientIdentitySearch();
 }
-async function openPatientIdentitySearch(){
-  openModal('patientIdentitySearchModal');
-  showPatientIdentitySearchView();
-  $('patientIdentitySearchInput').value='';
-  patientIdentityDisplayLimit=120;
-  clearTimeout(patientIdentityRemote.timer);patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:patientIdentityRemote.requestId+1};
+async function refreshPatientIdentityDirectory(){
   patientIdentityDirectory.loading=true;
   patientIdentityDirectory.error='';
   renderPatientIdentitySearch();
@@ -2121,6 +2113,15 @@ async function openPatientIdentitySearch(){
     else patientIdentityDirectory.error=lang==='en'?'Could not load the patient identity index.':'تعذر تحميل سجل هويات المرضى. حاول مرة أخرى.';
   }
   renderPatientIdentitySearch();
+}
+async function openPatientIdentitySearch(){
+  openModal('patientIdentitySearchModal');
+  showPatientIdentitySearchView();
+  closePatientDirectoryPanels();
+  $('patientIdentitySearchInput').value='';
+  patientIdentityDisplayLimit=120;
+  clearTimeout(patientIdentityRemote.timer);patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:patientIdentityRemote.requestId+1};
+  await refreshPatientIdentityDirectory();
   setTimeout(()=>$('patientIdentitySearchInput')?.focus(),50);
 }
 function patientProfileLookupFromButton(button){
@@ -2133,6 +2134,24 @@ function patientProfileLookupFromButton(button){
 function showPatientIdentitySearchView(){
   $('patientIdentitySearchView').hidden=false;$('patientProfileView').hidden=true;
   patientProfileState={lookup:null,profile:null,loading:false,error:'',tab:'appointments'};
+}
+function closePatientDirectoryPanels(){
+  $('patientDirectoryAddPanel').hidden=true;
+  $('patientDirectoryImportPanel').hidden=true;
+  $('patientDirectoryAddError').hidden=true;
+  $('patientDirectoryImportError').hidden=true;
+}
+function openPatientDirectoryAddPanel(){
+  $('patientDirectoryImportPanel').hidden=true;
+  $('patientDirectoryAddPanel').hidden=false;
+  $('patientDirectoryAddError').hidden=true;
+  $('patientDirectoryAddForm').reset();
+  setTimeout(()=>$('patientDirectoryName')?.focus(),30);
+}
+function openPatientDirectoryImportPicker(){
+  openModal('patientIdentitySearchModal');showPatientIdentitySearchView();closePatientDirectoryPanels();
+  patientIdentityDisplayLimit=120;refreshPatientIdentityDirectory();
+  $('patientDirectoryFileInput').click();
 }
 function patientProfilePaymentStage(item){
   if(!item?.paymentRequired)return'';
@@ -3314,6 +3333,109 @@ function findCsvColumn(headers,aliases){
   index=headers.findIndex(header=>normalizedAliases.some(alias=>alias.length>=4&&(header.includes(alias)||alias.includes(header))));
   return index;
 }
+function cleanDirectoryName(value){return String(value||'').replace(/[\u200e\u200f\u202a-\u202e]/g,'').replace(/\s+/g,' ').trim().slice(0,120)}
+function normalizeDirectoryFile(value){const raw=toLatinDigits(value).trim().toUpperCase().replace(/[\s-]+/g,'').slice(0,40);return raw&&!/^0+$/.test(raw)?raw:''}
+function normalizeDirectoryPhone(value){
+  const digits=toLatinDigits(value).replace(/\D/g,'').slice(0,20);
+  if(/^009665\d{8}$/.test(digits))return`0${digits.slice(5)}`;
+  if(/^9665\d{8}$/.test(digits))return`0${digits.slice(3)}`;
+  if(/^5\d{8}$/.test(digits))return`0${digits}`;
+  return digits;
+}
+function normalizeDirectoryNationalId(value){const digits=toLatinDigits(value).replace(/\D/g,'').slice(0,10);return digits.length===10?digits:''}
+function patientDirectoryAliases(row){return[fileAlias(row.fileNo),row.mobile?`phone:${row.mobile}`:'',row.nationalId?`national:${row.nationalId}`:''].filter(Boolean)}
+function fileAlias(value){const file=normalizeDirectoryFile(value);return file?`file:${file}`:''}
+function patientDirectoryIssue(row){
+  if(cleanDirectoryName(row.fullName).split(/\s+/).filter(Boolean).length<2)return'full_name_required';
+  if(row.rawPhone&&!/^05\d{8}$/.test(row.mobile))return'invalid_phone';
+  if(row.rawNationalId&&!row.nationalId)return'invalid_national_id';
+  if(!patientDirectoryAliases(row).length)return'identity_required';
+  return'';
+}
+function directoryNameScore(value){const name=cleanDirectoryName(value),parts=name.split(/\s+/).filter(Boolean);return parts.length*1000+name.length}
+function mergePatientDirectoryImportRows(rows){
+  const merged=[],aliasIndex=new Map(),invalid=[];
+  rows.forEach(row=>{
+    if(row.issue){invalid.push(row);return}
+    const aliases=patientDirectoryAliases(row),linked=[...new Set(aliases.map(alias=>aliasIndex.get(alias)).filter(index=>index!==undefined))];
+    if(linked.length>1){invalid.push({...row,issue:'identity_conflict'});return}
+    if(linked.length===1){
+      const target=merged[linked[0]];
+      if(directoryNameScore(row.fullName)>directoryNameScore(target.fullName))target.fullName=row.fullName;
+      target.fileNo=target.fileNo||row.fileNo;target.mobile=target.mobile||row.mobile;target.nationalId=target.nationalId||row.nationalId;
+      target.sourceRows=[...(target.sourceRows||[target.sourceRow]),row.sourceRow];
+      patientDirectoryAliases(target).forEach(alias=>aliasIndex.set(alias,linked[0]));
+      return;
+    }
+    const index=merged.length;merged.push({...row,sourceRows:[row.sourceRow]});aliases.forEach(alias=>aliasIndex.set(alias,index));
+  });
+  return{validRows:merged,invalidRows:invalid};
+}
+function parsePatientDirectoryCsv(text){
+  const records=parseCsvRecords(text);
+  if(records.length<2)return{rows:[],validRows:[],invalidRows:[],reason:'empty'};
+  const headers=records[0].map(normalizeCsvHeader),columns={
+    name:findCsvColumn(headers,['الاسم الكامل','اسم المريض','الاسم','المريض','full name','fullname','patient name','patientname','patient']),
+    file:findCsvColumn(headers,['رقم الملف','رقم ملف','الملف','file number','filenumber','file no','fileno','file.n','filen','file']),
+    phone:findCsvColumn(headers,['رقم الجوال','الجوال','رقم الهاتف','الهاتف','mobile number','mobilenumber','phone number','phonenumber','mobile','phone']),
+    nationalId:findCsvColumn(headers,['رقم الهوية','الهوية الوطنية','الهوية','national id','nationalid','identity number','identitynumber','identity'])
+  };
+  if(columns.name<0||[columns.file,columns.phone,columns.nationalId].every(index=>index<0))return{rows:[],validRows:[],invalidRows:[],reason:'headers'};
+  const rows=records.slice(1).map((cells,index)=>{
+    const rawPhone=columns.phone>=0?String(cells[columns.phone]||'').trim():'',rawNationalId=columns.nationalId>=0?String(cells[columns.nationalId]||'').trim():'';
+    const row={sourceRow:index+2,fullName:cleanDirectoryName(cells[columns.name]),fileNo:columns.file>=0?normalizeDirectoryFile(cells[columns.file]):'',mobile:normalizeDirectoryPhone(rawPhone),nationalId:normalizeDirectoryNationalId(rawNationalId),rawPhone,rawNationalId};
+    return{...row,issue:patientDirectoryIssue(row)};
+  }).filter(row=>row.fullName||row.fileNo||row.mobile||row.nationalId||row.rawPhone||row.rawNationalId);
+  const merged=mergePatientDirectoryImportRows(rows);
+  return{rows,validRows:merged.validRows,invalidRows:merged.invalidRows,reason:rows.length?'':'empty'};
+}
+function patientDirectoryIssueLabel(issue){return({full_name_required:'الاسم غير مكتمل',identity_required:'لا يوجد ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
+function renderPatientDirectoryImportPreview(){
+  const draft=patientDirectoryImportDraft,summary=$('patientDirectoryImportSummary'),preview=$('patientDirectoryImportPreview'),save=$('patientDirectoryImportSave');
+  $('patientDirectoryImportFileName').textContent=draft.fileName||'—';
+  summary.innerHTML=`<span>إجمالي الصفوف <b>${draft.rows.length}</b></span><span class="valid">جاهز للاستيراد <b>${draft.validRows.length}</b></span><span class="invalid">يحتاج مراجعة <b>${draft.invalidRows.length}</b></span>`;
+  const rows=[...draft.validRows.map(row=>({...row,valid:true})),...draft.invalidRows.map(row=>({...row,valid:false}))].slice(0,160);
+  preview.innerHTML=rows.length?`<table class="patient-directory-import-table"><thead><tr><th>الصف</th><th>الاسم الكامل</th><th>رقم الملف</th><th>الجوال</th><th>الهوية</th><th>النتيجة</th></tr></thead><tbody>${rows.map(row=>`<tr class="${row.valid?'valid':'invalid'}"><td>${escapeHtml((row.sourceRows||[row.sourceRow]).join('، '))}</td><td>${escapeHtml(row.fullName||'—')}</td><td>${escapeHtml(row.fileNo||'—')}</td><td>${escapeHtml(row.mobile||'—')}</td><td>${escapeHtml(row.nationalId||'—')}</td><td><span class="patient-directory-import-state ${row.valid?'valid':'invalid'}">${row.valid?'جاهز':escapeHtml(patientDirectoryIssueLabel(row.issue))}</span></td></tr>`).join('')}</tbody></table>${draft.rows.length>160?`<div class="patient-identity-empty">تم عرض أول 160 صفًا فقط؛ سيتم استيراد جميع الصفوف الصحيحة.</div>`:''}`:'<div class="patient-identity-empty">لم يتم العثور على صفوف قابلة للقراءة.</div>';
+  save.disabled=!draft.validRows.length;
+  save.textContent=`اعتماد واستيراد ${draft.validRows.length} مريض`;
+}
+function readLocalFile(file,mode='text'){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error('تعذرت قراءة الملف'));reader.onload=()=>resolve(reader.result);mode==='array'?reader.readAsArrayBuffer(file):reader.readAsText(file,'utf-8')})}
+async function preparePatientDirectoryImport(file){
+  if(!file)return;
+  const error=$('patientDirectoryImportError');error.hidden=true;
+  try{
+    const extension=String(file.name||'').split('.').pop().toLowerCase();let csv='';
+    if(['xlsx','xls'].includes(extension)){
+      await ensureExcelReader();const buffer=await readLocalFile(file,'array'),workbook=window.XLSX.read(buffer,{type:'array'}),worksheet=workbook.Sheets[workbook.SheetNames[0]];csv=window.XLSX.utils.sheet_to_csv(worksheet,{FS:',',RS:'\n'});
+    }else csv=String(await readLocalFile(file));
+    const parsed=parsePatientDirectoryCsv(csv);
+    if(parsed.reason==='headers')throw new Error('يلزم وجود عمود للاسم الكامل، وعمود واحد على الأقل لرقم الملف أو الجوال أو الهوية.');
+    if(parsed.reason==='empty')throw new Error('الملف فارغ أو لا يحتوي على بيانات مرضى.');
+    patientDirectoryImportDraft={fileName:file.name,rows:parsed.rows,validRows:parsed.validRows,invalidRows:parsed.invalidRows};
+    $('patientDirectoryAddPanel').hidden=true;$('patientDirectoryImportPanel').hidden=false;renderPatientDirectoryImportPreview();
+  }catch(importError){patientDirectoryImportDraft={fileName:'',rows:[],validRows:[],invalidRows:[]};error.textContent=String(importError.message||importError);error.hidden=false;$('patientDirectoryImportPanel').hidden=false;renderPatientDirectoryImportPreview()}
+  finally{$('patientDirectoryFileInput').value=''}
+}
+async function submitPatientDirectoryRows(rows,button){
+  button.disabled=true;const original=button.textContent;button.textContent='جارٍ المطابقة والتحديث…';
+  try{
+    const response=await request(PATIENTS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({clinicId:ACTIVE_CLINIC_ID,patients:rows})},60000),data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'تعذر تحديث قاعدة المرضى');
+    await refreshPatientIdentityDirectory();
+    toast('تم تحديث قاعدة المرضى',`جديد ${Number(data.created||0)} · تم تصحيحه ${Number(data.updated||0)} · متعارض ${Number(data.conflicts||0)} · متجاوز ${Number(data.skipped||0)}`);
+    return data;
+  }finally{button.disabled=false;button.textContent=original}
+}
+async function savePatientDirectoryImport(){
+  const error=$('patientDirectoryImportError'),button=$('patientDirectoryImportSave');error.hidden=true;
+  try{await submitPatientDirectoryRows(patientDirectoryImportDraft.validRows,button);patientDirectoryImportDraft={fileName:'',rows:[],validRows:[],invalidRows:[]};$('patientDirectoryImportPanel').hidden=true}
+  catch(saveError){error.textContent=String(saveError.message||saveError);error.hidden=false}
+}
+async function savePatientDirectorySingle(event){
+  event.preventDefault();const error=$('patientDirectoryAddError'),button=$('patientDirectoryAddSubmit'),row={fullName:cleanDirectoryName($('patientDirectoryName').value),fileNo:normalizeDirectoryFile($('patientDirectoryFile').value),mobile:normalizeDirectoryPhone($('patientDirectoryPhone').value),nationalId:normalizeDirectoryNationalId($('patientDirectoryNationalId').value),rawPhone:$('patientDirectoryPhone').value.trim(),rawNationalId:$('patientDirectoryNationalId').value.trim()};
+  const issue=patientDirectoryIssue(row);if(issue){error.textContent=patientDirectoryIssueLabel(issue);error.hidden=false;return}
+  error.hidden=true;try{await submitPatientDirectoryRows([row],button);$('patientDirectoryAddForm').reset();$('patientDirectoryAddPanel').hidden=true}catch(saveError){error.textContent=String(saveError.message||saveError);error.hidden=false}
+}
 function normalizeCsvTime(value){
   let raw=String(value||'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
   const suffix=(raw.match(/\b(am|pm)\b/i)||[])[1]?.toLowerCase()||(raw.match(/(ص|م)\s*$/)||[])[1]||'';
@@ -3836,6 +3958,14 @@ $('patientProfileBack').addEventListener('click',()=>{showPatientIdentitySearchV
 $('patientProfileForm').addEventListener('submit',savePatientProfile);
 document.querySelector('.patient-profile-summary').addEventListener('click',event=>{const button=event.target.closest('[data-profile-tab]');if(!button)return;patientProfileState.tab=button.dataset.profileTab;renderPatientProfileTimeline()});
 $('patientProfileTimeline').addEventListener('click',event=>{const button=event.target.closest('[data-profile-open-plan]');if(button)openPatientProfilePlan(button.dataset.profileOpenPlan)});
+$('patientDirectoryImportShortcutBtn').addEventListener('click',openPatientDirectoryImportPicker);
+$('patientDirectoryImportBtn').addEventListener('click',()=>$('patientDirectoryFileInput').click());
+$('patientDirectoryFileInput').addEventListener('change',event=>event.target.files[0]&&preparePatientDirectoryImport(event.target.files[0]));
+$('patientDirectoryAddBtn').addEventListener('click',openPatientDirectoryAddPanel);
+$('patientDirectoryAddCancel').addEventListener('click',()=>{$('patientDirectoryAddPanel').hidden=true});
+$('patientDirectoryAddForm').addEventListener('submit',savePatientDirectorySingle);
+$('patientDirectoryImportCancel').addEventListener('click',()=>{patientDirectoryImportDraft={fileName:'',rows:[],validRows:[],invalidRows:[]};$('patientDirectoryImportPanel').hidden=true});
+$('patientDirectoryImportSave').addEventListener('click',savePatientDirectoryImport);
 applyTheme(currentTheme);
 $('themeToggleBtn').addEventListener('click',()=>applyTheme(currentTheme==='dark'?'light':'dark',{save:true}));
 $('adminLayoutModeBtn')?.addEventListener('click',event=>{

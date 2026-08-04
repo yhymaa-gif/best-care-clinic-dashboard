@@ -250,7 +250,7 @@
       <h2 id="patientFormTitle">إضافة مريض جديد</h2>
       <p>أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.</p>
     </div>
-    <div class="quick-add-head-actions"><button id="newLabCaseShortcutBtn" class="new-lab-case-shortcut" type="button"><span aria-hidden="true">🦷</span><span id="newLabCaseShortcutLabel">حالة معمل جديدة</span></button><span id="patientFormMode" class="form-mode">إضافة</span></div>
+    <div class="quick-add-head-actions"><button id="patientDirectoryImportShortcutBtn" class="patient-directory-import-shortcut" type="button"><span aria-hidden="true">⇧</span><span><strong>استيراد قائمة مرضى</strong><small>CSV أو Excel</small></span></button><button id="newLabCaseShortcutBtn" class="new-lab-case-shortcut" type="button"><span aria-hidden="true">🦷</span><span id="newLabCaseShortcutLabel">حالة معمل جديدة</span></button><span id="patientFormMode" class="form-mode">إضافة</span></div>
   </div>
   <div class="quick-add-grid">
     <div><label for="fName">الاسم الكامل *</label><input id="fName" type="text" autocomplete="name" placeholder="الاسم الأول واسم العائلة" minlength="3" maxlength="120" required></div>
@@ -299,6 +299,30 @@
   <div class="patient-identity-head"><span aria-hidden="true">⌕</span><div><h3 id="patientIdentitySearchTitle">قاعدة بيانات المرضى</h3><p id="patientIdentitySearchHelp">سجل مركزي يتحدث تلقائيًا؛ ابحث أو استعرض المرضى وصحح بياناتهم وسجلاتهم المرتبطة.</p></div><button type="button" data-close="patientIdentitySearchModal" aria-label="إغلاق">×</button></div>
   <div class="patient-identity-body">
     <section id="patientIdentitySearchView">
+      <div class="patient-directory-actions">
+        <button id="patientDirectoryImportBtn" class="patient-directory-action import" type="button"><span class="patient-directory-action-icon" aria-hidden="true">⇧</span><span><strong>استيراد قائمة مرضى كاملة</strong><small>CSV أو Excel — الاسم الكامل، الملف، الجوال، الهوية</small></span></button>
+        <button id="patientDirectoryAddBtn" class="patient-directory-action add" type="button"><span class="patient-directory-action-icon" aria-hidden="true">＋</span><span><strong>إضافة مريض إلى القاعدة</strong><small>إضافة سجل مركزي دون إنشاء موعد</small></span></button>
+        <input id="patientDirectoryFileInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
+      </div>
+      <section id="patientDirectoryAddPanel" class="patient-directory-panel" hidden>
+        <div class="patient-directory-panel-head"><div><strong>إضافة مريض جديد</strong><small>اكتب الاسم كاملاً واربطه برقم ملف أو جوال أو هوية.</small></div><button id="patientDirectoryAddCancel" type="button" aria-label="إغلاق">×</button></div>
+        <form id="patientDirectoryAddForm" class="patient-directory-form">
+          <label class="patient-directory-name-field">الاسم الكامل *<input id="patientDirectoryName" type="text" autocomplete="name" maxlength="120" placeholder="الاسم الأول واسم العائلة" required></label>
+          <label>رقم الملف<input id="patientDirectoryFile" type="text" inputmode="numeric" maxlength="40" placeholder="مثال: 7041"></label>
+          <label>رقم الجوال<input id="patientDirectoryPhone" type="tel" inputmode="tel" maxlength="16" placeholder="05xxxxxxxx"></label>
+          <label>رقم الهوية<input id="patientDirectoryNationalId" type="text" inputmode="numeric" maxlength="10" placeholder="10 أرقام"></label>
+          <p id="patientDirectoryAddError" class="patient-directory-error" hidden></p>
+          <div class="patient-directory-form-actions"><button id="patientDirectoryAddSubmit" class="primary" type="submit">حفظ في قاعدة المرضى</button></div>
+        </form>
+      </section>
+      <section id="patientDirectoryImportPanel" class="patient-directory-panel import-preview" hidden>
+        <div class="patient-directory-panel-head"><div><strong>مراجعة قائمة المرضى</strong><small id="patientDirectoryImportFileName">—</small></div><button id="patientDirectoryImportCancel" type="button" aria-label="إلغاء الاستيراد">×</button></div>
+        <div id="patientDirectoryImportSummary" class="patient-directory-import-summary"></div>
+        <p class="patient-directory-import-note">يُحفظ الاسم بكل كلماته بعد تنظيف المسافات. الأسماء المكوّنة من كلمة واحدة لن تُستورد حتى تُستكمل، ولن يخمّن النظام اسم العائلة.</p>
+        <div id="patientDirectoryImportPreview" class="patient-directory-import-preview"></div>
+        <p id="patientDirectoryImportError" class="patient-directory-error" hidden></p>
+        <div class="patient-directory-form-actions"><button id="patientDirectoryImportSave" class="primary" type="button">اعتماد واستيراد الأسماء الصحيحة</button></div>
+      </section>
       <div class="patient-identity-search"><input id="patientIdentitySearchInput" type="search" autocomplete="off" placeholder="الاسم، رقم الملف، الجوال، أو الهوية" aria-label="البحث عن المريض"></div>
       <p id="patientIdentitySearchHint" class="patient-identity-hint">تظهر أحدث السجلات أولًا. ترتبط المواعيد والخطط والوصفات والمعمل بهوية المريض وتبقى متاحة عند عودته.</p>
       <div id="patientIdentitySearchResults" class="patient-identity-results"><div class="patient-identity-loading">جارٍ تحميل قاعدة المرضى…</div></div>
