@@ -2149,9 +2149,11 @@ function openPatientDirectoryAddPanel(){
   setTimeout(()=>$('patientDirectoryName')?.focus(),30);
 }
 function openPatientDirectoryImportPicker(){
-  openModal('patientIdentitySearchModal');showPatientIdentitySearchView();closePatientDirectoryPanels();
-  patientIdentityDisplayLimit=120;refreshPatientIdentityDirectory();
-  $('patientDirectoryFileInput').click();
+  const input=$('patientDirectoryFileInput');
+  if(!input){toast('تعذر فتح الاستيراد','حدّث الصفحة ثم أعد المحاولة.');return}
+  // Keep the native file chooser inside the original user gesture. Some mobile
+  // browsers block it when modal rendering or asynchronous work runs first.
+  input.click();
 }
 function patientProfilePaymentStage(item){
   if(!item?.paymentRequired)return'';
@@ -3402,6 +3404,8 @@ function renderPatientDirectoryImportPreview(){
 function readLocalFile(file,mode='text'){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error('تعذرت قراءة الملف'));reader.onload=()=>resolve(reader.result);mode==='array'?reader.readAsArrayBuffer(file):reader.readAsText(file,'utf-8')})}
 async function preparePatientDirectoryImport(file){
   if(!file)return;
+  openModal('patientIdentitySearchModal');showPatientIdentitySearchView();closePatientDirectoryPanels();
+  patientIdentityDisplayLimit=120;refreshPatientIdentityDirectory();
   const error=$('patientDirectoryImportError');error.hidden=true;
   try{
     const extension=String(file.name||'').split('.').pop().toLowerCase();let csv='';
@@ -3958,9 +3962,9 @@ $('patientProfileBack').addEventListener('click',()=>{showPatientIdentitySearchV
 $('patientProfileForm').addEventListener('submit',savePatientProfile);
 document.querySelector('.patient-profile-summary').addEventListener('click',event=>{const button=event.target.closest('[data-profile-tab]');if(!button)return;patientProfileState.tab=button.dataset.profileTab;renderPatientProfileTimeline()});
 $('patientProfileTimeline').addEventListener('click',event=>{const button=event.target.closest('[data-profile-open-plan]');if(button)openPatientProfilePlan(button.dataset.profileOpenPlan)});
-$('patientDirectoryImportShortcutBtn').addEventListener('click',openPatientDirectoryImportPicker);
-$('patientDirectoryImportBtn').addEventListener('click',()=>$('patientDirectoryFileInput').click());
-$('patientDirectoryFileInput').addEventListener('change',event=>event.target.files[0]&&preparePatientDirectoryImport(event.target.files[0]));
+$('patientDirectoryImportShortcutBtn')?.addEventListener('click',openPatientDirectoryImportPicker);
+$('patientDirectoryImportBtn')?.addEventListener('click',openPatientDirectoryImportPicker);
+$('patientDirectoryFileInput')?.addEventListener('change',event=>event.target.files[0]&&preparePatientDirectoryImport(event.target.files[0]));
 $('patientDirectoryAddBtn').addEventListener('click',openPatientDirectoryAddPanel);
 $('patientDirectoryAddCancel').addEventListener('click',()=>{$('patientDirectoryAddPanel').hidden=true});
 $('patientDirectoryAddForm').addEventListener('submit',savePatientDirectorySingle);

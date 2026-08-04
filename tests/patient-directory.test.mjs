@@ -80,6 +80,8 @@ test('central patient list import preserves full names and updates matched ident
   assert.match(html, /استيراد قائمة مرضى كاملة/);
   assert.match(dashboard, /function parsePatientDirectoryCsv\(/);
   assert.match(dashboard, /function mergePatientDirectoryImportRows\(/);
+  assert.match(dashboard, /input\.click\(\);/);
+  assert.match(dashboard, /openModal\('patientIdentitySearchModal'\);showPatientIdentitySearchView\(\);closePatientDirectoryPanels\(\);/);
   assert.match(dashboard, /الاسم غير مكتمل/);
   assert.match(dashboard, /جارٍ المطابقة والتحديث/);
   assert.match(endpoint, /request\.method === 'POST'/);
@@ -87,6 +89,19 @@ test('central patient list import preserves full names and updates matched ident
   assert.match(directorySource, /fullName: patient\.fullName/);
   assert.match(directorySource, /const linked = \[\.\.\.new Set\(identityAliases/);
   assert.match(directorySource, /result\.updated \+= 1/);
+});
+
+test('patient import deployment cannot mix a fresh page with stale cached controls', async () => {
+  const [dashboard, html, serviceWorker] = await Promise.all([
+    read('dashboard.js'),
+    read('index.html'),
+    read('service-worker.js')
+  ]);
+  assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
+  assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
+  assert.match(html, /dashboard\.js\?v=20260805-import-fix/);
+  assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
+  assert.match(serviceWorker, /20260805-patient-import-fix/);
 });
 
 test('central patient directory visually distinguishes complete and incomplete records', async () => {
