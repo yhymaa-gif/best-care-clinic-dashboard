@@ -128,7 +128,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.58-prescription-center';
+const DASHBOARD_BUILD='7.59-auth-deploy-guard';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -187,7 +187,25 @@ const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email'; let localStateHydrated=false; let authUser=null;
 function setupEmailAuth(){const step=$('authRequestStep'),phone=$('authPhone');if(!step||!phone||$('authEmail'))return;const methods=document.createElement('div');methods.className='auth-methods';methods.innerHTML='<label><input type="radio" name="authMethod" value="email" checked> البريد الإلكتروني</label><label><input type="radio" name="authMethod" value="phone"> الجوال</label>';const emailLabel=document.createElement('label');emailLabel.id='authEmailLabel';emailLabel.innerHTML='البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">';step.insertBefore(methods,phone.parentElement);step.insertBefore(emailLabel,phone.parentElement);phone.parentElement.id='authPhoneLabel';phone.parentElement.hidden=true;methods.querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{authMethod=input.value;emailLabel.hidden=authMethod!=='email';phone.parentElement.hidden=authMethod!=='phone'}));}
 const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=message||''};
-async function authRequest(path,options={}){const response=await fetch(`/api/auth${path}`,{credentials:'include',...options});let data={};try{data=await response.json()}catch{}if(!response.ok&&response.status!==401)throw new Error(data.error||'تعذر الاتصال بخدمة الدخول');return{response,data};}
+async function authRequest(path,options={}){
+  let response;
+  try{
+    response=await fetch(`/api/auth${path}`,{credentials:'include',cache:'no-store',...options});
+  }catch{
+    throw new Error('تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.');
+  }
+  const contentType=String(response.headers.get('content-type')||'').toLowerCase();
+  let data={};
+  if(contentType.includes('application/json')){
+    try{data=await response.json()}catch{}
+  }
+  if(!response.ok&&response.status!==401){
+    const unavailable=response.status>=500||!contentType.includes('application/json');
+    throw new Error(data.error||(unavailable?'خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.':'تعذر الاتصال بخدمة الدخول'));
+  }
+  if(response.ok&&!contentType.includes('application/json'))throw new Error('استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.');
+  return{response,data};
+}
 function setProtectedUiLocked(locked){
   const app=document.querySelector('.app');
   if(app){

@@ -13,6 +13,13 @@ test('protected dashboard UI stays inert until authentication succeeds', async (
   assert.match(script, /NEED_ROLE_CHOICE&&authUser\?\.role==='admin'/);
 });
 
+test('authentication reports incomplete static-only Netlify deployments clearly', async () => {
+  const script = await read('dashboard.js');
+  assert.match(script, /response\.status>=500\|\|!contentType\.includes\('application\/json'\)/);
+  assert.match(script, /إعادة نشر المشروع من GitHub مع وظائف Netlify/);
+  assert.match(script, /cache:'no-store'/);
+});
+
 test('treatment-plan actions are unavailable before session verification', async () => {
   const html = await read('treatment-plan.html');
   const script = await read('treatment-plan.js');

@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260804-prescription-center-smart-extractor-parser-fix';
+const CACHE_NAME='bestcare-dashboard-v1-20260804-auth-deploy-guard';
 const APP_SHELL=[
   './',
   './index.html',
