@@ -125,10 +125,10 @@ function presenceCadence(){
 }
 function adminHubCadence(){
   const cadence=syncCadence();
-  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
+  if(cadence.workHours)return document.hidden?5*60*1000:20*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.60-password-refresh';
+const DASHBOARD_BUILD='7.61-realtime-sync';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -755,7 +755,7 @@ async function ensurePushSubscription(){
     const {publicKey}=await response.json();
     subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
   }
-  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID})});
+  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID})});
   if(!saved.ok)throw new Error('Subscription save failed');
   localStorage.setItem('bestcare_push_registered','enabled');return true;
 }
@@ -1596,10 +1596,26 @@ function receiveSyncSignal(message){
   if(sync.dirty||sync.pushing)return;
   scheduleAutomaticSync(80);
 }
+function receiveServiceWorkerSyncSignal(message){
+  if(message?.type!=='BESTCARE_REMOTE_SYNC')return;
+  const payload=message.payload&&typeof message.payload==='object'?message.payload:{};
+  const clinicMatches=!payload.clinicId||payload.clinicId===ACTIVE_CLINIC_ID;
+  const dateMatches=!payload.date||payload.date===selectedDate;
+  if(clinicMatches&&dateMatches&&!sync.dirty&&!sync.pushing)scheduleAutomaticSync(60);
+  if(VIEW_MODE!=='admin')return;
+  clearTimeout(adminPatientHub.timer);
+  adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub({force:true}),80);
+  const tag=String(payload.tag||''),type=String(payload.type||'');
+  if(type==='appointment_request')setTimeout(()=>refreshAppointmentRequests({notify:true}),100);
+  if(type==='lab')setTimeout(()=>refreshLabCases({force:true}),100);
+  if(type==='prescription')setTimeout(()=>refreshOperationsPrescriptions(),100);
+  if(type==='treatment_plan'||tag.includes('treatment-plan'))setTimeout(()=>refreshTreatmentPlanRegistry(true),100);
+}
 function setupCrossDeviceSyncSignals(){
   if(window.__bestcareSyncSignals)return;window.__bestcareSyncSignals=true;
   if('BroadcastChannel' in window){syncChannel=new BroadcastChannel('bestcare-dashboard-sync-v1');syncChannel.addEventListener('message',event=>receiveSyncSignal(event.data))}
   window.addEventListener('storage',event=>{if(event.key!=='bestcare_sync_signal_v1'||!event.newValue)return;try{receiveSyncSignal(JSON.parse(event.newValue))}catch{}});
+  if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',event=>receiveServiceWorkerSyncSignal(event.data));
 }
 async function recordPatientCommunication(patient,kind,details={},eventId=''){
   const stableEventId=eventId||(crypto.randomUUID?.()||`${kind}-${Date.now()}-${Math.random().toString(36).slice(2)}`);
