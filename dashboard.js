@@ -3357,7 +3357,7 @@ const ocrApiOptions=()=>({escapeHtml,toast,openModal,closeModal,getLang:()=>lang
 async function openOcrImporter(){
   setSettingsMenuOpen(false);
   try{
-    await loadOptionalScript('./ocr-import-v7-3-1.js?v=7.58.1',()=>Boolean(window.BestCareOCR));
+    await loadOptionalScript('./ocr-import-v7-3-1.js?v=7.58.2',()=>Boolean(window.BestCareOCR));
     window.BestCareOCR.init(ocrApiOptions());
     window.BestCareOCR.open();
   }catch(error){toast(lang==='en'?'Image reader unavailable':'تعذر تشغيل قارئ الصور',String(error.message||error))}

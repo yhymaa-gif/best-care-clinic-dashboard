@@ -3,7 +3,7 @@
 (function(){
   'use strict';
 
-  const state={file:null,objectUrl:'',rotation:0,worker:null,running:false,rows:[],archiveMeta:null};
+  const state={file:null,objectUrl:'',rotation:0,worker:null,running:false,rows:[],archiveMeta:null,chunkIndex:0,chunkTotal:1};
   const $=id=>document.getElementById(id);
   const text={
     ar:{
@@ -323,9 +323,11 @@
   }
 
   function logger(message){
-    const base=message.status==='recognizing text'?50:message.status==='loading language traineddata'?18:message.status==='initializing api'?42:8;
-    const span=message.status==='recognizing text'?46:24;
-    const percent=base+(Number(message.progress)||0)*span;
+    const recognizing=message.status==='recognizing text';
+    const chunkProgress=(state.chunkIndex+(Number(message.progress)||0))/Math.max(1,state.chunkTotal);
+    const base=recognizing?48:message.status==='loading language traineddata'?18:message.status==='initializing api'?42:8;
+    const span=recognizing?48:24;
+    const percent=recognizing?base+chunkProgress*span:base+(Number(message.progress)||0)*span;
     status(message.status==='recognizing text'?t('recognizing'):t('loading'),percent);
   }
 
@@ -333,10 +335,11 @@
     if(state.worker)return state.worker;
     const Tesseract=await loadEngine();
     const base=new URL('./assets/ocr/',document.baseURI).href.replace(/\/$/,'');
-    state.worker=await Tesseract.createWorker(['ara','eng'],Tesseract.OEM?.LSTM_ONLY??1,{
+    state.worker=await Tesseract.createWorker('ara+eng',Tesseract.OEM?.LSTM_ONLY??1,{
       workerPath:`${base}/worker.min.js`,
-      corePath:base,
+      corePath:`${base}/tesseract-core-lstm.wasm.js`,
       langPath:base,
+      workerBlobURL:false,
       logger
     });
     await state.worker.setParameters({
@@ -360,35 +363,46 @@
     });
   }
 
-  async function prepareCanvas(){
+  async function prepareCanvases(){
     const source=await imageBitmap(state.file);
     const rotated=state.rotation%180!==0;
     const sourceWidth=rotated?source.height:source.width;
     const sourceHeight=rotated?source.width:source.height;
-    const minWidth=1900,maxWidth=2800;
-    const scale=Math.min(3,Math.max(1,minWidth/sourceWidth),maxWidth/sourceWidth);
+    const mobile=matchMedia?.('(max-width: 900px)')?.matches||Number(navigator.deviceMemory||8)<=4;
+    const targetWidth=mobile?1350:1750;
+    const maxScale=mobile?1.65:2.1;
+    const scale=Math.min(maxScale,targetWidth/sourceWidth);
     const width=Math.max(1,Math.round(sourceWidth*scale));
-    const height=Math.max(1,Math.round(sourceHeight*scale));
-    const canvas=$('ocrCanvas');
-    canvas.width=width;canvas.height=height;
-    const context=canvas.getContext('2d',{willReadFrequently:true});
-    context.save();
-    context.translate(width/2,height/2);
-    context.rotate(state.rotation*Math.PI/180);
-    const drawWidth=source.width*scale,drawHeight=source.height*scale;
-    context.filter='grayscale(1) contrast(1.55) brightness(1.08)';
-    context.drawImage(source,-drawWidth/2,-drawHeight/2,drawWidth,drawHeight);
-    context.restore();
-    source.close?.();
-    const image=context.getImageData(0,0,width,height);
-    const data=image.data;
-    for(let i=0;i<data.length;i+=4){
-      const value=data[i];
-      const adjusted=value<105?Math.max(0,value-18):value>225?255:value;
-      data[i]=data[i+1]=data[i+2]=adjusted;
+    const totalHeight=Math.max(1,Math.round(sourceHeight*scale));
+    const segmentHeight=mobile?1700:2300;
+    const overlap=80;
+    const canvases=[];
+    for(let top=0,index=0;top<totalHeight;top+=segmentHeight-overlap,index+=1){
+      const height=Math.min(segmentHeight,totalHeight-top);
+      const canvas=index===0?$('ocrCanvas'):document.createElement('canvas');
+      canvas.width=width;canvas.height=height;
+      const context=canvas.getContext('2d',{willReadFrequently:true});
+      context.save();
+      context.translate(width/2,totalHeight/2-top);
+      context.rotate(state.rotation*Math.PI/180);
+      const drawWidth=source.width*scale,drawHeight=source.height*scale;
+      context.filter='grayscale(1) contrast(1.55) brightness(1.08)';
+      context.drawImage(source,-drawWidth/2,-drawHeight/2,drawWidth,drawHeight);
+      context.restore();
+      const image=context.getImageData(0,0,width,height);
+      const data=image.data;
+      for(let i=0;i<data.length;i+=4){
+        const value=data[i];
+        const adjusted=value<105?Math.max(0,value-18):value>225?255:value;
+        data[i]=data[i+1]=data[i+2]=adjusted;
+      }
+      context.putImageData(image,0,0);
+      canvases.push(canvas);
+      if(top+height>=totalHeight)break;
+      await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
     }
-    context.putImageData(image,0,0);
-    return canvas;
+    source.close?.();
+    return canvases;
   }
 
   function selectFile(file){
@@ -412,11 +426,21 @@
     setBusy(true);state.rows=[];renderRows();
     try{
       status(t('loading'),7);
-      const [worker,canvas]=await Promise.all([getWorker(),prepareCanvas()]);
+      const worker=await getWorker();
+      const canvases=await prepareCanvases();
+      state.chunkTotal=canvases.length;state.chunkIndex=0;
       status(t('recognizing'),48);
-      const result=await worker.recognize(canvas,{}, {text:true,tsv:true});
+      const extracted=[];
+      for(let index=0;index<canvases.length;index+=1){
+        state.chunkIndex=index;
+        status(`${t('recognizing')} ${index+1}/${canvases.length}`,48+(index/canvases.length)*48);
+        const result=await worker.recognize(canvases[index],{}, {text:true,tsv:true});
+        extracted.push(...parseRecognition(result.data||{}));
+        if(index>0){canvases[index].width=1;canvases[index].height=1}
+        await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+      }
       status(t('parsing'),97);
-      state.rows=parseRecognition(result.data||{});
+      state.rows=dedupeRows(extracted);
       renderRows();
       if(state.rows.length&&typeof api?.reconcileRows==='function')await reconcile({automatic:true,manageBusy:false});
       status(state.rows.length?`${t('done')} — ${state.rows.length}`:t('noRows'),100,state.rows.length?'done':'warning');
@@ -509,5 +533,5 @@
     setBusy(false);
   }
 
-  window.BestCareOCR={init,open,version:'7.41.0'};
+  window.BestCareOCR={init,open,version:'7.42.0'};
 })();

@@ -51,6 +51,14 @@ test('offline retry behavior is cached as part of the PWA shell', async () => {
   assert.match(offline, /<script src="\.\/offline\.js" defer><\/script>/);
 });
 
+test('mobile OCR uses a direct compatible worker and segmented canvases', async () => {
+  const script = await read('ocr-import-v7-3-1.js');
+  assert.match(script, /corePath:`\$\{base\}\/tesseract-core-lstm\.wasm\.js`/);
+  assert.match(script, /workerBlobURL:false/);
+  assert.match(script, /const segmentHeight=mobile\?1700:2300/);
+  assert.match(script, /for\(let index=0;index<canvases\.length;index\+=1\)/);
+});
+
 test('every PWA application-shell asset exists', async () => {
   const serviceWorker = await read('service-worker.js');
   const shellBlock = serviceWorker.match(/const APP_SHELL=\[([\s\S]*?)\];/)?.[1] || '';
