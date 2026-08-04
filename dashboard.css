@@ -640,3 +640,14 @@ body.admin-layout-modern.admin-sidebar-collapsed .modern-sidebar-scroll{flex:1 1
 .ocr-archive-badge.none{border-color:#cbd8d2;background:#f2f6f4;color:#667970}
 #extractorTopBtn{border-color:#9acfb3;background:linear-gradient(135deg,#e7f7ee,#fff);color:#176344}
 @media(max-width:760px){.ocr-modal-card{width:100%}.ocr-archive-summary{align-items:flex-start}.ocr-actions{grid-template-columns:1fr 1fr}.ocr-actions .primary{grid-column:1/-1}}
+
+/* Central patient directory: dense, table-like rows without large vertical gaps. */
+.patient-identity-results{gap:6px}
+.patient-identity-result{gap:10px;padding:9px 11px;border-radius:11px;box-shadow:0 3px 10px rgba(21,72,52,.04)}
+.patient-identity-summary-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.patient-identity-summary-badges>span{display:inline-flex;margin:0;padding:4px 8px;border-radius:8px;background:#f1f6f3;color:#416b59;font-size:10px;font-weight:900}
+.patient-identity-summary-badges>.patient-identity-plan{background:#eaf5ef;color:#176344}
+.patient-directory-more{width:100%;min-height:42px;border:1px dashed #83b29d;background:#f2faf6;color:#1b6548;font-weight:900}
+.patient-profile-summary{grid-template-columns:repeat(6,1fr)}
+html[data-theme="dark"] .patient-identity-summary-badges>span{background:#24372f;color:#9bd5b7}
+@media(max-width:620px){.patient-profile-summary{grid-template-columns:repeat(3,1fr)}}

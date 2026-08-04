@@ -66,7 +66,7 @@
           <div id="appointmentRequestList" class="appointment-request-list"></div>
         </section>
       </aside>
-      <button id="patientIdentitySearchBtn" class="primary patient-record-trigger" type="button"><span aria-hidden="true">⌕</span><span><strong>ملف المريض</strong><small>بحث · تعديل · متابعة</small></span></button>
+      <button id="patientIdentitySearchBtn" class="primary patient-record-trigger admin-only" type="button"><span aria-hidden="true">⌕</span><span><strong>قاعدة المرضى</strong><small>عرض · تصحيح · متابعة</small></span></button>
       <button id="addBtn" type="button">إضافة مريض</button>
       <a id="statisticsTopLink" class="top-icon-link admin-only" href="./statistics.html" title="فتح مركز الإحصائيات"><span aria-hidden="true">▥</span><strong>الإحصائيات</strong></a>
       <button id="treatmentPlanCenterBtn" class="plan-center-trigger admin-only" type="button" aria-haspopup="dialog" aria-controls="treatmentPlanCenterModal" title="فتح مركز العمليات"><span class="plan-center-trigger-icon" aria-hidden="true">◎</span><span><strong>مركز العمليات</strong><small>المواعيد · الخطط · المعمل · الوصفات</small></span><b id="treatmentPlanCenterCount">0</b></button>
@@ -123,7 +123,7 @@
     <details class="modern-sidebar-group" open>
       <summary><span aria-hidden="true">⌕</span><strong>المرضى والمواعيد</strong></summary>
       <div class="modern-sidebar-items">
-        <button type="button" data-modern-action="patient-record"><span aria-hidden="true">◎</span><span><strong>ملف المريض</strong><small>بحث وتعديل وتتبع</small></span></button>
+        <button type="button" data-modern-action="patient-record"><span aria-hidden="true">◎</span><span><strong>قاعدة المرضى</strong><small>عرض وتصحيح وتتبع</small></span></button>
         <button type="button" data-modern-action="patients"><span aria-hidden="true">≡</span><span><strong>مرضى اليوم</strong><small>القائمة والتحديثات</small></span><b id="modernPatientsCount">0</b></button>
         <button type="button" data-modern-action="add-patient"><span aria-hidden="true">＋</span><span><strong>إضافة مريض</strong><small>موعد جديد</small></span></button>
         <button type="button" data-modern-action="alert"><span aria-hidden="true">!</span><span><strong>إرسال تنبيه</strong><small>عام أو لعيادة محددة</small></span></button>
@@ -296,12 +296,12 @@
   </div>
 </div></div>
 <div id="patientIdentitySearchModal" class="modal"><div class="modal-card patient-identity-card" role="dialog" aria-modal="true" aria-labelledby="patientIdentitySearchTitle">
-  <div class="patient-identity-head"><span aria-hidden="true">⌕</span><div><h3 id="patientIdentitySearchTitle">ملف المريض</h3><p id="patientIdentitySearchHelp">ابحث بالاسم أو رقم الملف أو الجوال أو الهوية، ثم استعرض بيانات المريض وجميع إجراءاته.</p></div><button type="button" data-close="patientIdentitySearchModal" aria-label="إغلاق">×</button></div>
+  <div class="patient-identity-head"><span aria-hidden="true">⌕</span><div><h3 id="patientIdentitySearchTitle">قاعدة بيانات المرضى</h3><p id="patientIdentitySearchHelp">سجل مركزي يتحدث تلقائيًا؛ ابحث أو استعرض المرضى وصحح بياناتهم وسجلاتهم المرتبطة.</p></div><button type="button" data-close="patientIdentitySearchModal" aria-label="إغلاق">×</button></div>
   <div class="patient-identity-body">
     <section id="patientIdentitySearchView">
       <div class="patient-identity-search"><input id="patientIdentitySearchInput" type="search" autocomplete="off" placeholder="الاسم، رقم الملف، الجوال، أو الهوية" aria-label="البحث عن المريض"></div>
-      <p id="patientIdentitySearchHint" class="patient-identity-hint">ترتبط الخطط والدفع وحالات المعمل والمواعيد بهوية المريض وتبقى متاحة عند عودته.</p>
-      <div id="patientIdentitySearchResults" class="patient-identity-results"><div class="patient-identity-empty">اكتب الاسم أو إحدى بيانات الهوية لبدء البحث.</div></div>
+      <p id="patientIdentitySearchHint" class="patient-identity-hint">تظهر أحدث السجلات أولًا. ترتبط المواعيد والخطط والوصفات والمعمل بهوية المريض وتبقى متاحة عند عودته.</p>
+      <div id="patientIdentitySearchResults" class="patient-identity-results"><div class="patient-identity-loading">جارٍ تحميل قاعدة المرضى…</div></div>
     </section>
     <section id="patientProfileView" class="patient-profile-view" hidden>
       <div class="patient-profile-toolbar"><button id="patientProfileBack" type="button">← العودة للنتائج</button><span id="patientProfileSyncState">سجل المريض المركزي</span></div>
@@ -317,9 +317,9 @@
           <label>رقم الملف<input id="patientProfileFileInput" type="text" maxlength="40" autocomplete="off" required></label>
           <label>رقم الجوال<input id="patientProfilePhoneInput" type="tel" maxlength="20" inputmode="tel" autocomplete="off" required></label>
           <label>رقم الهوية<input id="patientProfileNationalInput" type="text" maxlength="10" inputmode="numeric" autocomplete="off"></label>
-          <div class="patient-profile-save"><button id="patientProfileSave" class="primary" type="submit">حفظ وتحديث السجلات المرتبطة</button><small>يتم تحديث المواعيد والخطة وحالات المعمل المرتبطة بالمريض.</small></div>
+          <div class="patient-profile-save"><button id="patientProfileSave" class="primary" type="submit">حفظ وتحديث السجلات المرتبطة</button><small>يتم تحديث المواعيد والخطط والوصفات وحالات المعمل المرتبطة بالمريض.</small></div>
         </form>
-        <div class="patient-profile-summary" aria-label="ملخص إجراءات المريض"><button type="button" data-profile-tab="appointments" class="active"><b id="patientProfileAppointmentCount">0</b><span>المواعيد</span></button><button type="button" data-profile-tab="plans"><b id="patientProfilePlanCount">0</b><span>الخطط</span></button><button type="button" data-profile-tab="payments"><b id="patientProfilePaymentCount">0</b><span>الدفع</span></button><button type="button" data-profile-tab="labs"><b id="patientProfileLabCount">0</b><span>المعمل</span></button><button type="button" data-profile-tab="communications"><b id="patientProfileCommunicationCount">0</b><span>التواصل</span></button></div>
+        <div class="patient-profile-summary" aria-label="ملخص إجراءات المريض"><button type="button" data-profile-tab="appointments" class="active"><b id="patientProfileAppointmentCount">0</b><span>المواعيد</span></button><button type="button" data-profile-tab="plans"><b id="patientProfilePlanCount">0</b><span>الخطط</span></button><button type="button" data-profile-tab="prescriptions"><b id="patientProfilePrescriptionCount">0</b><span>الوصفات</span></button><button type="button" data-profile-tab="payments"><b id="patientProfilePaymentCount">0</b><span>الدفع</span></button><button type="button" data-profile-tab="labs"><b id="patientProfileLabCount">0</b><span>المعمل</span></button><button type="button" data-profile-tab="communications"><b id="patientProfileCommunicationCount">0</b><span>التواصل</span></button></div>
         <div id="patientProfileTimeline" class="patient-profile-timeline"></div>
       </div>
       <p id="patientProfileError" class="patient-profile-error" hidden></p>

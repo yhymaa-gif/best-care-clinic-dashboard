@@ -89,6 +89,8 @@
       if(group)group.setAttribute('aria-label',finalPlan?'مشاركة الخطة النهائية عبر واتساب':'مشاركة مسودة الخطة عبر واتساب');
     }
     function safeText(value,max=500){return String(value??'').slice(0,max)}
+    function nameScore(value){const text=String(value||'').trim();return text?text.split(/\s+/).filter(Boolean).length*100+text.length:0}
+    function preferCompleteName(current,candidate){return nameScore(candidate)>nameScore(current)?String(candidate||'').trim():String(current||'').trim()}
     function normalizeWhatsAppPhone(value){
       let digits=String(value||'').replace(/\D/g,'');
       if(digits.startsWith('00'))digits=digits.slice(2);
@@ -623,7 +625,7 @@
         <div class="sp-watermark" aria-hidden="true"></div>
         <div class="sp-copy-label">${finalPlan?'نسخة نهائية للاطلاع':'مسودة غير نهائية للاطلاع'}</div>
         <div class="sp-document-body"><header><div><h1>عيادات أفضل عناية الاستشارية للأسنان</h1><p>${finalPlan?'الخطة العلاجية النهائية المعتمدة':'خطة علاجية وعرض تكلفة تقديري'}</p></div><div class="sp-meta">رقم الخطة: ${escapeHtml(state.meta.planNo)}<br/>تاريخ الإصدار: ${dateFormatter.format(dates.issued)}${finalPlan?`<br/>تاريخ الطباعة: ${escapeHtml(generatedAt)}`:''}</div><img class="sp-logo-img" src="./best-care-logo.png" width="613" height="900" alt="شعار أفضل عناية"></header>
-        <div class="sp-patient"><span><b>المريض</b>${escapeHtml(state.patient.fullName||'—')}</span><span><b>رقم الملف</b>${escapeHtml(state.patient.fileNo||'—')}</span><span><b>الجوال</b>${escapeHtml(state.patient.mobile||'—')}</span></div>
+        <div class="sp-patient"><span style="overflow-wrap:anywhere"><b>المريض</b>${escapeHtml(state.patient.fullName||'—')}</span><span><b>رقم الملف</b>${escapeHtml(state.patient.fileNo||'—')}</span><span><b>الجوال</b>${escapeHtml(state.patient.mobile||'—')}</span></div>
         <section class="sp-clinical"><h2>التشخيص والفحوصات</h2><p>${escapeHtml(DEFAULT_DIAGNOSIS)}</p><p><b>الإجراءات التشخيصية:</b> تم استكمال الإجراءات التشخيصية اللازمة للحالة ومراجعة النتائج، وقد تم أخذ كل ما يلزم منها وشرح التشخيص والخطة العلاجية المقترحة للمريض بصورة واضحة.</p>${state.clinical.radiographs?`<p><b>الفحوصات والصور:</b> ${escapeHtml(state.clinical.radiographs)}</p>`:''}</section>
         <main>${phaseHtml}</main>
         <section class="sp-finance"><span><b>قبل الخصم</b>${formatMoney(total.before)}</span><span><b>قيمة الخصم</b>${formatMoney(total.saving)}</span><span><b>بعد الخصم</b>${formatMoney(total.after)}</span><span class="net"><b>الصافي المستحق</b>${formatMoney(total.net)}</span></section>
@@ -980,8 +982,8 @@
       const [remoteResult]=await Promise.all([loadRemote(),loadProcedureCatalog(false)]);
       const remote=remoteResult?.plan||null;
       state=normalizeState(remote||local||null);
+      state.patient.fullName=preferCompleteName(state.patient.fullName,source.name);
       if(!remote&&!local){
-        state.patient.fullName=source.name||'';
         state.patient.fileNo=source.file||'';
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
