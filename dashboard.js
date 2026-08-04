@@ -94,6 +94,7 @@ const ALERTS_API='/api/alerts';
 const ADMIN_PATIENTS_API='/api/admin-patients';
 const PATIENT_PROFILE_API='/api/patient-profile';
 const PATIENT_LOOKUP_API='/api/patient-lookup';
+const PATIENT_RECONCILE_API='/api/patient-reconcile';
 const ALERT_DISPLAY_MS=5*60*1000;
 const POLL_MS=5000;
 const SYNC_WORK_HIDDEN_MS=60000;
@@ -2937,6 +2938,7 @@ function handleModernAdminAction(action){
   if(action==='plans'){openTreatmentPlanCenter();operationsCenter.filter='plans';renderOperationsCenter();return}
   if(action==='labs'){openTreatmentPlanCenter();operationsCenter.filter='labs';renderOperationsCenter();return}
   if(action==='patient-record'){$('patientIdentitySearchBtn')?.click();return}
+  if(action==='extractor'){openOcrImporter();return}
   if(action==='patients'){scrollAdminTarget('adminPatientHub',{open:true});return}
   if(action==='add-patient'){$('addBtn')?.click();return}
   if(action==='alert'){$('alertBtn')?.click();return}
@@ -3338,11 +3340,24 @@ function loadOptionalScript(src,ready){
   return pending;
 }
 const ensureExcelReader=()=>loadOptionalScript('./assets/vendor/xlsx.full.min.js?v=7.9',()=>Boolean(window.XLSX));
-const ocrApiOptions=()=>({escapeHtml,toast,openModal,closeModal,getLang:()=>lang,getDate:()=>selectedDate,mergeRows:mergeOcrRows});
+async function reconcileOcrRows(rows){
+  const response=await request(PATIENT_RECONCILE_API,{
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({
+      clinicId:authUser?.role==='admin'?'all':ACTIVE_CLINIC_ID,
+      rows:rows.map(row=>({id:row.id,name:row.name,file:row.file,phone:row.phone}))
+    })
+  },45000);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||(lang==='en'?'Patient record matching failed':'تعذرت مطابقة سجل المرضى'));
+  return data;
+}
+const ocrApiOptions=()=>({escapeHtml,toast,openModal,closeModal,getLang:()=>lang,getDate:()=>selectedDate,mergeRows:mergeOcrRows,reconcileRows:reconcileOcrRows});
 async function openOcrImporter(){
   setSettingsMenuOpen(false);
   try{
-    await loadOptionalScript('./ocr-import-v7-3-1.js?v=7.9',()=>Boolean(window.BestCareOCR));
+    await loadOptionalScript('./ocr-import-v7-3-1.js?v=7.58.1',()=>Boolean(window.BestCareOCR));
     window.BestCareOCR.init(ocrApiOptions());
     window.BestCareOCR.open();
   }catch(error){toast(lang==='en'?'Image reader unavailable':'تعذر تشغيل قارئ الصور',String(error.message||error))}
@@ -3544,6 +3559,8 @@ function applyLang(){
   setText('#clinicViewLink',lang==='en'?'🩺 Doctor page':'🩺 صفحة الطبيب');
   setText('#adminViewLink',lang==='en'?'🗓️ Administration page':'🗓️ صفحة الإدارة');
   setText('#statisticsTopLink strong',lang==='en'?'Statistics':'الإحصائيات');
+  setText('#extractorTopBtn strong',lang==='en'?'Smart extraction':'استخراج ذكي');
+  setText('#extractorTopBtn small',lang==='en'?'Image · match · CSV':'صورة · مطابقة · CSV');
   setText('#appointmentRequestsPageBtn',lang==='en'?'📅 Appointment request tracking':'📅 متابعة طلبات المواعيد');
   setText('#appointmentRequestLabel',lang==='en'?'Appointment requests':'طلبات المواعيد');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
@@ -3594,7 +3611,7 @@ function applyLang(){
   applyIosInstallLanguage();
   updateNotificationsButton();
   updateSoundButton();
-  setText('#imageOcrBtn',tr('imageOcr'));
+  setText('#imageOcrBtn',lang==='en'?'📷 Smart appointment image extraction':'📷 استخراج ذكي من صورة المواعيد');
   setText('#importBtn',lang==='en'?'📥 Import CSV / Excel':'📥 استيراد CSV / Excel');
   setText('#exportBtn',tr('exportCsv'));
   setText('#syncTestBtn',tr('testSync'));
@@ -3667,9 +3684,9 @@ function applyLang(){
   setText('#reviewLinkHint',lang==='en'?'Opens the Best Care Dental Clinics profile on Google Maps.':'يفتح ملف عيادات أفضل عناية الاستشارية للأسنان على Google Maps.');
   setText('#reviewLinkPreview',lang==='en'?'Preview link':'معاينة الرابط');
   setTexts('#reviewModal .modal-actions button',[lang==='en'?'Cancel':'إلغاء',lang==='en'?'Copy message':'نسخ الرسالة',lang==='en'?'Send via WhatsApp':'إرسال عبر واتساب']);
-  setText('#ocrModalTitle',tr('ocrTitle'));
-  setText('#ocrModalHelp',tr('ocrHelp'));
-  setText('#ocrPrivacy',tr('ocrPrivacy'));
+  setText('#ocrModalTitle',lang==='en'?'📷 Extract appointments and match patient records':'📷 استخراج المواعيد ومطابقة سجل المرضى');
+  setText('#ocrModalHelp',lang==='en'?'The image stays on this device, then names, file numbers, and phones are matched against the latest dashboard corrections.':'تُقرأ الصورة داخل جهازك، ثم تُطابق الأسماء وأرقام الملفات والجوال مع أحدث تصحيحات الداشبورد.');
+  setText('#ocrPrivacy',lang==='en'?'🔒 Local image processing — matching uses authorized dashboard data only':'🔒 الصورة محلية — المطابقة تستخدم بيانات الداشبورد المصرح بها فقط');
   setText('#chooseOcrImageBtn',tr('ocrChoose'));
   setText('#ocrDropText',tr('ocrDrop'));
   setText('#ocrDropHint',tr('ocrDropHint'));
@@ -3678,14 +3695,16 @@ function applyLang(){
   if(!$('ocrProgressText').textContent||$('ocrProgress').hidden)setText('#ocrProgressText',tr('ocrReady'));
   if($('ocrModal').dataset.hasFile!=='true')setText('#ocrReviewHint',tr('ocrInitialHint'));
   setText('#ocrReviewTitle',tr('ocrReviewTitle'));
-  setText('#ocrReviewCaption',tr('ocrReviewCaption'));
-  setText('#ocrThName',tr('firstName'));
+  setText('#ocrReviewCaption',lang==='en'?'Review corrections before merging':'راجع التصحيحات قبل الدمج');
+  setText('#ocrThName',tr('name'));
   setText('#ocrThFile',tr('fileNumber'));
+  setText('#ocrThPhone',lang==='en'?'Phone number':'رقم الجوال');
   setText('#ocrThStart',tr('start'));
   setText('#ocrThEnd',tr('end'));
   setText('#ocrThProcedure',tr('procedure'));
   setText('#ocrThConfidence',tr('ocrConfidence'));
-  setTexts('#ocrModal .ocr-actions button',[tr('close'),tr('ocrStart'),tr('ocrDownload'),tr('ocrMerge')]);
+  setText('#ocrThArchive',lang==='en'?'Record match':'مطابقة السجل');
+  setTexts('#ocrModal .ocr-actions button',[tr('close'),tr('ocrStart'),lang==='en'?'Refresh from patient records':'تحديث من سجل المرضى',tr('ocrDownload'),tr('ocrMerge')]);
   rebuildStatusSelect($('fStatus'));
   rebuildStatusSelect($('filterStatus'),true);
   $('langBtn').textContent=lang==='en'?'العربية':'English';
@@ -3849,6 +3868,7 @@ $('settingsBtn').addEventListener('click',event=>{event.stopPropagation();setSet
 document.addEventListener('click',()=>setSettingsMenuOpen(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&els.settingsMenu.classList.contains('open')){setSettingsMenuOpen(false);els.settingsBtn.focus()}});
 $('imageOcrBtn').addEventListener('click',openOcrImporter);
+$('extractorTopBtn')?.addEventListener('click',openOcrImporter);
 $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);

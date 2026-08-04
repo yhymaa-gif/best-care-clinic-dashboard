@@ -625,3 +625,18 @@ body.admin-layout-modern .modern-sidebar-scroll{flex:1 1 0;min-height:0!importan
 body.admin-layout-modern .modern-sidebar-scroll:focus-visible{outline:2px solid rgba(171,224,248,.9);outline-offset:2px;border-radius:12px}
 body.admin-layout-modern.admin-sidebar-collapsed .modern-sidebar-scroll{flex:1 1 0;min-height:0!important;max-height:100%;padding-bottom:max(12px,env(safe-area-inset-bottom))!important}
 @media(max-width:760px){body.admin-layout-modern .modern-admin-sidebar{height:100vh;height:100dvh;max-height:100dvh}body.admin-layout-modern .modern-sidebar-scroll{padding-bottom:max(10px,env(safe-area-inset-bottom))!important}}
+
+/* Smart extractor: archive reconciliation and full patient identity review. */
+.ocr-modal-card{width:min(1380px,100%)}
+.ocr-table{min-width:1320px}
+.ocr-table .ocr-name{min-width:230px}
+.ocr-table .ocr-phone{min-width:132px;direction:ltr;text-align:left}
+.ocr-archive-summary{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:10px 12px;border:1px solid #b9ddc9;border-radius:12px;background:#edf9f2;color:#195f40;font-size:11px;font-weight:900}
+.ocr-archive-summary::before{content:"✓";display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:8px;background:#24835a;color:#fff}
+.ocr-archive-badge{display:inline-flex;align-items:center;white-space:nowrap;padding:6px 8px;border:1px solid transparent;border-radius:999px;font-size:9px;font-weight:950}
+.ocr-archive-badge.exact{border-color:#9bd0b2;background:#e1f5e9;color:#12643f}
+.ocr-archive-badge.review{border-color:#e8c36a;background:#fff6da;color:#805b08}
+.ocr-archive-badge.ambiguous{border-color:#e2a2aa;background:#fdecf0;color:#963044}
+.ocr-archive-badge.none{border-color:#cbd8d2;background:#f2f6f4;color:#667970}
+#extractorTopBtn{border-color:#9acfb3;background:linear-gradient(135deg,#e7f7ee,#fff);color:#176344}
+@media(max-width:760px){.ocr-modal-card{width:100%}.ocr-archive-summary{align-items:flex-start}.ocr-actions{grid-template-columns:1fr 1fr}.ocr-actions .primary{grid-column:1/-1}}

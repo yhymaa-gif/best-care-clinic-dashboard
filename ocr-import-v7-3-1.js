@@ -3,13 +3,13 @@
 (function(){
   'use strict';
 
-  const state={file:null,objectUrl:'',rotation:0,worker:null,running:false,rows:[]};
+  const state={file:null,objectUrl:'',rotation:0,worker:null,running:false,rows:[],archiveMeta:null};
   const $=id=>document.getElementById(id);
   const text={
     ar:{
-      choose:'اختر صورة جدول المواعيد أو اسحبها هنا',ready:'الصورة جاهزة — اضغط بدء الاستخراج',loading:'تحميل محرك القراءة المحلي…',recognizing:'قراءة الجدول…',parsing:'ترتيب أسماء المرضى والمواعيد…',done:'اكتمل الاستخراج',badFile:'اختر ملف صورة بصيغة JPG أو PNG أو WEBP',tooLarge:'حجم الصورة أكبر من 20 ميجابايت',noRows:'لم تُكتشف صفوف مكتملة. جرّب صورة أوضح أو صحّح المسودة يدويًا.',needImage:'اختر صورة جدول المواعيد أولًا',mergeNone:'لا توجد صفوف صحيحة محددة للدمج',merged:'تم دمج قائمة الصورة',mergedDetail:n=>`أضيف ${n.added} مريض، وتجاوز النظام ${n.skipped} صف مكرر`,download:'تم تجهيز ملف CSV',failed:'تعذر قراءة الصورة',engineFailed:'تعذر تشغيل قارئ الصور على هذا الجهاز. تحقق من الاتصال أول مرة ثم أعد المحاولة.',review:'راجع الصفوف، خاصة المعلّمة بالأصفر أو الأحمر، ثم ادمجها في قائمة اليوم.',row:'صف',high:'ثقة عالية',medium:'يحتاج مراجعة',low:'يحتاج تصحيح',unnamed:'غير معروف'},
+      choose:'اختر صورة جدول المواعيد أو اسحبها هنا',ready:'الصورة جاهزة — اضغط بدء الاستخراج',loading:'تحميل محرك القراءة المحلي…',recognizing:'قراءة الجدول…',parsing:'ترتيب أسماء المرضى والمواعيد…',matching:'مطابقة أحدث بيانات المرضى…',done:'اكتمل الاستخراج',badFile:'اختر ملف صورة بصيغة JPG أو PNG أو WEBP',tooLarge:'حجم الصورة أكبر من 20 ميجابايت',noRows:'لم تُكتشف صفوف مكتملة. جرّب صورة أوضح أو صحّح المسودة يدويًا.',needImage:'اختر صورة جدول المواعيد أولًا',mergeNone:'لا توجد صفوف صحيحة محددة للدمج',merged:'تم دمج قائمة الصورة',mergedDetail:n=>`أضيف ${n.added} مريض، وتجاوز النظام ${n.skipped} صف مكرر`,download:'تم تجهيز ملف CSV',failed:'تعذر قراءة الصورة',engineFailed:'تعذر تشغيل قارئ الصور على هذا الجهاز. تحقق من الاتصال أول مرة ثم أعد المحاولة.',matchFailed:'اكتمل استخراج الصورة، لكن تعذرت مطابقة سجل المرضى. يمكنك إعادة المحاولة.',review:'راجع الصفوف، خاصة المعلّمة بالأصفر أو الأحمر، ثم ادمجها في قائمة اليوم.',row:'صف',high:'ثقة عالية',medium:'يحتاج مراجعة',low:'يحتاج تصحيح',unnamed:'غير معروف',archiveExact:'مطابق ومحدّث',archiveSame:'مطابق بالسجل',archiveReview:'راجع التطابق',archiveAmbiguous:'أكثر من سجل',archiveNone:'غير موجود بالسجل',archiveSummary:(matched,corrected,total)=>`طابق السجل ${matched} من ${total} صفوف، وطُبّق ${corrected} تصحيح آمن.`},
     en:{
-      choose:'Choose an appointment image or drop it here',ready:'Image ready — start extraction',loading:'Loading the local reader…',recognizing:'Reading the appointment table…',parsing:'Organizing patients and times…',done:'Extraction complete',badFile:'Choose a JPG, PNG, or WEBP image',tooLarge:'The image is larger than 20 MB',noRows:'No complete rows were detected. Try a clearer image or edit the draft manually.',needImage:'Choose an appointment image first',mergeNone:'No valid selected rows to merge',merged:'Image list merged',mergedDetail:n=>`${n.added} patients added; ${n.skipped} duplicate rows skipped`,download:'CSV file prepared',failed:'Image reading failed',engineFailed:'The image reader could not start on this device. Connect once and retry.',review:'Review yellow or red rows, then merge them into today’s list.',row:'Row',high:'High confidence',medium:'Review',low:'Correction needed',unnamed:'Unknown'}
+      choose:'Choose an appointment image or drop it here',ready:'Image ready — start extraction',loading:'Loading the local reader…',recognizing:'Reading the appointment table…',parsing:'Organizing patients and times…',matching:'Matching the latest patient records…',done:'Extraction complete',badFile:'Choose a JPG, PNG, or WEBP image',tooLarge:'The image is larger than 20 MB',noRows:'No complete rows were detected. Try a clearer image or edit the draft manually.',needImage:'Choose an appointment image first',mergeNone:'No valid selected rows to merge',merged:'Image list merged',mergedDetail:n=>`${n.added} patients added; ${n.skipped} duplicate rows skipped`,download:'CSV file prepared',failed:'Image reading failed',engineFailed:'The image reader could not start on this device. Connect once and retry.',matchFailed:'Image extraction completed, but patient matching failed. You can retry.',review:'Review yellow or red rows, then merge them into today’s list.',row:'Row',high:'High confidence',medium:'Review',low:'Correction needed',unnamed:'Unknown',archiveExact:'Matched and updated',archiveSame:'Record matched',archiveReview:'Review match',archiveAmbiguous:'Multiple records',archiveNone:'Not in records',archiveSummary:(matched,corrected,total)=>`${matched} of ${total} rows matched; ${corrected} safe corrections applied.`}
   };
 
   let api=null,initialized=false;
@@ -29,7 +29,14 @@
     return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`;
   };
   const validTime=value=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(value||''));
-  const validRow=row=>Boolean(row.name&&row.file&&validTime(row.start)&&validTime(row.end)&&minutes(row.end)>minutes(row.start));
+  const normalizePhone=value=>{
+    const digits=normalizeDigits(value).replace(/\D/g,'');
+    if(/^009665\d{8}$/.test(digits))return`0${digits.slice(5)}`;
+    if(/^9665\d{8}$/.test(digits))return`0${digits.slice(3)}`;
+    if(/^5\d{8}$/.test(digits))return`0${digits}`;
+    return /^05\d{8}$/.test(digits)?digits:'';
+  };
+  const validRow=row=>Boolean(row.name&&validTime(row.start)&&validTime(row.end)&&minutes(row.end)>minutes(row.start));
   const stopWords=new Set([
     'patient','name','file','file.n','time','start','end','date','mobile','phone','procedure','type','status',
     'المريض','الاسم','اسم','رقم','الملف','ملف','الوقت','البداية','النهاية','التاريخ','الجوال','الحالة','الإجراء','نوع','موعد'
@@ -51,6 +58,7 @@
     $('chooseOcrImageBtn').disabled=busy;
     $('rotateOcrBtn').disabled=busy||!state.file;
     $('mergeOcrBtn').disabled=busy||!state.rows.length;
+    $('reconcileOcrBtn').disabled=busy||!state.rows.length||typeof api?.reconcileRows!=='function';
     $('downloadOcrCsvBtn').disabled=busy||!state.rows.length;
     $('ocrSpinner').hidden=!busy;
   }
@@ -109,6 +117,7 @@
     const aliases={
       patient:/^(patient|name|المريض|الاسم)$/i,
       file:/^(file|file\.n|filen|الملف|ملف)$/i,
+      phone:/^(mobile|phone|الجوال|الهاتف|رقم الجوال)$/i,
       start:/^(time|start|البداية|الوقت)$/i,
       end:/^(end|النهاية)$/i,
       procedure:/^(procedure|type|الإجراء|النوع)$/i
@@ -135,6 +144,15 @@
     if(!items.length)return null;
     if(x===undefined)return items[0];
     return [...items].sort((a,b)=>Math.abs(a.x-x)-Math.abs(b.x-x))[0];
+  }
+
+  function wordsInColumn(group,columns,key){
+    if(columns[key]===undefined)return[];
+    const centers=Object.entries(columns).sort((left,right)=>left[1]-right[1]);
+    const index=centers.findIndex(([name])=>name===key);
+    const left=index>0?(centers[index-1][1]+centers[index][1])/2:-Infinity;
+    const right=index<centers.length-1?(centers[index][1]+centers[index+1][1])/2:Infinity;
+    return group.filter(word=>word.x>=left&&word.x<right);
   }
 
   function parseWordGroup(group,columns,index){
@@ -172,32 +190,29 @@
     const fileWord=closest(numeric,columns.file);
     const file=fileWord?.digits||'';
 
-    let names=group.filter(word=>{
+    const phoneWords=group.map(word=>({...word,phone:normalizePhone(word.text)})).filter(word=>word.phone);
+    const phoneWord=closest(phoneWords,columns.phone);
+    const phone=phoneWord?.phone||'';
+
+    let names=(columns.patient!==undefined?wordsInColumn(group,columns,'patient'):group).filter(word=>{
       const token=cleanText(word.text).toLowerCase().replace(/[:#]/g,'');
       if(stopWords.has(token)||wordTime(word)||/\d/.test(token))return false;
       return /[\u0600-\u06ff]{2,}|[a-z]{2,}/i.test(token);
     });
-    if(columns.patient!==undefined){
-      const otherCenters=Object.entries(columns).filter(([key])=>key!=='patient').map(([,value])=>value);
-      const nameRadius=otherCenters.length?Math.max(110,Math.min(...otherCenters.map(value=>Math.abs(value-columns.patient)))*.48):220;
-      names=names.filter(word=>Math.abs(word.x-columns.patient)<=nameRadius);
-    }
-    let nameWord=closest(names,columns.patient);
-    if(!nameWord&&names.length)nameWord=names.find(word=>/[\u0600-\u06ff]/.test(word.text))||names[0];
-    const name=cleanText(nameWord?.text||'').split(/\s+/)[0];
-    if(!file)return null;
+    const arabicName=names.some(word=>/[\u0600-\u06ff]/.test(word.text));
+    names=[...names].sort((left,right)=>arabicName?right.x-left.x:left.x-right.x);
+    const name=cleanText(names.map(word=>word.text).join(' '));
+    if(!name)return null;
 
     let procedure='';
     if(columns.procedure!==undefined){
-      const centers=Object.values(columns).filter(value=>value!==columns.procedure);
-      const radius=Math.max(120,Math.min(...centers.map(value=>Math.abs(value-columns.procedure)))/2);
-      procedure=group.filter(word=>Math.abs(word.x-columns.procedure)<=radius&&!wordTime(word)&&!/^\d+$/.test(normalizeDigits(word.text).replace(/\D/g,'')))
+      procedure=wordsInColumn(group,columns,'procedure').filter(word=>!wordTime(word)&&!/^\d+$/.test(normalizeDigits(word.text).replace(/\D/g,'')))
         .map(word=>cleanText(word.text)).filter(token=>!stopWords.has(token.toLowerCase())).join(' ');
     }
-    const confidenceValues=[nameWord?.confidence,fileWord?.confidence,...timeWords.slice(0,2).map(word=>word.confidence)].filter(Number.isFinite);
+    const confidenceValues=[...names.map(word=>word.confidence),fileWord?.confidence,phoneWord?.confidence,...timeWords.slice(0,2).map(word=>word.confidence)].filter(Number.isFinite);
     let confidence=confidenceValues.length?confidenceValues.reduce((sum,value)=>sum+value,0)/confidenceValues.length:45;
     if(!name)confidence=Math.min(confidence,35);
-    const row={id:uid(),sourceIndex:index+1,include:Boolean(name),name,file,start,end,procedure,confidence};
+    const row={id:uid(),sourceIndex:index+1,include:Boolean(name),name,file,phone,start,end,procedure,confidence,archive:null};
     row.valid=validRow(row);
     return row;
   }
@@ -207,19 +222,20 @@
       const times=timeMatches(line).sort((a,b)=>minutes(a)-minutes(b));
       if(!times.length)return null;
       const start=times[0],end=times.find(value=>minutes(value)>minutes(start))||addMinutes(start,30);
-      const numbers=line.match(/\b\d{3,8}\b/g)||[];
+      const phone=normalizePhone(line.match(/(?:\+?966|0)?5\d{8}/)?.[0]||'');
+      const numbers=line.match(/\b\d{1,8}\b/g)||[];
       const file=numbers.find(value=>!/^20\d{2}$/.test(value)&&!/^19\d{2}$/.test(value)&&!times.some(time=>time.replace(':','')===value))||'';
       const tokens=line.split(/\s+/).filter(token=>/[\u0600-\u06ff]{2,}|[a-z]{2,}/i.test(token)&&!stopWords.has(token.toLowerCase()));
-      const name=(tokens.find(token=>/[\u0600-\u06ff]/.test(token))||tokens[0]||'').replace(/[^\u0600-\u06ffA-Za-z'-]/g,'');
-      if(!name||!file)return null;
-      return{id:uid(),sourceIndex:startIndex+index+1,include:true,name:name.split(/\s+/)[0],file,start,end,procedure:'',confidence:48,valid:true};
+      const name=cleanText(tokens.slice(0,6).join(' ').replace(/[^\u0600-\u06ffA-Za-z' -]/g,''));
+      if(!name)return null;
+      return{id:uid(),sourceIndex:startIndex+index+1,include:true,name,file,phone,start,end,procedure:'',confidence:48,valid:true,archive:null};
     }).filter(Boolean);
   }
 
   function dedupeRows(rows){
     const seen=new Set();
     return rows.filter(row=>{
-      const key=`${row.file}|${row.start}`;
+      const key=`${row.file||row.phone||row.name}|${row.start}`;
       if(seen.has(key))return false;
       seen.add(key);
       return true;
@@ -240,22 +256,38 @@
     if(!body)return;
     body.innerHTML=state.rows.map((row,index)=>{
       const meta=confidenceMeta(row.confidence);
+      const archive=row.archive||{status:'none'};
+      const archiveLabel=archive.status==='exact'
+        ?(archive.corrections?.length?t('archiveExact'):t('archiveSame'))
+        :archive.status==='review'?t('archiveReview')
+          :archive.status==='ambiguous'?t('archiveAmbiguous'):t('archiveNone');
+      const archiveTitle=archive.patient
+        ?[archive.patient.name,archive.patient.file&&`#${archive.patient.file}`,archive.patient.phone,archive.patient.sourceDate].filter(Boolean).join(' · ')
+        :archiveLabel;
       return `<tr data-ocr-row="${row.id}" class="ocr-confidence-${meta.className}">
         <td><input class="ocr-include" type="checkbox" ${row.include?'checked':''} aria-label="${t('row')} ${index+1}"></td>
         <td>${index+1}</td>
         <td><input class="ocr-name" value="${api.escapeHtml(row.name)}" autocomplete="off"></td>
         <td><input class="ocr-file" value="${api.escapeHtml(row.file)}" inputmode="numeric" autocomplete="off"></td>
+        <td><input class="ocr-phone" value="${api.escapeHtml(row.phone||'')}" inputmode="tel" autocomplete="off"></td>
         <td><input class="ocr-start" type="time" value="${api.escapeHtml(row.start)}"></td>
         <td><input class="ocr-end" type="time" value="${api.escapeHtml(row.end)}"></td>
         <td><input class="ocr-procedure" value="${api.escapeHtml(row.procedure||'')}" autocomplete="off"></td>
         <td><span class="ocr-confidence ${meta.className}" title="${meta.confidence}%">${meta.label} · ${meta.confidence}%</span></td>
+        <td><span class="ocr-archive-badge ${api.escapeHtml(archive.status||'none')}" title="${api.escapeHtml(archiveTitle)}">${api.escapeHtml(archiveLabel)}</span></td>
         <td><button class="ocr-delete mini danger" type="button" data-ocr-delete="${row.id}" aria-label="حذف">×</button></td>
       </tr>`;
     }).join('');
     $('ocrResults').hidden=!state.rows.length;
     $('ocrReviewHint').textContent=state.rows.length?t('review'):t('noRows');
     $('mergeOcrBtn').disabled=state.running||!state.rows.length;
+    $('reconcileOcrBtn').disabled=state.running||!state.rows.length||typeof api?.reconcileRows!=='function';
     $('downloadOcrCsvBtn').disabled=state.running||!state.rows.length;
+    const summary=$('ocrArchiveSummary');
+    if(summary){
+      summary.hidden=!state.archiveMeta;
+      summary.textContent=state.archiveMeta?t('archiveSummary',state.archiveMeta.matched,state.archiveMeta.corrected,state.rows.length):'';
+    }
   }
 
   function rowsFromEditor(){
@@ -265,8 +297,9 @@
         ...row,
         sourceIndex:index+1,
         include:tr.querySelector('.ocr-include').checked,
-        name:cleanText(tr.querySelector('.ocr-name').value).split(/\s+/)[0],
+        name:cleanText(tr.querySelector('.ocr-name').value),
         file:normalizeDigits(tr.querySelector('.ocr-file').value).replace(/\D/g,''),
+        phone:normalizePhone(tr.querySelector('.ocr-phone').value),
         start:tr.querySelector('.ocr-start').value,
         end:tr.querySelector('.ocr-end').value,
         procedure:cleanText(tr.querySelector('.ocr-procedure').value)
@@ -362,7 +395,7 @@
     if(!file||!/^image\/(jpeg|png|webp|bmp)$/i.test(file.type)){api.toast(t('failed'),t('badFile'));return}
     if(file.size>20*1024*1024){api.toast(t('failed'),t('tooLarge'));return}
     if(state.objectUrl)URL.revokeObjectURL(state.objectUrl);
-    state.file=file;state.rotation=0;state.rows=[];
+    state.file=file;state.rotation=0;state.rows=[];state.archiveMeta=null;
     $('ocrModal').dataset.hasFile='true';
     state.objectUrl=URL.createObjectURL(file);
     $('ocrPreview').src=state.objectUrl;
@@ -385,6 +418,7 @@
       status(t('parsing'),97);
       state.rows=parseRecognition(result.data||{});
       renderRows();
+      if(state.rows.length&&typeof api?.reconcileRows==='function')await reconcile({automatic:true,manageBusy:false});
       status(state.rows.length?`${t('done')} — ${state.rows.length}`:t('noRows'),100,state.rows.length?'done':'warning');
       if(!state.rows.length)api.toast(t('failed'),t('noRows'));
     }catch(error){
@@ -395,12 +429,45 @@
     }finally{setBusy(false)}
   }
 
+  async function reconcile({automatic=false,manageBusy=true}={}){
+    if(typeof api?.reconcileRows!=='function'||!state.rows.length)return false;
+    state.rows=rowsFromEditor();
+    if(manageBusy)setBusy(true);
+    status(t('matching'),99);
+    try{
+      const result=await api.reconcileRows(state.rows);
+      const byRow=new Map((result.matches||[]).map(match=>[match.rowId,match]));
+      let matched=0,corrected=0;
+      state.rows=state.rows.map(row=>{
+        const archive=byRow.get(row.id)||{rowId:row.id,found:false,status:'none',confidence:0};
+        if(archive.found)matched+=1;
+        if(archive.status!=='exact'||!archive.patient)return{...row,archive};
+        const next={...row,archive};
+        if(archive.patient.name&&archive.patient.name!==row.name){next.name=archive.patient.name;corrected+=1}
+        if(archive.patient.file&&archive.patient.file!==row.file){next.file=archive.patient.file;corrected+=1}
+        if(archive.patient.phone&&archive.patient.phone!==row.phone){next.phone=archive.patient.phone;corrected+=1}
+        next.confidence=Math.max(Number(next.confidence)||0,95);
+        return next;
+      });
+      state.archiveMeta={matched,corrected,refreshedAt:result.refreshedAt||Date.now()};
+      renderRows();
+      return true;
+    }catch(error){
+      console.warn('Best Care patient reconciliation failed',error);
+      state.archiveMeta=null;
+      renderRows();
+      if(!automatic)api.toast(t('failed'),String(error.message||error));
+      else $('ocrReviewHint').textContent=t('matchFailed');
+      return false;
+    }finally{if(manageBusy)setBusy(false)}
+  }
+
   function merge(){
     state.rows=rowsFromEditor();
     const selected=state.rows.filter(row=>row.include&&validRow(row));
     if(!selected.length){api.toast(t('merged'),t('mergeNone'));renderRows();return}
     const result=api.mergeRows(selected.map(row=>({
-      id:uid(),name:row.name,file:row.file,start:row.start,end:row.end,procedure:row.procedure,status:'waiting'
+      id:uid(),name:row.name,file:row.file||'0',phone:row.phone||'',start:row.start,end:row.end,procedure:row.procedure,status:'waiting'
     })));
     api.toast(t('merged'),t('mergedDetail',result));
     api.closeModal('ocrModal');
@@ -410,7 +477,7 @@
     state.rows=rowsFromEditor();
     const selected=state.rows.filter(row=>row.include&&validRow(row));
     if(!selected.length){api.toast(t('download'),t('mergeNone'));return}
-    const rows=[['الاسم','رقم الملف','البداية','النهاية','الإجراء'],...selected.map(row=>[row.name,row.file,row.start,row.end,row.procedure])];
+    const rows=[['الاسم','رقم الملف','رقم الجوال','البداية','النهاية','الإجراء','الحالة'],...selected.map(row=>[row.name,row.file||'0',row.phone||'',row.start,row.end,row.procedure,'بانتظار الموعد'])];
     const csv='\ufeff'+rows.map(row=>row.map(value=>`"${String(value??'').replaceAll('"','""')}"`).join(',')).join('\n');
     const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
     const anchor=document.createElement('a');anchor.href=url;anchor.download=`bestcare_image_${api.getDate()}.csv`;anchor.click();
@@ -427,6 +494,7 @@
     $('chooseOcrImageBtn')?.addEventListener('click',()=>$('imageOcrInput').click());
     $('imageOcrInput')?.addEventListener('change',event=>event.target.files?.[0]&&selectFile(event.target.files[0]));
     $('runOcrBtn')?.addEventListener('click',run);
+    $('reconcileOcrBtn')?.addEventListener('click',()=>reconcile());
     $('rotateOcrBtn')?.addEventListener('click',()=>{state.rotation=(state.rotation+90)%360;$('ocrPreview').style.transform=`rotate(${state.rotation}deg)`});
     $('mergeOcrBtn')?.addEventListener('click',merge);
     $('downloadOcrCsvBtn')?.addEventListener('click',downloadCsv);
@@ -441,5 +509,5 @@
     setBusy(false);
   }
 
-  window.BestCareOCR={init,open,version:'7.3.4'};
+  window.BestCareOCR={init,open,version:'7.41.0'};
 })();
