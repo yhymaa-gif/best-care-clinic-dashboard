@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260804-auth-deploy-guard';
+const CACHE_NAME='bestcare-dashboard-v1-20260804-password-refresh';
 const APP_SHELL=[
   './',
   './index.html',

@@ -152,7 +152,9 @@ export default async request => {
   if (request.method === 'POST' && action === 'password-login') {
     const body = await json(request);
     const username = cleanUsername(body.username);
-    const rate = await consumeRateLimit(request, 'password', username || 'unknown', 5, 15 * 60 * 1000);
+    // Version the limiter key when credentials change so devices are not kept
+    // inside a stale lockout created by attempts with the previous password.
+    const rate = await consumeRateLimit(request, 'password-v2', username || 'unknown', 8, 5 * 60 * 1000);
     if (!rate.allowed) return reply({ error: 'محاولات كثيرة. حاول لاحقًا.' }, 429, { 'retry-after': String(rate.retryAfter) });
     const user = bootstrapUser();
     if (!user || username !== user.username || !passwordMatches(body.password)) return reply({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, 401);

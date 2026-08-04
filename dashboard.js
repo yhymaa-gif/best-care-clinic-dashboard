@@ -128,7 +128,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.59-auth-deploy-guard';
+const DASHBOARD_BUILD='7.60-password-refresh';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -281,11 +281,13 @@ function lockApp(message='انتهت الجلسة بسبب الخمول. سجّ�
   $('authRequestStep').hidden=false;
   $('authVerifyStep').hidden=true;
   if($('authCode'))$('authCode').value='';
+  // Never keep or reuse a password filled by an old browser/PWA session.
+  if($('authPassword'))$('authPassword').value='';
   authErrorMessage(message);
   requestAnimationFrame(()=>$('authUsername')?.focus());
 }
 async function initAuth(){document.body.classList.add('auth-checking');document.body.classList.remove('auth-locked');$('authGate').hidden=true;try{const {response,data}=await authRequest('?action=session');if(!data.enabled){lockApp('الحماية غير مفعّلة بعد. يجب ضبط AUTH_ENABLED في Netlify قبل استخدام التطبيق.');return}if(data.authenticated){unlockApp(data.user);return}lockApp('')}catch(error){lockApp(error.message||'تعذر التحقق من الجلسة')}}
-async function requestAuthOtp(){prepareAudio();const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة.');return}unlockApp(data.user)}catch(error){authErrorMessage(error.message)}}
+async function requestAuthOtp(){prepareAudio();const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){if($('authPassword'))$('authPassword').value='';authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.');return}if($('authPassword'))$('authPassword').value='';unlockApp(data.user)}catch(error){if($('authPassword'))$('authPassword').value='';authErrorMessage(error.message)}}
 async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp(data.user)}catch(error){authErrorMessage(error.message)}}
 function openUsersModal(){openModal('usersModal');$('usersError').textContent=''}
 function normalizeClinicDirectory(items){
