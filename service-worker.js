@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260805-realtime-sync';
+const CACHE_NAME='bestcare-dashboard-v1-20260805-patient-import-fix';
 const APP_SHELL=[
   './',
   './index.html',
@@ -90,6 +90,24 @@ self.addEventListener('fetch',event=>{
           return response;
         })
         .catch(()=>caches.match(shellPage).then(response=>response||caches.match('./offline.html')))
+    );
+    return;
+  }
+
+  // Core UI files are network-first so a freshly deployed HTML page never runs
+  // against an older cached JavaScript/CSS bundle. The cache remains an offline
+  // fallback, while patient and API data are still never cached above.
+  if(url.origin===self.location.origin&&(
+    request.destination==='script'||request.destination==='style'||
+    /\.(?:js|css)$/i.test(url.pathname)
+  )){
+    event.respondWith(
+      fetch(request)
+        .then(response=>{
+          if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put(request,response.clone()));
+          return response;
+        })
+        .catch(()=>caches.match(request))
     );
     return;
   }
