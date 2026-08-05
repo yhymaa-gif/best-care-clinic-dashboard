@@ -174,6 +174,7 @@ let operationsCenter={filter:'all',labCases:[],labLoading:false,labError:'',labL
 let patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
 let patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:0};
 let patientIdentityDisplayLimit=120;
+let patientDirectoryReviewOnly=false;
 let patientDirectoryImportDraft={fileName:'',rows:[],validRows:[],invalidRows:[]};
 let patientProfileState={lookup:null,profile:null,loading:false,error:'',tab:'appointments'};
 let labCasesState={cases:[],revision:0,updatedAt:0,lastFetchedAt:0,loading:false};
@@ -254,7 +255,7 @@ function unlockApp(user=null){
   startPresence();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
-    if(VIEW_MODE==='admin'){startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling()}
+    if(VIEW_MODE==='admin'){startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshPatientIdentityDirectory().catch(()=>{})}
     if(NEED_ROLE_CHOICE&&authUser?.role==='admin')requestAnimationFrame(()=>openRoleChoice());
   });
 }
@@ -2008,6 +2009,7 @@ function patientIdentityRows(){
       prescriptionCount:Number(record.prescriptionCount||0),
       labCount:Number(record.labCount||0),
       communicationCount:Number(record.communicationCount||0)
+      ,adminNotes:String(record.adminNotes||''),dataQualityFlags:Array.isArray(record.dataQualityFlags)?record.dataQualityFlags:[],reviewRequired:Boolean(record.reviewRequired)
     });
   });
   adminHubAllPatients().forEach(item=>{
@@ -2054,24 +2056,30 @@ function renderPatientIdentitySearch(){
   }
   const query=String($('patientIdentitySearchInput')?.value||'').trim();
   const queryDigits=toLatinDigits(query).replace(/\D/g,'');
-  const allMatches=patientIdentityRows().filter(record=>!query||patientMatchesSearch(record,query)||(queryDigits&&toLatinDigits(record.nationalId||'').replace(/\D/g,'').includes(queryDigits)));
+  const allRows=patientIdentityRows(),reviewCount=allRows.filter(record=>record.reviewRequired||record.dataQualityFlags?.length).length;
+  const reviewPanel=$('patientDirectoryReviewPanel'),reviewBadge=$('patientDirectoryReviewBadge');
+  if(reviewPanel){reviewPanel.hidden=!reviewCount;$('patientDirectoryReviewText').textContent=`${reviewCount} سجلًا يحتوي بيانات ناقصة أو ملاحظة تحتاج إجراءً.`;$('patientDirectoryReviewFilter').textContent=patientDirectoryReviewOnly?'عرض جميع المرضى':'عرض المطلوب تصحيحه';reviewPanel.classList.toggle('active',patientDirectoryReviewOnly)}
+  if(reviewBadge){reviewBadge.hidden=!reviewCount;reviewBadge.textContent=String(reviewCount>99?'99+':reviewCount)}
+  const allMatches=allRows.filter(record=>(!patientDirectoryReviewOnly||record.reviewRequired||record.dataQualityFlags?.length)&&(!query||patientMatchesSearch(record,query)||(queryDigits&&toLatinDigits(record.nationalId||'').replace(/\D/g,'').includes(queryDigits))));
   const matches=allMatches.slice(0,patientIdentityDisplayLimit);
   if(!matches.length){
     results.innerHTML=`<div class="patient-identity-empty">${patientIdentityRemote.loading?(lang==='en'?'Searching all saved records…':'جارٍ البحث في جميع السجلات المحفوظة…'):patientIdentityRemote.error?escapeHtml(patientIdentityRemote.error):(lang==='en'?'No patient matched this search.':'لم يتم العثور على مريض مطابق للبحث.')}</div>`;
     return;
   }
-  const tableHead=`<div class="patient-directory-table-head" aria-hidden="true"><span>الاسم الكامل</span><span>رقم الملف</span><span>الجوال</span><span>الهوية</span><span>ملخص السجل</span><span>التفاصيل</span></div>`;
+  const tableHead=`<div class="patient-directory-table-head" aria-hidden="true"><span>الاسم الكامل</span><span>رقم الملف</span><span>الجوال</span><span>الهوية</span><span>الحالة والملاحظات</span><span>التصحيح</span></div>`;
   results.innerHTML=(patientIdentityRemote.loading?`<div class="patient-identity-loading">${lang==='en'?'Searching saved records…':'جارٍ استكمال البحث في السجلات…'}</div>`:'')+tableHead+matches.map(record=>{
     const clinic=clinicDirectory.find(item=>item.id===record.clinicId)||defaultClinic(clinicNumber(record.clinicId));
     const status=record.status?planStatusText(record.status):(lang==='en'?'No treatment plan yet':'لا توجد خطة علاجية بعد');
-    const completeName=cleanDirectoryName(record.fullName).split(/\s+/).filter(Boolean).length>=2,completeFile=Boolean(normalizeDirectoryFile(record.fileNo)),completeMobile=/^05\d{8}$/.test(normalizeDirectoryPhone(record.mobile)),recordComplete=completeName&&completeFile&&completeMobile;
+    const completeName=cleanDirectoryName(record.fullName).split(/\s+/).filter(Boolean).length>=2,completeFile=Boolean(normalizeDirectoryFile(record.fileNo)),completeMobile=/^05\d{8}$/.test(normalizeDirectoryPhone(record.mobile)),recordComplete=completeName&&completeFile&&completeMobile&&!record.reviewRequired;
+    const flagLabels={full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة'};
+    const reviewLabels=(record.dataQualityFlags||[]).map(flag=>flagLabels[flag]||flag);
     return `<article class="patient-identity-result patient-directory-table-row ${recordComplete?'complete':'incomplete'}">
       <div class="patient-directory-name-cell"><strong class="patient-identity-field ${completeName?'complete':'missing'}">${escapeHtml(record.fullName||'الاسم ناقص')}</strong><small>${escapeHtml(clinicDisplayName(clinic,{compact:true}))}</small><span class="patient-identity-completeness ${recordComplete?'complete':'missing'}">${recordComplete?'✓ مكتملة':'! تحتاج استكمال'}</span></div>
       <span class="patient-directory-cell patient-identity-field ${completeFile?'complete':'missing'}" data-label="رقم الملف">${escapeHtml(record.fileNo||'ناقص')}</span>
       <span class="patient-directory-cell patient-identity-field ${completeMobile?'complete':'missing'}" data-label="الجوال">${escapeHtml(record.mobile||'ناقص')}</span>
       <span class="patient-directory-cell patient-identity-field ${record.nationalId?'complete':'optional'}" data-label="الهوية">${escapeHtml(record.nationalId||'اختياري')}</span>
-      <div class="patient-identity-summary-badges"><span class="patient-identity-plan">${escapeHtml(status)}</span>${record.planCount?`<span>▤ ${record.planCount}</span>`:''}${record.prescriptionCount?`<span>💊 ${record.prescriptionCount}</span>`:''}${record.labCount?`<span>🦷 ${record.labCount}</span>`:''}${record.communicationCount?`<span>↗ ${record.communicationCount}</span>`:''}</div>
-      <button type="button" data-identity-open="${escapeHtml(record.patientId)}" data-identity-date="${escapeHtml(record.date)}" data-identity-clinic="${escapeHtml(record.clinicId)}" data-identity-name="${escapeHtml(record.fullName)}" data-identity-file="${escapeHtml(record.fileNo)}" data-identity-phone="${escapeHtml(record.mobile)}" data-identity-national="${escapeHtml(record.nationalId||'')}" ${record.fileNo||record.mobile||record.nationalId?'':'disabled'}>${lang==='en'?'View details':'عرض التفاصيل'}</button>
+      <div class="patient-identity-summary-badges"><span class="patient-identity-plan">${escapeHtml(status)}</span>${reviewLabels.map(label=>`<span class="review">! ${escapeHtml(label)}</span>`).join('')}${record.adminNotes?`<small class="patient-directory-note-preview" title="${escapeHtml(record.adminNotes)}">${escapeHtml(record.adminNotes)}</small>`:''}${record.planCount?`<span>▤ ${record.planCount}</span>`:''}${record.prescriptionCount?`<span>💊 ${record.prescriptionCount}</span>`:''}${record.labCount?`<span>🦷 ${record.labCount}</span>`:''}${record.communicationCount?`<span>↗ ${record.communicationCount}</span>`:''}</div>
+      <button type="button" class="${recordComplete?'':'needs-review'}" data-identity-open="${escapeHtml(record.patientId)}" data-identity-date="${escapeHtml(record.date)}" data-identity-clinic="${escapeHtml(record.clinicId)}" data-identity-name="${escapeHtml(record.fullName)}" data-identity-file="${escapeHtml(record.fileNo)}" data-identity-phone="${escapeHtml(record.mobile)}" data-identity-national="${escapeHtml(record.nationalId||'')}" ${record.fileNo||record.mobile||record.nationalId?'':'disabled'}>${recordComplete?(lang==='en'?'View details':'عرض التفاصيل'):'مراجعة وتصحيح'}</button>
     </article>`;
   }).join('')+(allMatches.length>matches.length?`<button class="patient-directory-more" type="button" data-identity-more>${lang==='en'?`Show more (${allMatches.length-matches.length})`:`عرض المزيد (${allMatches.length-matches.length})`}</button>`:'');
 }
@@ -2217,8 +2225,9 @@ function renderPatientProfile(){
   $('patientProfileIdentity').textContent=`ملف ${patient.file||'—'} · ${patient.phone||'لا يوجد جوال'}${patient.nationalId?` · هوية ${patient.nationalId}`:''}`;
   $('patientProfileClinic').textContent=operationClinicLabel(clinicId);
   $('patientProfileNameInput').value=patient.name||'';$('patientProfileFileInput').value=patient.file||'';$('patientProfilePhoneInput').value=patient.phone||'';$('patientProfileNationalInput').value=patient.nationalId||'';
+  $('patientProfileNotesInput').value=profile.directory?.adminNotes||'';$('patientProfileNotesReviewed').checked=Boolean(profile.directory?.notesReviewedAt)&&!profile.directory?.reviewRequired;
   const editable=authUser?.role==='admin';
-  $('patientProfileForm').classList.toggle('read-only',!editable);$('patientProfileForm').querySelectorAll('input,button').forEach(control=>control.disabled=!editable);
+  $('patientProfileForm').classList.toggle('read-only',!editable);$('patientProfileForm').querySelectorAll('input,textarea,button').forEach(control=>control.disabled=!editable);
   $('patientProfileSave').textContent=editable?'حفظ وتحديث السجلات المرتبطة':'التعديل متاح لصفحة الإدارة';
   const communication=profile.communications||{};
   $('patientProfileAppointmentCount').textContent=String(profile.summary?.appointments||0);$('patientProfilePlanCount').textContent=String(profile.summary?.plans||0);$('patientProfilePrescriptionCount').textContent=String(profile.summary?.prescriptions||0);$('patientProfilePaymentCount').textContent=String((profile.appointments||[]).filter(item=>item.paymentRequired).length);$('patientProfileLabCount').textContent=String(profile.summary?.labs||0);$('patientProfileCommunicationCount').textContent=String(Number(communication.planWhatsappCount||0)+Number(communication.reviewWhatsappCount||0));
@@ -2244,7 +2253,7 @@ function openPatientProfilePlan(canonical){
 }
 async function savePatientProfile(event){
   event.preventDefault();if(!patientProfileState.lookup||patientProfileState.loading||authUser?.role!=='admin')return;
-  const patient={name:$('patientProfileNameInput').value.trim(),file:$('patientProfileFileInput').value.trim(),phone:$('patientProfilePhoneInput').value.trim(),nationalId:$('patientProfileNationalInput').value.trim()};
+  const patient={name:$('patientProfileNameInput').value.trim(),file:$('patientProfileFileInput').value.trim(),phone:$('patientProfilePhoneInput').value.trim(),nationalId:$('patientProfileNationalInput').value.trim(),adminNotes:$('patientProfileNotesInput').value.trim(),notesReviewed:$('patientProfileNotesReviewed').checked};
   if(!patient.name||!patient.file||!patient.phone){toast('بيانات المريض ناقصة','الاسم ورقم الملف والجوال حقول مطلوبة.');return}
   if(patient.nationalId&&!/^\d{10}$/.test(patient.nationalId)){toast('رقم الهوية غير صحيح','يجب أن يتكون رقم الهوية من 10 أرقام.');return}
   const button=$('patientProfileSave');button.disabled=true;button.textContent='جارٍ تحديث السجلات…';
@@ -3348,28 +3357,48 @@ function normalizeDirectoryNationalId(value){const digits=toLatinDigits(value).r
 function patientDirectoryAliases(row){return[fileAlias(row.fileNo),row.mobile?`phone:${row.mobile}`:'',row.nationalId?`national:${row.nationalId}`:''].filter(Boolean)}
 function fileAlias(value){const file=normalizeDirectoryFile(value);return file?`file:${file}`:''}
 function patientDirectoryIssue(row){
-  if(cleanDirectoryName(row.fullName).split(/\s+/).filter(Boolean).length<2)return'full_name_required';
+  if(!cleanDirectoryName(row.fullName))return'name_required';
   if(row.rawPhone&&!/^05\d{8}$/.test(row.mobile))return'invalid_phone';
   if(row.rawNationalId&&!row.nationalId)return'invalid_national_id';
   if(!patientDirectoryAliases(row).length)return'identity_required';
   return'';
 }
+function patientDirectoryReviewFlags(row){
+  const flags=[];
+  if(cleanDirectoryName(row.fullName).split(/\s+/).filter(Boolean).length<2)flags.push('full_name_required');
+  if(!normalizeDirectoryFile(row.fileNo))flags.push('missing_file');
+  if(!/^05\d{8}$/.test(normalizeDirectoryPhone(row.mobile)))flags.push('missing_phone');
+  if(row.adminNotes&&/(⚠|يحتاج\s*مراجعة|تعارض|نفس\s*الجوال|مفقود|ناقص|بدون\s*(?:رقم|جوال|ملف)|تصحيح\s*مطلوب)/i.test(row.adminNotes))flags.push('note_review');
+  return[...new Set(flags)];
+}
 function directoryNameScore(value){const name=cleanDirectoryName(value),parts=name.split(/\s+/).filter(Boolean);return parts.length*1000+name.length}
 function mergePatientDirectoryImportRows(rows){
-  const merged=[],aliasIndex=new Map(),invalid=[];
+  const merged=[],strongIndex=new Map(),phoneIndex=new Map(),invalid=[];
+  const mergeNotes=(left,right)=>[...new Set([left,right].flatMap(value=>String(value||'').split(/\s*\|\s*|\r?\n/)).map(value=>value.trim()).filter(Boolean))].join(' | ').slice(0,1600);
+  const strongAliases=row=>patientDirectoryAliases(row).filter(alias=>alias.startsWith('file:')||alias.startsWith('national:'));
+  const incompatible=(left,right)=>Boolean((left.fileNo&&right.fileNo&&left.fileNo!==right.fileNo)||(left.nationalId&&right.nationalId&&left.nationalId!==right.nationalId));
+  const nameKey=value=>cleanDirectoryName(value).toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ًٌٍَُِّْـ]/g,'');
+  const namesCompatible=(left,right)=>{const a=nameKey(left),b=nameKey(right);if(!a||!b)return false;if(a===b)return true;const shorter=a.length<=b.length?a:b;return shorter.split(/\s+/).length>=2&&(a.includes(b)||b.includes(a))};
+  const indexRow=(row,index)=>{strongAliases(row).forEach(alias=>strongIndex.set(alias,index));const phone=row.mobile?`phone:${row.mobile}`:'';if(phone&&!phoneIndex.has(phone))phoneIndex.set(phone,index)};
   rows.forEach(row=>{
     if(row.issue){invalid.push(row);return}
-    const aliases=patientDirectoryAliases(row),linked=[...new Set(aliases.map(alias=>aliasIndex.get(alias)).filter(index=>index!==undefined))];
+    const strong=strongAliases(row),linked=[...new Set(strong.map(alias=>strongIndex.get(alias)).filter(index=>index!==undefined))],phone=row.mobile?`phone:${row.mobile}`:'',phoneMatch=phone?phoneIndex.get(phone):undefined;
     if(linked.length>1){invalid.push({...row,issue:'identity_conflict'});return}
-    if(linked.length===1){
-      const target=merged[linked[0]];
+    let targetIndex=linked[0];
+    if(targetIndex===undefined&&phoneMatch!==undefined&&(strong.length?!incompatible(merged[phoneMatch],row):namesCompatible(merged[phoneMatch].fullName,row.fullName)))targetIndex=phoneMatch;
+    if(targetIndex!==undefined){
+      const target=merged[targetIndex];
       if(directoryNameScore(row.fullName)>directoryNameScore(target.fullName))target.fullName=row.fullName;
       target.fileNo=target.fileNo||row.fileNo;target.mobile=target.mobile||row.mobile;target.nationalId=target.nationalId||row.nationalId;
+      target.adminNotes=mergeNotes(target.adminNotes,row.adminNotes);
+      target.reviewFlags=[...new Set([...(target.reviewFlags||[]),...(row.reviewFlags||[])])];
       target.sourceRows=[...(target.sourceRows||[target.sourceRow]),row.sourceRow];
-      patientDirectoryAliases(target).forEach(alias=>aliasIndex.set(alias,linked[0]));
+      indexRow(target,targetIndex);
       return;
     }
-    const index=merged.length;merged.push({...row,sourceRows:[row.sourceRow]});aliases.forEach(alias=>aliasIndex.set(alias,index));
+    const index=merged.length,next={...row,sourceRows:[row.sourceRow]};
+    if(phoneMatch!==undefined&&(incompatible(merged[phoneMatch],row)||(!strong.length&&!namesCompatible(merged[phoneMatch].fullName,row.fullName)))){next.reviewFlags=[...new Set([...(next.reviewFlags||[]),'shared_phone'])];merged[phoneMatch].reviewFlags=[...new Set([...(merged[phoneMatch].reviewFlags||[]),'shared_phone'])]}
+    merged.push(next);indexRow(next,index);
   });
   return{validRows:merged,invalidRows:invalid};
 }
@@ -3380,24 +3409,26 @@ function parsePatientDirectoryCsv(text){
     name:findCsvColumn(headers,['الاسم الكامل','اسم المريض','الاسم','المريض','full name','fullname','patient name','patientname','patient']),
     file:findCsvColumn(headers,['رقم الملف','رقم ملف','الملف','file number','filenumber','file no','fileno','file.n','filen','file']),
     phone:findCsvColumn(headers,['رقم الجوال','الجوال','رقم الهاتف','الهاتف','mobile number','mobilenumber','phone number','phonenumber','mobile','phone']),
-    nationalId:findCsvColumn(headers,['رقم الهوية','الهوية الوطنية','الهوية','national id','nationalid','identity number','identitynumber','identity'])
+    nationalId:findCsvColumn(headers,['رقم الهوية','الهوية الوطنية','الهوية','national id','nationalid','identity number','identitynumber','identity']),
+    notes:findCsvColumn(headers,['ملاحظة','ملاحظات','ملاحظات الادارة','الملاحظات','note','notes','admin note','admin notes'])
   };
   if(columns.name<0||[columns.file,columns.phone,columns.nationalId].every(index=>index<0))return{rows:[],validRows:[],invalidRows:[],reason:'headers'};
   const rows=records.slice(1).map((cells,index)=>{
     const rawPhone=columns.phone>=0?String(cells[columns.phone]||'').trim():'',rawNationalId=columns.nationalId>=0?String(cells[columns.nationalId]||'').trim():'';
-    const row={sourceRow:index+2,fullName:cleanDirectoryName(cells[columns.name]),fileNo:columns.file>=0?normalizeDirectoryFile(cells[columns.file]):'',mobile:normalizeDirectoryPhone(rawPhone),nationalId:normalizeDirectoryNationalId(rawNationalId),rawPhone,rawNationalId};
-    return{...row,issue:patientDirectoryIssue(row)};
+    const row={sourceRow:index+2,fullName:cleanDirectoryName(cells[columns.name]),fileNo:columns.file>=0?normalizeDirectoryFile(cells[columns.file]):'',mobile:normalizeDirectoryPhone(rawPhone),nationalId:normalizeDirectoryNationalId(rawNationalId),adminNotes:columns.notes>=0?String(cells[columns.notes]||'').trim().replace(/\s+/g,' ').slice(0,1600):'',rawPhone,rawNationalId};
+    return{...row,issue:patientDirectoryIssue(row),reviewFlags:patientDirectoryReviewFlags(row)};
   }).filter(row=>row.fullName||row.fileNo||row.mobile||row.nationalId||row.rawPhone||row.rawNationalId);
   const merged=mergePatientDirectoryImportRows(rows);
   return{rows,validRows:merged.validRows,invalidRows:merged.invalidRows,reason:rows.length?'':'empty'};
 }
-function patientDirectoryIssueLabel(issue){return({full_name_required:'الاسم غير مكتمل',identity_required:'لا يوجد ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
+function patientDirectoryIssueLabel(issue){return({name_required:'الاسم مفقود',full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة',identity_required:'لا يوجد ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
 function renderPatientDirectoryImportPreview(){
   const draft=patientDirectoryImportDraft,summary=$('patientDirectoryImportSummary'),preview=$('patientDirectoryImportPreview'),save=$('patientDirectoryImportSave');
   $('patientDirectoryImportFileName').textContent=draft.fileName||'—';
-  summary.innerHTML=`<span>إجمالي الصفوف <b>${draft.rows.length}</b></span><span class="valid">جاهز للاستيراد <b>${draft.validRows.length}</b></span><span class="invalid">يحتاج مراجعة <b>${draft.invalidRows.length}</b></span>`;
+  const reviewCount=draft.validRows.filter(row=>row.reviewFlags?.length).length;
+  summary.innerHTML=`<span>إجمالي الصفوف <b>${draft.rows.length}</b></span><span class="valid">سيتم دمجه <b>${draft.validRows.length}</b></span><span class="review">مع تنبيه تصحيح <b>${reviewCount}</b></span><span class="invalid">متعذر استيراده <b>${draft.invalidRows.length}</b></span>`;
   const rows=[...draft.validRows.map(row=>({...row,valid:true})),...draft.invalidRows.map(row=>({...row,valid:false}))].slice(0,160);
-  preview.innerHTML=rows.length?`<table class="patient-directory-import-table"><thead><tr><th>الصف</th><th>الاسم الكامل</th><th>رقم الملف</th><th>الجوال</th><th>الهوية</th><th>النتيجة</th></tr></thead><tbody>${rows.map(row=>`<tr class="${row.valid?'valid':'invalid'}"><td>${escapeHtml((row.sourceRows||[row.sourceRow]).join('، '))}</td><td>${escapeHtml(row.fullName||'—')}</td><td>${escapeHtml(row.fileNo||'—')}</td><td>${escapeHtml(row.mobile||'—')}</td><td>${escapeHtml(row.nationalId||'—')}</td><td><span class="patient-directory-import-state ${row.valid?'valid':'invalid'}">${row.valid?'جاهز':escapeHtml(patientDirectoryIssueLabel(row.issue))}</span></td></tr>`).join('')}</tbody></table>${draft.rows.length>160?`<div class="patient-identity-empty">تم عرض أول 160 صفًا فقط؛ سيتم استيراد جميع الصفوف الصحيحة.</div>`:''}`:'<div class="patient-identity-empty">لم يتم العثور على صفوف قابلة للقراءة.</div>';
+  preview.innerHTML=rows.length?`<table class="patient-directory-import-table"><thead><tr><th>الصف</th><th>الاسم الكامل</th><th>رقم الملف</th><th>الجوال</th><th>الملاحظات</th><th>النتيجة</th></tr></thead><tbody>${rows.map(row=>`<tr class="${row.valid?(row.reviewFlags?.length?'review':'valid'):'invalid'}"><td>${escapeHtml((row.sourceRows||[row.sourceRow]).join('، '))}</td><td>${escapeHtml(row.fullName||'—')}</td><td>${escapeHtml(row.fileNo||'—')}</td><td>${escapeHtml(row.mobile||'—')}</td><td title="${escapeHtml(row.adminNotes||'')}">${escapeHtml(row.adminNotes||'—')}</td><td><span class="patient-directory-import-state ${row.valid?(row.reviewFlags?.length?'review':'valid'):'invalid'}">${row.valid?(row.reviewFlags?.length?row.reviewFlags.map(patientDirectoryIssueLabel).join('، '):'جاهز'):escapeHtml(patientDirectoryIssueLabel(row.issue))}</span></td></tr>`).join('')}</tbody></table>${draft.rows.length>160?`<div class="patient-identity-empty">تم عرض أول 160 صفًا فقط؛ سيتم دمج جميع الصفوف المقروءة.</div>`:''}`:'<div class="patient-identity-empty">لم يتم العثور على صفوف قابلة للقراءة.</div>';
   save.disabled=!draft.validRows.length;
   save.textContent=`اعتماد واستيراد ${draft.validRows.length} مريض`;
 }
@@ -3426,7 +3457,7 @@ async function submitPatientDirectoryRows(rows,button){
     const response=await request(PATIENTS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({clinicId:ACTIVE_CLINIC_ID,patients:rows})},60000),data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر تحديث قاعدة المرضى');
     await refreshPatientIdentityDirectory();
-    toast('تم تحديث قاعدة المرضى',`جديد ${Number(data.created||0)} · تم تصحيحه ${Number(data.updated||0)} · متعارض ${Number(data.conflicts||0)} · متجاوز ${Number(data.skipped||0)}`);
+    toast('تم تحديث قاعدة المرضى',`جديد ${Number(data.created||0)} · تم تحديثه ${Number(data.updated||0)} · يحتاج تصحيح ${Number(data.reviewRequired||0)} · جوال مشترك ${Number(data.sharedPhones||0)} · متعارض ${Number(data.conflicts||0)} · متجاوز ${Number(data.skipped||0)}`);
     return data;
   }finally{button.disabled=false;button.textContent=original}
 }
@@ -3953,6 +3984,7 @@ $('resetPatientBtn').addEventListener('click',()=>resetPatientForm(true));
 $('cancelEditBtn').addEventListener('click',()=>resetPatientForm(false));
 $('patientFormCard').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.tagName!=='SELECT'){event.preventDefault();savePatient()}});
 $('patientIdentitySearchInput').addEventListener('input',()=>{patientIdentityDisplayLimit=120;renderPatientIdentitySearch();schedulePatientIdentityRemoteSearch()});
+$('patientDirectoryReviewFilter')?.addEventListener('click',()=>{patientDirectoryReviewOnly=!patientDirectoryReviewOnly;patientIdentityDisplayLimit=120;renderPatientIdentitySearch()});
 $('patientIdentitySearchResults').addEventListener('click',event=>{
   if(event.target.closest('[data-identity-more]')){patientIdentityDisplayLimit+=120;renderPatientIdentitySearch();return}
   const button=event.target.closest('[data-identity-open]');
