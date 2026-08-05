@@ -98,7 +98,7 @@ test('dashboard shell does not embed large raster assets in HTML', async () => {
   const html = await read('index.html');
   assert.doesNotMatch(html, /data:image\/png;base64,/);
   assert.match(html, /src="\.\/assets\/best-care-logo-header\.png"/);
-  assert.match(html, /href="\.\/dashboard\.css"/);
+  assert.match(html, /href="\.\/dashboard\.css(?:\?[^\"]+)?"/);
   assert.match(html, /src="\.\/dashboard\.js(?:\?[^\"]+)?"/);
   assert.ok(Buffer.byteLength(html, 'utf8') < 80_000, 'index.html exceeded the dashboard shell size budget');
 });

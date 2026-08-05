@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
 <title>عيادات أفضل عناية الاستشارية للأسنان</title>
 <script src="./theme-boot.js"></script>
-<link rel="stylesheet" href="./dashboard.css">
+<link rel="stylesheet" href="./dashboard.css?v=20260805-master-patient-import">
 <link rel="stylesheet" href="./theme.css">
 </head>
 <body class="auth-checking">
@@ -66,7 +66,7 @@
           <div id="appointmentRequestList" class="appointment-request-list"></div>
         </section>
       </aside>
-      <button id="patientIdentitySearchBtn" class="primary patient-record-trigger admin-only" type="button"><span aria-hidden="true">⌕</span><span><strong>قاعدة المرضى</strong><small>عرض · تصحيح · متابعة</small></span></button>
+      <button id="patientIdentitySearchBtn" class="primary patient-record-trigger admin-only" type="button"><span aria-hidden="true">⌕</span><span><strong>قاعدة المرضى</strong><small>عرض · تصحيح · متابعة</small></span><b id="patientDirectoryReviewBadge" class="patient-directory-review-badge" hidden>0</b></button>
       <button id="addBtn" type="button">إضافة مريض</button>
       <a id="statisticsTopLink" class="top-icon-link admin-only" href="./statistics.html" title="فتح مركز الإحصائيات"><span aria-hidden="true">▥</span><strong>الإحصائيات</strong></a>
       <button id="treatmentPlanCenterBtn" class="plan-center-trigger admin-only" type="button" aria-haspopup="dialog" aria-controls="treatmentPlanCenterModal" title="فتح مركز العمليات"><span class="plan-center-trigger-icon" aria-hidden="true">◎</span><span><strong>مركز العمليات</strong><small>المواعيد · الخطط · المعمل · الوصفات</small></span><b id="treatmentPlanCenterCount">0</b></button>
@@ -300,7 +300,7 @@
   <div class="patient-identity-body">
     <section id="patientIdentitySearchView">
       <div class="patient-directory-actions">
-        <button id="patientDirectoryImportBtn" class="patient-directory-action import" type="button"><span class="patient-directory-action-icon" aria-hidden="true">⇧</span><span><strong>استيراد قائمة مرضى كاملة</strong><small>CSV أو Excel — الاسم الكامل، الملف، الجوال، الهوية</small></span></button>
+        <button id="patientDirectoryImportBtn" class="patient-directory-action import" type="button"><span class="patient-directory-action-icon" aria-hidden="true">⇧</span><span><strong>استيراد قائمة مرضى كاملة</strong><small>CSV أو Excel — الاسم الكامل، الملف، الجوال، الهوية، الملاحظات</small></span></button>
         <button id="patientDirectoryAddBtn" class="patient-directory-action add" type="button"><span class="patient-directory-action-icon" aria-hidden="true">＋</span><span><strong>إضافة مريض إلى القاعدة</strong><small>إضافة سجل مركزي دون إنشاء موعد</small></span></button>
         <input id="patientDirectoryFileInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
       </div>
@@ -318,11 +318,12 @@
       <section id="patientDirectoryImportPanel" class="patient-directory-panel import-preview" hidden>
         <div class="patient-directory-panel-head"><div><strong>مراجعة قائمة المرضى</strong><small id="patientDirectoryImportFileName">—</small></div><button id="patientDirectoryImportCancel" type="button" aria-label="إلغاء الاستيراد">×</button></div>
         <div id="patientDirectoryImportSummary" class="patient-directory-import-summary"></div>
-        <p class="patient-directory-import-note">يُحفظ الاسم بكل كلماته بعد تنظيف المسافات. الأسماء المكوّنة من كلمة واحدة لن تُستورد حتى تُستكمل، ولن يخمّن النظام اسم العائلة.</p>
+        <p class="patient-directory-import-note">تتم المطابقة برقم الملف أو الهوية أولًا. الجوال المشترك لا يدمج مريضين، والسجلات الناقصة تُحفظ مع تنبيه واضح للتصحيح دون تخمين البيانات.</p>
         <div id="patientDirectoryImportPreview" class="patient-directory-import-preview"></div>
         <p id="patientDirectoryImportError" class="patient-directory-error" hidden></p>
         <div class="patient-directory-form-actions"><button id="patientDirectoryImportSave" class="primary" type="button">اعتماد واستيراد الأسماء الصحيحة</button></div>
       </section>
+      <div id="patientDirectoryReviewPanel" class="patient-directory-review-panel" hidden><div><span aria-hidden="true">!</span><p><strong>سجلات تحتاج مراجعة</strong><small id="patientDirectoryReviewText">توجد بيانات ناقصة أو ملاحظات تحتاج إجراءً.</small></p></div><button id="patientDirectoryReviewFilter" type="button">عرض المطلوب تصحيحه</button></div>
       <div class="patient-identity-search"><input id="patientIdentitySearchInput" type="search" autocomplete="off" placeholder="الاسم، رقم الملف، الجوال، أو الهوية" aria-label="البحث عن المريض"></div>
       <p id="patientIdentitySearchHint" class="patient-identity-hint">تظهر أحدث السجلات أولًا. ترتبط المواعيد والخطط والوصفات والمعمل بهوية المريض وتبقى متاحة عند عودته.</p>
       <div id="patientIdentitySearchResults" class="patient-identity-results"><div class="patient-identity-loading">جارٍ تحميل قاعدة المرضى…</div></div>
@@ -341,6 +342,8 @@
           <label>رقم الملف<input id="patientProfileFileInput" type="text" maxlength="40" autocomplete="off" required></label>
           <label>رقم الجوال<input id="patientProfilePhoneInput" type="tel" maxlength="20" inputmode="tel" autocomplete="off" required></label>
           <label>رقم الهوية<input id="patientProfileNationalInput" type="text" maxlength="10" inputmode="numeric" autocomplete="off"></label>
+          <label class="patient-profile-notes">ملاحظات الإدارة<textarea id="patientProfileNotesInput" maxlength="1600" rows="3" placeholder="ملاحظات تصحيح البيانات أو التعارضات"></textarea></label>
+          <label class="patient-profile-review-check"><input id="patientProfileNotesReviewed" type="checkbox"> تمت مراجعة الملاحظات ومعالجة المطلوب</label>
           <div class="patient-profile-save"><button id="patientProfileSave" class="primary" type="submit">حفظ وتحديث السجلات المرتبطة</button><small>يتم تحديث المواعيد والخطط والوصفات وحالات المعمل المرتبطة بالمريض.</small></div>
         </form>
         <div class="patient-profile-summary" aria-label="ملخص إجراءات المريض"><button type="button" data-profile-tab="appointments" class="active"><b id="patientProfileAppointmentCount">0</b><span>المواعيد</span></button><button type="button" data-profile-tab="plans"><b id="patientProfilePlanCount">0</b><span>الخطط</span></button><button type="button" data-profile-tab="prescriptions"><b id="patientProfilePrescriptionCount">0</b><span>الوصفات</span></button><button type="button" data-profile-tab="payments"><b id="patientProfilePaymentCount">0</b><span>الدفع</span></button><button type="button" data-profile-tab="labs"><b id="patientProfileLabCount">0</b><span>المعمل</span></button><button type="button" data-profile-tab="communications"><b id="patientProfileCommunicationCount">0</b><span>التواصل</span></button></div>
@@ -432,5 +435,5 @@
 </div></div>
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
-<script src="./dashboard.js?v=20260805-import-fix"></script>
+<script src="./dashboard.js?v=20260805-master-patient-import"></script>
 </body></html>

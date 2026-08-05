@@ -18,7 +18,9 @@ test('central patient directory preserves a complete normalized identity', () =>
     fullName: 'أحمد محمد علي',
     fileNo: '7041',
     mobile: '0551234567',
-    nationalId: '1234567890'
+    nationalId: '1234567890',
+    adminNotes: '',
+    notesReviewed: false
   });
 });
 
@@ -86,9 +88,26 @@ test('central patient list import preserves full names and updates matched ident
   assert.match(dashboard, /جارٍ المطابقة والتحديث/);
   assert.match(endpoint, /request\.method === 'POST'/);
   assert.match(endpoint, /importPatientDirectory/);
-  assert.match(directorySource, /fullName: patient\.fullName/);
-  assert.match(directorySource, /const linked = \[\.\.\.new Set\(identityAliases/);
+  assert.match(directorySource, /fullName: preferValue\(existing\.fullName, patient\.fullName/);
+  assert.match(directorySource, /resolveCanonical\(records, aliases, patient\)/);
   assert.match(directorySource, /result\.updated \+= 1/);
+});
+
+test('shared mobile numbers never merge patients with different file numbers', () => {
+  const first = directory.directoryPatient({ fullName: 'مريض أول كامل', fileNo: '1001', mobile: '0551112233' });
+  const second = directory.directoryPatient({ fullName: 'مريض ثان كامل', fileNo: '1002', mobile: '0551112233' });
+  const firstCanonical = 'first-canonical';
+  const records = { [firstCanonical]: { ...first, canonical: firstCanonical } };
+  const aliases = { 'file:1001': firstCanonical, 'phone:0551112233': firstCanonical };
+  const resolution = directory.resolveCanonical(records, aliases, second);
+  assert.notEqual(resolution.canonical, firstCanonical);
+  assert.equal(resolution.sharedPhoneCanonical, firstCanonical);
+  assert.deepEqual(directory.reviewFlagsFor(second, { sharedPhone: true }), ['shared_phone']);
+});
+
+test('incomplete imported identities are retained for explicit admin correction', () => {
+  assert.deepEqual(directory.reviewFlagsFor({ fullName: 'هند', fileNo: '', mobile: '0551234567' }), ['full_name_required', 'missing_file']);
+  assert.deepEqual(directory.reviewFlagsFor({ fullName: 'هند محمد', fileNo: '7041', mobile: '' }), ['missing_phone']);
 });
 
 test('patient import deployment cannot mix a fresh page with stale cached controls', async () => {
@@ -99,9 +118,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260805-import-fix/);
+  assert.match(html, /dashboard\.js\?v=20260805-master-patient-import/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260805-patient-import-fix/);
+  assert.match(serviceWorker, /20260805-master-patient-import/);
 });
 
 test('central patient directory visually distinguishes complete and incomplete records', async () => {

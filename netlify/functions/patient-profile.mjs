@@ -154,7 +154,7 @@ function communicationPayload(matches) {
   };
 }
 
-function profilePayload(patient, dayMatches, plans, labs, communications = [], prescriptions = []) {
+function profilePayload(patient, dayMatches, plans, labs, communications = [], prescriptions = [], directoryRecord = null) {
   const appointments = dayMatches.flatMap(day => day.matches.map(item => ({
     id: cleanText(item.id, 100), clinicId: day.clinicId, date: day.date, start: cleanText(item.start, 8), end: cleanText(item.end, 8),
     procedure: cleanText(item.procedure, 180), status: cleanText(item.status, 30), statusLabel: statusLabel(item.status),
@@ -175,6 +175,12 @@ function profilePayload(patient, dayMatches, plans, labs, communications = [], p
     labs: labItems,
     prescriptions: prescriptionItems,
     communications: communication,
+    directory: directoryRecord ? {
+      adminNotes: cleanText(directoryRecord.adminNotes, 1600),
+      dataQualityFlags: Array.isArray(directoryRecord.dataQualityFlags) ? directoryRecord.dataQualityFlags : [],
+      reviewRequired: Boolean(directoryRecord.reviewRequired),
+      notesReviewedAt: Number(directoryRecord.notesReviewedAt || 0)
+    } : { adminNotes: '', dataQualityFlags: [], reviewRequired: false, notesReviewedAt: 0 },
     updatedAt: Date.now()
   };
 }
@@ -268,20 +274,22 @@ export default async request => {
   const patient = primaryPatient(dayMatches, plans, labs, communications, prescriptions, directoryRecord);
   if (!patient.name && !patient.file && !patient.phone && !patient.nationalId) return reply({ found: false, patient: null, appointments: [], plans: [], labs: [] }, 404);
 
-  if (request.method === 'GET') return reply({ found: true, ...profilePayload(patient, dayMatches, plans, labs, communications, prescriptions) });
+  if (request.method === 'GET') return reply({ found: true, ...profilePayload(patient, dayMatches, plans, labs, communications, prescriptions, directoryRecord) });
 
   const next = {
     name: cleanText(body?.patient?.name, 100),
     file: cleanText(body?.patient?.file, 40),
     phone: normalizePatientPhone(body?.patient?.phone),
-    nationalId: normalizePatientNationalId(body?.patient?.nationalId)
+    nationalId: normalizePatientNationalId(body?.patient?.nationalId),
+    adminNotes: cleanText(body?.patient?.adminNotes, 1600),
+    notesReviewed: Boolean(body?.patient?.notesReviewed)
   };
   if (!next.name || !next.file || !next.phone) return reply({ error: 'Name, file number, and mobile are required' }, 400);
   if (next.nationalId && next.nationalId.length !== 10) return reply({ error: 'National ID must contain 10 digits' }, 400);
   const nextAliases = patientIdentityKeys(next);
   const conflicting = nextAliases.map(alias => registry.aliases?.[alias]).find(canonical => canonical && !plans.some(item => item.canonical === canonical));
   if (conflicting) return reply({ error: 'The new identity is already linked to another patient' }, 409);
-  const directoryConflict = nextAliases.map(alias => directoryRegistry.aliases?.[alias]).find(canonical => canonical && canonical !== directoryCanonical);
+  const directoryConflict = nextAliases.filter(alias => !alias.startsWith('phone:')).map(alias => directoryRegistry.aliases?.[alias]).find(canonical => canonical && canonical !== directoryCanonical);
   if (directoryConflict) return reply({ error: 'The new identity is already linked to another patient' }, 409);
 
   let appointmentUpdates = 0;
