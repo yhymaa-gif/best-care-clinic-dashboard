@@ -61,6 +61,7 @@ test('patient corrections propagate to appointments, plans, prescriptions, labs,
   assert.match(profile, /labUpdates/);
   assert.match(profile, /planUpdates/);
   assert.match(state, /upsertPatientDirectory/);
+  assert.match(state, /authoritativeImport:auth\.user\?\.role==='admin'&&Boolean\(body\.directoryImport\)/);
   assert.match(dashboard, /const PATIENTS_API='\/api\/patients'/);
   assert.match(dashboard, /VIEW_MODE==='admin'\?\(String\(p\.name/);
   assert.match(dashboard, /name:rawName\?rawName\.replace/);
@@ -86,10 +87,16 @@ test('central patient list import preserves full names and updates matched ident
   assert.match(dashboard, /openModal\('patientIdentitySearchModal'\);showPatientIdentitySearchView\(\);closePatientDirectoryPanels\(\);/);
   assert.match(dashboard, /الاسم غير مكتمل/);
   assert.match(dashboard, /جارٍ المطابقة والتحديث/);
+  assert.match(dashboard, /sync\.directoryImport=true/);
+  assert.match(dashboard, /directoryImport:Boolean\(sync\.directoryImport\)/);
   assert.match(endpoint, /request\.method === 'POST'/);
   assert.match(endpoint, /importPatientDirectory/);
   assert.match(directorySource, /fullName: preferValue\(existing\.fullName, patient\.fullName/);
   assert.match(directorySource, /resolveCanonical\(records, aliases, patient\)/);
+  assert.match(directorySource, /matchedByStrongIdentity/);
+  assert.match(directorySource, /authoritativeImport && matchedByStrongIdentity/);
+  assert.match(directorySource, /pruneNameOnlyRecords/);
+  assert.match(dashboard, /حُذف اسم فقط/);
   assert.match(directorySource, /result\.updated \+= 1/);
 });
 
@@ -110,6 +117,26 @@ test('incomplete imported identities are retained for explicit admin correction'
   assert.deepEqual(directory.reviewFlagsFor({ fullName: 'هند محمد', fileNo: '7041', mobile: '' }), ['missing_phone']);
 });
 
+test('daily patient import removes name-only orphans but retains correctable identities', () => {
+  const source = {
+    orphan: { fullName: 'اسم فقط' },
+    byPhone: { fullName: 'هند محمد', mobile: '0551234567' },
+    byFile: { fullName: 'أحمد محمد', fileNo: '7041' }
+  };
+  const pruned = directory.pruneNameOnlyRecords(source, {
+    'phone:0551234567': 'byPhone',
+    'file:7041': 'byFile',
+    'file:OLD': 'orphan'
+  });
+  assert.equal(pruned.removed, 1);
+  assert.equal(pruned.records.orphan, undefined);
+  assert.equal(pruned.aliases['file:OLD'], undefined);
+  assert.equal(pruned.records.byPhone.fullName, 'هند محمد');
+  assert.equal(pruned.records.byFile.fullName, 'أحمد محمد');
+  assert.equal(directory.isNameOnlyRecord({ fullName: 'اسم فقط' }), true);
+  assert.equal(directory.isNameOnlyRecord({ fullName: 'اسم وجوال', mobile: '0551234567' }), false);
+});
+
 test('patient import deployment cannot mix a fresh page with stale cached controls', async () => {
   const [dashboard, html, serviceWorker] = await Promise.all([
     read('dashboard.js'),
@@ -118,9 +145,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260805-master-patient-import/);
+  assert.match(html, /dashboard\.js\?v=20260805-patient-directory-refresh/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260805-master-patient-import/);
+  assert.match(serviceWorker, /20260805-patient-directory-refresh/);
 });
 
 test('central patient directory visually distinguishes complete and incomplete records', async () => {

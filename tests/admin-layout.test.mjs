@@ -27,7 +27,8 @@ test('modern admin workspace is optional and switched from Settings', async () =
 
 test('modern workspace state is local-only and reuses existing actions', async () => {
   const script = await readFile(new URL('dashboard.js', root), 'utf8');
-  assert.match(script, /ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1'/);
+  assert.match(script, /ADMIN_LAYOUT_KEY='bestcare_admin_layout_v2'/);
+  assert.match(script, /localStorage\.getItem\(ADMIN_LAYOUT_KEY\)==='modern'\?'modern':'classic'/, 'classic is the default when the new preference is absent');
   assert.match(script, /ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1'/);
   assert.match(script, /stored===null\?Boolean\(matchMedia\?\.\('\(max-width: 1400px\)'\)/);
   assert.match(script, /function applyAdminLayout\(/);
@@ -66,7 +67,12 @@ test('modern workspace keeps a fixed and optionally collapsible right sidebar', 
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modal\{right:88px/);
   assert.match(css, /V7\.55:[^\n]*independent, reliable scrolling/);
   assert.match(css, /body\.admin-layout-modern \.modern-sidebar-scroll\{flex:1 1 0;min-height:0!important;[^}]*overflow-y:auto!important;[^}]*touch-action:pan-y/);
+  assert.match(css, /V7\.56:[^\n]*full-height desktop sidebar scrolling/);
+  assert.match(css, /grid-template-rows:auto auto minmax\(0,1fr\) auto/);
+  assert.match(css, /body\.admin-layout-modern \.modern-sidebar-scroll\{[\s\S]*?overflow-y:scroll!important/);
   assert.match(script, /function setupModernSidebarScroll\(\)/);
+  assert.match(script, /scroller\.scrollTop\+=event\.deltaY/);
+  assert.match(script, /event\.key==='End'/);
   assert.doesNotMatch(css, /\.modern-tool-panel/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);
   assert.match(css, /body\.admin-layout-modern \.toolbar>#appointmentRequestCenter/);

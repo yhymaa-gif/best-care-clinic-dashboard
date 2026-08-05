@@ -2,7 +2,9 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const THEME_KEY='bestcare_dashboard_theme_v1';
-const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1';
+// A versioned preference resets the previously forced modern layout once.
+// Classic remains the default; a new explicit user choice is still remembered.
+const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v2';
 const ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1';
 function preferredTheme(){try{const stored=localStorage.getItem(THEME_KEY);if(['light','dark'].includes(stored))return stored}catch{}return matchMedia?.('(prefers-color-scheme: dark)')?.matches?'dark':'light'}
 let currentTheme=preferredTheme();
@@ -79,11 +81,18 @@ function setupModernSidebarScroll(){
   if(!sidebar||!scroller||sidebar.dataset.scrollReady==='1')return;
   sidebar.dataset.scrollReady='1';
   sidebar.addEventListener('wheel',event=>{
-    if(event.ctrlKey||!event.deltaY||event.target.closest('.modern-sidebar-scroll'))return;
+    if(event.ctrlKey||!event.deltaY||scroller.scrollHeight<=scroller.clientHeight)return;
     const previous=scroller.scrollTop;
     scroller.scrollTop+=event.deltaY;
     if(scroller.scrollTop!==previous)event.preventDefault();
   },{passive:false});
+  scroller.addEventListener('keydown',event=>{
+    const page=Math.max(120,scroller.clientHeight*.78);
+    if(event.key==='PageDown'){scroller.scrollBy({top:page,behavior:'smooth'});event.preventDefault()}
+    else if(event.key==='PageUp'){scroller.scrollBy({top:-page,behavior:'smooth'});event.preventDefault()}
+    else if(event.key==='End'){scroller.scrollTo({top:scroller.scrollHeight,behavior:'smooth'});event.preventDefault()}
+    else if(event.key==='Home'){scroller.scrollTo({top:0,behavior:'smooth'});event.preventDefault()}
+  });
 }
 const API='/api/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
@@ -601,7 +610,8 @@ let sync={
   autoStarted:false,
   lastSync:0,
   localVersion:0,
-  localUpdatedAt:0
+  localUpdatedAt:0,
+  directoryImport:false
 };
 let syncChannel=null;
 const localKey=d=>`bestcare_dashboard_v4_${ACTIVE_CLINIC_ID}_${d}`;
@@ -852,7 +862,7 @@ function detectRemoteNotification(previousPatients,previousAlert,data){
   if(nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))return {type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:lang==='en'?'Best Care update':'تنبيه جديد من أفضل عناية',body:String(nextAlert.message||tr('defaultAlert')),tag:`alert-${nextAlert.kind||'update'}`};
   return null;
 }
-function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined}}
+function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined,directoryImport:Boolean(sync.directoryImport)}}
 function loadLocal(date){
   try{
     const v=JSON.parse(localStorage.getItem(localKey(date))||'null');
@@ -863,12 +873,14 @@ function loadLocal(date){
     updateAlert=freshPending&&v?.updateAlert&&typeof v.updateAlert==='object'?{...v.updateAlert}:{active:false,message:'',updatedAt:0,kind:''};
     sync.dirty=freshPending;
     sync.localUpdatedAt=freshPending?Number(v?.localUpdatedAt||0):0;
+    sync.directoryImport=freshPending&&Boolean(v?.directoryImport);
   }catch{
     patients=[];
     notes='';
     updateAlert={active:false,message:'',updatedAt:0,kind:''};
     sync.dirty=false;
     sync.localUpdatedAt=0;
+    sync.directoryImport=false;
   }
   els.notes.value=notes;
   render();
@@ -1300,6 +1312,7 @@ async function pushState(){
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==sentDate)return false;
+    if(snapshot.directoryImport)sync.directoryImport=false;
     sync.revision=Number(data.revision||sync.revision);
     sync.updatedAt=Number(data.updatedAt||Date.now());
     sync.dirty=sentVersion!==sync.localVersion;
@@ -3421,12 +3434,12 @@ function parsePatientDirectoryCsv(text){
   const merged=mergePatientDirectoryImportRows(rows);
   return{rows,validRows:merged.validRows,invalidRows:merged.invalidRows,reason:rows.length?'':'empty'};
 }
-function patientDirectoryIssueLabel(issue){return({name_required:'الاسم مفقود',full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة',identity_required:'لا يوجد ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
+function patientDirectoryIssueLabel(issue){return({name_required:'الاسم مفقود',full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة',identity_required:'مستبعد: اسم فقط بلا ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
 function renderPatientDirectoryImportPreview(){
   const draft=patientDirectoryImportDraft,summary=$('patientDirectoryImportSummary'),preview=$('patientDirectoryImportPreview'),save=$('patientDirectoryImportSave');
   $('patientDirectoryImportFileName').textContent=draft.fileName||'—';
   const reviewCount=draft.validRows.filter(row=>row.reviewFlags?.length).length;
-  summary.innerHTML=`<span>إجمالي الصفوف <b>${draft.rows.length}</b></span><span class="valid">سيتم دمجه <b>${draft.validRows.length}</b></span><span class="review">مع تنبيه تصحيح <b>${reviewCount}</b></span><span class="invalid">متعذر استيراده <b>${draft.invalidRows.length}</b></span>`;
+  summary.innerHTML=`<span>إجمالي الصفوف <b>${draft.rows.length}</b></span><span class="valid">سيتم دمجه وتحديثه <b>${draft.validRows.length}</b></span><span class="review">مع تنبيه تصحيح <b>${reviewCount}</b></span><span class="invalid">مستبعد تلقائيًا <b>${draft.invalidRows.length}</b></span>`;
   const rows=[...draft.validRows.map(row=>({...row,valid:true})),...draft.invalidRows.map(row=>({...row,valid:false}))].slice(0,160);
   preview.innerHTML=rows.length?`<table class="patient-directory-import-table"><thead><tr><th>الصف</th><th>الاسم الكامل</th><th>رقم الملف</th><th>الجوال</th><th>الملاحظات</th><th>النتيجة</th></tr></thead><tbody>${rows.map(row=>`<tr class="${row.valid?(row.reviewFlags?.length?'review':'valid'):'invalid'}"><td>${escapeHtml((row.sourceRows||[row.sourceRow]).join('، '))}</td><td>${escapeHtml(row.fullName||'—')}</td><td>${escapeHtml(row.fileNo||'—')}</td><td>${escapeHtml(row.mobile||'—')}</td><td title="${escapeHtml(row.adminNotes||'')}">${escapeHtml(row.adminNotes||'—')}</td><td><span class="patient-directory-import-state ${row.valid?(row.reviewFlags?.length?'review':'valid'):'invalid'}">${row.valid?(row.reviewFlags?.length?row.reviewFlags.map(patientDirectoryIssueLabel).join('، '):'جاهز'):escapeHtml(patientDirectoryIssueLabel(row.issue))}</span></td></tr>`).join('')}</tbody></table>${draft.rows.length>160?`<div class="patient-identity-empty">تم عرض أول 160 صفًا فقط؛ سيتم دمج جميع الصفوف المقروءة.</div>`:''}`:'<div class="patient-identity-empty">لم يتم العثور على صفوف قابلة للقراءة.</div>';
   save.disabled=!draft.validRows.length;
@@ -3457,7 +3470,7 @@ async function submitPatientDirectoryRows(rows,button){
     const response=await request(PATIENTS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({clinicId:ACTIVE_CLINIC_ID,patients:rows})},60000),data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر تحديث قاعدة المرضى');
     await refreshPatientIdentityDirectory();
-    toast('تم تحديث قاعدة المرضى',`جديد ${Number(data.created||0)} · تم تحديثه ${Number(data.updated||0)} · يحتاج تصحيح ${Number(data.reviewRequired||0)} · جوال مشترك ${Number(data.sharedPhones||0)} · متعارض ${Number(data.conflicts||0)} · متجاوز ${Number(data.skipped||0)}`);
+    toast('تم تحسين قاعدة المرضى',`جديد ${Number(data.created||0)} · مصحح أو مكتمل ${Number(data.updated||0)} · يحتاج تصحيح ${Number(data.reviewRequired||0)} · حُذف اسم فقط ${Number(data.removedNameOnly||0)} · جوال مشترك ${Number(data.sharedPhones||0)} · متعارض ${Number(data.conflicts||0)} · مستبعد ${Number(data.skipped||0)}`);
     return data;
   }finally{button.disabled=false;button.textContent=original}
 }
@@ -3525,6 +3538,7 @@ async function acceptPatientImport(parsed){
     toast(lang==='en'?'Import failed':'تعذر الاستيراد',detail);els.csvInput.value='';return;
   }
   if(parsed.date&&parsed.date!==selectedDate){await setDate(parsed.date);els.datePicker.value=parsed.date;}
+  sync.directoryImport=true;
   mutate(()=>patients=parsed.rows);
   const dateMessage=parsed.date?(lang==='en'?` for ${parsed.date}`:` لتاريخ ${parsed.date}`):'';
   toast(lang==='en'?'Import complete':'تم الاستيراد',lang==='en'?`${parsed.rows.length} patients imported${dateMessage}`:`تم استيراد ${parsed.rows.length} مريض${dateMessage}`);

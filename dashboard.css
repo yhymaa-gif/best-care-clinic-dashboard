@@ -626,6 +626,34 @@ body.admin-layout-modern .modern-sidebar-scroll:focus-visible{outline:2px solid 
 body.admin-layout-modern.admin-sidebar-collapsed .modern-sidebar-scroll{flex:1 1 0;min-height:0!important;max-height:100%;padding-bottom:max(12px,env(safe-area-inset-bottom))!important}
 @media(max-width:760px){body.admin-layout-modern .modern-admin-sidebar{height:100vh;height:100dvh;max-height:100dvh}body.admin-layout-modern .modern-sidebar-scroll{padding-bottom:max(10px,env(safe-area-inset-bottom))!important}}
 
+/* V7.56: classic-first preference and full-height desktop sidebar scrolling. */
+body.admin-layout-modern .modern-admin-sidebar{
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr) auto;
+  height:100vh!important;
+  height:100dvh!important;
+  max-height:100dvh!important;
+  min-height:0!important;
+}
+body.admin-layout-modern .modern-sidebar-scroll{
+  align-self:stretch;
+  min-height:0!important;
+  max-height:none!important;
+  overflow-x:hidden!important;
+  overflow-y:scroll!important;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable both-edges;
+  padding-bottom:max(36px,env(safe-area-inset-bottom))!important;
+}
+body.admin-layout-modern .modern-sidebar-scroll::after{content:"";display:block;height:18px;pointer-events:none}
+body.admin-layout-modern .modern-sidebar-footer{position:relative;z-index:2;background:linear-gradient(180deg,rgba(17,46,67,.7),#112e43)}
+@media(max-height:760px) and (min-width:761px){
+  body.admin-layout-modern .modern-sidebar-head{padding-bottom:9px!important}
+  body.admin-layout-modern .modern-sidebar-home{min-height:42px;margin-block:7px 5px!important}
+  body.admin-layout-modern .modern-sidebar-scroll{padding-bottom:48px!important}
+  body.admin-layout-modern .modern-sidebar-footer{padding-top:6px}
+}
+
 /* Smart extractor: archive reconciliation and full patient identity review. */
 .ocr-modal-card{width:min(1380px,100%)}
 .ocr-table{min-width:1320px}
