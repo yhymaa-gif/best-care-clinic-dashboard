@@ -142,6 +142,37 @@ export async function getPatientDirectory() {
   return await directoryStore().get(DIRECTORY_KEY, { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {}, revision: 0, updatedAt: 0 };
 }
 
+export function resolvePatientDirectoryRecord(registry = {}, value = {}) {
+  const records = registry?.records && typeof registry.records === 'object' ? registry.records : {};
+  const aliases = registry?.aliases && typeof registry.aliases === 'object' ? registry.aliases : {};
+  const patient = directoryPatient(value);
+  const strongAliases = strongAliasesFor(patient);
+  const strongCanonicals = [...new Set(strongAliases.map(alias => aliases[alias]).filter(Boolean))];
+  if (strongCanonicals.length > 1) return null;
+  if (strongCanonicals.length === 1) return records[strongCanonicals[0]] || null;
+
+  const phoneAlias = phoneAliasFor(patient);
+  const phoneCanonical = phoneAlias ? aliases[phoneAlias] : '';
+  const phoneRecord = phoneCanonical ? records[phoneCanonical] : null;
+  if (!phoneRecord) return null;
+  const incomingName = normalizedName(patient.fullName);
+  const savedName = normalizedName(phoneRecord.fullName);
+  const sameFirstName = Boolean(incomingName && savedName && incomingName.split(/\s+/)[0] === savedName.split(/\s+/)[0]);
+  return namesCompatible(phoneRecord.fullName, patient.fullName) || sameFirstName ? phoneRecord : null;
+}
+
+export function enrichPatientNameFromDirectory(registry = {}, value = {}) {
+  const record = resolvePatientDirectoryRecord(registry, value);
+  if (!record) return { ...value };
+  const currentName = cleanText(value?.name ?? value?.fullName, 120);
+  const savedName = cleanText(record.fullName, 120);
+  const fullName = savedName && nameScore(savedName) >= nameScore(currentName) ? savedName : currentName;
+  if (Object.prototype.hasOwnProperty.call(value || {}, 'name') || !Object.prototype.hasOwnProperty.call(value || {}, 'fullName')) {
+    return { ...value, name: fullName };
+  }
+  return { ...value, fullName };
+}
+
 export async function upsertPatientDirectory(patients, meta = {}) {
   const list = Array.isArray(patients) ? patients : [];
   if (!list.length) return { changed: false, revision: 0 };
@@ -357,4 +388,4 @@ export async function importPatientDirectory(values, meta = {}) {
   return { ...result, revision: nextRegistry.revision, records: nextRegistry.records };
 }
 
-export const __test = { directoryPatient, aliasesFor, strongAliasesFor, phoneAliasFor, isNameOnlyRecord, pruneNameOnlyRecords, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, nameScore, preferValue, appointmentSnapshot, mergeRecords };
+export const __test = { directoryPatient, aliasesFor, strongAliasesFor, phoneAliasFor, isNameOnlyRecord, pruneNameOnlyRecords, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, resolvePatientDirectoryRecord, enrichPatientNameFromDirectory, nameScore, preferValue, appointmentSnapshot, mergeRecords };

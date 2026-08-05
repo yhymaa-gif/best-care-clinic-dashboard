@@ -1,5 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { apiHeaders, requireUser } from './lib/session.mjs';
+import { enrichPatientNameFromDirectory, getPatientDirectory } from './lib/patient-directory.mjs';
 
 const headers = apiHeaders('GET,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -46,7 +47,10 @@ export default async request => {
 
   const configStore = store('clinic-dashboard-config');
   const dayStore = store('clinic-dashboard-days');
-  const savedClinics = await configStore.get('clinics', { type: 'json', consistency: 'strong' });
+  const [savedClinics, patientDirectory] = await Promise.all([
+    configStore.get('clinics', { type: 'json', consistency: 'strong' }),
+    getPatientDirectory(),
+  ]);
   const clinics = activeClinics(savedClinics);
 
   const records = await Promise.all(clinics.map(async clinic => {
@@ -54,7 +58,9 @@ export default async request => {
     const state = await dayStore.get(key, { type: 'json', consistency: 'strong' });
     return {
       clinic,
-      patients: Array.isArray(state?.patients) ? state.patients : [],
+      patients: Array.isArray(state?.patients)
+        ? state.patients.map(patient => enrichPatientNameFromDirectory(patientDirectory, patient))
+        : [],
       revision: Number(state?.revision || 0),
       updatedAt: Number(state?.updatedAt || 0),
     };

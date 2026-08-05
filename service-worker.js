@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260805-patient-directory-refresh';
+const CACHE_NAME='bestcare-dashboard-v1-20260805-admin-full-name';
 const APP_SHELL=[
   './',
   './index.html',

@@ -100,6 +100,21 @@ test('central patient list import preserves full names and updates matched ident
   assert.match(directorySource, /result\.updated \+= 1/);
 });
 
+test('administration receives the complete central name while matching by stable identity', () => {
+  const registry = {
+    records: {
+      canonical: { fullName: 'أحمد محمد علي القحطاني', fileNo: '7041', mobile: '0551234567' }
+    },
+    aliases: {
+      'file:7041': 'canonical',
+      'phone:0551234567': 'canonical'
+    }
+  };
+  assert.equal(directory.enrichPatientNameFromDirectory(registry, { name: 'أحمد', file: '7041' }).name, 'أحمد محمد علي القحطاني');
+  assert.equal(directory.enrichPatientNameFromDirectory(registry, { name: 'أحمد', phone: '0551234567' }).name, 'أحمد محمد علي القحطاني');
+  assert.equal(directory.enrichPatientNameFromDirectory(registry, { name: 'خالد', phone: '0551234567' }).name, 'خالد');
+});
+
 test('shared mobile numbers never merge patients with different file numbers', () => {
   const first = directory.directoryPatient({ fullName: 'مريض أول كامل', fileNo: '1001', mobile: '0551112233' });
   const second = directory.directoryPatient({ fullName: 'مريض ثان كامل', fileNo: '1002', mobile: '0551112233' });
@@ -145,9 +160,19 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260805-patient-directory-refresh/);
+  assert.match(html, /dashboard\.js\?v=20260805-admin-full-name/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260805-patient-directory-refresh/);
+  assert.match(serviceWorker, /20260805-admin-full-name/);
+});
+
+test('administration endpoints enrich names without exposing full names to the clinic response', async () => {
+  const [state, adminPatients] = await Promise.all([
+    read('netlify/functions/state.mjs'),
+    read('netlify/functions/admin-patients.mjs')
+  ]);
+  assert.match(state, /if\(auth\.user\?\.role!=='admin'\)return reply\(\{exists:true,\.\.\.state/);
+  assert.match(state, /enrichPatientNameFromDirectory\(patientDirectory,patient\)/);
+  assert.match(adminPatients, /patients\.map\(patient => enrichPatientNameFromDirectory\(patientDirectory, patient\)\)/);
 });
 
 test('central patient directory visually distinguishes complete and incomplete records', async () => {
