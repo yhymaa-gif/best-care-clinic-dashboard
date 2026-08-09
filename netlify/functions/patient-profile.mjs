@@ -276,15 +276,19 @@ export default async request => {
 
   if (request.method === 'GET') return reply({ found: true, ...profilePayload(patient, dayMatches, plans, labs, communications, prescriptions, directoryRecord) });
 
+  const allowIncomplete = Boolean(body?.allowIncomplete);
+  const suppliedPatient = body?.patient && typeof body.patient === 'object' ? body.patient : {};
+  const suppliedNationalId = Object.prototype.hasOwnProperty.call(suppliedPatient, 'nationalId');
   const next = {
-    name: cleanText(body?.patient?.name, 100),
-    file: cleanText(body?.patient?.file, 40),
-    phone: normalizePatientPhone(body?.patient?.phone),
-    nationalId: normalizePatientNationalId(body?.patient?.nationalId),
-    adminNotes: cleanText(body?.patient?.adminNotes, 1600),
-    notesReviewed: Boolean(body?.patient?.notesReviewed)
+    name: cleanText(suppliedPatient.name, 100) || (allowIncomplete ? cleanText(patient.name, 100) : ''),
+    file: cleanText(suppliedPatient.file, 40) || (allowIncomplete ? cleanText(patient.file, 40) : ''),
+    phone: normalizePatientPhone(suppliedPatient.phone) || (allowIncomplete ? normalizePatientPhone(patient.phone) : ''),
+    nationalId: suppliedNationalId ? normalizePatientNationalId(suppliedPatient.nationalId) : normalizePatientNationalId(patient.nationalId),
+    adminNotes: Object.prototype.hasOwnProperty.call(suppliedPatient, 'adminNotes') ? cleanText(suppliedPatient.adminNotes, 1600) : cleanText(patient.adminNotes, 1600),
+    notesReviewed: Object.prototype.hasOwnProperty.call(suppliedPatient, 'notesReviewed') ? Boolean(suppliedPatient.notesReviewed) : Boolean(patient.notesReviewed)
   };
-  if (!next.name || !next.file || !next.phone) return reply({ error: 'Name, file number, and mobile are required' }, 400);
+  if (!next.name || (!next.file && !next.phone && !next.nationalId)) return reply({ error: 'Name and at least one stable patient identity are required' }, 400);
+  if (!allowIncomplete && (!next.file || !next.phone)) return reply({ error: 'Name, file number, and mobile are required' }, 400);
   if (next.nationalId && next.nationalId.length !== 10) return reply({ error: 'National ID must contain 10 digits' }, 400);
   const nextAliases = patientIdentityKeys(next);
   const conflicting = nextAliases.map(alias => registry.aliases?.[alias]).find(canonical => canonical && !plans.some(item => item.canonical === canonical));
@@ -376,7 +380,7 @@ export default async request => {
     planUpdates += 1;
   }));
 
-  await correctDirectoryPatient([...lookupAliases], next, { actor: cleanText(auth.user?.displayName || auth.user?.username, 120) });
+  await correctDirectoryPatient([...lookupAliases], next, { actor: cleanText(auth.user?.displayName || auth.user?.username, 120), correctionId: cleanText(body?.correctionId, 120) });
 
   return reply({ ok: true, patient: next, updated: { appointments: appointmentUpdates, plans: planUpdates, prescriptions: prescriptionUpdates, labs: labUpdates } });
 };
