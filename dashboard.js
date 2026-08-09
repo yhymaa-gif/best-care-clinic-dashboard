@@ -137,7 +137,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:20*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.62-patient-history-fix';
+const DASHBOARD_BUILD='7.63-patient-save-fix';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -3382,6 +3382,17 @@ async function savePatient(){
     patients.sort((a,b)=>a.start.localeCompare(b.start));
     applyAutomaticStatusAlert(item,item.status);
   });
+  // An admin name correction must complete its state + directory write before
+  // the form closes.  A delayed background push can be cancelled when the
+  // browser/app is closed, which used to make the old name reappear next time.
+  if(wasEditing&&authUser?.role==='admin'){
+    clearTimeout(sync.pushTimer);
+    const persisted=await pushState();
+    if(!persisted){
+      toast('تعذر تثبيت تعديل الاسم','بقي التعديل محليًا وسيُعاد حفظه تلقائيًا عند عودة الاتصال.');
+      return;
+    }
+  }
   void refreshTreatmentPlanRegistry(true);
   patientFormSavedFeedback(wasEditing,item);
   resetPatientForm(false);
