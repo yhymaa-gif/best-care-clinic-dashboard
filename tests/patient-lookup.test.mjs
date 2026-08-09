@@ -32,3 +32,11 @@ test('patient lookup parses legacy and clinic-scoped day keys', () => {
   assert.deepEqual(lookup.parseDayKey('clinics/clinic-15/days/2026-07-31'), { clinicId: 'clinic-15', date: '2026-07-31' });
   assert.equal(lookup.parseDayKey('clinics/clinic-16/days/2026-07-31'), null);
 });
+
+test('central directory search respects clinic scope while admin all-clinic search remains available', () => {
+  const patient = { latestClinicId: 'clinic-3', clinicIds: ['clinic-2', 'clinic-3'] };
+  assert.equal(lookup.directoryRecordInScope(patient, 'clinic-2', false), true);
+  assert.equal(lookup.directoryRecordInScope(patient, 'clinic-3', false), true);
+  assert.equal(lookup.directoryRecordInScope(patient, 'clinic-4', false), false);
+  assert.equal(lookup.directoryRecordInScope(patient, '', true), true);
+});

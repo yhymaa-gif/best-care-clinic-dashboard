@@ -38,6 +38,7 @@ const cleanPatient=p=>({
  reviewRequestedAt:Number(p?.reviewRequestedAt||0),
  reviewRequestCount:Math.max(0,Math.min(9999,Number(p?.reviewRequestCount||0))),
  reviewLastEventId:String(p?.reviewLastEventId||'').slice(0,120),
+ addedAt:Number(p?.addedAt||0),
  adminUpdatedAt:Number(p?.adminUpdatedAt||0)
 });
 const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
