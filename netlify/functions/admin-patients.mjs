@@ -1,6 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { apiHeaders, requireUser } from './lib/session.mjs';
-import { enrichPatientNameFromDirectory, getPatientDirectory } from './lib/patient-directory.mjs';
+import { enrichPatientFromDirectory, getPatientDirectory } from './lib/patient-directory.mjs';
 
 const headers = apiHeaders('GET,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -49,7 +49,7 @@ export default async request => {
   const dayStore = store('clinic-dashboard-days');
   const [savedClinics, patientDirectory] = await Promise.all([
     configStore.get('clinics', { type: 'json', consistency: 'strong' }),
-    getPatientDirectory(),
+    getPatientDirectory().catch(() => ({ records: {}, aliases: {} }))
   ]);
   const clinics = activeClinics(savedClinics);
 
@@ -58,9 +58,16 @@ export default async request => {
     const state = await dayStore.get(key, { type: 'json', consistency: 'strong' });
     return {
       clinic,
-      patients: Array.isArray(state?.patients)
-        ? state.patients.map(patient => enrichPatientNameFromDirectory(patientDirectory, patient))
-        : [],
+      patients: Array.isArray(state?.patients) ? state.patients.map(patient => {
+        const enriched = enrichPatientFromDirectory(patientDirectory, patient);
+        return {
+          ...patient,
+          name: enriched.name,
+          file: enriched.file,
+          phone: enriched.phone,
+          nationalId: enriched.nationalId
+        };
+      }) : [],
       revision: Number(state?.revision || 0),
       updatedAt: Number(state?.updatedAt || 0),
     };

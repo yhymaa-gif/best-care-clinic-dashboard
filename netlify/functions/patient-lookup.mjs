@@ -1,5 +1,4 @@
 import { getStore } from '@netlify/blobs';
-import { getPatientDirectory } from './lib/patient-directory.mjs';
 import { apiHeaders, canAccessClinic, requireUser } from './lib/session.mjs';
 
 const headers = apiHeaders('GET,OPTIONS');
@@ -72,11 +71,6 @@ const publicMatch = ({ patient, clinicId, date, source }) => ({
 });
 
 const matchKey = match => `${match.clinicId}:${normalizeFile(match.patient.file) || normalizePhone(match.patient.phone) || normalizeNationalId(match.patient.nationalId) || `${normalizeName(match.patient.name)}:${match.patient.id||match.sourceDate||''}`}`;
-const directoryRecordInScope = (record, scopedClinic, searchAll) => {
-  if (searchAll) return true;
-  const clinicIds = Array.isArray(record?.clinicIds) ? record.clinicIds : [];
-  return record?.latestClinicId === scopedClinic || clinicIds.includes(scopedClinic);
-};
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
@@ -104,18 +98,6 @@ export default async request => {
   if (scopedClinic && !canAccessClinic(auth.user, scopedClinic)) return reply({ error: 'Clinic access denied' }, 403);
 
   const matches = [];
-  const directory = await getPatientDirectory();
-  if(type==='query'){
-    Object.values(directory.records||{})
-      .filter(patient=>directoryRecordInScope(patient,scopedClinic,searchAll)&&patientMatchesQuery(patient,rawValue))
-      .sort((left,right)=>Number(right?.updatedAt||right?.lastSeenAt||0)-Number(left?.updatedAt||left?.lastSeenAt||0))
-      .slice(0,30)
-      .forEach(patient=>matches.push(publicMatch({patient,clinicId:patient.latestClinicId||patient.clinicIds?.[0]||scopedClinic||'clinic-1',date:patient.lastAppointmentDate,source:'directory'})));
-  }else{
-    const directoryCanonical = directory.aliases?.[lookupAlias(type, normalized)];
-    const directoryPatient = directoryCanonical ? directory.records?.[directoryCanonical] : null;
-    if(directoryPatient&&directoryRecordInScope(directoryPatient,scopedClinic,searchAll))matches.push(publicMatch({patient:directoryPatient,clinicId:directoryPatient.latestClinicId||directoryPatient.clinicIds?.[0]||scopedClinic||'clinic-1',date:directoryPatient.lastAppointmentDate,source:'directory'}));
-  }
   const registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || {};
   if(type==='query'){
     Object.values(registry.records||{}).filter(patient=>clinicPattern.test(patient?.clinicId)&&(searchAll||patient.clinicId===scopedClinic)&&patientMatchesQuery(patient,rawValue)).slice(0,20).forEach(patient=>matches.push(publicMatch({patient,clinicId:patient.clinicId,date:patient.sourceDate,source:'treatment-plan'})));
@@ -164,4 +146,4 @@ export default async request => {
   });
 };
 
-export const __test = { toLatinDigits, normalizeName, normalizeFile, normalizePhone, normalizeNationalId, normalizeLookup, patientMatches, patientMatchesQuery, parseDayKey, directoryRecordInScope };
+export const __test = { toLatinDigits, normalizeName, normalizeFile, normalizePhone, normalizeNationalId, normalizeLookup, patientMatches, patientMatchesQuery, parseDayKey };

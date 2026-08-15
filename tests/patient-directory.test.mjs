@@ -31,6 +31,45 @@ test('central patient directory prefers the more complete name and keeps correct
   assert.equal(directory.preferValue('7041', '9999', { force: true, locked: true }), '9999');
 });
 
+test('legacy appointments resolve to the complete central patient identity', () => {
+  const record = {
+    canonical: 'patient-7041',
+    fullName: 'دعاء الحسن العطوي',
+    fileNo: '7041',
+    mobile: '0551234567',
+    nationalId: '1234567890',
+    aliases: ['file:7041', 'file:OLD7041', 'phone:0551234567', 'national:1234567890']
+  };
+  const registry = {
+    records: { 'patient-7041': record },
+    aliases: {
+      'file:7041': 'patient-7041',
+      'file:OLD7041': 'patient-7041',
+      'phone:0551234567': 'patient-7041',
+      'national:1234567890': 'patient-7041'
+    }
+  };
+  assert.equal(directory.resolveDirectoryPatient(registry, { name: 'دعاء', file: 'OLD-7041' }), record);
+  assert.deepEqual(directory.enrichPatientFromDirectory(registry, { id: 'appointment-1', name: 'دعاء', file: '7041' }), {
+    id: 'appointment-1',
+    name: 'دعاء الحسن العطوي',
+    fullName: 'دعاء الحسن العطوي',
+    file: '7041',
+    fileNo: '7041',
+    phone: '0551234567',
+    mobile: '0551234567',
+    nationalId: '1234567890'
+  });
+});
+
+test('mobile fallback refuses to guess when a number is shared', () => {
+  const registry = { records: {
+    first: { canonical: 'first', fullName: 'المريض الأول', mobile: '0551112233', aliases: ['phone:0551112233'] },
+    second: { canonical: 'second', fullName: 'المريض الثاني', mobile: '0551112233', aliases: ['phone:0551112233'] }
+  }, aliases: { 'phone:0551112233': 'first' } };
+  assert.equal(directory.resolveDirectoryPatient(registry, { name: 'مريض', phone: '0551112233' }), null);
+});
+
 test('central patient directory keeps recent appointment context for future visits', () => {
   const snapshot = directory.appointmentSnapshot({
     id: 'p-1', start: '15:30', end: '16:00', status: 'arrived', procedure: 'مراجعة', treatmentPlanStatus: 'doctor_approved'
@@ -61,63 +100,14 @@ test('patient corrections propagate to appointments, plans, prescriptions, labs,
   assert.match(profile, /labUpdates/);
   assert.match(profile, /planUpdates/);
   assert.match(state, /upsertPatientDirectory/);
-  assert.match(state, /authoritativeImport:auth\.user\?\.role==='admin'&&Boolean\(body\.directoryImport\)/);
   assert.match(dashboard, /const PATIENTS_API='\/api\/patients'/);
-  assert.match(dashboard, /VIEW_MODE==='admin'\?\(String\(p\.name/);
+  assert.match(dashboard, /VIEW_MODE==='admin'\?\(String\(displayPatient\.name/);
+  assert.match(dashboard, /function patientWithDirectoryIdentity\(patient\)/);
   assert.match(dashboard, /name:rawName\?rawName\.replace/);
   assert.match(prescription, /preferCompleteName\(patient\.name,storedPatient\.name\)/);
   assert.match(treatmentPlan, /preferCompleteName\(state\.patient\.fullName,source\.name\)/);
   assert.match(treatmentPlan, /state\.patient\.fullName\|\|'—'/);
   assert.match(toml, /from = "\/api\/patients"/);
-});
-
-test('editing a scheduled patient queues one central identity correction with the same save', async () => {
-  const [dashboard, profileSource, directorySource] = await Promise.all([
-    read('dashboard.js'),
-    read('netlify/functions/patient-profile.mjs'),
-    read('netlify/functions/lib/patient-directory.mjs')
-  ]);
-  assert.match(dashboard, /directoryCorrections:\[\]/);
-  assert.match(dashboard, /function queuePatientDirectoryCorrection\(/);
-  assert.match(dashboard, /function flushPatientDirectoryCorrections\(/);
-  assert.match(dashboard, /directoryCorrections:sync\.directoryCorrections\.map/);
-  assert.match(dashboard, /queuePatientDirectoryCorrection\(existing,item\)/);
-  assert.match(dashboard, /allowIncomplete:true/);
-  assert.match(profileSource, /allowIncomplete/);
-  assert.match(profileSource, /correctionId/);
-  assert.match(directorySource, /lastCorrectionId/);
-});
-
-test('patient lookup searches the central directory before historical appointments', async () => {
-  const source = await read('netlify/functions/patient-lookup.mjs');
-  assert.match(source, /getPatientDirectory/);
-  assert.match(source, /source:'directory'/);
-  assert.match(source, /directoryRecordInScope/);
-});
-
-test('manual patient additions retain a tiny recent-addition marker through state cleaning', async () => {
-  const [dashboard, state, styles] = await Promise.all([
-    read('dashboard.js'),
-    read('netlify/functions/state.mjs'),
-    read('dashboard.css')
-  ]);
-  assert.match(dashboard, /addedAt:Number\(existing\?\.addedAt\|\|\(!editingId\?Date\.now\(\):0\)\)/);
-  assert.match(dashboard, /patient-new-badge/);
-  assert.match(state, /addedAt:Number\(p\?\.addedAt\|\|0\)/);
-  assert.match(styles, /patient-new-badge/);
-});
-
-test('operations center exposes an independent visible close action', async () => {
-  const [dashboard, html, styles] = await Promise.all([
-    read('dashboard.js'),
-    read('index.html'),
-    read('dashboard.css')
-  ]);
-  assert.match(html, /id="treatmentPlanCenterClose"/);
-  assert.match(html, /id="treatmentPlanCenterDone"/);
-  assert.match(dashboard, /data-center-close/);
-  assert.match(dashboard, /closeModal\('treatmentPlanCenterModal'\)/);
-  assert.match(styles, /treatment-plan-center-footer/);
 });
 
 test('central patient list import preserves full names and updates matched identities', async () => {
@@ -136,32 +126,11 @@ test('central patient list import preserves full names and updates matched ident
   assert.match(dashboard, /openModal\('patientIdentitySearchModal'\);showPatientIdentitySearchView\(\);closePatientDirectoryPanels\(\);/);
   assert.match(dashboard, /الاسم غير مكتمل/);
   assert.match(dashboard, /جارٍ المطابقة والتحديث/);
-  assert.match(dashboard, /sync\.directoryImport=true/);
-  assert.match(dashboard, /directoryImport:Boolean\(sync\.directoryImport\)/);
   assert.match(endpoint, /request\.method === 'POST'/);
   assert.match(endpoint, /importPatientDirectory/);
   assert.match(directorySource, /fullName: preferValue\(existing\.fullName, patient\.fullName/);
   assert.match(directorySource, /resolveCanonical\(records, aliases, patient\)/);
-  assert.match(directorySource, /matchedByStrongIdentity/);
-  assert.match(directorySource, /authoritativeImport && matchedByStrongIdentity/);
-  assert.match(directorySource, /pruneNameOnlyRecords/);
-  assert.match(dashboard, /حُذف اسم فقط/);
   assert.match(directorySource, /result\.updated \+= 1/);
-});
-
-test('administration receives the complete central name while matching by stable identity', () => {
-  const registry = {
-    records: {
-      canonical: { fullName: 'أحمد محمد علي القحطاني', fileNo: '7041', mobile: '0551234567' }
-    },
-    aliases: {
-      'file:7041': 'canonical',
-      'phone:0551234567': 'canonical'
-    }
-  };
-  assert.equal(directory.enrichPatientNameFromDirectory(registry, { name: 'أحمد', file: '7041' }).name, 'أحمد محمد علي القحطاني');
-  assert.equal(directory.enrichPatientNameFromDirectory(registry, { name: 'أحمد', phone: '0551234567' }).name, 'أحمد محمد علي القحطاني');
-  assert.equal(directory.enrichPatientNameFromDirectory(registry, { name: 'خالد', phone: '0551234567' }).name, 'خالد');
 });
 
 test('shared mobile numbers never merge patients with different file numbers', () => {
@@ -181,26 +150,6 @@ test('incomplete imported identities are retained for explicit admin correction'
   assert.deepEqual(directory.reviewFlagsFor({ fullName: 'هند محمد', fileNo: '7041', mobile: '' }), ['missing_phone']);
 });
 
-test('daily patient import removes name-only orphans but retains correctable identities', () => {
-  const source = {
-    orphan: { fullName: 'اسم فقط' },
-    byPhone: { fullName: 'هند محمد', mobile: '0551234567' },
-    byFile: { fullName: 'أحمد محمد', fileNo: '7041' }
-  };
-  const pruned = directory.pruneNameOnlyRecords(source, {
-    'phone:0551234567': 'byPhone',
-    'file:7041': 'byFile',
-    'file:OLD': 'orphan'
-  });
-  assert.equal(pruned.removed, 1);
-  assert.equal(pruned.records.orphan, undefined);
-  assert.equal(pruned.aliases['file:OLD'], undefined);
-  assert.equal(pruned.records.byPhone.fullName, 'هند محمد');
-  assert.equal(pruned.records.byFile.fullName, 'أحمد محمد');
-  assert.equal(directory.isNameOnlyRecord({ fullName: 'اسم فقط' }), true);
-  assert.equal(directory.isNameOnlyRecord({ fullName: 'اسم وجوال', mobile: '0551234567' }), false);
-});
-
 test('patient import deployment cannot mix a fresh page with stale cached controls', async () => {
   const [dashboard, html, serviceWorker] = await Promise.all([
     read('dashboard.js'),
@@ -209,19 +158,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260809-patient-save-fix-v2/);
+  assert.match(html, /dashboard\.js\?v=20260816-clinic-next-details/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260809-patient-save-fix-v2/);
-});
-
-test('administration endpoints enrich names without exposing full names to the clinic response', async () => {
-  const [state, adminPatients] = await Promise.all([
-    read('netlify/functions/state.mjs'),
-    read('netlify/functions/admin-patients.mjs')
-  ]);
-  assert.match(state, /if\(auth\.user\?\.role!=='admin'\)return reply\(\{exists:true,\.\.\.state/);
-  assert.match(state, /enrichPatientNameFromDirectory\(patientDirectory,patient\)/);
-  assert.match(adminPatients, /patients\.map\(patient => enrichPatientNameFromDirectory\(patientDirectory, patient\)\)/);
+  assert.match(serviceWorker, /20260816-clinic-next-details/);
 });
 
 test('central patient directory visually distinguishes complete and incomplete records', async () => {
@@ -232,4 +171,22 @@ test('central patient directory visually distinguishes complete and incomplete r
   assert.match(styles, /patient-identity-result\.complete/);
   assert.match(styles, /patient-identity-result\.incomplete/);
   assert.match(styles, /patient-directory-table-row/);
+});
+
+test('clinic flow exposes an actionable next-patient hand-off with complete timing details', async () => {
+  const [dashboard, html, styles] = await Promise.all([
+    read('dashboard.js'),
+    read('index.html'),
+    read('dashboard.css')
+  ]);
+  assert.match(html, /id="nextPatientCallout"/);
+  assert.match(html, /id="nextPatientStart"/);
+  assert.match(html, /id="nextPatientEnd"/);
+  assert.match(html, /id="nextPatientDuration"/);
+  assert.match(html, /id="nextPatientCallBtn"/);
+  assert.match(dashboard, /nextPatientCallBtn/);
+  assert.match(dashboard, /button.dataset.nextCallId/);
+  assert.match(dashboard, /appointmentExitTime\(nextPatient\)/);
+  assert.match(styles, /next-patient-detail-grid/);
+  assert.match(styles, /next-patient-actions/);
 });

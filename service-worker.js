@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260809-patient-save-fix-v2';
+const CACHE_NAME='bestcare-dashboard-v1-20260816-clinic-next-details';
 const APP_SHELL=[
   './',
   './index.html',
@@ -17,6 +17,8 @@ const APP_SHELL=[
   './appointment-request.js',
   './appointment-requests.html',
   './appointment-requests.js',
+  './admin-notifications.html',
+  './admin-notifications.js',
   './offline.html',
   './offline.js',
   './lab.html',
@@ -77,6 +79,8 @@ self.addEventListener('fetch',event=>{
           ?'./appointment-request.html'
           :url.pathname.endsWith('/appointment-requests.html')
             ?'./appointment-requests.html'
+          :url.pathname.endsWith('/admin-notifications.html')
+            ?'./admin-notifications.html'
           :url.pathname.endsWith('/lab.html')
             ?'./lab.html'
           :url.pathname.endsWith('/prescription.html')

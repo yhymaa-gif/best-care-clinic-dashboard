@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
 <title>عيادات أفضل عناية الاستشارية للأسنان</title>
 <script src="./theme-boot.js"></script>
-<link rel="stylesheet" href="./dashboard.css?v=20260809-patient-save-fix-v2">
+<link rel="stylesheet" href="./dashboard.css?v=20260816-clinic-next-details">
 <link rel="stylesheet" href="./theme.css">
 </head>
 <body class="auth-checking">
@@ -69,6 +69,7 @@
       <button id="patientIdentitySearchBtn" class="primary patient-record-trigger admin-only" type="button"><span aria-hidden="true">⌕</span><span><strong>قاعدة المرضى</strong><small>عرض · تصحيح · متابعة</small></span><b id="patientDirectoryReviewBadge" class="patient-directory-review-badge" hidden>0</b></button>
       <button id="addBtn" type="button">إضافة مريض</button>
       <a id="statisticsTopLink" class="top-icon-link admin-only" href="./statistics.html" title="فتح مركز الإحصائيات"><span aria-hidden="true">▥</span><strong>الإحصائيات</strong></a>
+      <a id="adminNotificationsTopLink" class="top-icon-link admin-only" href="./admin-notifications.html" title="فتح تنبيهات تحتاج تدخل الإدارة"><span aria-hidden="true">⚠</span><strong>تنبيهات الإدارة</strong><small id="adminNotificationsTopCount">0</small></a>
       <button id="treatmentPlanCenterBtn" class="plan-center-trigger admin-only" type="button" aria-haspopup="dialog" aria-controls="treatmentPlanCenterModal" title="فتح مركز العمليات"><span class="plan-center-trigger-icon" aria-hidden="true">◎</span><span><strong>مركز العمليات</strong><small>المواعيد · الخطط · المعمل · الوصفات</small></span><b id="treatmentPlanCenterCount">0</b></button>
       <button id="screenBtn" class="dark" type="button">وضع الشاشة</button>
       <button id="installBtn" type="button" hidden>تثبيت التطبيق</button>
@@ -146,6 +147,7 @@
         <button type="button" data-modern-action="language"><span aria-hidden="true">文</span><span><strong>تبديل اللغة</strong><small>العربية أو الإنجليزية</small></span></button>
         <button type="button" data-modern-action="theme"><span aria-hidden="true">◑</span><span><strong>مظهر التطبيق</strong><small>فاتح أو داكن</small></span></button>
         <button type="button" data-modern-action="notifications"><span aria-hidden="true">🔔</span><span><strong>إشعارات النظام</strong><small>تفعيل أو إيقاف الإشعارات</small></span></button>
+        <a class="modern-sidebar-link" href="./admin-notifications.html" data-modern-action="admin-alerts"><span aria-hidden="true">⚠</span><span><strong>تنبيهات الإدارة</strong><small>المتأخر والإجراءات المطلوبة</small></span><b id="modernAdminAlertsCount">0</b></a>
         <button type="button" data-modern-action="sound"><span aria-hidden="true">🔊</span><span><strong>التنبيهات الصوتية</strong><small>التحكم بصوت التنبيه</small></span></button>
         <button type="button" data-modern-action="export"><span aria-hidden="true">⇧</span><span><strong>تصدير القائمة</strong><small>تنزيل ملف CSV</small></span></button>
         <button type="button" data-modern-action="logout"><span aria-hidden="true">↪</span><span><strong>تسجيل الخروج</strong><small>إنهاء الجلسة بأمان</small></span></button>
@@ -208,6 +210,7 @@
   <div class="admin-hub-summary">
     <span><b id="adminHubPaymentCount">0</b><span id="adminHubPaymentLabel">طلبات دفع</span></span>
     <span><b id="adminHubPlanCount">0</b><span id="adminHubPlanLabel">خطط تحتاج اعتمادًا</span></span>
+    <span class="earliest"><b id="adminHubEarliestCount">0</b><span id="adminHubEarliestLabel">أقرب موعد ⚡</span></span>
     <span><b id="adminHubUpdateCount">0</b><span id="adminHubUpdateLabel">تحديثات مرضى</span></span>
     <span><b id="adminHubTotalCount">0</b><span id="adminHubTotalLabel">إجمالي مرضى اليوم</span></span>
   </div>
@@ -230,9 +233,27 @@
     <div id="currentName" class="patient-name">لا يوجد الآن</div>
     <section id="timeline" class="timeline-strip" aria-label="الخط الزمني للمرضى"></section>
     <div id="currentMeta" class="patient-meta">—</div>
+    <div id="currentAppointmentDetails" class="appointment-details" aria-label="تفاصيل وقت الموعد"><span><small>الدخول</small><b id="currentStartTime">—</b></span><span><small id="currentExitLabel">الخروج المتوقع</small><b id="currentEndTime">—</b></span><span><small>مدة الموعد</small><b id="currentDuration">—</b></span></div>
     <div id="currentStatusNotice" class="current-status-notice"><span class="status-notice-icon">⌛</span><div><strong id="currentStatusTitle">بانتظار بدء العلاج</strong><small id="currentStatusText">سيبدأ العداد عند وصول المريض</small></div><b id="waitingTimer">--:--:--</b></div>
+    <div id="nextPatientCallout" class="next-patient-callout" hidden aria-live="polite">
+      <span class="next-patient-icon" aria-hidden="true">⚡</span>
+      <div class="next-patient-copy">
+        <small id="nextPatientLabel">المريض التالي</small>
+        <strong id="nextPatientName">—</strong>
+        <span id="nextPatientMeta">—</span>
+      </div>
+      <div class="next-patient-detail-grid" aria-label="تفاصيل المريض التالي">
+        <span><small id="nextPatientStartLabel">الدخول</small><b id="nextPatientStart">—</b></span>
+        <span><small id="nextPatientEndLabel">الخروج المتوقع</small><b id="nextPatientEnd">—</b></span>
+        <span><small id="nextPatientDurationLabel">مدة الموعد</small><b id="nextPatientDuration">—</b></span>
+      </div>
+      <div class="next-patient-actions">
+        <b id="nextPatientTime">—</b>
+        <button id="nextPatientCallBtn" type="button" data-next-call-id="" disabled>استدعاء التالي</button>
+      </div>
+    </div>
     <div class="timer-grid">
-      <div class="timer-box"><span class="timer-icon" aria-hidden="true">◷</span><small>وقت الموعد الأصلي</small><strong id="currentCountdown">--:--:--</strong><div class="actual-hint">يبقى محفوظًا حسب جدول الموعد</div></div>
+      <div class="timer-box"><span class="timer-icon" aria-hidden="true">◷</span><small id="currentCountdownLabel">الوقت حتى نهاية الموعد</small><strong id="currentCountdown">--:--:--</strong><div id="currentCountdownHint" class="actual-hint">يبقى محفوظًا حسب جدول الموعد</div></div>
       <div class="timer-box actual"><span class="timer-icon" aria-hidden="true">▶</span><small>مدة العلاج الفعلية</small><strong id="actualTimer">--:--:--</strong><div id="actualTimerHint" class="actual-hint">يبدأ عند دخول المريض</div></div>
     </div>
     <div id="currentActions" class="patient-actions"></div>
@@ -283,7 +304,7 @@
 <button id="exitScreenBtn" class="exit-full" type="button">⤢ إلغاء ملء الشاشة</button>
 <input id="hiddenCsv" type="file" hidden>
 <div id="treatmentPlanCenterModal" class="modal"><div class="modal-card treatment-plan-center-card" role="dialog" aria-modal="true" aria-labelledby="treatmentPlanCenterTitle">
-  <header class="treatment-plan-center-head"><span class="treatment-plan-center-mark" aria-hidden="true">◎</span><div><h3 id="treatmentPlanCenterTitle">مركز العمليات</h3><p>قائمة موحدة لتنبيهات المواعيد والخطط والمعمل والوصفات المعتمدة من الطبيب.</p></div><button id="treatmentPlanCenterClose" type="button" data-close="treatmentPlanCenterModal" data-center-close aria-label="إغلاق مركز العمليات">×</button></header>
+  <header class="treatment-plan-center-head"><span class="treatment-plan-center-mark" aria-hidden="true">◎</span><div><h3 id="treatmentPlanCenterTitle">مركز العمليات</h3><p>قائمة موحدة لتنبيهات المواعيد والخطط والمعمل والوصفات المعتمدة من الطبيب.</p></div><button type="button" data-close="treatmentPlanCenterModal" aria-label="إغلاق">×</button></header>
   <div class="treatment-plan-center-body">
     <div class="operations-center-nav"><button type="button" data-operation-filter="all" class="active"><span>◎</span><b id="operationAllCount">0</b><small>كل التنبيهات</small></button><button type="button" data-operation-filter="appointments"><span>📅</span><b id="operationAppointmentsCount">0</b><small>مركز المواعيد</small></button><button type="button" data-operation-filter="plans"><span>▤</span><b id="operationPlansCount">0</b><small>مركز الخطط</small></button><button type="button" data-operation-filter="labs"><span>🦷</span><b id="operationLabsCount">0</b><small>مركز المعمل</small></button><button type="button" data-operation-filter="prescriptions"><span>💊</span><b id="operationPrescriptionsCount">0</b><small>مركز الوصفات</small></button></div>
     <nav class="operations-center-links" aria-label="فتح المراكز المستقلة"><a href="./appointment-requests.html">📅 صفحة مركز المواعيد</a><a href="./treatment-plans.html">▤ صفحة مركز الخطط</a><a href="./lab.html">🦷 صفحة مركز المعمل</a></nav>
@@ -294,7 +315,6 @@
     <p id="treatmentPlanCenterError" class="treatment-plan-center-error" hidden></p>
     <div id="treatmentPlanCenterList" class="treatment-plan-center-list"><div class="treatment-plan-center-empty">اضغط تحديث لعرض الخطط العلاجية.</div></div>
   </div>
-  <footer class="treatment-plan-center-footer"><button id="treatmentPlanCenterDone" type="button" data-center-close>إغلاق مركز العمليات والعودة للوحة</button></footer>
 </div></div>
 <div id="patientIdentitySearchModal" class="modal"><div class="modal-card patient-identity-card" role="dialog" aria-modal="true" aria-labelledby="patientIdentitySearchTitle">
   <div class="patient-identity-head"><span aria-hidden="true">⌕</span><div><h3 id="patientIdentitySearchTitle">قاعدة بيانات المرضى</h3><p id="patientIdentitySearchHelp">سجل مركزي يتحدث تلقائيًا؛ ابحث أو استعرض المرضى وصحح بياناتهم وسجلاتهم المرتبطة.</p></div><button type="button" data-close="patientIdentitySearchModal" aria-label="إغلاق">×</button></div>
@@ -436,5 +456,5 @@
 </div></div>
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
-<script src="./dashboard.js?v=20260809-patient-save-fix-v2"></script>
+<script src="./dashboard.js?v=20260816-clinic-next-details"></script>
 </body></html>
