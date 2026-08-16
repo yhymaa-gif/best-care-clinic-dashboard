@@ -773,3 +773,91 @@ html[data-theme="dark"] body.view-clinic .clinic-compact-badge{box-shadow:0 3px 
 html[data-theme="dark"] body.view-clinic .clinic-row-action.prescription{border-color:#765996;background:#302344;color:#e4c9f4}
 html[data-theme="dark"] body.view-clinic .patient-actions .clinic-current-action.finish{border-color:#3fbb82;background:linear-gradient(145deg,#1a7855,#12543e);color:#fff}
 @media(max-width:680px){body.view-clinic .patient-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}body.view-clinic .patient-actions .clinic-current-action{width:100%;min-width:0;height:42px}body.view-clinic .queue-actions .clinic-queue-action{width:40px;min-width:40px}body.view-clinic .row-actions .clinic-row-action{width:38px;min-width:38px}}
+
+/* V7.61: clinic screen density pass. Keep every action and data hook intact,
+   but reduce repetition, padding, and vertical expansion only in clinic view. */
+body.view-clinic .app{padding:10px}
+body.view-clinic .header{gap:10px;padding:12px 14px;border-top-width:4px}
+body.view-clinic .brand{gap:10px}
+body.view-clinic .logo{width:64px;height:64px;flex-basis:64px;border-radius:14px;padding:5px}
+body.view-clinic .brand h1{font-size:clamp(20px,2.1vw,29px);line-height:1.2}
+body.view-clinic .brand p{margin-top:3px;font-size:11px}
+body.view-clinic .clinic-context-line{margin-top:3px;font-size:10px}
+body.view-clinic .clock{font-size:24px}
+body.view-clinic .toolbar{gap:5px;margin-top:8px;padding-top:8px}
+body.view-clinic .toolbar>button,body.view-clinic .toolbar>input,body.view-clinic .toolbar>a,body.view-clinic .toolbar>.settings{min-height:38px;padding:7px 9px;font-size:11px}
+body.view-clinic .toolbar>button:not(.sync-badge)::before,body.view-clinic .toolbar>.settings>button::before{width:21px;height:21px;flex-basis:21px;font-size:13px}
+body.view-clinic .view-switch{gap:5px;margin:-2px 0 7px}
+body.view-clinic .view-switch a,body.view-clinic .view-switch button{min-width:122px;padding:8px 10px;font-size:11px}
+body.view-clinic #flowStage{gap:8px;margin-bottom:8px}
+body.view-clinic .current-card{min-height:0;padding:16px 17px 14px}
+body.view-clinic .current-card .patient-name{margin:9px 0 6px;font-size:clamp(34px,4vw,60px);line-height:1.2}
+body.view-clinic .current-visual-icon{width:44px;height:44px;font-size:22px}
+body.view-clinic .timeline-strip{gap:5px;max-height:58px;padding:4px 1px 7px}
+body.view-clinic .timeline-chip{min-width:76px;padding:5px 7px;border-radius:9px}
+body.view-clinic .timeline-chip strong{font-size:11px}
+body.view-clinic .timeline-chip small{margin-top:1px;font-size:9px}
+body.view-clinic #currentMeta{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+body.view-clinic .appointment-details{gap:5px;margin-top:7px}
+body.view-clinic .appointment-details span{padding:6px 7px;border-radius:9px}
+body.view-clinic .appointment-details small{font-size:9px}
+body.view-clinic .appointment-details b{font-size:12px}
+body.view-clinic .current-status-notice{grid-template-columns:34px minmax(0,1fr) auto;gap:8px;min-height:52px;margin-top:8px;padding:8px 10px}
+body.view-clinic .status-notice-icon{width:32px;height:32px;font-size:16px}
+body.view-clinic .current-status-notice small{display:none}
+body.view-clinic #waitingTimer{font-size:17px}
+body.view-clinic .next-patient-callout{gap:7px;margin-top:8px;padding:8px 10px;border-width:1px}
+body.view-clinic .next-patient-icon{width:32px;height:32px;font-size:17px}
+body.view-clinic .next-patient-callout strong{font-size:14px}
+body.view-clinic .next-patient-detail-grid{gap:4px;margin-top:4px}
+body.view-clinic .next-patient-detail-grid span{padding:4px 5px;border-top-width:2px}
+body.view-clinic .next-patient-actions{gap:5px}
+body.view-clinic .next-patient-actions>b{font-size:14px!important}
+body.view-clinic .next-patient-actions button{min-height:30px;padding:5px 8px;font-size:9px}
+body.view-clinic .timer-grid{gap:6px;margin-top:8px;padding-top:8px}
+body.view-clinic .timer-box{padding:8px 10px;border-radius:11px}
+body.view-clinic .timer-box small{font-size:10px}
+body.view-clinic .timer-box strong{font-size:clamp(22px,2.6vw,32px)}
+body.view-clinic .actual-hint{display:none}
+body.view-clinic .patient-actions{gap:6px;margin-top:8px}
+body.view-clinic .upcoming-panel{padding:12px}
+body.view-clinic .upcoming-head{margin-bottom:7px}
+body.view-clinic .upcoming-head h2{font-size:16px}
+body.view-clinic .upcoming-head small{font-size:9px}
+body.view-clinic .upcoming-stack{gap:7px;max-height:min(450px,calc(100vh - 265px))}
+body.view-clinic .queue-card{--queue-height:118px;--queue-padding:11px;border-radius:13px}
+body.view-clinic .queue-name{font-size:calc(var(--queue-font) * .82);margin:4px 0}
+body.view-clinic .queue-meta{font-size:10px;line-height:1.45}
+body.view-clinic .queue-countdown{font-size:15px;margin-top:5px}
+body.view-clinic .queue-proximity-meter{height:3px;margin-top:6px}
+body.view-clinic .queue-actions{gap:5px;margin-top:7px}
+body.view-clinic .doctor-list-note{display:none!important}
+body.view-clinic #adminWorkspace{margin-top:8px}
+body.view-clinic #adminWorkspace>details>summary{padding:10px 13px;font-size:13px}
+body.view-clinic #adminWorkspace>details>.section-head{gap:6px;padding:8px 10px}
+body.view-clinic #adminWorkspace>details>.table-wrap{max-height:320px;overflow:auto}
+body.view-clinic #adminWorkspace>details table{min-width:900px}
+body.view-clinic #adminWorkspace>details th,body.view-clinic #adminWorkspace>details td{padding:7px 8px}
+body.view-clinic #adminWorkspace>details td{font-size:11px}
+body.view-clinic #adminWorkspace>details .status-select{min-width:105px;padding:7px 8px;font-size:11px}
+body.view-clinic .status-legend{gap:4px}
+body.view-clinic .legend-chip{padding:4px 6px;font-size:9px}
+body.view-clinic .legend-chip::before{width:7px;height:7px}
+body.view-clinic .app-footer{margin-top:8px;padding:7px;font-size:10px}
+@media(max-width:680px){
+  body.view-clinic .app{padding:7px}
+  body.view-clinic .header{padding:10px 11px}
+  body.view-clinic .logo{width:56px;height:56px;flex-basis:56px}
+  body.view-clinic .brand h1{font-size:19px}
+  body.view-clinic .brand p{font-size:10px}
+  body.view-clinic .clock{font-size:21px}
+  body.view-clinic .view-switch a,body.view-clinic .view-switch button{min-width:0;padding:7px 6px;font-size:10px}
+  body.view-clinic .current-card{padding:13px 12px 11px}
+  body.view-clinic .current-card .patient-name{font-size:clamp(30px,9vw,46px)}
+  body.view-clinic .timeline-strip{max-height:49px}
+  body.view-clinic .timeline-chip{min-width:68px;padding:4px 6px}
+  body.view-clinic .timeline-chip strong{font-size:10px}
+  body.view-clinic .timeline-chip small{font-size:8px}
+  body.view-clinic .upcoming-stack{max-height:none}
+  body.view-clinic #adminWorkspace>details>.table-wrap{max-height:250px}
+}

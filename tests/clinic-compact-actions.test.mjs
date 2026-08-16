@@ -16,4 +16,9 @@ test('doctor screen uses compact icon actions without changing action hooks', as
   assert.match(css, /body\.view-clinic \.clinic-icon-action\{/);
   assert.match(css, /body\.view-clinic \.clinic-action-label\{/);
   assert.match(css, /body\.view-clinic \.row-actions \.clinic-row-action/);
+  assert.match(css, /V7\.61: clinic screen density pass/);
+  assert.match(css, /body\.view-clinic \.doctor-list-note\{display:none!important\}/);
+  assert.match(css, /body\.view-clinic #adminWorkspace>details>.table-wrap\{max-height:320px;overflow:auto\}/);
+  assert.match(css, /body\.view-clinic \.current-status-notice small\{display:none\}/);
+  assert.match(css, /body\.view-clinic \.actual-hint\{display:none\}/);
 });
