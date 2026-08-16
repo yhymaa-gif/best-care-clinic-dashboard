@@ -14,6 +14,11 @@ test('modern admin workspace is optional and switched from Settings', async () =
   assert.ok(toggleIndex > menuStart && toggleIndex < menuEnd, 'layout switch stays inside settings menu');
   assert.match(html, /id="modernAdminSidebar"[^>]*hidden/);
   assert.match(html, /id="modernAdminOverview"[^>]*hidden/);
+  const modernSidebarStart = html.indexOf('id="modernAdminSidebar"');
+  const modernSidebarHome = html.indexOf('class="modern-sidebar-home', modernSidebarStart);
+  const modernSidebarSwitch = html.indexOf('class="modern-sidebar-layout-toggle', modernSidebarStart);
+  assert.ok(modernSidebarSwitch > modernSidebarStart && modernSidebarSwitch < modernSidebarHome, 'classic/modern switch is at the top of the modern sidebar');
+  assert.equal((html.match(/data-modern-action="classic"/g)||[]).length, 1, 'the switch is not duplicated in the sidebar');
   assert.match(html, /data-modern-action="appointments"/);
   assert.match(html, /data-modern-action="payments"/);
   assert.match(html, /data-modern-action="plans"/);
@@ -66,6 +71,8 @@ test('modern workspace keeps a fixed and optionally collapsible right sidebar', 
   assert.match(css, /body\.admin-layout-modern\.admin-sidebar-collapsed \.modal\{right:88px/);
   assert.match(css, /V7\.55:[^\n]*independent, reliable scrolling/);
   assert.match(css, /body\.admin-layout-modern \.modern-sidebar-scroll\{flex:1 1 0;min-height:0!important;[^}]*overflow-y:auto!important;[^}]*touch-action:pan-y/);
+  assert.match(css, /V7\.62:[^\n]*classic\/modern switch/);
+  assert.match(css, /body\.admin-layout-modern \.modern-sidebar-layout-toggle/);
   assert.match(script, /function setupModernSidebarScroll\(\)/);
   assert.doesNotMatch(css, /\.modern-tool-panel/);
   assert.match(css, /html\[data-theme="dark"\] \.modern-admin-overview/);

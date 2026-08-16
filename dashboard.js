@@ -2993,9 +2993,19 @@ async function confirmPatientCompletion(){
       p.treatmentPlanStatus='draft';
       p.treatmentPlanUpdatedAt=Date.now();
     }
-    if(paymentRequired)updateAlert={active:true,message:lang==='en'?`New payment order for ${firstName(p.name)}`:`أمر دفع جديد للمريض ${firstName(p.name)}`,updatedAt:Date.now(),kind:'payment-request'};
+    if(paymentRequired){
+      p.paymentMissingAlertAt=0;
+      updateAlert={active:true,message:lang==='en'?`New payment order for ${firstName(p.name)}`:`أمر دفع جديد للمريض ${firstName(p.name)}`,updatedAt:Date.now(),kind:'payment-request'};
+    }else{
+      p.paymentMissingAlertAt=Date.now();
+      updateAlert={active:true,message:lang==='en'?`Treatment completed for ${firstName(p.name)} — administration must collect the remaining balance.`:`اكتمل علاج المريض ${firstName(p.name)} — يلزم الإدارة تحصيل المبلغ المتبقي عليه.`,updatedAt:Date.now(),kind:'payment-missing'};
+    }
     });
     if(paymentRequired)await trackPaymentProcedureUsage(selection.items);
+    // Persist the completion and the administration alert immediately. Do not
+    // wait for the normal background cadence, otherwise the administration
+    // screen may not see the missing-payment action until a later refresh.
+    if(sync.dirty)await pushState();
     closeModal('paymentModal');
     pendingCompletionId=null;
     if(createPrescription){
@@ -3408,8 +3418,36 @@ function handleModernAdminAction(action){
   if(action==='logout'){$('logoutBtn')?.click();return}
   if(action==='classic'){applyAdminLayout('classic',{save:true});toast(lang==='en'?'Classic interface':'الواجهة الكلاسيكية',lang==='en'?'The previous administration layout is active.':'تمت العودة إلى تصميم الإدارة المعتاد.')}
 }
+function ensurePaymentMissingAlert(){
+  const panel=$('paymentPanel');
+  if(!panel)return null;
+  let alert=$('paymentMissingAlert');
+  if(!alert){
+    alert=document.createElement('div');
+    alert.id='paymentMissingAlert';
+    alert.className='payment-missing-alert';
+    alert.setAttribute('role','alert');
+    alert.setAttribute('aria-live','polite');
+    const queue=$('paymentQueue');
+    if(queue)panel.insertBefore(alert,queue);else panel.appendChild(alert);
+  }
+  return alert;
+}
+function renderPaymentMissingAlert(){
+  const alert=ensurePaymentMissingAlert();
+  if(!alert)return;
+  const missing=VIEW_MODE==='admin'
+    ?patients.filter(patient=>paymentMissingAfterCompletion(patient))
+    :[];
+  alert.hidden=!missing.length;
+  if(!missing.length){alert.replaceChildren();return}
+  const title=lang==='en'?'Remaining payment required':'يلزم تحصيل المبلغ المتبقي';
+  const help=lang==='en'?'Treatment is completed, but no payment order was recorded. Review each patient before closing the visit.':'اكتمل العلاج، لكن لم يُسجّل أمر دفع. راجع كل مريض لاستكمال تحصيل المبلغ قبل إغلاق الزيارة.';
+  alert.innerHTML=`<div class="payment-missing-alert-icon" aria-hidden="true">!</div><div class="payment-missing-alert-copy"><strong>${escapeHtml(title)} <b>${missing.length}</b></strong><small>${escapeHtml(help)}</small><div class="payment-missing-alert-list">${missing.map(patient=>{const display=patientWithDirectoryIdentity(patient);return `<button type="button" class="payment-missing-alert-item" data-payment-missing-id="${escapeHtml(patient.id)}"><span><b>${escapeHtml(String(display.name||patient.name||'—').trim()||'—')}</b><small>${escapeHtml(lang==='en'?'File':'ملف')} ${escapeHtml(display.file||patient.file||'—')}${display.phone?` · ${escapeHtml(display.phone)}`:''}</small></span><strong>${lang==='en'?'Complete payment':'استكمال الدفع'}</strong></button>`}).join('')}</div></div>`;
+}
 function renderPaymentPanel(){
   if(!$('paymentQueue'))return;
+  renderPaymentMissingAlert();
   const invoices=patients.filter(p=>p.paymentRequired).sort((a,b)=>Number(b.paymentRequestedAt||0)-Number(a.paymentRequestedAt||0));
   const pending=invoices.filter(p=>!p.paymentCompletedAt);
   $('paymentCount').textContent=String(pending.length);
@@ -4766,6 +4804,10 @@ $('saveLabCaseBtn').addEventListener('click',saveLabCase);
 $('openLabCasesPageBtn').addEventListener('click',()=>openLabCasesPage(patientById(pendingLabPatientId)));
 $('newLabCaseShortcutBtn').addEventListener('click',()=>{const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,create:'1'});location.href=`./lab.html?${params.toString()}`});
 $('confirmCompletionBtn').addEventListener('click',confirmPatientCompletion);
+$('paymentPanel').addEventListener('click',event=>{
+  const missingId=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId;
+  if(missingId)openMissingPaymentOrder(missingId);
+});
 $('paymentQueue').addEventListener('click',event=>{
   const ackId=event.target.closest('[data-payment-ack-id]')?.dataset.paymentAckId;
   const completeId=event.target.closest('[data-payment-complete-id]')?.dataset.paymentCompleteId;
