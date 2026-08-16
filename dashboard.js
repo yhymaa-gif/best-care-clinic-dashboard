@@ -1127,7 +1127,7 @@ function adminPatientReasons(patient){
   if(isZeroFileNumber(patient?.file)&&['arrived','early_arrival','active'].includes(status))add('identity','يلزم تحديث رقم الملف عند وصول المريض',0);
   const hasOpenAction=reasons.some(reason=>reason.type==='payment'||reason.type==='plan');
   if(paymentMissingAfterCompletion(patient)){
-    add('payment_missing',lang==='en'?'Payment order missing — close and collect any remaining amount':'تنبيه: اكتمل العلاج دون أمر دفع — راجع الإغلاق والمبالغ المتبقية',0);
+    add('payment_missing',lang==='en'?'Complete the patient’s remaining payment':'استكمال دفع المبلغ المتبقي على المريض',0);
   }else if(status==='done'&&!hasOpenAction&&!patient?.paymentCompletedAt&&planStatus!=='approved_signed'){
     add('done',lang==='en'?'Treatment completed — review next action':'اكتمل العلاج — راجع الإجراء التالي',2);
   }
@@ -1271,7 +1271,7 @@ function renderAdminPatientHub(){
         ${hasEarliest&&patient.earliestAppointmentRequestId?`<a class="primary earliest" href="./appointment-requests.html?focus=${encodeURIComponent(patient.earliestAppointmentRequestId)}">${lang==='en'?'Follow up urgently':'متابعة عاجلة ⚡'}</a>`:''}
         ${hasPlan?`<a class="primary" href="${escapeHtml(adminPlanUrl(item))}">${lang==='en'?'Open plan':'فتح الخطة'}</a>`:''}
         ${hasPayment?`<a class="primary payment" href="${escapeHtml(adminClinicUrl(item.clinic.id,'paymentPanel'))}">${lang==='en'?'Open payment':'فتح الدفع'}</a>`:''}
-        ${hasMissingPayment?`<a class="primary payment-missing-action" href="${escapeHtml(adminClinicUrl(item.clinic.id,'patientListTitle'))}">${lang==='en'?'Review missing payment':'مراجعة أمر الدفع الناقص'}</a>`:''}
+        ${hasMissingPayment?`<a class="primary payment-missing-action" href="${escapeHtml(adminClinicUrl(item.clinic.id,'patientListTitle'))}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</a>`:''}
         <a href="${escapeHtml(adminClinicUrl(item.clinic.id))}">${lang==='en'?'Open clinic list':'فتح قائمة العيادة'}</a>
       </div>
     </article>`;
@@ -1636,8 +1636,8 @@ function paymentMissingAfterCompletion(p){
 }
 function paymentMissingBadgeMarkup(p){
   if(!paymentMissingAfterCompletion(p))return'';
-  const label=lang==='en'?'Payment order required':'مطلوب أمر دفع';
-  const help=lang==='en'?'Treatment completed without a payment order':'اكتمل العلاج ولم يختر الطبيب أمر دفع';
+  const label=lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي';
+  const help=lang==='en'?'Treatment completed — review and collect the remaining balance':'اكتمل العلاج — راجع المبلغ المتبقي واستكمل تحصيله';
   return `<span class="payment-missing-badge" role="status" title="${escapeHtml(help)}"><span aria-hidden="true">!</span>${escapeHtml(label)}</span>`;
 }
 function paymentBadgeMarkup(p){
@@ -2560,7 +2560,7 @@ function renderTable(){
             <button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>
             <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>
              ${VIEW_MODE==='clinic'&&displayStatus==='done'?`<button class="mini" type="button" data-completion-id="${escapeHtml(p.id)}">${lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة'}</button>`:''}
-             ${VIEW_MODE==='admin'&&paymentMissingAfterCompletion(p)?`<button class="mini payment-missing-action" type="button" data-payment-missing-id="${escapeHtml(p.id)}">${lang==='en'?'Add payment order':'إضافة أمر دفع'}</button>`:''}
+             ${VIEW_MODE==='admin'&&paymentMissingAfterCompletion(p)?`<button class="mini payment-missing-action" type="button" data-payment-missing-id="${escapeHtml(p.id)}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</button>`:''}
             <button type="button" class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button type="button" class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
@@ -2937,7 +2937,7 @@ function openMissingPaymentOrder(id){
   const p=patientById(id);
   if(!p||!paymentMissingAfterCompletion(p))return;
   pendingCompletionId=String(id);
-  $('paymentPatientText').textContent=lang==='en'?`Add the missing payment order for ${firstName(p.name)}.`:`أضف أمر الدفع الناقص للمريض ${firstName(p.name)}.`;
+  $('paymentPatientText').textContent=lang==='en'?`Complete the remaining payment for ${firstName(p.name)}.`:`استكمل دفع المبلغ المتبقي على المريض ${firstName(p.name)}.`;
   $('paymentRequiredCheck').checked=true;
   $('planDraftCheck').checked=false;
   $('prescriptionCheck').checked=false;
