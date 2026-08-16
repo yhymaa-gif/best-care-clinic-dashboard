@@ -110,6 +110,55 @@ test('patient corrections propagate to appointments, plans, prescriptions, labs,
   assert.match(toml, /from = "\/api\/patients"/);
 });
 
+test('editing a scheduled patient queues one central identity correction with the same save', async () => {
+  const [dashboard, profileSource, directorySource] = await Promise.all([
+    read('dashboard.js'),
+    read('netlify/functions/patient-profile.mjs'),
+    read('netlify/functions/lib/patient-directory.mjs')
+  ]);
+  assert.match(dashboard, /directoryCorrections:\[\]/);
+  assert.match(dashboard, /function queuePatientDirectoryCorrection\(/);
+  assert.match(dashboard, /function flushPatientDirectoryCorrections\(/);
+  assert.match(dashboard, /directoryCorrections:sync\.directoryCorrections\.map/);
+  assert.match(dashboard, /queuePatientDirectoryCorrection\(existing,item\)/);
+  assert.match(dashboard, /allowIncomplete:true/);
+  assert.match(profileSource, /allowIncomplete/);
+  assert.match(profileSource, /correctionId/);
+  assert.match(directorySource, /lastCorrectionId/);
+});
+
+test('patient lookup searches the central directory before historical appointments', async () => {
+  const source = await read('netlify/functions/patient-lookup.mjs');
+  assert.match(source, /getPatientDirectory/);
+  assert.match(source, /source:'directory'/);
+  assert.match(source, /directoryRecordInScope/);
+});
+
+test('manual patient additions retain a tiny recent-addition marker through state cleaning', async () => {
+  const [dashboard, state, styles] = await Promise.all([
+    read('dashboard.js'),
+    read('netlify/functions/state.mjs'),
+    read('dashboard.css')
+  ]);
+  assert.match(dashboard, /addedAt:Number\(existing\?\.addedAt\|\|\(!editingId\?Date\.now\(\):0\)\)/);
+  assert.match(dashboard, /patient-new-badge/);
+  assert.match(state, /addedAt:Number\(p\?\.addedAt\|\|0\)/);
+  assert.match(styles, /patient-new-badge/);
+});
+
+test('operations center exposes an independent visible close action', async () => {
+  const [dashboard, html, styles] = await Promise.all([
+    read('dashboard.js'),
+    read('index.html'),
+    read('dashboard.css')
+  ]);
+  assert.match(html, /id="treatmentPlanCenterClose"/);
+  assert.match(html, /id="treatmentPlanCenterDone"/);
+  assert.match(dashboard, /data-center-close/);
+  assert.match(dashboard, /closeModal\('treatmentPlanCenterModal'\)/);
+  assert.match(styles, /treatment-plan-center-footer/);
+});
+
 test('central patient list import preserves full names and updates matched identities', async () => {
   const [dashboard, html, endpoint, directorySource] = await Promise.all([
     read('dashboard.js'),
@@ -161,6 +210,17 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   assert.match(html, /dashboard\.js\?v=20260816-clinic-next-details/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
   assert.match(serviceWorker, /20260816-clinic-next-details/);
+});
+
+test('administration endpoints enrich names without exposing full names to the clinic response', async () => {
+  const [state, adminPatients] = await Promise.all([
+    read('netlify/functions/state.mjs'),
+    read('netlify/functions/admin-patients.mjs')
+  ]);
+  assert.match(state, /if\(auth\.user\?\.role!=='admin'\)return reply\(\{exists:true,\.\.\.state/);
+  assert.match(state, /enrichPatientNameFromDirectory\(patientDirectory,patient\)/);
+  assert.match(adminPatients, /patients\.map\(patient =>/);
+  assert.match(adminPatients, /enrichPatientFromDirectory\(patientDirectory, patient\)/);
 });
 
 test('central patient directory visually distinguishes complete and incomplete records', async () => {

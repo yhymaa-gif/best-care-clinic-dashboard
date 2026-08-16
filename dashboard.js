@@ -135,7 +135,7 @@ function adminHubCadence(){
   if(cadence.workHours)return document.hidden?5*60*1000:20*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.61-realtime-sync';
+const DASHBOARD_BUILD='7.64-patient-save-fix-v2';
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -612,10 +612,14 @@ let sync={
   auxBusy:false,
   lastSync:0,
   localVersion:0,
-  localUpdatedAt:0
+  localUpdatedAt:0,
+  directoryImport:false,
+  directoryCorrections:[],
+  directoryCorrectionTimer:null
 };
 let syncChannel=null;
 const localKey=d=>`bestcare_dashboard_v4_${ACTIVE_CLINIC_ID}_${d}`;
+const directoryCorrectionStorageKey=`bestcare_patient_directory_corrections_v1_${ACTIVE_CLINIC_ID}`;
 function cleanupOldLocalPatientData(){
   const cutoff=Date.now()-24*60*60*1000;
   const prefix='bestcare_dashboard_v4_';
@@ -863,7 +867,38 @@ function detectRemoteNotification(previousPatients,previousAlert,data){
   if(nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))return {type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:lang==='en'?'Best Care update':'تنبيه جديد من أفضل عناية',body:String(nextAlert.message||tr('defaultAlert')),tag:`alert-${nextAlert.kind||'update'}`};
   return null;
 }
-function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined}}
+ function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined,directoryImport:Boolean(sync.directoryImport),directoryCorrections:sync.directoryCorrections.map(correction=>({...correction,lookup:{...correction.lookup},patient:{...correction.patient}}))}}
+async function flushPatientDirectoryCorrections(corrections=[]){
+  const applied=[],failed=[];
+  if(authUser?.role!=='admin')return{applied,failed};
+  for(const correction of corrections.slice(0,25)){
+    try{
+      const response=await request(PATIENT_PROFILE_API,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({lookup:correction.lookup,clinic:'all',allowIncomplete:true,correctionId:correction.id,patient:correction.patient})},45000);
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(data.error||`HTTP ${response.status}`);
+      applied.push(String(correction.id||''));
+    }catch(error){failed.push({id:String(correction.id||''),error:String(error.message||error)})}
+  }
+  return{applied,failed};
+}
+function storedPatientDirectoryCorrections(){
+  try{const value=JSON.parse(localStorage.getItem(directoryCorrectionStorageKey)||'[]');return Array.isArray(value)?value.slice(0,25):[]}catch{return[]}
+}
+function persistPatientDirectoryCorrections(){
+  try{
+    if(sync.directoryCorrections.length)localStorage.setItem(directoryCorrectionStorageKey,JSON.stringify(sync.directoryCorrections.slice(0,25)));
+    else localStorage.removeItem(directoryCorrectionStorageKey);
+  }catch{}
+}
+function schedulePatientDirectoryCorrectionRetry(delay=30000){
+  clearTimeout(sync.directoryCorrectionTimer);
+  sync.directoryCorrectionTimer=setTimeout(async()=>{
+    if(authUser?.role!=='admin'||sync.pushing||!sync.directoryCorrections.length){if(sync.directoryCorrections.length)schedulePatientDirectoryCorrectionRetry(15000);return}
+    const result=await flushPatientDirectoryCorrections(sync.directoryCorrections);
+    if(result.applied.length){const ids=new Set(result.applied);sync.directoryCorrections=sync.directoryCorrections.filter(correction=>!ids.has(String(correction.id||'')));persistPatientDirectoryCorrections();patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};if(VIEW_MODE==='admin')refreshAdminPatientHub({force:true})}
+    if(result.failed.length)schedulePatientDirectoryCorrectionRetry(60000);
+  },delay);
+}
 function loadLocal(date){
   try{
     const v=JSON.parse(localStorage.getItem(localKey(date))||'null');
@@ -874,12 +909,20 @@ function loadLocal(date){
     updateAlert=freshPending&&v?.updateAlert&&typeof v.updateAlert==='object'?{...v.updateAlert}:{active:false,message:'',updatedAt:0,kind:''};
     sync.dirty=freshPending;
     sync.localUpdatedAt=freshPending?Number(v?.localUpdatedAt||0):0;
+    sync.directoryImport=freshPending&&Boolean(v?.directoryImport);
+    const pendingCorrections=freshPending&&Array.isArray(v?.directoryCorrections)?v.directoryCorrections:[];
+    const corrections=new Map([...storedPatientDirectoryCorrections(),...pendingCorrections].map(correction=>[String(correction.id||correction.patientId||''),correction]));
+    sync.directoryCorrections=[...corrections.values()].filter(correction=>correction?.id&&correction?.lookup).slice(0,25);
+    if(sync.directoryCorrections.length)schedulePatientDirectoryCorrectionRetry();
   }catch{
     patients=[];
     notes='';
     updateAlert={active:false,message:'',updatedAt:0,kind:''};
     sync.dirty=false;
     sync.localUpdatedAt=0;
+    sync.directoryImport=false;
+    sync.directoryCorrections=storedPatientDirectoryCorrections();
+    if(sync.directoryCorrections.length)schedulePatientDirectoryCorrectionRetry();
   }
   els.notes.value=notes;
   render();
@@ -1327,6 +1370,17 @@ async function pushState(){
     if(selectedDate!==sentDate)return false;
     sync.revision=Number(data.revision||sync.revision);
     sync.updatedAt=Number(data.updatedAt||Date.now());
+    const correctionResult=await flushPatientDirectoryCorrections(snapshot.directoryCorrections||[]);
+    if(correctionResult.applied.length){
+      const appliedIds=new Set(correctionResult.applied);
+      sync.directoryCorrections=sync.directoryCorrections.filter(correction=>!appliedIds.has(String(correction.id||'')));
+      persistPatientDirectoryCorrections();
+      try{
+        const latestResponse=await request(stateUrl(sentDate,true));
+        if(latestResponse.ok){const latest=await latestResponse.json();sync.revision=Number(latest.revision||sync.revision);sync.updatedAt=Number(latest.updatedAt||sync.updatedAt)}
+      }catch{}
+      patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
+    }
     sync.dirty=sentVersion!==sync.localVersion;
     sync.ready=true;
     sync.error='';
@@ -1336,6 +1390,7 @@ async function pushState(){
     if(sync.dirty)setBadge('saving',lang==='en'?'Saving latest changes…':'جارٍ حفظ آخر التعديلات…',`revision ${sync.revision}`);
     else setIdleSyncBadge(`revision ${sync.revision}`);
     if(VIEW_MODE==='admin')refreshAdminPatientHub({force:true});
+    if(correctionResult.failed.length){console.warn('Patient identity correction will be retried',correctionResult.failed);persistPatientDirectoryCorrections();schedulePatientDirectoryCorrectionRetry()}
     if(sync.dirty){clearTimeout(sync.pushTimer);sync.pushTimer=setTimeout(pushState,80)}
     return true;
   }catch(e){
@@ -1680,6 +1735,8 @@ function mergePatientVersions(remote={},local={}){
     [['earliestAppointmentRequestId','earliestAppointmentRequestedAt','earliestAppointmentRequestedBy'],value=>Number(value?.earliestAppointmentRequestedAt||0)]
   ];
   groups.forEach(([fields,stamp])=>copyPatientGroup(merged,stamp(local)>=stamp(remote)?local:remote,fields));
+  const addedAtValues=[Number(remote.addedAt||0),Number(local.addedAt||0)].filter(value=>value>0);
+  merged.addedAt=addedAtValues.length?Math.min(...addedAtValues):0;
   merged.recordUpdatedAt=Math.max(Number(remote.recordUpdatedAt||0),Number(local.recordUpdatedAt||0));
   return merged;
 }
@@ -2469,9 +2526,9 @@ function renderTable(){
     .sort((a,b)=>a.start.localeCompare(b.start));
 
   els.patientRows.innerHTML=visible.length
-    ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p);return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
+    ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000;return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>${earliestAppointmentBadgeMarkup(p)}<button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong></span>${earliestAppointmentBadgeMarkup(p)}<button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -3504,6 +3561,29 @@ async function movePatientToDate(item,targetDate){
     if(editingId)saveButton.textContent=tr('saveChanges');
   }
 }
+function patientDirectoryCorrectionLookup(patient={}){
+  const file=toLatinDigits(patient.file||'').replace(/\s|-/g,''),phone=normalizeSearchPhone(patient.phone||''),national=toLatinDigits(patient.nationalId||'').replace(/\D/g,'');
+  if(file&&!/^0+$/.test(file))return{type:'file',value:file};
+  if(national.length===10)return{type:'national',value:national};
+  if(phone)return{type:'phone',value:phone};
+  return null;
+}
+function queuePatientDirectoryCorrection(existing,item){
+  if(VIEW_MODE!=='admin'||authUser?.role!=='admin'||!existing)return false;
+  const fields=['name','file','phone','nationalId'];
+  if(!fields.some(field=>String(existing[field]||'').trim()!==String(item[field]||'').trim()))return false;
+  const patientId=String(item.id||existing.id||''),pending=sync.directoryCorrections.find(correction=>correction.patientId===patientId),lookup=pending?.lookup||patientDirectoryCorrectionLookup(existing)||patientDirectoryCorrectionLookup(item);
+  if(!lookup)return false;
+  const correction={
+    id:pending?.id||(crypto.randomUUID?.()||`correction-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+    patientId,
+    lookup,
+    patient:{name:item.name||existing.name||'',file:item.file||existing.file||'',phone:item.phone||existing.phone||'',nationalId:item.nationalId||existing.nationalId||''}
+  };
+  sync.directoryCorrections=[...sync.directoryCorrections.filter(value=>value.patientId!==patientId),correction].slice(-25);
+  persistPatientDirectoryCorrections();
+  return true;
+}
 async function savePatient(){
   const rawName=$('fName').value.trim();
   const normalizedName=rawName.replace(/\s+/g,' ');
@@ -3527,9 +3607,11 @@ async function savePatient(){
     end,
     procedure:$('fProcedure').value.trim(),
     status:$('fStatus').value,
+    addedAt:Number(existing?.addedAt||(!editingId?Date.now():0)),
     adminUpdatedAt:Date.now()
   };
   const wasEditing=Boolean(editingId);
+  if(wasEditing)queuePatientDirectoryCorrection(existing,item);
   const targetDate=wasEditing?($('fDate').value||selectedDate):selectedDate;
   if(wasEditing&&targetDate!==selectedDate){
     await movePatientToDate(item,targetDate);
@@ -3541,6 +3623,24 @@ async function savePatient(){
     patients.sort((a,b)=>a.start.localeCompare(b.start));
     applyAutomaticStatusAlert(item,item.status);
   });
+  // An admin name correction must complete its state + directory write before
+  // the form closes.  A delayed background push can be cancelled when the
+  // browser/app is closed, which used to make the old name reappear next time.
+  if(wasEditing&&authUser?.role==='admin'){
+    clearTimeout(sync.pushTimer);
+    let persisted=await pushState();
+    // A concurrent device can produce one revision conflict.  pushState
+    // reconciles that revision; retry once so the explicit form save still
+    // completes before the user closes the app.
+    if(!persisted&&sync.dirty&&navigator.onLine){
+      await new Promise(resolve=>setTimeout(resolve,80));
+      persisted=await pushState();
+    }
+    if(!persisted){
+      toast('تعذر تثبيت تعديل الاسم','بقي التعديل محليًا وسيُعاد حفظه تلقائيًا عند عودة الاتصال.');
+      return;
+    }
+  }
   void refreshTreatmentPlanRegistry(true);
   patientFormSavedFeedback(wasEditing,item);
   resetPatientForm(false);
@@ -4449,6 +4549,8 @@ $('treatmentPlanCenterList')?.addEventListener('change',event=>{
   if(canonical)changePlanCenterStatus(canonical,event.target.value,event.target);
 });
 $('treatmentPlanCenterModal')?.addEventListener('click',event=>{
+  const closeAction=event.target.closest('[data-center-close]');
+  if(closeAction){event.preventDefault();event.stopPropagation();closeModal('treatmentPlanCenterModal');return}
   const filter=event.target.closest('[data-operation-filter]')?.dataset.operationFilter;
   const canonical=event.target.closest('[data-operation-plan]')?.dataset.operationPlan;
   if(filter){operationsCenter.filter=filter;renderOperationsCenter()}

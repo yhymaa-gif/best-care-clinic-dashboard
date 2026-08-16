@@ -304,7 +304,7 @@
 <button id="exitScreenBtn" class="exit-full" type="button">⤢ إلغاء ملء الشاشة</button>
 <input id="hiddenCsv" type="file" hidden>
 <div id="treatmentPlanCenterModal" class="modal"><div class="modal-card treatment-plan-center-card" role="dialog" aria-modal="true" aria-labelledby="treatmentPlanCenterTitle">
-  <header class="treatment-plan-center-head"><span class="treatment-plan-center-mark" aria-hidden="true">◎</span><div><h3 id="treatmentPlanCenterTitle">مركز العمليات</h3><p>قائمة موحدة لتنبيهات المواعيد والخطط والمعمل والوصفات المعتمدة من الطبيب.</p></div><button type="button" data-close="treatmentPlanCenterModal" aria-label="إغلاق">×</button></header>
+  <header class="treatment-plan-center-head"><span class="treatment-plan-center-mark" aria-hidden="true">◎</span><div><h3 id="treatmentPlanCenterTitle">مركز العمليات</h3><p>قائمة موحدة لتنبيهات المواعيد والخطط والمعمل والوصفات المعتمدة من الطبيب.</p></div><button id="treatmentPlanCenterClose" type="button" data-close="treatmentPlanCenterModal" data-center-close aria-label="إغلاق مركز العمليات">×</button></header>
   <div class="treatment-plan-center-body">
     <div class="operations-center-nav"><button type="button" data-operation-filter="all" class="active"><span>◎</span><b id="operationAllCount">0</b><small>كل التنبيهات</small></button><button type="button" data-operation-filter="appointments"><span>📅</span><b id="operationAppointmentsCount">0</b><small>مركز المواعيد</small></button><button type="button" data-operation-filter="plans"><span>▤</span><b id="operationPlansCount">0</b><small>مركز الخطط</small></button><button type="button" data-operation-filter="labs"><span>🦷</span><b id="operationLabsCount">0</b><small>مركز المعمل</small></button><button type="button" data-operation-filter="prescriptions"><span>💊</span><b id="operationPrescriptionsCount">0</b><small>مركز الوصفات</small></button></div>
     <nav class="operations-center-links" aria-label="فتح المراكز المستقلة"><a href="./appointment-requests.html">📅 صفحة مركز المواعيد</a><a href="./treatment-plans.html">▤ صفحة مركز الخطط</a><a href="./lab.html">🦷 صفحة مركز المعمل</a></nav>
@@ -315,6 +315,7 @@
     <p id="treatmentPlanCenterError" class="treatment-plan-center-error" hidden></p>
     <div id="treatmentPlanCenterList" class="treatment-plan-center-list"><div class="treatment-plan-center-empty">اضغط تحديث لعرض الخطط العلاجية.</div></div>
   </div>
+  <footer class="treatment-plan-center-footer"><button id="treatmentPlanCenterDone" type="button" data-center-close>إغلاق مركز العمليات والعودة للوحة</button></footer>
 </div></div>
 <div id="patientIdentitySearchModal" class="modal"><div class="modal-card patient-identity-card" role="dialog" aria-modal="true" aria-labelledby="patientIdentitySearchTitle">
   <div class="patient-identity-head"><span aria-hidden="true">⌕</span><div><h3 id="patientIdentitySearchTitle">قاعدة بيانات المرضى</h3><p id="patientIdentitySearchHelp">سجل مركزي يتحدث تلقائيًا؛ ابحث أو استعرض المرضى وصحح بياناتهم وسجلاتهم المرتبطة.</p></div><button type="button" data-close="patientIdentitySearchModal" aria-label="إغلاق">×</button></div>

@@ -263,6 +263,10 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
   const nextAliases = aliasesFor(patient);
   const canonical = normalizedAliases.map(alias => aliases[alias]).find(Boolean) || nextAliases.map(alias => aliases[alias]).find(Boolean) || hash((nextAliases[0] || normalizedAliases[0] || `manual:${Date.now()}`));
   const existing = records[canonical] || {};
+  const correctionId = cleanText(meta.correctionId, 120);
+  if (correctionId && existing.lastCorrectionId === correctionId) {
+    return { canonical, record: existing, revision: Number(registry.revision || 0), duplicate: true };
+  }
   const now = Date.now();
   const next = {
     ...existing,
@@ -278,6 +282,7 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
     updatedAt: now,
     lastSeenAt: Math.max(Number(existing.lastSeenAt || 0), now),
     correctedAt: now,
+    lastCorrectionId: correctionId || existing.lastCorrectionId || '',
     updatedBy: cleanText(meta.actor, 120)
   };
   next.dataQualityFlags = reviewFlagsFor({ ...next, notesReviewed: Boolean(next.notesReviewedAt) });
