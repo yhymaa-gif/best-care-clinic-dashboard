@@ -9,10 +9,14 @@ test('completed patients without a payment order create an administration action
   const css = await readFile(new URL('dashboard.css', root), 'utf8');
 
   assert.match(script, /function paymentOrderExists\(p\)/);
+  assert.match(script, /function riyadhDateKey\(value=Date\.now\(\)\)/);
+  assert.match(script, /function dailyQuickActionsVisible\(date=selectedDate\)/);
   assert.match(script, /function paymentMissingAfterCompletion\(p\)/);
+  assert.match(script, /VIEW_MODE==='admin'&&dailyQuickActionsVisible\(\)&&derivedStatus\(p\)==='done'/);
   assert.match(script, /add\('payment_missing'/);
   assert.match(script, /function paymentMissingBadgeMarkup\(p\)[\s\S]*payment-missing-badge/);
   assert.match(script, /data-payment-missing-id=/);
+  assert.match(script, /dailyQuickActionsVisible\(\)\?\(VIEW_MODE==='clinic'\?clinicIconAction\('💊'/);
   assert.match(script, /function openMissingPaymentOrder\(id\)/);
   assert.match(script, /if\(paymentMissing&&VIEW_MODE==='admin'\)openMissingPaymentOrder\(paymentMissing\)/);
   assert.match(css, /\.payment-missing-badge\{/);

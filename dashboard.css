@@ -744,3 +744,32 @@ html[data-theme="dark"] .next-patient-callout{background:linear-gradient(135deg,
 .admin-patient-item.priority-urgent:has(.admin-action-tag.payment_missing){background:linear-gradient(135deg,#fffafb,#fff2f4)}
 @keyframes paymentMissingPulse{0%,100%{box-shadow:0 4px 12px rgba(163,40,61,.1)}50%{box-shadow:0 4px 16px rgba(199,46,72,.25)}}
 html[data-theme="dark"] .payment-missing-badge{border-color:#a85c69;background:#3b2027;color:#ffd9df}html[data-theme="dark"] .payment-missing-badge>span{background:#d74b64}html[data-theme="dark"] .admin-action-tag.payment_missing{border-color:#a85c69;background:#3b2027;color:#ffd9df}html[data-theme="dark"] .admin-patient-item.priority-urgent:has(.admin-action-tag.payment_missing){background:linear-gradient(135deg,#2d2024,#3b2027)}
+
+/* Doctor screen: replace repeated text actions with compact, accessible icons. */
+body.view-clinic .clinic-icon-action{position:relative;display:inline-grid;place-items:center;flex:0 0 auto;width:42px;min-width:42px;height:40px;min-height:40px;padding:6px;border:1px solid #b7d2df;border-radius:12px;background:linear-gradient(145deg,#fff,#eaf5fa);color:#1f607e;box-shadow:0 5px 13px rgba(34,92,121,.11);font-size:18px;line-height:1;cursor:pointer}
+body.view-clinic .clinic-icon-action:hover{transform:translateY(-2px);border-color:#3b91b8;background:#e0f2fa;box-shadow:0 9px 18px rgba(34,92,121,.18)}
+body.view-clinic .clinic-icon-action:disabled{opacity:.55;cursor:default;transform:none;box-shadow:none}
+body.view-clinic .clinic-action-symbol{display:grid;place-items:center;line-height:1;filter:drop-shadow(0 1px 1px rgba(19,69,91,.16))}
+body.view-clinic .clinic-action-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+body.view-clinic .clinic-compact-badge{display:inline-grid;place-items:center;width:27px;min-width:27px;height:25px;margin:5px 4px 0 0;padding:3px;border-radius:9px;font-size:14px;line-height:1;vertical-align:middle;box-shadow:0 3px 8px rgba(34,92,121,.1)}
+body.view-clinic .lab-row-badge.clinic-compact-badge{cursor:pointer}
+body.view-clinic .lab-row-badge.clinic-compact-badge::before{display:none}
+body.view-clinic .clinic-row-action.prescription{border-color:#c9b2dc;background:linear-gradient(145deg,#fbf5ff,#eee2f8);color:#754796}
+body.view-clinic .plan-status-badge.clinic-compact-badge{border:1px solid currentColor;font-weight:950}
+body.view-clinic .plan-status-badge.clinic-compact-badge .clinic-action-label{display:none}
+body.view-clinic .patient-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+body.view-clinic .patient-actions .clinic-current-action{width:46px;min-width:46px;height:44px;border-radius:14px;font-size:20px}
+body.view-clinic .patient-actions .clinic-current-action.finish{border-color:#13754c;background:linear-gradient(145deg,#1b8758,#0d603f);color:#fff;box-shadow:0 7px 16px rgba(13,96,63,.2)}
+body.view-clinic .queue-actions{display:flex;gap:7px;align-items:center;margin-top:11px}
+body.view-clinic .queue-actions .clinic-queue-action{width:38px;min-width:38px;height:36px;min-height:36px;border-radius:11px;padding:5px;font-size:17px}
+body.view-clinic .row-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+body.view-clinic .row-actions .clinic-row-action{width:36px;min-width:36px;height:34px;min-height:34px;border-radius:10px;padding:4px;font-size:16px}
+body.view-clinic .row-actions .clinic-row-action.lab{border-color:#8bc5d5;background:linear-gradient(145deg,#effbfe,#dceff6);color:#1c718c}
+body.view-clinic .row-actions .clinic-row-action.plan{border-color:#b8c8e1;background:linear-gradient(145deg,#f1f5ff,#e1eafa);color:#3c6091}
+body.view-clinic .row-actions .clinic-row-action.payment{border-color:#ddbf72;background:linear-gradient(145deg,#fff9e5,#ffefbd);color:#8a6100}
+html[data-theme="dark"] body.view-clinic .clinic-icon-action{border-color:#3c6273;background:linear-gradient(145deg,#203e4b,#19313c);color:#bde8f5;box-shadow:0 5px 13px rgba(0,0,0,.22)}
+html[data-theme="dark"] body.view-clinic .clinic-icon-action:hover{border-color:#65b6d1;background:#254c5c}
+html[data-theme="dark"] body.view-clinic .clinic-compact-badge{box-shadow:0 3px 8px rgba(0,0,0,.22)}
+html[data-theme="dark"] body.view-clinic .clinic-row-action.prescription{border-color:#765996;background:#302344;color:#e4c9f4}
+html[data-theme="dark"] body.view-clinic .patient-actions .clinic-current-action.finish{border-color:#3fbb82;background:linear-gradient(145deg,#1a7855,#12543e);color:#fff}
+@media(max-width:680px){body.view-clinic .patient-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}body.view-clinic .patient-actions .clinic-current-action{width:100%;min-width:0;height:42px}body.view-clinic .queue-actions .clinic-queue-action{width:40px;min-width:40px}body.view-clinic .row-actions .clinic-row-action{width:38px;min-width:38px}}
