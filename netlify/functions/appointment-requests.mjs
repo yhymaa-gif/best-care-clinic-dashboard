@@ -1,6 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { createHash, randomUUID } from 'node:crypto';
-import { apiHeaders, requireUser, sameOriginRequest } from './lib/session.mjs';
+import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { sendPushNotifications } from './lib/push.mjs';
 
 const headers = apiHeaders('GET,POST,PATCH,DELETE,OPTIONS');
@@ -32,6 +32,9 @@ const ipKey = value => createHash('sha256').update(value).digest('hex');
 const submissionFingerprint = ({ phone, identity, service, serviceOther }) => createHash('sha256')
   .update([cleanPhone(phone), cleanIdentity(identity), cleanText(service, 40), cleanText(serviceOther, 100).toLowerCase()].join('|'))
   .digest('hex');
+const internalRequestFingerprint = value => createHash('sha256')
+  .update(cleanText(value, 180))
+  .digest('hex');
 
 async function allowSubmission(request) {
   const key = `limits/${ipKey(requestIp(request))}`;
@@ -60,9 +63,15 @@ async function listKeys(store, prefix) {
 
 const publicRecord = value => ({
   id: cleanText(value?.id, 80),
+  patientId: cleanText(value?.patientId, 80),
   name: cleanText(value?.name, 80),
+  file: cleanText(value?.file, 40),
   phone: cleanPhone(value?.phone),
   identity: cleanIdentity(value?.identity),
+  clinicId: /^clinic-([1-9]|1[0-5])$/.test(value?.clinicId || '') ? value.clinicId : '',
+  doctorName: cleanText(value?.doctorName, 80),
+  priority: value?.priority === 'urgent' ? 'urgent' : 'normal',
+  sourceDate: /^\d{4}-\d{2}-\d{2}$/.test(value?.sourceDate || '') ? value.sourceDate : '',
   service: serviceValues.includes(value?.service) ? value.service : 'other',
   serviceOther: cleanText(value?.serviceOther, 100),
   note: cleanText(value?.note, 220),
@@ -82,9 +91,55 @@ export default async request => {
   const store = requestStore();
 
   if (request.method === 'POST') {
-    if (!await allowSubmission(request)) return reply({ error: 'Too many requests. Please try again later.' }, 429);
     let body;
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
+    const auth = await requireUser(request);
+    const internalSource = cleanText(body?.source, 40) === 'doctor_earliest';
+    if (internalSource && auth.ok) {
+      const clinicId = /^clinic-([1-9]|1[0-5])$/.test(body?.clinicId || '') ? body.clinicId : '';
+      if (!clinicId || !canAccessClinic(auth.user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
+      const name = cleanText(body?.name, 80);
+      const patientId = cleanText(body?.patientId, 80);
+      const file = cleanText(body?.file, 40);
+      const phone = cleanPhone(body?.phone);
+      const identity = cleanIdentity(body?.identity);
+      const idempotencyKey = cleanText(body?.idempotencyKey, 180);
+      if (name.length < 2 || !patientId || idempotencyKey.length < 12) return reply({ error: 'Incomplete patient request' }, 400);
+      const duplicateStore = rateStore();
+      const duplicateKey = `internal/${internalRequestFingerprint(idempotencyKey)}`;
+      const duplicate = await duplicateStore.get(duplicateKey, { type: 'json', consistency: 'strong' });
+      if (duplicate?.requestId) {
+        const existing = await store.get(`requests/${cleanText(duplicate.requestId, 80)}`, { type: 'json', consistency: 'strong' });
+        if (existing) return reply({ ok: true, duplicate: true, requestId: existing.id, request: publicRecord(existing) });
+      }
+      const now = Date.now();
+      const id = `${now}-${randomUUID()}`;
+      const actor = cleanText(auth.user?.displayName || auth.user?.username || 'الطبيب', 80);
+      const record = publicRecord({
+        id, patientId, name, file, phone, identity, clinicId,
+        doctorName: body?.doctorName,
+        priority: 'urgent',
+        sourceDate: body?.sourceDate,
+        service: 'examination',
+        note: cleanText(body?.note, 220) || 'يرجى التواصل مع المريض عاجلًا لتقديم أقرب موعد متاح.',
+        source: 'doctor_earliest',
+        status: 'new', createdAt: now, updatedAt: now,
+        history: [{ status: 'new', note: 'طلب الطبيب التواصل لتقديم أقرب موعد متاح', at: now, by: actor }],
+      });
+      await store.setJSON(`requests/${id}`, record);
+      await duplicateStore.setJSON(duplicateKey, { requestId: id, createdAt: now });
+      await sendPushNotifications({
+        type: 'appointment_request',
+        title: '⚡ طلب أقرب موعد',
+        body: `${name}${file ? ` — ملف ${file}` : ''} يحتاج تواصلًا عاجلًا لتقديم أقرب موعد.`,
+        tag: `earliest-appointment-${id}`,
+        url: `/appointment-requests.html?focus=${encodeURIComponent(id)}`,
+        clinicId,
+      });
+      return reply({ ok: true, requestId: id, request: record }, 201);
+    }
+    if (internalSource) return reply({ error: auth.error || 'Authentication required' }, auth.status || 401);
+    if (!await allowSubmission(request)) return reply({ error: 'Too many requests. Please try again later.' }, 429);
     if (cleanText(body?.website, 40)) return reply({ ok: true });
     const startedAt = Number(body?.startedAt || 0);
     if (!startedAt || Date.now() - startedAt < 1800 || Date.now() - startedAt > 2 * 60 * 60 * 1000) {
@@ -196,4 +251,4 @@ export default async request => {
   return reply({ error: 'Method not allowed' }, 405);
 };
 
-export const __test = { cleanPhone, cleanIdentity, publicRecord, submissionFingerprint, statusValues, serviceValues };
+export const __test = { cleanPhone, cleanIdentity, publicRecord, submissionFingerprint, internalRequestFingerprint, statusValues, serviceValues };

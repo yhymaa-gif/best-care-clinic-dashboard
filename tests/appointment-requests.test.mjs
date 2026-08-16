@@ -59,3 +59,31 @@ test('duplicate-request fingerprint is stable across formatted identifiers', () 
   assert.equal(first, same);
   assert.notEqual(first, different);
 });
+
+test('internal earliest-appointment request keeps routing fields safely', () => {
+  const record = appointments.publicRecord({
+    patientId: 'patient-42',
+    name: 'مريض مكتمل العلاج',
+    file: '7041',
+    phone: '0550000001',
+    identity: '1234567890',
+    clinicId: 'clinic-3',
+    doctorName: 'د. يحيى هادي',
+    priority: 'urgent',
+    sourceDate: '2026-08-11',
+    source: 'doctor_earliest',
+  });
+  assert.equal(record.patientId, 'patient-42');
+  assert.equal(record.file, '7041');
+  assert.equal(record.clinicId, 'clinic-3');
+  assert.equal(record.doctorName, 'د. يحيى هادي');
+  assert.equal(record.priority, 'urgent');
+  assert.equal(record.sourceDate, '2026-08-11');
+  assert.equal(record.source, 'doctor_earliest');
+});
+
+test('internal idempotency fingerprint prevents repeated doctor requests', () => {
+  const key = 'earliest:clinic-3:2026-08-11:patient-42';
+  assert.equal(appointments.internalRequestFingerprint(key), appointments.internalRequestFingerprint(key));
+  assert.notEqual(appointments.internalRequestFingerprint(key), appointments.internalRequestFingerprint(`${key}-other`));
+});

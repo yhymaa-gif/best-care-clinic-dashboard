@@ -1,6 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import { sendPushNotifications } from './lib/push.mjs';
-import { correctDirectoryPatient, enrichPatientNameFromDirectory, getPatientDirectory, upsertPatientDirectory } from './lib/patient-directory.mjs';
+import { correctDirectoryPatient, enrichPatientFromDirectory, getPatientDirectory, upsertPatientDirectory } from './lib/patient-directory.mjs';
 import { patientIdentityKeys } from './lib/patient-identity.mjs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 const headers=apiHeaders('GET,PUT,POST,OPTIONS');
@@ -39,6 +39,9 @@ const cleanPatient=p=>({
  reviewRequestedAt:Number(p?.reviewRequestedAt||0),
  reviewRequestCount:Math.max(0,Math.min(9999,Number(p?.reviewRequestCount||0))),
  reviewLastEventId:String(p?.reviewLastEventId||'').slice(0,120),
+ earliestAppointmentRequestId:String(p?.earliestAppointmentRequestId||'').slice(0,80),
+ earliestAppointmentRequestedAt:Number(p?.earliestAppointmentRequestedAt||0),
+ earliestAppointmentRequestedBy:String(p?.earliestAppointmentRequestedBy||'').slice(0,120),
  addedAt:Number(p?.addedAt||0),
  adminUpdatedAt:Number(p?.adminUpdatedAt||0)
 });
@@ -79,7 +82,7 @@ export default async request=>{
  if(!validClinic(clinicId))return reply({error:'Invalid clinic'},400);
  if(!canAccessClinic(auth.user,clinicId))return reply({error:'Clinic access denied'},403);
  const store=getStore({name:'clinic-dashboard-days',consistency:'strong'}),key=clinicId==='clinic-1'?`days/${date}`:`clinics/${clinicId}/days/${date}`;
- if(request.method==='GET'){const state=await store.get(key,{type:'json',consistency:'strong'});if(!state)return reply({exists:false,date,patients:[],notes:'',updateAlert:cleanAlert(null),revision:0,updatedAt:0});if(auth.user?.role!=='admin')return reply({exists:true,...state,updateAlert:cleanAlert(state.updateAlert)});const patientDirectory=await getPatientDirectory();const patients=Array.isArray(state.patients)?state.patients.map(patient=>enrichPatientNameFromDirectory(patientDirectory,patient)):[];return reply({exists:true,...state,patients,updateAlert:cleanAlert(state.updateAlert)})}
+  if(request.method==='GET'){const state=await store.get(key,{type:'json',consistency:'strong'});if(!state)return reply({exists:false,date,patients:[],notes:'',updateAlert:cleanAlert(null),revision:0,updatedAt:0});if(auth.user?.role!=='admin')return reply({exists:true,...state,updateAlert:cleanAlert(state.updateAlert)});const patientDirectory=await getPatientDirectory();const patients=Array.isArray(state.patients)?state.patients.map(patient=>enrichPatientFromDirectory(patientDirectory,patient)):[];return reply({exists:true,...state,patients,updateAlert:cleanAlert(state.updateAlert)})}
   if(request.method==='PUT'||request.method==='POST'){let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}if(!Array.isArray(body.patients)||body.patients.length>300)return reply({error:'Invalid patients'},400);const clinic={id:clinicId,name:String(body.clinic?.name||'').slice(0,80),doctorName:String(body.clinic?.doctorName||'').slice(0,80),roomNumber:String(body.clinic?.roomNumber||'').slice(0,20)};const existing=await store.get(key,{type:'json',consistency:'strong'});const expected=Number(body.expectedRevision);const currentRevision=Number(existing?.revision||0);if(Number.isFinite(expected)&&expected>=0&&expected!==currentRevision)return reply({error:'Revision conflict',revision:currentRevision,updatedAt:Number(existing?.updatedAt||0)},409);const existingPatients=new Map((existing?.patients||[]).map(patient=>[String(patient.id),patient]));const cleanedPatients=body.patients.map(cleanPatient).map(patient=>{if(auth.user?.role==='admin')return patient;const previous=existingPatients.get(String(patient.id));patient.paymentAcknowledgedAt=Number(previous?.paymentAcknowledgedAt||0);patient.paymentCompletedAt=Number(previous?.paymentCompletedAt||0);if(['patient_accepted','approved','approved_signed','cancelled'].includes(patient.treatmentPlanStatus))patient.treatmentPlanStatus=String(previous?.treatmentPlanStatus||'');return patient});const state={date,clinic,patients:cleanedPatients,notes:String(body.notes||'').slice(0,5000),updateAlert:cleanAlert(body.updateAlert),clientId:String(body.clientId||'').slice(0,100),revision:currentRevision+1,updatedAt:Date.now(),updatedBy:String(auth.user?.displayName||auth.user?.username||'').slice(0,120)};await store.setJSON(key,state);
     // Apply identity corrections as part of the same server request.  The
     // directory intentionally locks corrected identities against ordinary

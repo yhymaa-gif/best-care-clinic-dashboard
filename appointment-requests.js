@@ -2,7 +2,7 @@
   const $=id=>document.getElementById(id);
   const STATUS={new:'جديد',contacted:'تم التواصل',booked:'تم الحجز',closed:'مغلق'};
   const SERVICE={examination:'فحص وتشخيص',pain:'ألم أو حالة عاجلة',restorative:'حشوات وعلاج تحفظي',root_canal:'علاج عصب',prosthodontics:'تركيبات وعدسات',implants:'زراعة أسنان',cosmetic:'تجميل الأسنان والابتسامة',cleaning:'تنظيف الأسنان',other:'خدمة أخرى'};
-  const SOURCE={'dr-yahyahadi':'الموقع الشخصي',direct:'الرابط المباشر'};
+  const SOURCE={'dr-yahyahadi':'الموقع الشخصي',direct:'الرابط المباشر',doctor_earliest:'طلب عاجل من الطبيب ⚡'};
   const state={items:[],busy:false,timer:null};
   const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const format=value=>value?new Date(value).toLocaleString('ar-SA',{timeZone:'Asia/Riyadh',dateStyle:'medium',timeStyle:'short'}):'—';
@@ -11,7 +11,7 @@
   const latestHistory=item=>Array.isArray(item.history)&&item.history.length?item.history[item.history.length-1]:null;
   function render(){
     const query=$('searchInput').value.trim().toLowerCase(),status=$('statusFilter').value,source=$('sourceFilter').value;
-    const filtered=state.items.filter(item=>(status==='all'||item.status===status)&&(source==='all'||item.source===source)&&(!query||[item.name,item.phone,item.identity].some(value=>String(value||'').toLowerCase().includes(query))));
+    const filtered=state.items.filter(item=>(status==='all'||item.status===status)&&(source==='all'||item.source===source)&&(!query||[item.name,item.file,item.phone,item.identity,item.doctorName].some(value=>String(value||'').toLowerCase().includes(query))));
     $('totalCount').textContent=state.items.length;
     Object.keys(STATUS).forEach(key=>$(key+'Count').textContent=state.items.filter(item=>item.status===key).length);
     $('visibleCount').textContent=filtered.length;
@@ -19,9 +19,10 @@
       const history=Array.isArray(item.history)?[...item.history].reverse():[];
       const latest=latestHistory(item);
       const focus=new URLSearchParams(location.search).get('focus')===item.id;
-      return `<article class="request-card ${item.status==='new'?'is-new':''}" id="request-${escape(item.id)}" ${focus?'data-focus="true"':''}>
+      const reference=item.phone||item.file||item.identity||'—';
+      return `<article class="request-card ${item.status==='new'?'is-new':''} ${item.source==='doctor_earliest'?'is-earliest':''}" id="request-${escape(item.id)}" ${focus?'data-focus="true"':''}>
         <div class="request-main">
-          <section class="patient"><h2>${escape(item.name)}</h2><div class="contact"><a class="pill phone" href="https://wa.me/${waPhone(item.phone)}" target="_blank" rel="noopener">واتساب ${escape(item.phone)}</a><span class="pill">هوية ${escape(item.identity)}</span><span class="pill status-${escape(item.status)}">${escape(STATUS[item.status]||STATUS.new)}</span></div>${item.note?`<p class="note">${escape(item.note)}</p>`:''}</section>
+          <section class="patient"><h2>${item.source==='doctor_earliest'?'⚡ ':''}${escape(item.name)}</h2><div class="contact">${item.phone?`<a class="pill phone" href="https://wa.me/${waPhone(item.phone)}" target="_blank" rel="noopener">واتساب ${escape(item.phone)}</a>`:`<span class="pill">${escape(reference)}</span>`}${item.file?`<span class="pill">ملف ${escape(item.file)}</span>`:''}${item.identity?`<span class="pill">هوية ${escape(item.identity)}</span>`:''}<span class="pill status-${escape(item.status)}">${escape(STATUS[item.status]||STATUS.new)}</span></div>${item.note?`<p class="note">${escape(item.note)}</p>`:''}</section>
           <section class="request-meta"><p>الخدمة<strong>${escape(service(item))}</strong></p><p class="source">المصدر<strong>${escape(SOURCE[item.source]||'رابط خارجي')}</strong></p><p>تاريخ الطلب<strong>${escape(format(item.createdAt))}</strong></p>${latest?`<p>آخر إجراء<strong>${escape(STATUS[latest.status]||'تحديث')} · ${escape(latest.by||'النظام')}</strong></p>`:''}</section>
           <section class="action-box">
             <label>حالة الطلب<select data-status="${escape(item.id)}">${Object.entries(STATUS).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select></label>

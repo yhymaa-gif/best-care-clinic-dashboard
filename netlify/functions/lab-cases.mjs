@@ -1,26 +1,32 @@
 import { getStore } from '@netlify/blobs';
 import { sendPushNotifications } from './lib/push.mjs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
+import { enrichPatientFromDirectory, getPatientDirectory } from './lib/patient-directory.mjs';
 
 const headers = apiHeaders('GET,POST,PATCH,DELETE,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
-const store = getStore({ name: 'clinic-lab-cases', consistency: 'strong' });
-const configStore = getStore({ name: 'clinic-dashboard-config', consistency: 'strong' });
+// Netlify Blobs access tokens are short-lived. Resolve a fresh store client for
+// each operation instead of keeping a token-bearing client in a warm function.
+const labStore = () => getStore({ name: 'clinic-lab-cases', consistency: 'strong' });
+const configStore = () => getStore({ name: 'clinic-dashboard-config', consistency: 'strong' });
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(String(value || ''));
 const cleanText = (value, max = 160) => String(value ?? '').trim().slice(0, max);
 const normalizePhone = value => String(value || '').replace(/\D/g, '').slice(0, 20);
 const allowedStatuses = new Set([
   'pending_send',
+  'sent_coordination',
   'sent',
   'in_production',
   'ready_at_lab',
   'received_clinic',
+  'delivered_coordination',
   'delivered_patient',
   'needs_adjustment',
   'returned_lab',
   'cancelled'
 ]);
 const terminalStatuses = new Set(['delivered_patient', 'cancelled']);
+const labStartedStatuses = new Set(['sent', 'in_production', 'ready_at_lab', 'received_clinic', 'delivered_coordination', 'delivered_patient', 'needs_adjustment', 'returned_lab']);
 
 const cleanItems = items => (Array.isArray(items) ? items : [])
   .slice(0, 20)
@@ -47,7 +53,7 @@ const normalizedItems = items => cleanItems(items)
   .join('|');
 const doctorKey = (clinicId, doctorName) => `${clinicId}:${cleanText(doctorName, 100).toLocaleLowerCase('ar').replace(/\s+/g, ' ')}`;
 const readClinicAssignment = async clinicId => {
-  const saved = await configStore.get('clinics', { type: 'json', consistency: 'strong' });
+  const saved = await configStore().get('clinics', { type: 'json', consistency: 'strong' });
   const clinic = (Array.isArray(saved?.clinics) ? saved.clinics : []).find(item => String(item?.id) === clinicId);
   return {
     name: cleanText(clinic?.name, 100),
@@ -56,11 +62,21 @@ const readClinicAssignment = async clinicId => {
   };
 };
 
+const cleanHistory = history => (Array.isArray(history) ? history : [])
+  .slice(-120)
+  .map(event => ({
+    status: allowedStatuses.has(event?.status) ? event.status : '',
+    at: Math.max(0, Number(event?.at || 0)),
+    by: cleanText(event?.by, 100),
+    note: cleanText(event?.note, 200)
+  }))
+  .filter(event => event.status && event.at);
+
 const cleanCase = (value, fallback = {}, touch = true) => {
+  const now = Date.now();
   const status = allowedStatuses.has(value?.status) ? value.status : (fallback.status || 'pending_send');
-  const sentAt = status === 'pending_send'
-    ? Number(value?.sentAt || fallback.sentAt || 0)
-    : Number(value?.sentAt || fallback.sentAt || Date.now());
+  const existingSentAt = Number(value?.sentAt ?? fallback.sentAt ?? 0);
+  const sentAt = existingSentAt || (labStartedStatuses.has(status) ? now : 0);
   return {
     id: cleanText(value?.id || fallback.id, 100),
     clinicId: cleanText(value?.clinicId || fallback.clinicId, 30),
@@ -82,22 +98,42 @@ const cleanCase = (value, fallback = {}, touch = true) => {
     notes: cleanText(value?.notes ?? fallback.notes, 600),
     status,
     sentAt,
-    receivedAt: status === 'received_clinic' && !Number(fallback.receivedAt)
-      ? Date.now()
+    receivedAt: ['received_clinic','delivered_coordination'].includes(status) && !Number(fallback.receivedAt)
+      ? now
       : Number(value?.receivedAt ?? fallback.receivedAt ?? 0),
     deliveredAt: status === 'delivered_patient' && !Number(fallback.deliveredAt)
-      ? Date.now()
+      ? now
       : Number(value?.deliveredAt ?? fallback.deliveredAt ?? 0),
-    createdAt: Number(fallback.createdAt || value?.createdAt || Date.now()),
+    history: cleanHistory(value?.history?.length ? value.history : fallback.history),
+    createdAt: Number(fallback.createdAt || value?.createdAt || now),
     createdBy: cleanText(fallback.createdBy || value?.createdBy, 100),
-    updatedAt: touch ? Date.now() : Number(value?.updatedAt || fallback.updatedAt || 0),
+    updatedAt: touch ? now : Number(value?.updatedAt || fallback.updatedAt || 0),
     updatedBy: cleanText(value?.updatedBy || fallback.updatedBy, 100)
   };
 };
 
+const withDerivedHistory = item => {
+  const existing = cleanHistory(item?.history);
+  if (existing.length) return { ...item, history: existing };
+  const history = [];
+  const push = (status, at, by = '') => {
+    const timestamp = Math.max(0, Number(at || 0));
+    if (!allowedStatuses.has(status) || !timestamp) return;
+    const previous = history[history.length - 1];
+    if (previous?.status === status && previous?.at === timestamp) return;
+    history.push({ status, at: timestamp, by: cleanText(by, 100), note: '' });
+  };
+  push('pending_send', item.createdAt || item.updatedAt, item.createdBy);
+  if (item.sentAt) push('sent', item.sentAt, item.updatedBy);
+  if (item.receivedAt) push('received_clinic', item.receivedAt, item.updatedBy);
+  if (item.deliveredAt) push('delivered_patient', item.deliveredAt, item.updatedBy);
+  if (item.status && history[history.length - 1]?.status !== item.status) push(item.status, item.updatedAt || item.createdAt, item.updatedBy);
+  return { ...item, history: history.slice(-120) };
+};
+
 const clinicKey = clinicId => `clinics/${clinicId}`;
 const readClinic = async clinicId => {
-  const record = await store.get(clinicKey(clinicId), { type: 'json', consistency: 'strong' });
+  const record = await labStore().get(clinicKey(clinicId), { type: 'json', consistency: 'strong' });
   return {
     clinicId,
     cases: Array.isArray(record?.cases) ? record.cases : [],
@@ -105,16 +141,30 @@ const readClinic = async clinicId => {
     updatedAt: Number(record?.updatedAt || 0)
   };
 };
-const visibleCases = cases => cases
-  .map(item => cleanCase(item, item, false))
+const enrichLabCasePatient = (item, patientDirectory) => {
+  const enriched = enrichPatientFromDirectory(patientDirectory, item.patient || {});
+  return {
+    ...item,
+    patient: {
+      ...item.patient,
+      name: enriched.name,
+      file: enriched.file,
+      phone: enriched.phone
+    }
+  };
+};
+const visibleCases = (cases, patientDirectory = {}) => cases
+  .map(item => enrichLabCasePatient(withDerivedHistory(cleanCase(item, item, false)), patientDirectory))
   .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
 const clinicLabel = item => `${item.clinicName || 'العيادة'} · رقم ${item.roomNumber || ''}${item.doctorName ? ` · د. ${item.doctorName}` : ''}`;
 const statusCopy = status => ({
   pending_send: ['حالة معمل جديدة', 'تم إنشاء حالة معمل وبانتظار إرسالها.'],
+  sent_coordination: ['أُرسلت الحالة للتنسيق', 'تم توثيق إرسال حالة المعمل لفريق التنسيق.'],
   sent: ['سُلّمت الحالة للمعمل', 'بدأ احتساب مدة الحالة لدى المعمل.'],
   in_production: ['الحالة قيد التصنيع', 'بدأ المعمل تنفيذ الحالة.'],
   ready_at_lab: ['الحالة جاهزة لدى المعمل', 'الحالة جاهزة للاستلام من المعمل.'],
   received_clinic: ['وصلت الحالة إلى العيادة', 'وصلت الحالة ولم تُسلّم للمريض بعد.'],
+  delivered_coordination: ['تم تسليم الحالة لموظفي التنسيق', 'تم تسليم الحالة لموظفي التنسيق لاستكمال الإجراء.'],
   delivered_patient: ['سُلّمت الحالة للمريض', 'تم توثيق تسليم حالة المعمل للمريض.'],
   needs_adjustment: ['حالة المعمل تحتاج تعديلًا', 'تحتاج الحالة إلى تعديل قبل التسليم.'],
   returned_lab: ['أُعيدت الحالة للمعمل', 'تمت إعادة الحالة إلى المعمل للتعديل.'],
@@ -153,17 +203,23 @@ export default async request => {
   if (request.method === 'GET') {
     if (allClinics) {
       if (user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
-      const records = await Promise.all(Array.from({ length: 15 }, (_, index) => readClinic(`clinic-${index + 1}`)));
+      const [records, patientDirectory] = await Promise.all([
+        Promise.all(Array.from({ length: 15 }, (_, index) => readClinic(`clinic-${index + 1}`))),
+        getPatientDirectory().catch(() => ({ records: {}, aliases: {} }))
+      ]);
       return reply({
         scope: 'all',
-        cases: visibleCases(records.flatMap(record => record.cases)),
+        cases: visibleCases(records.flatMap(record => record.cases), patientDirectory),
         updatedAt: Math.max(0, ...records.map(record => record.updatedAt))
       });
     }
     const clinicId = validClinic(requestedClinic) ? requestedClinic : (validClinic(user.clinicId) ? user.clinicId : 'clinic-1');
     if (!canAccessClinic(user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
-    const record = await readClinic(clinicId);
-    return reply({ ...record, cases: visibleCases(record.cases) });
+    const [record, patientDirectory] = await Promise.all([
+      readClinic(clinicId),
+      getPatientDirectory().catch(() => ({ records: {}, aliases: {} }))
+    ]);
+    return reply({ ...record, cases: visibleCases(record.cases, patientDirectory) });
   }
 
   let body;
@@ -200,7 +256,7 @@ export default async request => {
       }, 409);
     }
     const id = crypto.randomUUID();
-    const item = cleanCase({
+    const item = withDerivedHistory(cleanCase({
       ...body,
       id,
       clinicId,
@@ -210,14 +266,14 @@ export default async request => {
       doctorKey: doctorKey(clinicId, assignedDoctor),
       createdBy: user.displayName || user.username,
       updatedBy: user.displayName || user.username
-    });
+    }));
     const record = {
       clinicId,
       cases: [item, ...current.cases].slice(0, 1200),
       revision: current.revision + 1,
       updatedAt: Date.now()
     };
-    await store.setJSON(clinicKey(clinicId), record);
+    await labStore().setJSON(clinicKey(clinicId), record);
     await Promise.allSettled([notify(item)]);
     return reply({ ok: true, case: item, revision: record.revision, updatedAt: record.updatedAt }, 201);
   }
@@ -227,7 +283,7 @@ export default async request => {
     const index = current.cases.findIndex(item => String(item.id) === id);
     if (index < 0) return reply({ error: 'Lab case not found' }, 404);
     const previous = current.cases[index];
-    const item = cleanCase({
+    let item = cleanCase({
       ...previous,
       ...body,
       id,
@@ -238,10 +294,16 @@ export default async request => {
       doctorKey: previous.doctorKey || doctorKey(clinicId, previous.doctorName),
       updatedBy: user.displayName || user.username
     }, previous);
+    const history = withDerivedHistory(cleanCase(previous, previous, false)).history.slice();
+    if (item.status !== previous.status) {
+      const last = history[history.length - 1];
+      if (last?.status !== item.status) history.push({ status: item.status, at: item.updatedAt, by: cleanText(user.displayName || user.username, 100), note: '' });
+    }
+    item = { ...item, history: cleanHistory(history) };
     const cases = current.cases.slice();
     cases[index] = item;
     const record = { clinicId, cases, revision: current.revision + 1, updatedAt: Date.now() };
-    await store.setJSON(clinicKey(clinicId), record);
+    await labStore().setJSON(clinicKey(clinicId), record);
     if (item.status !== previous.status) await Promise.allSettled([notify(item)]);
     return reply({ ok: true, case: item, revision: record.revision, updatedAt: record.updatedAt });
   }
@@ -253,7 +315,7 @@ export default async request => {
     const removed = cleanCase(current.cases[index], current.cases[index], false);
     const cases = current.cases.filter((_, caseIndex) => caseIndex !== index);
     const record = { clinicId, cases, revision: current.revision + 1, updatedAt: Date.now() };
-    await store.setJSON(clinicKey(clinicId), record);
+    await labStore().setJSON(clinicKey(clinicId), record);
     return reply({ ok: true, case: removed, revision: record.revision, updatedAt: record.updatedAt });
   }
 

@@ -2,9 +2,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const THEME_KEY='bestcare_dashboard_theme_v1';
-// A versioned preference resets the previously forced modern layout once.
-// Classic remains the default; a new explicit user choice is still remembered.
-const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v2';
+const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1';
 const ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1';
 function preferredTheme(){try{const stored=localStorage.getItem(THEME_KEY);if(['light','dark'].includes(stored))return stored}catch{}return matchMedia?.('(prefers-color-scheme: dark)')?.matches?'dark':'light'}
 let currentTheme=preferredTheme();
@@ -81,18 +79,11 @@ function setupModernSidebarScroll(){
   if(!sidebar||!scroller||sidebar.dataset.scrollReady==='1')return;
   sidebar.dataset.scrollReady='1';
   sidebar.addEventListener('wheel',event=>{
-    if(event.ctrlKey||!event.deltaY||scroller.scrollHeight<=scroller.clientHeight)return;
+    if(event.ctrlKey||!event.deltaY||event.target.closest('.modern-sidebar-scroll'))return;
     const previous=scroller.scrollTop;
     scroller.scrollTop+=event.deltaY;
     if(scroller.scrollTop!==previous)event.preventDefault();
   },{passive:false});
-  scroller.addEventListener('keydown',event=>{
-    const page=Math.max(120,scroller.clientHeight*.78);
-    if(event.key==='PageDown'){scroller.scrollBy({top:page,behavior:'smooth'});event.preventDefault()}
-    else if(event.key==='PageUp'){scroller.scrollBy({top:-page,behavior:'smooth'});event.preventDefault()}
-    else if(event.key==='End'){scroller.scrollTo({top:scroller.scrollHeight,behavior:'smooth'});event.preventDefault()}
-    else if(event.key==='Home'){scroller.scrollTo({top:0,behavior:'smooth'});event.preventDefault()}
-  });
 }
 const API='/api/state';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
@@ -109,6 +100,13 @@ const POLL_MS=5000;
 const SYNC_WORK_HIDDEN_MS=60000;
 const SYNC_OFF_HOURS_MS=5*60*1000;
 const SYNC_OFF_HOURS_HIDDEN_MS=15*60*1000;
+// Auxiliary feeds (plans, alerts, labs) do not need to run on every patient
+// revision poll. Keeping them on their own cadence reduces render/API churn
+// while the patient list remains live during working hours.
+const AUX_WORK_MS=30000;
+const AUX_WORK_HIDDEN_MS=120000;
+const AUX_OFF_HOURS_MS=5*60*1000;
+const AUX_OFF_HOURS_HIDDEN_MS=15*60*1000;
 const RIYADH_OFFSET_MS=3*60*60*1000;
 function syncCadence(now=Date.now()){
   const riyadh=new Date(now+RIYADH_OFFSET_MS);
@@ -155,6 +153,7 @@ const DEVICE_ID=(()=>{
 })();
 const STATUS={waiting:'بانتظار الموعد',arrived:'وصل المريض',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'المريض غادر',asks_delay:'يستفسر عن التأخير'};
 const EN={waiting:'Waiting',arrived:'Patient arrived',early_arrival:'Early arrival',active:'In treatment',done:'Completed',late:'Overdue',cancel:'Cancelled',left:'Patient left',asks_delay:'Asking about delay'};
+const EARLIEST_APPOINTMENT_ACTION='request_earliest_appointment';
 const PLAN_STATUS_VALUES=['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'];
 const I18N={
   ar:{documentTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageTitle:'عيادات أفضل عناية الاستشارية للأسنان',pageSubtitle:'شاشة استقبال ومتابعة المرضى — مزامنة مباشرة بين الأجهزة',updateToday:'تحديث قائمة اليوم',addPatient:'إضافة مريض',screenMode:'وضع الشاشة',installApp:'تثبيت التطبيق',settings:'الإعدادات ▾',imageOcr:'📷 قراءة صورة المواعيد',importCsv:'📥 استيراد CSV',exportCsv:'📤 تصدير CSV',testSync:'🧪 اختبار المزامنة',clearToday:'🗑 مسح قائمة اليوم',alertTitle:'تنبيه تعديل',alertInactiveHint:'إرسال ملاحظة للطبيب',alertActiveHint:'تنبيه فعّال — اضغط للإدارة',defaultAlert:'يوجد تعديل جديد على قائمة المواعيد',updateAvailable:'يتوفر تحديث جديد للتطبيق.',updateNow:'تحديث الآن',totalPatients:'إجمالي المرضى',completed:'تم الإنجاز',inTreatment:'قيد العلاج',remaining:'المتبقي',cancelled:'الملغاة',completionRate:'نسبة الإنجاز',originalTime:'وقت الموعد الأصلي',originalHint:'يبقى محفوظًا حسب جدول الموعد',actualDuration:'مدة العلاج الفعلية',actualStartHint:'يبدأ عند دخول المريض',upcomingPatients:'المرضى القادمون',upcomingHint:'خريطة أحجام حسب ترتيب الموعد',addNewPatient:'إضافة مريض جديد',editPatient:'تعديل بيانات المريض',add:'إضافة',editing:'تعديل',formIntro:'أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.',firstName:'الاسم الكامل',fileNumber:'رقم الملف',appointmentDate:'تاريخ الموعد',startTime:'وقت البداية',endTime:'وقت النهاية',procedure:'الإجراء العلاجي',status:'الحالة',namePlaceholder:'اسم المريض الكامل',filePlaceholder:'رقم الملف',procedurePlaceholder:'مثال: مراجعة، كشف جديد',resetFields:'تفريغ الحقول',cancelEdit:'إلغاء التعديل',saveAdd:'حفظ وإضافة المريض',saveChanges:'حفظ التعديل',patientUpdated:'تم حفظ التعديل',patientAdded:'تمت إضافة المريض',movingPatient:'جارٍ نقل الموعد…',dateMoveFailed:'تعذر تغيير تاريخ الموعد',sourceSaveFailed:'تعذر حفظ قائمة اليوم القديم',targetLoadFailed:'تعذر قراءة قائمة اليوم الجديد',targetSaveFailed:'تعذر حفظ المريض في اليوم الجديد',patientList:'قائمة المرضى اليومية',searchPlaceholder:'بحث بالاسم أو الجوال أو رقم الملف',allStatuses:'كل الحالات',name:'الاسم',start:'البداية',end:'النهاية',action:'إجراء',todayNotes:'ملاحظات اليوم',notesPlaceholder:'اكتب ملاحظات اليوم...',exitFullscreen:'⤢ إلغاء ملء الشاشة',bulkTitle:'تحديث قائمة اليوم',bulkHelp:'كل مريض في سطر: الاسم الكامل، رقم الملف، البداية، النهاية، الإجراء',cancel:'إلغاء',saveList:'حفظ القائمة',alertModalTitle:'🔔 إرسال تنبيه تعديل',alertModalHelp:'اكتب ملاحظة مختصرة وواضحة لتظهر فورًا على الأجهزة المتصلة.',alertMessage:'رسالة التنبيه',alertPlaceholder:'مثال: تم تعديل موعد المريض التالي، يرجى مراجعة القائمة',alertTip:'يظهر التنبيه باللون الأحمر وينتقل عبر المزامنة المباشرة. يمكنك إلغاؤه بعد اطلاع الطبيب.',close:'إغلاق',clearAlert:'إلغاء التنبيه الحالي',publishAlert:'نشر التنبيه',noAppointments:'لا توجد مواعيد لهذا اليوم',noUpcoming:'لا يوجد مرضى قادمون',edit:'تعديل',delete:'حذف',currentPatient:'المريض الحالي',nextToCall:'التالي للاستدعاء',noCurrent:'لا يوجد مريض قيد العلاج',noSchedule:'أضف قائمة المرضى لبدء المتابعة',fileLabel:'رقم الملف',nextDirect:'التالي مباشرة',patientNumber:'المريض رقم',lastCall:'آخر استدعاء',recall:'🔔 إعادة الاستدعاء',callNext:'🔔 استدعاء التالي',callPatient:'🔔 استدعاء المريض',startActual:'▶ بدء وقت الدخول الفعلي',actualRunning:'✓ الوقت الفعلي يعمل',finishPatient:'✓ إنهاء المريض',startedAt:'بدأ',developerRights:'جميع الحقوق محفوظة — تطوير يحيى هادي',ocrTitle:'📷 تحويل صورة المواعيد إلى قائمة مرضى',ocrHelp:'تتم قراءة الصورة داخل جهازك. راجع المسودة ثم ادمج الصفوف الصحيحة مباشرة في قائمة اليوم.',ocrPrivacy:'🔒 معالجة محلية — لا تُرفع الصورة',ocrChoose:'اختيار صورة من الجهاز',ocrDrop:'أو اسحب صورة جدول المواعيد هنا',ocrDropHint:'JPG أو PNG أو WEBP — حتى 20 MB',ocrNoFile:'لم يتم اختيار صورة',ocrRotate:'↻ تدوير الصورة 90°',ocrReady:'جاهز للاستخراج',ocrInitialHint:'اختر صورة واضحة يظهر فيها الجدول كاملًا.',ocrReviewTitle:'مسودة المراجعة',ocrReviewCaption:'يمكنك تعديل أي خانة قبل الدمج',ocrConfidence:'دقة القراءة',ocrStart:'بدء الاستخراج',ocrDownload:'تنزيل CSV',ocrMerge:'دمج في قائمة اليوم'},
@@ -181,6 +180,7 @@ let treatmentPlanRegistry={records:{},aliases:{},revision:0,updatedAt:0,lastFetc
 let treatmentPlanCenter={records:{},aliases:{},loading:false,error:'',loadedAt:0};
 let operationsCenter={filter:'all',labCases:[],labLoading:false,labError:'',labLoadedAt:0,prescriptions:[],prescriptionsLoading:false,prescriptionsError:'',prescriptionsLoadedAt:0,prescriptionsTimer:null,prescriptionsStarted:false};
 let patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
+let patientIdentityAliasIndex=new Map();
 let patientIdentityRemote={query:'',matches:[],loading:false,error:'',timer:null,requestId:0};
 let patientIdentityDisplayLimit=120;
 let patientDirectoryReviewOnly=false;
@@ -608,6 +608,8 @@ let sync={
   pollTimer:null,
   autoTimer:null,
   autoStarted:false,
+  auxLastRun:0,
+  auxBusy:false,
   lastSync:0,
   localVersion:0,
   localUpdatedAt:0,
@@ -865,7 +867,7 @@ function detectRemoteNotification(previousPatients,previousAlert,data){
   if(nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))return {type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:lang==='en'?'Best Care update':'تنبيه جديد من أفضل عناية',body:String(nextAlert.message||tr('defaultAlert')),tag:`alert-${nextAlert.kind||'update'}`};
   return null;
 }
-function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined,directoryImport:Boolean(sync.directoryImport),directoryCorrections:sync.directoryCorrections.map(correction=>({...correction,lookup:{...correction.lookup},patient:{...correction.patient}}))}}
+ function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined,directoryImport:Boolean(sync.directoryImport),directoryCorrections:sync.directoryCorrections.map(correction=>({...correction,lookup:{...correction.lookup},patient:{...correction.patient}}))}}
 async function flushPatientDirectoryCorrections(corrections=[]){
   const applied=[],failed=[];
   if(authUser?.role!=='admin')return{applied,failed};
@@ -1099,6 +1101,11 @@ function adminPatientReasons(patient){
     :{draft:'مسودة خطة غير معتمدة',submitted:'خطة بانتظار مراجعة الإدارة',patient_accepted:'وافق المريض — تحتاج اعتمادًا نهائيًا',approved:'خطة معتمدة — التوقيع معلق',rejected:'خطة معادة للتعديل'};
   if(planCopy[planStatus])add('plan',planCopy[planStatus],planStatus==='rejected'?1:0);
   const status=String(patient?.status||'waiting');
+  const earliestRequestId=String(patient?.earliestAppointmentRequestId||'');
+  const earliestRequest=earliestRequestId?appointmentRequests.items.find(item=>String(item.id)===earliestRequestId):null;
+  if(Number(patient?.earliestAppointmentRequestedAt||0)>0&&!['booked','closed'].includes(earliestRequest?.status)){
+    add('earliest',lang==='en'?'Urgent: contact for the earliest appointment':'⚡ تواصل عاجل لتقديم أقرب موعد',0);
+  }
   const statusCopy=lang==='en'
     ?{
       asks_delay:['urgent','Patient is asking about the delay',0],
@@ -1136,6 +1143,7 @@ function adminPatientActivityAt(patient,recordUpdatedAt=0){
     Number(patient?.completedAt||0),
     Number(patient?.arrivedAt||0),
     Number(patient?.actualStartedAt||0),
+    Number(patient?.earliestAppointmentRequestedAt||0),
     Number(patient?.adminUpdatedAt||0),
     Number(recordUpdatedAt||0)
   );
@@ -1154,9 +1162,13 @@ function adminHubVisiblePatients(){
   const query=String($('adminHubSearch')?.value||'').trim();
   return adminHubAllPatients()
     .filter(item=>clinicFilter==='all'||item.clinic.id===clinicFilter)
-    .filter(item=>scope==='all'||item.reasons.length)
+    .filter(item=>scope==='all'||(scope==='earliest'?item.reasons.some(reason=>reason.type==='earliest'):item.reasons.length))
     .filter(item=>!query||patientMatchesSearch(item.patient,query)||normalizeSearchText(`${item.clinic.name||''} ${item.clinic.doctorName||''}`).includes(normalizeSearchText(query)))
     .sort((left,right)=>{
+      if(scope==='earliest'){
+        const ageDiff=Number(left.patient?.earliestAppointmentRequestedAt||0)-Number(right.patient?.earliestAppointmentRequestedAt||0);
+        if(ageDiff)return ageDiff;
+      }
       if(scope==='attention'){
         const leftPriority=Math.min(...left.reasons.map(reason=>reason.priority),9);
         const rightPriority=Math.min(...right.reasons.map(reason=>reason.priority),9);
@@ -1199,7 +1211,7 @@ function renderAdminPatientHub(){
   const scope=$('adminHubScopeFilter');
   if(scope){
     const value=scope.value||'attention';
-    scope.innerHTML=`<option value="attention">${lang==='en'?'Administration actions only':'تحتاج تدخل الإدارة فقط'}</option><option value="all">${lang==='en'?'All daily patients':'جميع مرضى اليوم'}</option>`;
+    scope.innerHTML=`<option value="attention">${lang==='en'?'Administration actions only':'تحتاج تدخل الإدارة فقط'}</option><option value="earliest">${lang==='en'?'Earliest appointment requests':'⚡ قائمة أقرب موعد'}</option><option value="all">${lang==='en'?'All daily patients':'جميع مرضى اليوم'}</option>`;
     scope.value=value;
   }
   if($('adminHubSearch'))$('adminHubSearch').placeholder=lang==='en'?'Search name, file, phone, or clinic':'بحث بالاسم أو الملف أو الجوال أو العيادة';
@@ -1207,10 +1219,12 @@ function renderAdminPatientHub(){
   const all=adminHubAllPatients(),attention=all.filter(item=>item.reasons.length);
   $('adminHubPaymentCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>reason.type==='payment')).length);
   $('adminHubPlanCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>reason.type==='plan')).length);
-  $('adminHubUpdateCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>!['payment','plan'].includes(reason.type))).length);
+  $('adminHubEarliestCount').textContent=String(appointmentRequests.items.filter(item=>item.source==='doctor_earliest'&&['new','contacted'].includes(item.status)).length);
+  $('adminHubUpdateCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>!['payment','plan','earliest'].includes(reason.type))).length);
   $('adminHubTotalCount').textContent=String(all.length);
   setText('#adminHubPaymentLabel',lang==='en'?'Payment':'الدفع');
   setText('#adminHubPlanLabel',lang==='en'?'Plans':'الخطط');
+  setText('#adminHubEarliestLabel',lang==='en'?'Earliest appointment':'أقرب موعد ⚡');
   setText('#adminHubUpdateLabel',lang==='en'?'Other updates':'تحديثات أخرى');
   setText('#adminHubTotalLabel',lang==='en'?'All patients':'كل المرضى');
   const error=$('adminHubError');
@@ -1238,6 +1252,7 @@ function renderAdminPatientHub(){
     const status=derivedStatus(patient);
     const hasPlan=item.reasons.some(reason=>reason.type==='plan');
     const hasPayment=item.reasons.some(reason=>reason.type==='payment');
+    const hasEarliest=item.reasons.some(reason=>reason.type==='earliest');
     return `<article class="admin-patient-item priority-${tone}">
       <div class="admin-patient-main">
         <strong>${escapeHtml(String(patient.name||'').trim()||'—')}</strong>
@@ -1250,6 +1265,7 @@ function renderAdminPatientHub(){
       <div class="admin-patient-time"><strong>${escapeHtml(patient.start||'—')}–${escapeHtml(patient.end||'—')}</strong><small>${escapeHtml(statusText(status))}</small></div>
       <div class="admin-action-tags">${badges}</div>
       <div class="admin-patient-actions">
+        ${hasEarliest&&patient.earliestAppointmentRequestId?`<a class="primary earliest" href="./appointment-requests.html?focus=${encodeURIComponent(patient.earliestAppointmentRequestId)}">${lang==='en'?'Follow up urgently':'متابعة عاجلة ⚡'}</a>`:''}
         ${hasPlan?`<a class="primary" href="${escapeHtml(adminPlanUrl(item))}">${lang==='en'?'Open plan':'فتح الخطة'}</a>`:''}
         ${hasPayment?`<a class="primary payment" href="${escapeHtml(adminClinicUrl(item.clinic.id,'paymentPanel'))}">${lang==='en'?'Open payment':'فتح الدفع'}</a>`:''}
         <a href="${escapeHtml(adminClinicUrl(item.clinic.id))}">${lang==='en'?'Open clinic list':'فتح قائمة العيادة'}</a>
@@ -1352,7 +1368,6 @@ async function pushState(){
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==sentDate)return false;
-    if(snapshot.directoryImport)sync.directoryImport=false;
     sync.revision=Number(data.revision||sync.revision);
     sync.updatedAt=Number(data.updatedAt||Date.now());
     const correctionResult=await flushPatientDirectoryCorrections(snapshot.directoryCorrections||[]);
@@ -1468,7 +1483,7 @@ async function runAutomaticSync(){
     }else{
       await pullState(false);
     }
-    await Promise.all([refreshTreatmentPlanRegistry(false),refreshManualAlert(false),refreshLabCases(false)]);
+    await refreshAuxiliaryData();
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
@@ -1479,6 +1494,25 @@ async function runAutomaticSync(){
     }
     scheduleAutomaticSync(nextDelay);
   }
+}
+
+function auxiliaryCadence(now=Date.now()){
+  const cadence=syncCadence(now);
+  if(cadence.workHours)return document.hidden?AUX_WORK_HIDDEN_MS:AUX_WORK_MS;
+  return document.hidden?AUX_OFF_HOURS_HIDDEN_MS:AUX_OFF_HOURS_MS;
+}
+async function refreshAuxiliaryData({force=false}={}){
+  if(sync.auxBusy)return;
+  if(!force&&sync.auxLastRun&&Date.now()-sync.auxLastRun<auxiliaryCadence())return;
+  sync.auxBusy=true;
+  sync.auxLastRun=Date.now();
+  try{
+    await Promise.allSettled([
+      refreshTreatmentPlanRegistry(false),
+      refreshManualAlert(false),
+      refreshLabCases(false)
+    ]);
+  }finally{sync.auxBusy=false}
 }
 
 async function startAutomaticSync(){
@@ -1544,6 +1578,50 @@ function flowLeadPatient(){return currentPatient()||sortedPendingPatients()[0]||
 function upcomingPatients(excludedId=null){
   return sortedPendingPatients().filter(p=>excludedId===null||String(p.id)!==String(excludedId));
 }
+function appointmentDurationMinutes(patient){
+  if(!patient?.start||!patient?.end)return 0;
+  const start=timeDate(patient.start).getTime(),end=timeDate(patient.end).getTime();
+  if(!Number.isFinite(start)||!Number.isFinite(end))return 0;
+  const duration=Math.round((end-start)/60000);
+  return duration>0?duration:0;
+}
+function appointmentDurationLabel(patient){
+  const minutes=appointmentDurationMinutes(patient);
+  if(!minutes)return'—';
+  if(lang==='en'){
+    const hours=Math.floor(minutes/60),rest=minutes%60;
+    return hours?`${hours}h${rest?` ${rest}m`:''}`:`${minutes} min`;
+  }
+  const hours=Math.floor(minutes/60),rest=minutes%60;
+  if(hours)return`${hours} س${rest?` و${rest} د`:''}`;
+  return`${minutes} دقيقة`;
+}
+function appointmentExitLabel(patient){
+  const hasActual=Number(patient?.actualEndedAt||0)>0;
+  return lang==='en'?(hasActual?'Actual exit':'Expected exit'):(hasActual?'الخروج الفعلي':'الخروج المتوقع');
+}
+function appointmentExitTime(patient){
+  const actual=Number(patient?.actualEndedAt||0);
+  if(actual)return new Date(actual).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'});
+  return patient?.end||'—';
+}
+function appointmentTimeDetailsMarkup(patient){
+  if(!patient)return'';
+  return `<div class="queue-time-grid" aria-label="${escapeHtml(lang==='en'?'Appointment times':'تفاصيل وقت الموعد')}"><span><small>${escapeHtml(lang==='en'?'Entry':'الدخول')}</small><b>${escapeHtml(patient.start||'—')}</b></span><span><small>${escapeHtml(appointmentExitLabel(patient))}</small><b>${escapeHtml(appointmentExitTime(patient))}</b></span><span><small>${escapeHtml(lang==='en'?'Duration':'المدة')}</small><b>${escapeHtml(appointmentDurationLabel(patient))}</b></span></div>`;
+}
+function clinicToneFor(patient,activelyTreating=false){
+  if(!patient)return'idle';
+  const status=derivedStatus(patient);
+  if(activelyTreating){
+    const start=timeDate(patient.start).getTime(),end=timeDate(patient.end).getTime(),now=Date.now();
+    if(Number.isFinite(end)&&now>end)return'red';
+    const duration=Math.max(1,end-start),remaining=end-now;
+    return remaining<=Math.min(15*60000,duration*.25)?'orange':'green';
+  }
+  if(['arrived','early_arrival','active'].includes(status))return'blue';
+  if(status==='late')return'orange';
+  return'blue';
+}
 function stageFor(p){if(!p)return'stage-idle';const st=timeDate(p.start).getTime(),en=timeDate(p.end).getTime(),now=Date.now();const ratio=Math.max(0,Math.min(1,(now-st)/Math.max(1,en-st)));if(ratio<.5)return'stage-green';if(ratio<.75)return'stage-yellow';if(ratio<.9)return'stage-orange';return'stage-red';}
 function paymentStage(p){if(!p?.paymentRequired)return'';if(p.paymentCompletedAt)return'completed';if(p.paymentAcknowledgedAt)return'received';return'requested'}
 function paymentBadgeMarkup(p){
@@ -1564,21 +1642,26 @@ function patientLabCases(patient,{activeOnly=true}={}){
   const terminal=new Set(['delivered_patient','cancelled']);
   return labCasesState.cases.filter(item=>labCaseMatchesPatient(item,patient)&&(!activeOnly||!terminal.has(item.status))).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
 }
-function labStatusText(status){return ({pending_send:'بانتظار التسليم للمعمل',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||'حالة معمل'}
+function labStatusText(status){return (lang==='en'?{pending_send:'Awaiting lab handoff',sent:'Handed to lab',in_production:'In production',ready_at_lab:'Ready at lab',received_clinic:'Received by clinic',delivered_coordination:'Handed to coordination',delivered_patient:'Delivered to patient',needs_adjustment:'Needs adjustment',returned_lab:'Returned to lab',cancelled:'Cancelled'}:{pending_send:'بانتظار التسليم للمعمل',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_coordination:'تم تسليمها لموظفي التنسيق',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||(lang==='en'?'Lab case':'حالة معمل')}
 function labElapsedDays(item){
   const start=Number(item?.sentAt||0);if(!start)return'';
-  const end=item?.status==='received_clinic'&&Number(item?.receivedAt)>0?Number(item.receivedAt):Date.now();
+  const end=['received_clinic','delivered_coordination'].includes(item?.status)&&Number(item?.receivedAt)>0?Number(item.receivedAt):Date.now();
   const elapsed=Math.max(0,end-start),days=Math.floor(elapsed/86400000),hours=Math.floor(elapsed%86400000/3600000),minutes=Math.floor(elapsed%3600000/60000);
+  if(lang==='en'){
+    if(days)return`${days} day${days===1?'':'s'}${hours?` ${hours}h`:''}`;
+    if(hours)return`${hours} hour${hours===1?'':'s'}`;
+    return`${minutes} minute${minutes===1?'':'s'}`;
+  }
   if(days)return`${days} يوم${hours?` و${hours} س`:''}`;
   if(hours)return`${hours} ساعة`;
   return`${minutes} دقيقة`;
 }
 function labCaseBadgeMarkup(patient){
   const active=patientLabCases(patient);if(!active.length)return'';
-  const lead=active[0],tone=lead.status==='received_clinic'?'received':'';
+  const lead=active[0],tone=['received_clinic','delivered_coordination'].includes(lead.status)?'received':'';
   const elapsed=labElapsedDays(lead);
-  const label=active.length>1?`${active.length} حالات بالمعمل`:`${labStatusText(lead.status)}${elapsed?` · ${elapsed}`:''}`;
-  return `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="فتح حالات معمل الأسنان">${escapeHtml(label)}</button>`;
+  const label=active.length>1?`${active.length} ${lang==='en'?'lab cases':'حالات بالمعمل'}`:`${labStatusText(lead.status)}${elapsed?` · ${elapsed}`:''}`;
+  return `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="${lang==='en'?'Open dental lab cases':'فتح حالات معمل الأسنان'}">${escapeHtml(label)}</button>`;
 }
 async function refreshLabCases({force=false}={}){
   const cadence=syncCadence().workHours?120000:600000;
@@ -1589,7 +1672,7 @@ async function refreshLabCases({force=false}={}){
     const data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر تحميل حالات المعمل');
     labCasesState.cases=Array.isArray(data.cases)?data.cases:[];labCasesState.revision=Number(data.revision||0);labCasesState.updatedAt=Number(data.updatedAt||0);labCasesState.lastFetchedAt=Date.now();
-    renderFloatingLabButton();renderTable();
+    renderFloatingLabButton();renderTable();updateAdminInterventionBadge();
     if(VIEW_MODE==='admin'&&authUser?.role==='admin'){
       operationsCenter.labCases=operationsCenter.labCases.filter(item=>item.clinicId!==ACTIVE_CLINIC_ID).concat(labCasesState.cases);
       renderOperationsCenter();updateTreatmentPlanCenterTrigger();
@@ -1608,11 +1691,11 @@ function renderFloatingLabButton(){
   const terminal=new Set(['delivered_patient','cancelled']);
   const active=labCasesState.cases.filter(item=>item&&item.clinicId===ACTIVE_CLINIC_ID&&!terminal.has(item.status));
   const urgent=active.some(item=>['needs_adjustment','returned_lab'].includes(item.status));
-  const ready=active.some(item=>['ready_at_lab','received_clinic'].includes(item.status));
+  const ready=active.some(item=>['ready_at_lab','received_clinic','delivered_coordination'].includes(item.status));
   button.classList.toggle('is-urgent',urgent);
   button.classList.toggle('is-ready',!urgent&&ready);
   count.textContent=String(active.length);
-  const label=active.length?`فتح قائمة حالات معمل الأسنان — ${active.length} حالة نشطة`:'فتح قائمة حالات معمل الأسنان';
+  const label=active.length?(lang==='en'?`Open dental lab cases — ${active.length} active`:`فتح قائمة حالات معمل الأسنان — ${active.length} حالة نشطة`):(lang==='en'?'Open dental lab cases':'فتح قائمة حالات معمل الأسنان');
   button.setAttribute('aria-label',label);button.title=label;
 }
 function reviewRequestMessage(patient,url){
@@ -1638,17 +1721,18 @@ function patientMatchesSearch(patient,rawQuery){
   const name=normalizeSearchText(patient?.name??patient?.fullName),compact=query.replace(/[\s-]/g,''),file=normalizeSearchText(patient?.file??patient?.fileNo).replace(/[\s-]/g,''),phone=normalizeSearchPhone(patient?.phone??patient?.mobile),digits=normalizeSearchPhone(rawQuery);
   return name.includes(query)||Boolean(compact&&file.includes(compact))||Boolean(digits&&phone.includes(digits));
 }
-function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.reviewRequestedAt||0))}
+function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0))}
 function copyPatientGroup(target,source,fields){fields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(source||{},field))target[field]=source[field]})}
 function mergePatientVersions(remote={},local={}){
   const remoteStamp=patientVersionStamp(remote),localStamp=patientVersionStamp(local);
   const merged=localStamp>=remoteStamp?{...remote,...local}:{...local,...remote};
   const groups=[
     [['name','file','phone','nationalId','start','end','procedure','adminUpdatedAt'],value=>Number(value?.adminUpdatedAt||value?.recordUpdatedAt||0)],
-    [['status','statusUpdatedAt','arrivedAt','actualStartedAt','completedAt','lastCalledAt','callCount'],value=>Math.max(Number(value?.statusUpdatedAt||0),Number(value?.arrivedAt||0),Number(value?.actualStartedAt||0),Number(value?.completedAt||0),Number(value?.lastCalledAt||0))],
+    [['status','statusUpdatedAt','arrivedAt','actualStartedAt','actualEndedAt','completedAt','lastCalledAt','callCount'],value=>Math.max(Number(value?.statusUpdatedAt||0),Number(value?.arrivedAt||0),Number(value?.actualStartedAt||0),Number(value?.actualEndedAt||0),Number(value?.completedAt||0),Number(value?.lastCalledAt||0))],
     [['paymentRequired','paymentAction','paymentItems','paymentDiscount','paymentRequestedAt','paymentAcknowledgedAt','paymentCompletedAt'],value=>Math.max(Number(value?.paymentRequestedAt||0),Number(value?.paymentAcknowledgedAt||0),Number(value?.paymentCompletedAt||0))],
     [['treatmentPlanStatus','treatmentPlanUpdatedAt'],value=>Number(value?.treatmentPlanUpdatedAt||0)],
-    [['reviewRequestedAt','reviewRequestCount','reviewLastEventId'],value=>Number(value?.reviewRequestedAt||0)]
+    [['reviewRequestedAt','reviewRequestCount','reviewLastEventId'],value=>Number(value?.reviewRequestedAt||0)],
+    [['earliestAppointmentRequestId','earliestAppointmentRequestedAt','earliestAppointmentRequestedBy'],value=>Number(value?.earliestAppointmentRequestedAt||0)]
   ];
   groups.forEach(([fields,stamp])=>copyPatientGroup(merged,stamp(local)>=stamp(remote)?local:remote,fields));
   const addedAtValues=[Number(remote.addedAt||0),Number(local.addedAt||0)].filter(value=>value>0);
@@ -1872,13 +1956,16 @@ function operationClinicLabel(clinicId){
 function operationCenterItems(){
   const appointmentItems=appointmentRequests.items
     .filter(item=>['new','contacted'].includes(item.status))
-    .map(item=>({
-      id:`appointment:${item.id}`,recordId:item.id,status:item.status,type:'appointments',priority:item.status==='new'?100:72,updatedAt:Number(item.updatedAt||item.createdAt||0),
-      title:item.status==='new'?'طلب موعد جديد':'طلب موعد قيد المتابعة',
-      patient:item.name||'مريض بدون اسم',identity:item.phone||item.identity||'',
-      detail:item.service==='other'?(item.serviceOther||APPOINTMENT_SERVICE_LABELS.other):(APPOINTMENT_SERVICE_LABELS[item.service]||APPOINTMENT_SERVICE_LABELS.other),
-      source:'مركز المواعيد',tone:item.status==='new'?'urgent':'pending',href:`./appointment-requests.html?focus=${encodeURIComponent(item.id)}`
-    }));
+    .map(item=>{
+      const earliest=item.source==='doctor_earliest';
+      return{
+        id:`appointment:${item.id}`,recordId:item.id,status:item.status,type:'appointments',priority:earliest?112:(item.status==='new'?100:72),updatedAt:Number(item.updatedAt||item.createdAt||0),
+        title:earliest?(lang==='en'?'⚡ Urgent earliest-appointment request':'⚡ طلب عاجل لتقديم أقرب موعد'):(item.status==='new'?(lang==='en'?'New appointment request':'طلب موعد جديد'):(lang==='en'?'Appointment request in progress':'طلب موعد قيد المتابعة')),
+        patient:item.name||(lang==='en'?'Unnamed patient':'مريض بدون اسم'),identity:item.file?`${lang==='en'?'File':'ملف'} ${item.file}`:(item.phone||item.identity||''),
+        detail:earliest?`${item.doctorName||operationClinicLabel(item.clinicId)}${item.phone?` · ${item.phone}`:''}`:appointmentServiceLabel(item),
+        source:earliest?`${lang==='en'?'Appointment center · Doctor request':'مركز المواعيد · طلب الطبيب'} · ${operationClinicLabel(item.clinicId)}`:(lang==='en'?'Appointment center':'مركز المواعيد'),tone:earliest?'urgent':(item.status==='new'?'urgent':'pending'),href:`./appointment-requests.html?focus=${encodeURIComponent(item.id)}`
+      };
+    });
   const planItems=planCenterEntries()
     .filter(({record})=>planCenterIsUnapproved(record?.status))
     .map(({canonical,record})=>{
@@ -1886,14 +1973,14 @@ function operationCenterItems(){
       const priorities={patient_accepted:92,rejected:88,submitted:78,draft:66};
       return{
         id:`plan:${canonical}`,type:'plans',canonical,status:record.status,priority:zeroFile?96:(priorities[record.status]||64),updatedAt:Number(record.updatedAt||0),
-        title:zeroFile?'خطة تحتاج تصحيح رقم الملف':planStatusText(record.status),patient:record.fullName||'مريض بدون اسم',
-        identity:zeroFile?'رقم الملف 0 — يلزم التصحيح':(record.fileNo?`ملف ${record.fileNo}`:(record.mobile||'')),
-        detail:record.planNo?`رقم الخطة ${record.planNo}`:'خطة علاجية',source:`مركز الخطط · ${operationClinicLabel(record.clinicId)}`,
+        title:zeroFile?(lang==='en'?'Plan needs a valid file number':'خطة تحتاج تصحيح رقم الملف'):planStatusText(record.status),patient:record.fullName||(lang==='en'?'Unnamed patient':'مريض بدون اسم'),
+        identity:zeroFile?(lang==='en'?'File number 0 — correction required':'رقم الملف 0 — يلزم التصحيح'):(record.fileNo?`${lang==='en'?'File':'ملف'} ${record.fileNo}`:(record.mobile||'')),
+        detail:record.planNo?`${lang==='en'?'Plan number':'رقم الخطة'} ${record.planNo}`:(lang==='en'?'Treatment plan':'خطة علاجية'),source:`${lang==='en'?'Treatment plan center':'مركز الخطط'} · ${operationClinicLabel(record.clinicId)}`,
         tone:zeroFile||record.status==='rejected'?'urgent':'pending'
       };
     });
   const terminal=new Set(['delivered_patient','cancelled']);
-  const labPriorities={needs_adjustment:94,returned_lab:90,received_clinic:86,ready_at_lab:82,in_production:58,sent:56,pending_send:54};
+  const labPriorities={needs_adjustment:94,returned_lab:90,received_clinic:86,delivered_coordination:84,ready_at_lab:82,in_production:58,sent:56,pending_send:54};
   const labSource=operationsCenter.labLoadedAt?operationsCenter.labCases:labCasesState.cases;
   const labItems=labSource
     .filter(item=>item&&!terminal.has(item.status))
@@ -1901,17 +1988,17 @@ function operationCenterItems(){
       const elapsed=labElapsedDays(item),params=new URLSearchParams({clinic:item.clinicId||'clinic-1',patient:String(item.patient?.file||item.patient?.phone||item.patient?.name||'')});
       return{
         id:`lab:${item.id}`,recordId:item.id,clinicId:item.clinicId||'clinic-1',status:item.status,type:'labs',priority:labPriorities[item.status]||50,updatedAt:Number(item.updatedAt||item.createdAt||0),
-        title:labStatusText(item.status),patient:item.patient?.name||'مريض بدون اسم',identity:item.patient?.file?`ملف ${item.patient.file}`:(item.patient?.phone||''),
-        detail:`${item.labName==='other'?(item.customLabName||'معمل آخر'):(item.labName||'المعمل')}${elapsed?` · مضى ${elapsed}`:''}`,
-        source:`مركز المعمل · ${operationClinicLabel(item.clinicId)}`,tone:['needs_adjustment','returned_lab'].includes(item.status)?'urgent':['ready_at_lab','received_clinic'].includes(item.status)?'ready':'pending',href:`./lab.html?${params.toString()}`
+        title:labStatusText(item.status),patient:item.patient?.name||(lang==='en'?'Unnamed patient':'مريض بدون اسم'),identity:item.patient?.file?`${lang==='en'?'File':'ملف'} ${item.patient.file}`:(item.patient?.phone||''),
+        detail:`${item.labName==='other'?(item.customLabName||(lang==='en'?'Other laboratory':'معمل آخر')):(item.labName||(lang==='en'?'Laboratory':'المعمل'))}${elapsed?` · ${lang==='en'?'Elapsed':'مضى'} ${elapsed}`:''}`,
+        source:`${lang==='en'?'Lab center':'مركز المعمل'} · ${operationClinicLabel(item.clinicId)}`,tone:['needs_adjustment','returned_lab'].includes(item.status)?'urgent':['ready_at_lab','received_clinic','delivered_coordination'].includes(item.status)?'ready':'pending',href:`./lab.html?${params.toString()}`
       };
     });
   const prescriptionItems=(operationsCenter.prescriptions||[])
     .filter(item=>item?.status==='ready_for_admin')
     .map(item=>({
       id:`prescription:${item.canonical}`,type:'prescriptions',canonical:item.canonical,status:item.status,priority:84,updatedAt:Number(item.updatedAt||0),
-      title:'وصفة معتمدة بانتظار مشاركة الإدارة',patient:item.patient?.name||'مريض بدون اسم',identity:item.patient?.file?`ملف ${item.patient.file}`:(item.patient?.phone||''),
-      detail:`${Number(item.medicineCount||0)} علاج · معتمدة بواسطة ${item.updatedBy||'الطبيب'}`,source:`مركز الوصفات · ${operationClinicLabel(item.clinicId)}`,
+      title:lang==='en'?'Approved prescription awaiting administration sharing':'وصفة معتمدة بانتظار مشاركة الإدارة',patient:item.patient?.name||(lang==='en'?'Unnamed patient':'مريض بدون اسم'),identity:item.patient?.file?`${lang==='en'?'File':'ملف'} ${item.patient.file}`:(item.patient?.phone||''),
+      detail:lang==='en'?`${Number(item.medicineCount||0)} medicine(s) · Approved by ${item.updatedBy||'doctor'}`:`${Number(item.medicineCount||0)} علاج · معتمدة بواسطة ${item.updatedBy||'الطبيب'}`,source:`${lang==='en'?'Prescription center':'مركز الوصفات'} · ${operationClinicLabel(item.clinicId)}`,
       tone:'prescription',href:`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||item.patient?.id||'',date:item.sourceDate||today(),clinic:item.clinicId||'clinic-1',view:'admin',patientName:item.patient?.name||'',file:item.patient?.file||'',phone:item.patient?.phone||'',nationalId:item.patient?.nationalId||''}).toString()}`
     }));
   return [...appointmentItems,...planItems,...labItems,...prescriptionItems].sort((a,b)=>b.priority-a.priority||b.updatedAt-a.updatedAt);
@@ -1923,19 +2010,19 @@ function renderOperationsCenter(){
   $('operationAllCount').textContent=String(items.length);$('operationAppointmentsCount').textContent=String(counts.appointments);$('operationPlansCount').textContent=String(counts.plans);$('operationLabsCount').textContent=String(counts.labs);$('operationPrescriptionsCount').textContent=String(counts.prescriptions);
   document.querySelectorAll('[data-operation-filter]').forEach(button=>button.classList.toggle('active',button.dataset.operationFilter===operationsCenter.filter));
   const visible=operationsCenter.filter==='all'?items:items.filter(item=>item.type===operationsCenter.filter);
-  if((treatmentPlanCenter.loading||operationsCenter.labLoading||operationsCenter.prescriptionsLoading)&&!visible.length){list.innerHTML='<div class="treatment-plan-center-empty">جارٍ تجميع التنبيهات التشغيلية…</div>';return}
-  if(!visible.length){list.innerHTML='<div class="operations-center-clear"><span>✓</span><strong>لا توجد إجراءات معلقة في هذا القسم</strong><small>ستظهر التحديثات هنا تلقائيًا عند وصولها.</small></div>';return}
+  if((treatmentPlanCenter.loading||operationsCenter.labLoading||operationsCenter.prescriptionsLoading)&&!visible.length){list.innerHTML=`<div class="treatment-plan-center-empty">${lang==='en'?'Collecting operational alerts…':'جارٍ تجميع التنبيهات التشغيلية…'}</div>`;return}
+  if(!visible.length){list.innerHTML=`<div class="operations-center-clear"><span>✓</span><strong>${lang==='en'?'No pending actions in this section':'لا توجد إجراءات معلقة في هذا القسم'}</strong><small>${lang==='en'?'Updates will appear here automatically.':'ستظهر التحديثات هنا تلقائيًا عند وصولها.'}</small></div>`;return}
   const icons={appointments:'📅',plans:'▤',labs:'🦷',prescriptions:'💊'};
-  const labLabels={pending_send:'بانتظار التسليم',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة بالمعمل',received_clinic:'وصلت للعيادة',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'};
+  const labLabels=lang==='en'?{pending_send:'Awaiting handoff',sent:'Handed to lab',in_production:'In production',ready_at_lab:'Ready at lab',received_clinic:'Received by clinic',delivered_coordination:'Handed to coordination',delivered_patient:'Delivered to patient',needs_adjustment:'Needs adjustment',returned_lab:'Returned to lab',cancelled:'Cancelled'}:{pending_send:'بانتظار التسليم',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة بالمعمل',received_clinic:'وصلت للعيادة',delivered_coordination:'تم تسليمها للتنسيق',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'};
   list.innerHTML=visible.slice(0,60).map(item=>{
     const control=item.type==='appointments'
-      ?`<select data-operation-appointment-status="${escapeHtml(item.recordId)}" aria-label="تعديل حالة طلب الموعد">${Object.entries(APPOINTMENT_STATUS_LABELS).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`
+      ?`<select data-operation-appointment-status="${escapeHtml(item.recordId)}" aria-label="${lang==='en'?'Update appointment request status':'تعديل حالة طلب الموعد'}">${appointmentStatusEntries().map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`
       :item.type==='plans'
-        ?`<select data-operation-plan-status="${escapeHtml(item.canonical)}" aria-label="تعديل حالة الخطة">${PLAN_STATUS_VALUES.map(value=>`<option value="${value}" ${item.status===value?'selected':''}>${escapeHtml(planStatusText(value))}</option>`).join('')}</select>`
+        ?`<select data-operation-plan-status="${escapeHtml(item.canonical)}" aria-label="${lang==='en'?'Update treatment plan status':'تعديل حالة الخطة'}">${PLAN_STATUS_VALUES.map(value=>`<option value="${value}" ${item.status===value?'selected':''}>${escapeHtml(planStatusText(value))}</option>`).join('')}</select>`
         :item.type==='labs'
-          ?`<select data-operation-lab-status="${escapeHtml(item.recordId)}" data-operation-lab-clinic="${escapeHtml(item.clinicId)}" aria-label="تعديل حالة المعمل">${Object.entries(labLabels).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`
-          :'<span class="prescription-admin-ready">جاهزة للمشاركة</span>';
-    return`<article class="operation-alert-item ${item.tone}" data-operation-type="${item.type}"><span class="operation-alert-icon" aria-hidden="true">${icons[item.type]}</span><div class="operation-alert-copy"><small>${escapeHtml(item.source)}</small><strong>${escapeHtml(item.title)}</strong><b>${escapeHtml(item.patient)}${item.identity?` · ${escapeHtml(item.identity)}`:''}</b><p>${escapeHtml(item.detail||'')}</p></div><div class="operation-alert-actions">${control}${item.type==='plans'?`<button type="button" data-operation-plan="${escapeHtml(item.canonical)}">فتح الخطة</button>`:`<a href="${escapeHtml(item.href)}">${item.type==='prescriptions'?'فتح الوصفة ومشاركتها':'فتح المركز'}</a>`}</div></article>`;
+          ?`<select data-operation-lab-status="${escapeHtml(item.recordId)}" data-operation-lab-clinic="${escapeHtml(item.clinicId)}" aria-label="${lang==='en'?'Update laboratory case status':'تعديل حالة المعمل'}">${Object.entries(labLabels).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`
+          :`<span class="prescription-admin-ready">${lang==='en'?'Ready to share':'جاهزة للمشاركة'}</span>`;
+    return`<article class="operation-alert-item ${item.tone}" data-operation-type="${item.type}"><span class="operation-alert-icon" aria-hidden="true">${icons[item.type]}</span><div class="operation-alert-copy"><small>${escapeHtml(item.source)}</small><strong>${escapeHtml(item.title)}</strong><b>${escapeHtml(item.patient)}${item.identity?` · ${escapeHtml(item.identity)}`:''}</b><p>${escapeHtml(item.detail||'')}</p></div><div class="operation-alert-actions">${control}${item.type==='plans'?`<button type="button" data-operation-plan="${escapeHtml(item.canonical)}">${lang==='en'?'Open plan':'فتح الخطة'}</button>`:`<a href="${escapeHtml(item.href)}">${item.type==='prescriptions'?(lang==='en'?'Open and share prescription':'فتح الوصفة ومشاركتها'):(lang==='en'?'Open center':'فتح المركز')}</a>`}</div></article>`;
   }).join('');
 }
 function updateTreatmentPlanCenterTrigger(){
@@ -1943,13 +2030,13 @@ function updateTreatmentPlanCenterTrigger(){
   const pending=operationCenterItems().length;
   count.textContent=String(pending);
   button.classList.toggle('has-pending',pending>0);
-  button.title=pending?`${pending} إجراء يحتاج متابعة`:'فتح مركز العمليات';
+  button.title=lang==='en'?(pending?`${pending} actions need follow-up`:'Open operations center'):(pending?`${pending} إجراء يحتاج متابعة`:'فتح مركز العمليات');
 }
 function syncTreatmentPlanCenterClinics(){
   const select=$('treatmentPlanCenterClinic');if(!select)return;
   const previous=select.value||'all';
   const ids=[...new Set(planCenterEntries().map(({record})=>record.clinicId).filter(Boolean))];
-  select.innerHTML=`<option value="all">جميع العيادات</option>${ids.sort((a,b)=>clinicNumber(a)-clinicNumber(b)).map(id=>{const clinic=clinicDirectory.find(item=>item.id===id)||defaultClinic(clinicNumber(id));return`<option value="${escapeHtml(id)}">${escapeHtml(clinicDisplayName(clinic))}</option>`}).join('')}`;
+  select.innerHTML=`<option value="all">${lang==='en'?'All clinics':'جميع العيادات'}</option>${ids.sort((a,b)=>clinicNumber(a)-clinicNumber(b)).map(id=>{const clinic=clinicDirectory.find(item=>item.id===id)||defaultClinic(clinicNumber(id));return`<option value="${escapeHtml(id)}">${escapeHtml(clinicDisplayName(clinic))}</option>`}).join('')}`;
   select.value=[...select.options].some(option=>option.value===previous)?previous:'all';
 }
 function renderTreatmentPlanCenter(){
@@ -1962,14 +2049,14 @@ function renderTreatmentPlanCenter(){
   const visible=entries.filter(({record})=>clinicFilter==='all'||record.clinicId===clinicFilter).filter(({record})=>statusFilter==='all'||statusFilter==='unapproved'&&planCenterIsUnapproved(record.status)||record.status===statusFilter).filter(({record})=>!query||`${record.fullName||''} ${record.fileNo||''} ${record.mobile||''} ${record.planNo||''}`.toLowerCase().includes(query));
   const error=$('treatmentPlanCenterError');error.hidden=!treatmentPlanCenter.error;error.textContent=treatmentPlanCenter.error;
   renderOperationsCenter();
-  if(treatmentPlanCenter.loading){list.innerHTML='<div class="treatment-plan-center-empty">جارٍ تحميل سجل الخطط العلاجية…</div>';return}
-  if(!visible.length){list.innerHTML=`<div class="treatment-plan-center-empty">${entries.length?'لا توجد خطط مطابقة للتصفية.':'لا توجد خطط علاجية محفوظة.'}</div>`;return}
+  if(treatmentPlanCenter.loading){list.innerHTML=`<div class="treatment-plan-center-empty">${lang==='en'?'Loading treatment plan records…':'جارٍ تحميل سجل الخطط العلاجية…'}</div>`;return}
+  if(!visible.length){list.innerHTML=`<div class="treatment-plan-center-empty">${entries.length?(lang==='en'?'No plans match the current filters.':'لا توجد خطط مطابقة للتصفية.'):(lang==='en'?'No treatment plans saved.':'لا توجد خطط علاجية محفوظة.')}</div>`;return}
   const labels=planStatusLabels();
   list.innerHTML=visible.map(({canonical,record})=>{
     const clinic=clinicDirectory.find(item=>item.id===record.clinicId)||defaultClinic(clinicNumber(record.clinicId));
     const zeroFile=isZeroFileNumber(record.fileNo)||/^file:0+$/i.test(canonical),canOpen=record.sourcePatientId&&/^\d{4}-\d{2}-\d{2}$/.test(record.sourceDate||'');
     const options=PLAN_STATUS_VALUES.map(status=>`<option value="${status}" ${status===record.status?'selected':''}>${escapeHtml(labels[status])}</option>`).join('');
-    return`<article class="treatment-plan-center-item status-${escapeHtml(PLAN_STATUS_VALUES.includes(record.status)?record.status:'draft')} ${planCenterIsUnapproved(record.status)?'needs-approval':'is-approved'} ${zeroFile?'has-zero-file':''}" data-plan-center-key="${escapeHtml(canonical)}"><div class="plan-center-patient"><strong>${escapeHtml(record.fullName||'مريض بدون اسم')}</strong><small>${record.planNo?`رقم الخطة ${escapeHtml(record.planNo)} · `:''}ملف ${escapeHtml(record.fileNo||'غير مسجل')}${record.mobile?` · ${escapeHtml(record.mobile)}`:''}</small>${zeroFile?'<span class="plan-zero-file-alert">⚠ رقم الملف 0 مشترك — يجب تصحيحه من الخطة أو بيانات المريض</span>':''}</div><div class="plan-center-clinic"><b>${escapeHtml(clinicDisplayName(clinic))}</b><small>${record.updatedAt?new Date(record.updatedAt).toLocaleString('ar-SA-u-ca-gregory-nu-latn'):'—'}</small></div><label class="plan-center-status"><span>حالة الاعتماد</span><select data-plan-center-status="${escapeHtml(canonical)}">${options}</select></label><div class="plan-center-actions"><button type="button" class="primary" data-plan-center-open="${escapeHtml(canonical)}" ${canOpen?'':'disabled'}>فتح وتعديل</button><button type="button" class="danger" data-plan-center-delete="${escapeHtml(canonical)}">حذف الخطة</button></div></article>`;
+    return`<article class="treatment-plan-center-item status-${escapeHtml(PLAN_STATUS_VALUES.includes(record.status)?record.status:'draft')} ${planCenterIsUnapproved(record.status)?'needs-approval':'is-approved'} ${zeroFile?'has-zero-file':''}" data-plan-center-key="${escapeHtml(canonical)}"><div class="plan-center-patient"><strong>${escapeHtml(record.fullName||(lang==='en'?'Unnamed patient':'مريض بدون اسم'))}</strong><small>${record.planNo?`${lang==='en'?'Plan number':'رقم الخطة'} ${escapeHtml(record.planNo)} · `:''}${lang==='en'?'File':'ملف'} ${escapeHtml(record.fileNo|| (lang==='en'?'Not registered':'غير مسجل'))}${record.mobile?` · ${escapeHtml(record.mobile)}`:''}</small>${zeroFile?`<span class="plan-zero-file-alert">⚠ ${lang==='en'?'File number 0 is shared — correct the patient identity':'رقم الملف 0 مشترك — يجب تصحيحه من الخطة أو بيانات المريض'}</span>`:''}</div><div class="plan-center-clinic"><b>${escapeHtml(clinicDisplayName(clinic))}</b><small>${record.updatedAt?new Date(record.updatedAt).toLocaleString(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'}):'—'}</small></div><label class="plan-center-status"><span>${lang==='en'?'Approval status':'حالة الاعتماد'}</span><select data-plan-center-status="${escapeHtml(canonical)}">${options}</select></label><div class="plan-center-actions"><button type="button" class="primary" data-plan-center-open="${escapeHtml(canonical)}" ${canOpen?'':'disabled'}>${lang==='en'?'Open and edit':'فتح وتعديل'}</button><button type="button" class="danger" data-plan-center-delete="${escapeHtml(canonical)}">${lang==='en'?'Delete plan':'حذف الخطة'}</button></div></article>`;
   }).join('');
 }
 async function refreshTreatmentPlanCenter(){
@@ -2166,6 +2253,45 @@ function schedulePatientIdentityRemoteSearch(){
   },400),requestId};
   renderPatientIdentitySearch();
 }
+function rebuildPatientIdentityAliasIndex(){
+  const next=new Map();
+  const add=(alias,record)=>{
+    if(!alias)return;
+    if(!next.has(alias)){next.set(alias,record);return}
+    if(next.get(alias)!==record)next.set(alias,null);
+  };
+  Object.values(patientIdentityDirectory.records||{}).forEach(record=>{
+    const aliases=[
+      ...(Array.isArray(record.aliases)?record.aliases:[]),
+      fileAlias(record.fileNo),
+      record.nationalId?`national:${normalizeDirectoryNationalId(record.nationalId)}`:'',
+      record.mobile?`phone:${normalizeDirectoryPhone(record.mobile)}`:''
+    ];
+    [...new Set(aliases.filter(Boolean))].forEach(alias=>add(alias,record));
+  });
+  patientIdentityAliasIndex=next;
+}
+function directoryPatientFor(patient){
+  if(!patient)return null;
+  const aliases=[
+    fileAlias(patient.file??patient.fileNo),
+    normalizeDirectoryNationalId(patient.nationalId)?`national:${normalizeDirectoryNationalId(patient.nationalId)}`:'',
+    normalizeDirectoryPhone(patient.phone??patient.mobile)?`phone:${normalizeDirectoryPhone(patient.phone??patient.mobile)}`:''
+  ].filter(Boolean);
+  for(const alias of aliases){const match=patientIdentityAliasIndex.get(alias);if(match)return match}
+  return null;
+}
+function patientWithDirectoryIdentity(patient){
+  const record=directoryPatientFor(patient);
+  if(!record)return patient;
+  return{
+    ...patient,
+    name:record.fullName||patient.name||'',
+    file:record.fileNo||patient.file||'',
+    phone:record.mobile||patient.phone||'',
+    nationalId:record.nationalId||patient.nationalId||''
+  };
+}
 async function refreshPatientIdentityDirectory(){
   patientIdentityDirectory.loading=true;
   patientIdentityDirectory.error='';
@@ -2182,9 +2308,12 @@ async function refreshPatientIdentityDirectory(){
       loading:false,
       error:''
     };
+    rebuildPatientIdentityAliasIndex();
+    renderTable();
+    if(VIEW_MODE==='admin')renderAdminPatientHub();
   }catch(error){
     patientIdentityDirectory.loading=false;
-    if(String(error?.message)==='clinic-local')patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};
+    if(String(error?.message)==='clinic-local'){patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};patientIdentityAliasIndex=new Map()}
     else patientIdentityDirectory.error=lang==='en'?'Could not load the patient identity index.':'تعذر تحميل سجل هويات المرضى. حاول مرة أخرى.';
   }
   renderPatientIdentitySearch();
@@ -2328,10 +2457,63 @@ async function savePatientProfile(event){
     const response=await request(PATIENT_PROFILE_API,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({lookup:patientProfileState.lookup,clinic:'all',patient})},45000),data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر حفظ بيانات المريض');
     const updated=data.updated||{};toast('تم تحديث ملف المريض',`المواعيد ${updated.appointments||0} · الخطط ${updated.plans||0} · المعمل ${updated.labs||0}`);
-    patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};adminPatientHub.updatedAt=0;treatmentPlanRegistry.lastFetchedAt=0;
+    patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};patientIdentityAliasIndex=new Map();adminPatientHub.updatedAt=0;treatmentPlanRegistry.lastFetchedAt=0;
     const nextLookup=patient.file?{type:'file',value:patient.file}:patient.phone?{type:'phone',value:patient.phone}:{type:'national',value:patient.nationalId};
-    await loadPatientProfile(nextLookup);refreshAdminPatientHub(true);refreshTreatmentPlanRegistry(true);
+    await Promise.all([loadPatientProfile(nextLookup),refreshPatientIdentityDirectory()]);refreshAdminPatientHub(true);refreshTreatmentPlanRegistry(true);
   }catch(error){toast('تعذر تحديث ملف المريض',String(error.message||error));button.disabled=false;button.textContent='حفظ وتحديث السجلات المرتبطة'}
+}
+function patientStatusOptionsMarkup(patient){
+  const requested=Number(patient?.earliestAppointmentRequestedAt||0)>0;
+  const actionLabel=lang==='en'
+    ?(requested?'⚡ Earliest appointment requested':'⚡ Earliest appointment')
+    :(requested?'⚡ تم طلب أقرب موعد':'⚡ أقرب موعد');
+  return Object.keys(STATUS).map(key=>{
+    const statusOption=`<option value="${key}" ${patient.status===key?'selected':''}>${escapeHtml(statusText(key))}</option>`;
+    if(key!=='done'||VIEW_MODE!=='clinic')return statusOption;
+    return `${statusOption}<option value="${EARLIEST_APPOINTMENT_ACTION}" ${patient.status==='done'&&!requested?'':'disabled'}>${escapeHtml(actionLabel)}</option>`;
+  }).join('');
+}
+function earliestAppointmentBadgeMarkup(patient){
+  if(!Number(patient?.earliestAppointmentRequestedAt||0))return'';
+  return `<span class="earliest-appointment-badge" title="${lang==='en'?'Administration is following up for an earlier appointment':'طلب الطبيب التواصل عاجلًا لتقديم أقرب موعد'}">⚡ ${lang==='en'?'Earliest appointment requested':'أقرب موعد مطلوب'}</span>`;
+}
+async function requestEarliestAppointment(patientId,select){
+  const patient=patientById(patientId);
+  if(!patient||patient.status!=='done'){
+    toast(lang==='en'?'Complete treatment first':'أكمل علاج المريض أولًا',lang==='en'?'The earliest-appointment action becomes available after completion.':'يتفعّل خيار أقرب موعد بعد وضع الحالة «مكتمل».');
+    renderTable();return false;
+  }
+  if(Number(patient.earliestAppointmentRequestedAt||0)>0){
+    toast(lang==='en'?'Request already sent':'الطلب مسجل مسبقًا',lang==='en'?'Administration can follow it from the appointment center.':'يمكن للإدارة متابعته من مركز المواعيد.');
+    renderTable();return true;
+  }
+  if(select)select.disabled=true;
+  const identity=patientWithDirectoryIdentity(patient);
+  try{
+    const response=await request('/api/appointment-requests',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
+      source:'doctor_earliest',patientId:String(patient.id||''),name:String(identity.name||patient.name||''),file:String(identity.file||patient.file||''),phone:String(identity.phone||patient.phone||''),identity:String(identity.nationalId||patient.nationalId||''),clinicId:ACTIVE_CLINIC_ID,doctorName:String(currentClinic.doctorName||''),sourceDate:selectedDate,priority:'urgent',note:'يرجى التواصل مع المريض عاجلًا لتقديم أقرب موعد متاح.',idempotencyKey:`earliest:${ACTIVE_CLINIC_ID}:${selectedDate}:${patient.id}`
+    })},20000);
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'Could not create request');
+    mutate(()=>{
+      const current=patientById(patientId);if(!current)return;
+      current.earliestAppointmentRequestId=String(data.requestId||data.request?.id||'');
+      current.earliestAppointmentRequestedAt=Number(data.request?.createdAt||Date.now());
+      current.earliestAppointmentRequestedBy=String(currentClinic.doctorName||authUser?.displayName||authUser?.username||'الطبيب');
+      current.adminUpdatedAt=Date.now();
+    });
+    if(sync.dirty)await pushState();
+    appointmentRequestChannel?.postMessage({type:'updated',id:data.requestId});
+    toast(lang==='en'?'Urgent request sent ⚡':'تم إرسال طلب أقرب موعد ⚡',lang==='en'?'Administration was notified and the patient was added to the urgent follow-up list.':'ظهر المريض الآن في قائمة المتابعة العاجلة لدى الإدارة.');
+    return true;
+  }catch(error){
+    console.error('Earliest appointment request failed',error);
+    toast(lang==='en'?'Could not send the request':'تعذر إرسال طلب أقرب موعد',lang==='en'?'Check the connection and try again.':'تحقق من الاتصال ثم أعد المحاولة.');
+    renderTable();return false;
+  }finally{
+    if(select?.isConnected){select.disabled=false;select.blur()}
+    renderTable();
+  }
 }
 function renderTable(){
   const activeStatusSelect=document.activeElement?.matches?.('.status-select,.plan-status-select');
@@ -2344,16 +2526,16 @@ function renderTable(){
     .sort((a,b)=>a.start.localeCompare(b.start));
 
   els.patientRows.innerHTML=visible.length
-    ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000;return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
+    ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000;return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'أضيف إلى قائمة اليوم حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف حديثًا'}</small>`:''}<strong>${escapeHtml(VIEW_MODE==='admin'?(String(p.name||'').trim()||'—'):firstName(p.name))}</strong></span><button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
-        <td>${escapeHtml(p.file)}${isZeroFileNumber(p.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
+        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong></span>${earliestAppointmentBadgeMarkup(p)}<button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
         <td>${escapeHtml(p.procedure||'—')}</td>
         <td>
-          <select class="status-select" data-status-id="${escapeHtml(p.id)}" aria-label="${escapeHtml(`${lang==='en'?'Patient status':'حالة المريض'}: ${VIEW_MODE==='admin'?(String(p.name||'').trim()||'—'):firstName(p.name)}`)}">
-            ${Object.keys(STATUS).map(k=>`<option value="${k}" ${p.status===k?'selected':''}>${escapeHtml(statusText(k))}</option>`).join('')}
+          <select class="status-select status-select-${escapeHtml(displayStatus)}" data-status-id="${escapeHtml(p.id)}" aria-label="${escapeHtml(`${lang==='en'?'Patient status':'حالة المريض'}: ${VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name)}`)}">
+            ${patientStatusOptionsMarkup(p)}
           </select>
         </td>
         <td class="hide-screen">
@@ -2531,8 +2713,8 @@ function callPatient(id){
 function startActualTreatment(id){
   const p=patientById(id);if(!p)return;
   const other=currentPatient();
-  if(other&&String(other.id)!==String(id)){toast('يوجد مريض قيد العلاج',`أنهِ حالة ${firstName(other.name)} أولًا`);return}
-  if(p.actualStartedAt){toast('الوقت الفعلي يعمل',`بدأ عند ${new Date(Number(p.actualStartedAt)).toLocaleTimeString('ar-SA')}`);return}
+  if(other&&String(other.id)!==String(id)){toast(lang==='en'?'Another patient is in treatment':'يوجد مريض قيد العلاج',lang==='en'?`Finish ${firstName(other.name)} first`:`أنهِ حالة ${firstName(other.name)} أولًا`);return}
+  if(p.actualStartedAt){toast(lang==='en'?'Actual timer is already running':'الوقت الفعلي يعمل',lang==='en'?`Started at ${new Date(Number(p.actualStartedAt)).toLocaleTimeString('en-GB')}`:`بدأ عند ${new Date(Number(p.actualStartedAt)).toLocaleTimeString('ar-SA')}`);return}
   mutate(()=>{p.status='active';p.actualStartedAt=Date.now();p.lastCalledAt=p.lastCalledAt||Date.now()});
   toast('بدأ الوقت الفعلي',`${firstName(p.name)} — دون تغيير وقت الموعد الأصلي`);
 }
@@ -2640,7 +2822,8 @@ function collectLabCaseDraft(){
   return{labName,customLabName:labName==='other'?customLabName:'',items:[{code:'direct-lab-entry',name:procedureName,quantity:units}],units,material:$('labMaterialInput').value.trim(),shade:$('labShadeInput').value.trim(),status:$('labSentNowCheck').checked?'sent':'pending_send',sentAt:$('labSentNowCheck').checked?Date.now():0};
 }
 async function createLabCase(patient,draft){
-  const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,clinicId:ACTIVE_CLINIC_ID,clinicName:currentClinic?.name||'',roomNumber:currentClinic?.roomNumber||'',doctorName:currentClinic?.doctorName||authUser?.displayName||'',patient:{id:patient.id,name:patient.name,file:patient.file,phone:patient.phone},sourceDate:selectedDate})});
+  const resolvedPatient=patientWithDirectoryIdentity(patient);
+  const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,clinicId:ACTIVE_CLINIC_ID,clinicName:currentClinic?.name||'',roomNumber:currentClinic?.roomNumber||'',doctorName:currentClinic?.doctorName||authUser?.displayName||'',patient:{id:patient.id,name:resolvedPatient.name,file:resolvedPatient.file,phone:resolvedPatient.phone},sourceDate:selectedDate})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok){
     const error=new Error(data.duplicate?'توجد حالة معمل نشطة مسجلة مسبقًا لنفس المريض والإجراء.':(data.error||'تعذر إنشاء حالة المعمل'));
@@ -2750,6 +2933,7 @@ async function confirmPatientCompletion(){
     mutate(()=>{
     p.status='done';
     p.completedAt=Date.now();
+    p.actualEndedAt=p.actualEndedAt||p.completedAt;
     p.adminUpdatedAt=Date.now();
     p.paymentRequired=paymentRequired;
     p.paymentAction=paymentRequired?paymentAction:'';
@@ -2804,10 +2988,12 @@ function queueCardMarkup(p,index){
   const position=index+1;
   const callLabel=called?tr('recall'):tr('callNext');
   const lastCall=called&&p.lastCalledAt?` · ${tr('lastCall')} ${new Date(Number(p.lastCalledAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
-  return `<article class="queue-card rank-${position} queue-${position}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
+  const visualStatus=derivedStatus(p);
+  return `<article class="queue-card rank-${position} queue-${position} status-${escapeHtml(visualStatus)}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
     <div class="queue-card-top"><div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div><span class="queue-orbit" aria-hidden="true">#${position+1}</span></div>
     <div class="queue-name">${escapeHtml(firstName(p.name))}${treatmentPlanBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</div>
-    <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.start)}–${escapeHtml(p.end)} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
+    <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
+    ${appointmentTimeDetailsMarkup(p)}
     <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
     <span class="queue-proximity-meter" aria-hidden="true"><i></i></span>
     ${position===1?`<div class="queue-actions"><button type="button" data-call-id="${escapeHtml(p.id)}">${escapeHtml(callLabel)}</button><button type="button" data-actual-id="${escapeHtml(p.id)}">${escapeHtml(tr('startActual'))}</button></div>`:''}
@@ -2822,9 +3008,14 @@ function treemapMarkup(queue,index=0){
 }
 function renderUpcoming(lead){
   const queue=upcomingPatients(lead?.id??null);
+  const leadOverrun=Boolean(lead&&lead.actualStartedAt&&Date.now()>timeDate(lead.end).getTime());
   const queueCountLabel=lang==='en'?`${queue.length} patients`:`${queue.length} مرضى`;
   const layoutHint=lang==='en'?'Market-style size map by appointment order':'خريطة أحجام مثل سوق الأسهم حسب ترتيب الموعد';
-  document.querySelector('.upcoming-head small').innerHTML=`<span class="upcoming-layout-key">${escapeHtml(queueCountLabel)} · ${escapeHtml(layoutHint)}</span>`;
+  const upcomingHead=document.querySelector('.upcoming-head h2');
+  if(upcomingHead)upcomingHead.textContent=leadOverrun?(lang==='en'?'Next patient — ready to call':'المريض التالي — جاهز للاستدعاء'):(lang==='en'?'Upcoming patients':'المرضى القادمون');
+  const upcomingPanel=document.querySelector('.upcoming-panel');
+  upcomingPanel?.classList.toggle('is-overrun',leadOverrun);
+  document.querySelector('.upcoming-head small').innerHTML=`<span class="upcoming-layout-key">${escapeHtml(queueCountLabel)} · ${escapeHtml(leadOverrun?(lang==='en'?'Current treatment is over time':'العلاج الحالي تجاوز وقته — التالي ظاهر بوضوح'):layoutHint)}</span>`;
   const featured=queue.slice(0,8);
   const overflow=queue.slice(8);
   $('upcomingStack').classList.add('treemap-mode');
@@ -2927,25 +3118,75 @@ function renderLive(updateStructure=true){
   const card=$('currentCard');
   const activelyTreating=Boolean(cur&&lead&&String(cur.id)===String(lead.id));
   const leadStatus=lead?derivedStatus(lead):'';
-  card.className='card current-card '+stageFor(lead);
+  const treatmentOverrun=Boolean(activelyTreating&&lead&&Date.now()>timeDate(lead.end).getTime());
+  const clinicTone=clinicToneFor(lead,activelyTreating);
+  card.className='card current-card '+stageFor(lead)+(lead?` status-${escapeHtml(leadStatus)}`:'')+` clinic-tone-${clinicTone}`+(treatmentOverrun?' treatment-overrun':'');
   $('currentVisualIcon').textContent=activelyTreating?'●':['arrived','early_arrival'].includes(leadStatus)?'✓':lead?'➜':'○';
   $('currentVisualIcon').classList.toggle('arrival-pulse',['arrived','early_arrival'].includes(leadStatus));
   $('currentLabel').textContent=activelyTreating?tr('currentPatient'):['arrived','early_arrival'].includes(leadStatus)?statusText(leadStatus):tr('nextToCall');
   $('currentName').innerHTML=lead?`${escapeHtml(firstName(lead.name))}<span class="current-plan-mark">${treatmentPlanBadgeMarkup(lead)}</span>${labCaseBadgeMarkup(lead)}`:escapeHtml(tr('noCurrent'));
-  $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.start}–${lead.end} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
-  $('currentCountdown').textContent=lead?fmtMs((activelyTreating?timeDate(lead.end):timeDate(lead.start))-new Date()):'--:--:--';
+  $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
+  if($('currentStartTime'))$('currentStartTime').textContent=lead?.start||'—';
+  if($('currentExitLabel'))$('currentExitLabel').textContent=appointmentExitLabel(lead);
+  if($('currentEndTime'))$('currentEndTime').textContent=appointmentExitTime(lead);
+  if($('currentDuration'))$('currentDuration').textContent=appointmentDurationLabel(lead);
+  const scheduleDelta=lead?(activelyTreating?timeDate(lead.end).getTime()-Date.now():timeDate(lead.start).getTime()-Date.now()):0;
+  $('currentCountdown').textContent=lead?(treatmentOverrun?`+${fmtMs(Math.abs(scheduleDelta))}`:fmtMs(scheduleDelta)):'--:--:--';
+  if($('currentCountdownLabel'))$('currentCountdownLabel').textContent=treatmentOverrun?(lang==='en'?'Overtime — treatment still running':'تجاوز الموعد — العلاج مستمر'):(lang==='en'?'Time to appointment end':'الوقت حتى نهاية الموعد');
+  if($('currentCountdownHint'))$('currentCountdownHint').textContent=treatmentOverrun?(lang==='en'?'Finish the current patient to move the queue':'أكمل المريض الحالي لتنتقل القائمة تلقائيًا'):(lang==='en'?'Entry and exit remain fixed to the schedule':'وقت الدخول والخروج محفوظان حسب جدول الموعد');
   $('actualTimer').textContent=lead?.actualStartedAt?fmtMs(Date.now()-Number(lead.actualStartedAt)):'--:--:--';
   $('actualTimerHint').textContent=lead?.actualStartedAt?`${tr('startedAt')} ${new Date(Number(lead.actualStartedAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA')}`:tr('actualStartHint');
   const notice=$('currentStatusNotice');
   notice.hidden=!lead;
-  notice.className='current-status-notice '+(activelyTreating?'is-active':['arrived','early_arrival'].includes(leadStatus)?'is-arrived':'is-waiting');
+  notice.className='current-status-notice '+(treatmentOverrun?'is-overrun':activelyTreating?'is-active':['arrived','early_arrival'].includes(leadStatus)?'is-arrived':'is-waiting');
   if(lead){
     const appointmentStart=timeDate(lead.start).getTime();
     const waitingBase=Number(lead.arrivedAt||appointmentStart);
     const beforeAppointment=Date.now()<appointmentStart;
-    $('currentStatusTitle').textContent=activelyTreating?(lang==='en'?'Treatment confirmed and running':'تم تأكيد بدء العلاج'):leadStatus==='arrived'?(lang==='en'?'Patient arrived — waiting to start':'وصل المريض — بانتظار بدء العلاج'):leadStatus==='early_arrival'?(lang==='en'?'Early arrival — waiting for appointment':'وصول مبكر — بانتظار موعد العلاج'):(lang==='en'?'Waiting for treatment confirmation':'بانتظار تأكيد بدء العلاج');
-    $('currentStatusText').textContent=activelyTreating?(lang==='en'?'Actual treatment time is being tracked':'يتم الآن احتساب مدة العلاج الفعلية'):beforeAppointment?(lang==='en'?'Time remaining until the scheduled appointment':'الوقت المتبقي حتى الموعد المحدد'):(lang==='en'?'Waiting time until treatment starts':'مدة الانتظار حتى بدء العلاج');
-    $('waitingTimer').textContent=activelyTreating?fmtMs(Date.now()-Number(lead.actualStartedAt||Date.now())):beforeAppointment?fmtMs(appointmentStart-Date.now()):fmtMs(Date.now()-waitingBase);
+    $('currentStatusTitle').textContent=treatmentOverrun?(lang==='en'?'Overtime — treatment still running':'تجاوز الوقت — العلاج مستمر'):activelyTreating?(lang==='en'?'Treatment confirmed and running':'تم تأكيد بدء العلاج'):leadStatus==='arrived'?(lang==='en'?'Patient arrived — waiting to start':'وصل المريض — بانتظار بدء العلاج'):leadStatus==='early_arrival'?(lang==='en'?'Early arrival — waiting for appointment':'وصول مبكر — بانتظار موعد العلاج'):(lang==='en'?'Waiting for treatment confirmation':'بانتظار تأكيد بدء العلاج');
+    $('currentStatusText').textContent=treatmentOverrun?(lang==='en'?'The next patient stays visible until you finish this session':'المريض التالي ظاهر بوضوح حتى تنهي هذه الجلسة'):activelyTreating?(lang==='en'?'Actual treatment time is being tracked':'يتم الآن احتساب مدة العلاج الفعلية'):beforeAppointment?(lang==='en'?'Time remaining until the scheduled appointment':'الوقت المتبقي حتى الموعد المحدد'):(lang==='en'?'Waiting time until treatment starts':'مدة الانتظار حتى بدء العلاج');
+    $('waitingTimer').textContent=treatmentOverrun?`+${fmtMs(Date.now()-timeDate(lead.end).getTime())}`:activelyTreating?fmtMs(Date.now()-Number(lead.actualStartedAt||Date.now())):beforeAppointment?fmtMs(appointmentStart-Date.now()):fmtMs(Date.now()-waitingBase);
+  }
+
+  const nextCallout=$('nextPatientCallout');
+  const nextPatient=lead?upcomingPatients(lead.id)[0]:null;
+  const upcomingPanel=document.querySelector('.upcoming-panel');
+  if(upcomingPanel){
+    upcomingPanel.classList.toggle('is-overrun',treatmentOverrun);
+    const upcomingHead=upcomingPanel.querySelector('.upcoming-head h2');
+    if(upcomingHead)upcomingHead.textContent=treatmentOverrun?(lang==='en'?'Next patient — ready to call':'المريض التالي — جاهز للاستدعاء'):(lang==='en'?'Upcoming patients':'المرضى القادمون');
+  }
+  if(nextCallout){
+    const showNext=Boolean(nextPatient);
+    const canCallNext=Boolean(nextPatient&&activelyTreating);
+    nextCallout.hidden=!showNext;
+    nextCallout.classList.toggle('is-overrun',treatmentOverrun);
+    const nextCallButton=$('nextPatientCallBtn');
+    if(nextCallButton){
+      nextCallButton.disabled=!canCallNext;
+      nextCallButton.dataset.nextCallId=canCallNext?String(nextPatient.id):'';
+    }
+    if(showNext){
+      const nextDisplay=VIEW_MODE==='admin'?patientWithDirectoryIdentity(nextPatient):nextPatient;
+      $('nextPatientLabel').textContent=lang==='en'?'Next patient':'المريض التالي';
+      $('nextPatientName').textContent=VIEW_MODE==='admin'?String(nextDisplay.name||nextPatient.name||'—'):firstName(nextPatient.name);
+      $('nextPatientMeta').textContent=`${tr('fileLabel')}: ${nextPatient.file||'—'} · ${statusText(derivedStatus(nextPatient))}`;
+      if($('nextPatientStartLabel'))$('nextPatientStartLabel').textContent=lang==='en'?'Entry':'الدخول';
+      if($('nextPatientEndLabel'))$('nextPatientEndLabel').textContent=appointmentExitLabel(nextPatient);
+      if($('nextPatientDurationLabel'))$('nextPatientDurationLabel').textContent=lang==='en'?'Duration':'مدة الموعد';
+      if($('nextPatientStart'))$('nextPatientStart').textContent=nextPatient.start||'—';
+      if($('nextPatientEnd'))$('nextPatientEnd').textContent=appointmentExitTime(nextPatient);
+      if($('nextPatientDuration'))$('nextPatientDuration').textContent=appointmentDurationLabel(nextPatient);
+      $('nextPatientTime').textContent=fmtMs(timeDate(nextPatient.start)-new Date());
+      if(nextCallButton)nextCallButton.textContent=canCallNext?(Number(nextPatient.callCount||0)>0?(lang==='en'?'Recall next':'إعادة استدعاء التالي'):(lang==='en'?'Call next':'استدعاء التالي')):(lang==='en'?'After current session':'بعد إنهاء الحالي');
+    }else{
+      if($('nextPatientName'))$('nextPatientName').textContent='—';
+      if($('nextPatientMeta'))$('nextPatientMeta').textContent='—';
+      if($('nextPatientStart'))$('nextPatientStart').textContent='—';
+      if($('nextPatientEnd'))$('nextPatientEnd').textContent='—';
+      if($('nextPatientDuration'))$('nextPatientDuration').textContent='—';
+      if($('nextPatientTime'))$('nextPatientTime').textContent='—';
+    }
   }
 
   document.querySelectorAll('[data-queue-countdown-id]').forEach(el=>{
@@ -3113,7 +3354,7 @@ function renderPaymentPanel(){
     const items=Array.isArray(p.paymentItems)?p.paymentItems:[];
     const details=items.length?`<div class="payment-items-summary">${items.map(item=>`<span class="payment-item-chip${item.free?' free':''}">${escapeHtml(item.name)} ×${Number(item.quantity||1)}${item.free?` · ${lang==='en'?'Free':'مجاني'}`:''}</span>`).join('')}</div>`:`<p>${escapeHtml(p.paymentAction||'إجراء دفع')}</p>`;
     const discount=p.paymentDiscount?`<p class="payment-discount-note">🏷 ${lang==='en'?'Discount':'الخصم'}: ${escapeHtml(p.paymentDiscount)}</p>`:'';
-    return `<article class="payment-item ${stage}"><div><strong>💳 ${escapeHtml(firstName(p.name))} — ${escapeHtml(p.file||'بدون رقم ملف')}</strong>${details}${discount}<small>${p.paymentRequestedAt?new Date(Number(p.paymentRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'):''}</small></div>${controls}</article>`;
+    return `<article class="payment-item ${stage}"><div><strong>💳 ${escapeHtml(firstName(p.name))} — ${escapeHtml(p.file||(lang==='en'?'No file number':'بدون رقم ملف'))}</strong>${details}${discount}<small>${p.paymentRequestedAt?new Date(Number(p.paymentRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'):''}</small></div>${controls}</article>`;
   }).join(''):`<div class="payment-empty">${lang==='en'?'No pending payment actions.':'لا توجد إجراءات دفع معلقة.'}</div>`;
 }
 function suggestedTimes(){
@@ -3531,12 +3772,12 @@ function parsePatientDirectoryCsv(text){
   const merged=mergePatientDirectoryImportRows(rows);
   return{rows,validRows:merged.validRows,invalidRows:merged.invalidRows,reason:rows.length?'':'empty'};
 }
-function patientDirectoryIssueLabel(issue){return({name_required:'الاسم مفقود',full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة',identity_required:'مستبعد: اسم فقط بلا ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
+function patientDirectoryIssueLabel(issue){return({name_required:'الاسم مفقود',full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة',identity_required:'لا يوجد ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
 function renderPatientDirectoryImportPreview(){
   const draft=patientDirectoryImportDraft,summary=$('patientDirectoryImportSummary'),preview=$('patientDirectoryImportPreview'),save=$('patientDirectoryImportSave');
   $('patientDirectoryImportFileName').textContent=draft.fileName||'—';
   const reviewCount=draft.validRows.filter(row=>row.reviewFlags?.length).length;
-  summary.innerHTML=`<span>إجمالي الصفوف <b>${draft.rows.length}</b></span><span class="valid">سيتم دمجه وتحديثه <b>${draft.validRows.length}</b></span><span class="review">مع تنبيه تصحيح <b>${reviewCount}</b></span><span class="invalid">مستبعد تلقائيًا <b>${draft.invalidRows.length}</b></span>`;
+  summary.innerHTML=`<span>إجمالي الصفوف <b>${draft.rows.length}</b></span><span class="valid">سيتم دمجه <b>${draft.validRows.length}</b></span><span class="review">مع تنبيه تصحيح <b>${reviewCount}</b></span><span class="invalid">متعذر استيراده <b>${draft.invalidRows.length}</b></span>`;
   const rows=[...draft.validRows.map(row=>({...row,valid:true})),...draft.invalidRows.map(row=>({...row,valid:false}))].slice(0,160);
   preview.innerHTML=rows.length?`<table class="patient-directory-import-table"><thead><tr><th>الصف</th><th>الاسم الكامل</th><th>رقم الملف</th><th>الجوال</th><th>الملاحظات</th><th>النتيجة</th></tr></thead><tbody>${rows.map(row=>`<tr class="${row.valid?(row.reviewFlags?.length?'review':'valid'):'invalid'}"><td>${escapeHtml((row.sourceRows||[row.sourceRow]).join('، '))}</td><td>${escapeHtml(row.fullName||'—')}</td><td>${escapeHtml(row.fileNo||'—')}</td><td>${escapeHtml(row.mobile||'—')}</td><td title="${escapeHtml(row.adminNotes||'')}">${escapeHtml(row.adminNotes||'—')}</td><td><span class="patient-directory-import-state ${row.valid?(row.reviewFlags?.length?'review':'valid'):'invalid'}">${row.valid?(row.reviewFlags?.length?row.reviewFlags.map(patientDirectoryIssueLabel).join('، '):'جاهز'):escapeHtml(patientDirectoryIssueLabel(row.issue))}</span></td></tr>`).join('')}</tbody></table>${draft.rows.length>160?`<div class="patient-identity-empty">تم عرض أول 160 صفًا فقط؛ سيتم دمج جميع الصفوف المقروءة.</div>`:''}`:'<div class="patient-identity-empty">لم يتم العثور على صفوف قابلة للقراءة.</div>';
   save.disabled=!draft.validRows.length;
@@ -3567,7 +3808,7 @@ async function submitPatientDirectoryRows(rows,button){
     const response=await request(PATIENTS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({clinicId:ACTIVE_CLINIC_ID,patients:rows})},60000),data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر تحديث قاعدة المرضى');
     await refreshPatientIdentityDirectory();
-    toast('تم تحسين قاعدة المرضى',`جديد ${Number(data.created||0)} · مصحح أو مكتمل ${Number(data.updated||0)} · يحتاج تصحيح ${Number(data.reviewRequired||0)} · حُذف اسم فقط ${Number(data.removedNameOnly||0)} · جوال مشترك ${Number(data.sharedPhones||0)} · متعارض ${Number(data.conflicts||0)} · مستبعد ${Number(data.skipped||0)}`);
+    toast('تم تحديث قاعدة المرضى',`جديد ${Number(data.created||0)} · تم تحديثه ${Number(data.updated||0)} · يحتاج تصحيح ${Number(data.reviewRequired||0)} · جوال مشترك ${Number(data.sharedPhones||0)} · متعارض ${Number(data.conflicts||0)} · متجاوز ${Number(data.skipped||0)}`);
     return data;
   }finally{button.disabled=false;button.textContent=original}
 }
@@ -3635,7 +3876,6 @@ async function acceptPatientImport(parsed){
     toast(lang==='en'?'Import failed':'تعذر الاستيراد',detail);els.csvInput.value='';return;
   }
   if(parsed.date&&parsed.date!==selectedDate){await setDate(parsed.date);els.datePicker.value=parsed.date;}
-  sync.directoryImport=true;
   mutate(()=>patients=parsed.rows);
   const dateMessage=parsed.date?(lang==='en'?` for ${parsed.date}`:` لتاريخ ${parsed.date}`):'';
   toast(lang==='en'?'Import complete':'تم الاستيراد',lang==='en'?`${parsed.rows.length} patients imported${dateMessage}`:`تم استيراد ${parsed.rows.length} مريض${dateMessage}`);
@@ -3821,6 +4061,52 @@ async function registerPwa(){
 }
 function setText(selector,value){const el=document.querySelector(selector);if(el)el.textContent=value}
 function setTexts(selector,values){document.querySelectorAll(selector).forEach((el,index)=>{if(values[index]!==undefined)el.textContent=values[index]})}
+function setLocalizedNode(node,english,arabic){
+  if(!node)return;
+  if(!node.dataset.defaultLabel)node.dataset.defaultLabel=arabic??node.textContent;
+  node.textContent=lang==='en'?english:node.dataset.defaultLabel;
+}
+function setLocalizedTexts(selector,englishValues,arabicValues){
+  document.querySelectorAll(selector).forEach((node,index)=>{
+    const arabic=arabicValues?.[index]??node.textContent;
+    setLocalizedNode(node,englishValues?.[index]??node.textContent,arabic);
+  });
+}
+function setLocalizedPlaceholder(input,english,arabic){
+  if(!input)return;
+  if(!input.dataset.defaultPlaceholder)input.dataset.defaultPlaceholder=arabic??(input.getAttribute('placeholder')||'');
+  input.setAttribute('placeholder',lang==='en'?english:input.dataset.defaultPlaceholder);
+}
+const STATIC_EN=Object.freeze({
+  'مركز العمليات':'Operations center','كل التنبيهات':'All alerts','مركز المواعيد':'Appointment center','مركز الخطط':'Treatment plan center','مركز المعمل':'Laboratory center','مركز الوصفات':'Prescription center',
+  'إدارة الخطط العلاجية':'Treatment plan management','فتح مركز الخطط المستقل':'Open treatment plan center','تعديل حالات الاعتماد، فتح الخطة للتصحيح، أو حذف السجل الخاطئ.':'Change approval status, open a plan for correction, or remove an incorrect record.',
+  'اضغط تحديث لعرض الخطط العلاجية.':'Select refresh to load treatment plans.','جميع العيادات':'All clinics','جميع الحالات':'All statuses','غير المعتمدة فقط':'Unapproved only','إجمالي الخطط':'Total plans','غير مكتملة الاعتماد':'Awaiting approval','معتمدة وموقعة':'Approved and signed','تحتاج تصحيح رقم الملف':'File number needs correction',
+  'قاعدة بيانات المرضى':'Patient database','استيراد قائمة مرضى كاملة':'Import full patient list','إضافة مريض إلى القاعدة':'Add patient to database','إضافة مريض جديد':'Add new patient','الاسم الكامل *':'Full name *','رقم الملف':'File number','رقم الجوال':'Mobile number','رقم الهوية':'National ID','حفظ في قاعدة المرضى':'Save to patient database','مراجعة قائمة المرضى':'Review patient list','إلغاء الاستيراد':'Cancel import',
+  'فتح سجل المريض':'Open patient record','بحث وتعديل وتتبع':'Search, edit, and track','إجراءات ما بعد العلاج':'Post-treatment actions','فتح الخطة':'Open plan','فتح وتعديل':'Open and edit','حذف الخطة':'Delete plan','حالة الاعتماد':'Approval status','رقم الخطة':'Plan number','غير مسجل':'Not registered','ملف':'File','جوال':'Mobile',
+  'إجراءات الدفع المطلوبة للعيادة المحددة':'Payment actions for selected clinic','متابعة الإدارة':'Administration follow-up','لا توجد إجراءات دفع معلقة.':'No pending payment actions.','إضافة مريض':'Add patient','إضافة حالة معمل جديدة':'Add new lab case','تنبيهات الإدارة':'Admin alerts','ضغط العمل':'Workload','الإعدادات':'Settings','تحديث':'Refresh','إغلاق':'Close','إلغاء':'Cancel','حفظ':'Save','حذف':'Delete','بحث':'Search','المريض':'Patient','الحالة':'Status','الإجراء':'Procedure','الملاحظات':'Notes','لا توجد بيانات':'No data available'
+});
+function translateStaticArabicDom(){
+  document.querySelectorAll('body *').forEach(node=>{
+    if(node.children.length)return;
+    const current=String(node.textContent||'').trim();
+    if(!node.dataset.bcOriginalText){if(!Object.prototype.hasOwnProperty.call(STATIC_EN,current))return;node.dataset.bcOriginalText=current}
+    const original=node.dataset.bcOriginalText;
+    if(lang==='en'&&Object.prototype.hasOwnProperty.call(STATIC_EN,original))node.textContent=STATIC_EN[original];
+    else if(lang==='ar')node.textContent=original;
+  });
+}
+function adminInterventionCount(){
+  const overdue=appointmentRequests.items.filter(item=>item.status!=='closed'&&Date.now()-Number(item.createdAt||0)>(item.service==='pain'?15*60*1000:30*60*1000)).length;
+  const fresh=appointmentRequests.items.filter(item=>item.status==='new').length;
+  const labStatuses=new Set(['needs_adjustment','returned_lab','received_clinic','delivered_coordination','ready_at_lab']);
+  const labs=labCasesState.cases.filter(item=>labStatuses.has(item.status)).length;
+  return overdue+fresh+labs;
+}
+function updateAdminInterventionBadge(){
+  const count=adminInterventionCount();
+  const top=$('adminNotificationsTopLink'),badge=$('adminNotificationsTopCount'),modern=$('modernAdminAlertsCount');
+  if(badge)badge.textContent=String(count);if(modern)modern.textContent=String(count);if(top)top.classList.toggle('has-alert',count>0);
+}
 function rebuildStatusSelect(select,includeAll=false){
   if(!select)return;
   const value=select.value;
@@ -3838,6 +4124,39 @@ function applyLang(){
   setText('#clinicViewLink',lang==='en'?'🩺 Doctor page':'🩺 صفحة الطبيب');
   setText('#adminViewLink',lang==='en'?'🗓️ Administration page':'🗓️ صفحة الإدارة');
   setText('#statisticsTopLink strong',lang==='en'?'Statistics':'الإحصائيات');
+  setText('#adminNotificationsTopLink strong',lang==='en'?'Admin alerts':'تنبيهات الإدارة');
+  $('adminNotificationsTopLink')?.setAttribute('title',lang==='en'?'Open alerts requiring administration action':'فتح التنبيهات التي تحتاج تدخل الإدارة');
+  setText('[data-modern-action="admin-alerts"] strong',lang==='en'?'Admin alerts':'تنبيهات الإدارة');
+  setText('[data-modern-action="admin-alerts"] small',lang==='en'?'Overdue and required actions':'المتأخر والإجراءات المطلوبة');
+  setText('.modern-sidebar-brand strong',lang==='en'?'Best Care administration':'إدارة أفضل عناية');
+  setText('.modern-sidebar-brand small',lang==='en'?'Modern workspace':'مساحة العمل الحديثة');
+  setText('.modern-overview-copy>small',lang==='en'?'Modern workspace':'مساحة العمل الحديثة');
+  setText('.modern-overview-copy h2',lang==='en'?'Current priorities':'الأولوية الآن');
+  setText('.modern-overview-copy p',lang==='en'?'Reach work that needs action without leaving today’s dashboard.':'الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.');
+  setText('#modernSyncLabel',lang==='en'?'Live synchronization':'المزامنة المباشرة');
+  setLocalizedTexts('.modern-overview-metrics button small',['New appointments','Payment requests','Plans to review'],['مواعيد جديدة','طلبات دفع','خطط تحتاج مراجعة']);
+  if(lang==='en'){
+    const modernCopy={overview:['Overview',''],appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Plan approval and review'],labs:['Laboratory cases','Track active cases'],'patient-record':['Patient database','View, correct, and track'],patients:['Today’s patients','List and updates'],'add-patient':['Add patient','New appointment'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payment and plan procedures'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],doctor:['Doctor page','Open selected clinic'],language:['Switch language','Arabic or English'],theme:['App appearance','Light or dark'],notifications:['System notifications','Enable or disable notifications'],'admin-alerts':['Admin alerts','Overdue and required actions'],sound:['Sound alerts','Alert sound control'],export:['Export list','Download CSV'],logout:['Sign out','End the session safely'],presence:['Connected devices','Live synchronization'],classic:['Classic interface','Return to the previous design']};
+    Object.entries(modernCopy).forEach(([action,copy])=>{const node=document.querySelector(`[data-modern-action="${action}"]`);if(!node)return;setLocalizedNode(node.querySelector('strong'),copy[0]);if(copy[1])setLocalizedNode(node.querySelector('small'),copy[1]);});
+    document.querySelectorAll('.modern-sidebar-group>summary strong').forEach((node,index)=>setLocalizedNode(node,['Requests and follow-up','Patients and appointments','Settings and administration','Access and preferences'][index]||node.textContent));
+    setLocalizedNode(document.querySelector('.modern-sidebar-home>span:last-child'),'Overview');
+    setLocalizedNode($('#modernPresenceCount'),`${presence.online||0} connected devices`,`${presence.online||0} أجهزة متصلة`);
+    setLocalizedNode($('#treatmentPlanCenterTitle'),'Operations center','مركز العمليات');
+    setLocalizedNode(document.querySelector('.treatment-plan-center-head p'),'Unified alerts for appointments, plans, laboratory cases, and approved prescriptions.','قائمة موحدة لتنبيهات المواعيد والخطط والمعمل والوصفات المعتمدة من الطبيب.');
+    setLocalizedTexts('.operations-center-nav small',['All alerts','Appointment center','Treatment plan center','Laboratory center','Prescription center'],['كل التنبيهات','مركز المواعيد','مركز الخطط','مركز المعمل','مركز الوصفات']);
+    setLocalizedTexts('.operations-center-links a',['📅 Appointment center page','▤ Treatment plan center page','🦷 Laboratory center page'],['📅 صفحة مركز المواعيد','▤ صفحة مركز الخطط','🦷 صفحة مركز المعمل']);
+    setLocalizedNode($('#adminHubTitle'),'All-clinic patient follow-up','متابعة مرضى جميع العيادات');setLocalizedNode($('#adminHubHelp'),'Unified cases and updates requiring administration action today.','قائمة موحدة للحالات والتحديثات التي تحتاج تدخل الإدارة اليوم.');
+    setLocalizedNode($('#adminHubPaymentLabel'),'Payment requests','إجراءات الدفع');setLocalizedNode($('#adminHubPlanLabel'),'Plans awaiting approval','الخطط بانتظار الاعتماد');setLocalizedNode($('#adminHubUpdateLabel'),'Patient updates','تحديثات المرضى');setLocalizedNode($('#adminHubTotalLabel'),'Total patients today','إجمالي مرضى اليوم');
+    setLocalizedPlaceholder($('adminHubSearch'),'Search by name, file, or mobile','بحث بالاسم أو الملف أو الجوال');$('adminHubSearch')?.setAttribute('aria-label',lang==='en'?'Search all clinic patients':'البحث في جميع مرضى العيادات');$('adminHubClinicFilter')?.setAttribute('aria-label',lang==='en'?'Filter by clinic':'التصفية حسب العيادة');$('adminHubScopeFilter')?.setAttribute('aria-label',lang==='en'?'List type':'نوع القائمة');
+    if($('adminHubClinicFilter')?.options[0])setLocalizedNode($('adminHubClinicFilter').options[0],'All clinics','جميع العيادات');if($('adminHubScopeFilter')){setLocalizedNode($('adminHubScopeFilter').options[0],'Needs administration action','تحتاج تدخل الإدارة فقط');setLocalizedNode($('adminHubScopeFilter').options[1],'All patients today','جميع مرضى اليوم')}
+    setLocalizedNode(document.querySelector('.payment-kicker'),'Administration follow-up','متابعة الإدارة');setLocalizedNode(document.querySelector('#paymentPanel h2'),'Payment actions for selected clinic','إجراءات الدفع المطلوبة للعيادة المحددة');setLocalizedNode(document.querySelector('#paymentPanel p'),'Open clinic cases appear here; use the unified list above to follow other clinics.','تظهر هنا حالات العيادة المفتوحة حاليًا؛ استخدم القائمة الموحدة أعلاه لمتابعة بقية العيادات.');
+    setLocalizedNode($('#treatmentPlanCenterRefresh'),'↻ Refresh','↻ تحديث');setLocalizedNode($('#treatmentPlanCenterStatus option[value="all"]'),'All statuses','كل الحالات');setLocalizedNode($('#treatmentPlanCenterStatus option[value="unapproved"]'),'Unapproved only','غير معتمدة فقط');setLocalizedPlaceholder($('treatmentPlanCenterSearch'),'Search by name, file, mobile, or plan number','بحث بالاسم أو الملف أو الجوال أو رقم الخطة');
+  }else{
+    document.querySelectorAll('[data-modern-action] strong,[data-modern-action] small,.modern-sidebar-group>summary strong,.modern-sidebar-home>span:last-child,.modern-overview-metrics button small,.operations-center-nav small,.operations-center-links a,#modernPresenceCount,#treatmentPlanCenterTitle,.treatment-plan-center-head p,#adminHubTitle,#adminHubHelp,#adminHubPaymentLabel,#adminHubPlanLabel,#adminHubUpdateLabel,#adminHubTotalLabel,.payment-kicker,#paymentPanel h2,#paymentPanel p,#treatmentPlanCenterRefresh,#treatmentPlanCenterStatus option,#adminHubClinicFilter option,#adminHubScopeFilter option').forEach(node=>{if(node.dataset.defaultLabel)node.textContent=node.dataset.defaultLabel});
+    setLocalizedPlaceholder($('adminHubSearch'),'Search by name, file, or mobile','بحث بالاسم أو الملف أو الجوال');
+    setLocalizedPlaceholder($('treatmentPlanCenterSearch'),'Search by name, file, mobile, or plan number','بحث بالاسم أو الملف أو الجوال أو رقم الخطة');
+  }
+  updateAdminInterventionBadge();
   setText('#appointmentRequestsPageBtn',lang==='en'?'📅 Appointment request tracking':'📅 متابعة طلبات المواعيد');
   setText('#appointmentRequestLabel',lang==='en'?'Appointment requests':'طلبات المواعيد');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
@@ -3980,11 +4299,17 @@ function applyLang(){
   renderClinicSwitcher();
   render();
   renderAppointmentRequests();
+  translateStaticArabicDom();
   updateClock();
 }
 function toggleLang(){lang=lang==='ar'?'en':'ar';localStorage.setItem('bestcare_lang',lang);applyLang()}
 const APPOINTMENT_SERVICE_LABELS={examination:'فحص وتشخيص',pain:'ألم أو حالة عاجلة',restorative:'حشوات وعلاج تحفظي',root_canal:'علاج عصب',prosthodontics:'تركيبات وعدسات',implants:'زراعة أسنان',cosmetic:'تجميل الأسنان والابتسامة',cleaning:'تنظيف الأسنان',other:'خدمة أخرى'};
 const APPOINTMENT_STATUS_LABELS={new:'طلب جديد',contacted:'تم التواصل',booked:'تم الحجز',closed:'مغلق'};
+const APPOINTMENT_SERVICE_LABELS_EN={examination:'Examination and diagnosis',pain:'Urgent pain or case',restorative:'Restorative care',root_canal:'Root canal treatment',prosthodontics:'Crowns and veneers',implants:'Dental implants',cosmetic:'Cosmetic dentistry and smile design',cleaning:'Dental cleaning',other:'Other service'};
+const APPOINTMENT_STATUS_LABELS_EN={new:'New request',contacted:'Contacted',booked:'Booked',closed:'Closed'};
+function appointmentServiceLabel(item){const key=item?.service||'other';return lang==='en'?(key==='other'?(item.serviceOther||APPOINTMENT_SERVICE_LABELS_EN.other):(APPOINTMENT_SERVICE_LABELS_EN[key]||APPOINTMENT_SERVICE_LABELS_EN.other)):(key==='other'?(item.serviceOther||APPOINTMENT_SERVICE_LABELS.other):(APPOINTMENT_SERVICE_LABELS[key]||APPOINTMENT_SERVICE_LABELS.other))}
+function appointmentStatusLabel(status){return (lang==='en'?APPOINTMENT_STATUS_LABELS_EN:APPOINTMENT_STATUS_LABELS)[status]|| (lang==='en'?'Update':'تحديث')}
+function appointmentStatusEntries(){return Object.entries(lang==='en'?APPOINTMENT_STATUS_LABELS_EN:APPOINTMENT_STATUS_LABELS)}
 function appointmentRequestCadence(){
   const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',weekday:'short',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
   const read=type=>parts.find(part=>part.type===type)?.value||'';
@@ -4011,14 +4336,16 @@ function renderAppointmentRequests(){
     ?(openItems.length?(openItems.length===1?'new request':'new requests'):'no new requests')
     :(openItems.length?(openItems.length===1?'طلب جديد':'طلبات جديدة'):'لا طلبات جديدة');
   $('appointmentRequestList').innerHTML=appointmentRequests.items.length?appointmentRequests.items.map(item=>{
-    const service=item.service==='other'?(item.serviceOther||APPOINTMENT_SERVICE_LABELS.other):(APPOINTMENT_SERVICE_LABELS[item.service]||APPOINTMENT_SERVICE_LABELS.other);
-    const created=item.createdAt?new Date(item.createdAt).toLocaleString('ar-SA',{timeZone:'Asia/Riyadh',dateStyle:'short',timeStyle:'short'}):'—';
-    const source=item.source==='dr-yahyahadi'?'الموقع الشخصي':'الرابط المباشر';
+    const service=appointmentServiceLabel(item);
+    const created=item.createdAt?new Date(item.createdAt).toLocaleString(lang==='en'?'en-GB':'ar-SA',{timeZone:'Asia/Riyadh',dateStyle:'short',timeStyle:'short'}):'—';
+    const source=item.source==='doctor_earliest'?(lang==='en'?'Urgent doctor request ⚡':'طلب عاجل من الطبيب ⚡'):item.source==='dr-yahyahadi'?(lang==='en'?'Personal website':'الموقع الشخصي'):(lang==='en'?'Direct link':'الرابط المباشر');
     const history=Array.isArray(item.history)?item.history:[],latest=history.at(-1);
-    const lastAction=latest?`${APPOINTMENT_STATUS_LABELS[latest.status]||'تحديث'} · ${latest.by||'النظام'}${latest.note?` · ${latest.note}`:''}`:'بانتظار أول إجراء';
-    return `<article class="appointment-request-item ${item.status==='new'?'is-new':''}" data-appointment-request="${escapeHtml(item.id)}"><div><strong><a href="./appointment-requests.html?focus=${encodeURIComponent(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(item.phone)}</a></strong><small>هوية ${escapeHtml(item.identity)} · ${escapeHtml(service)}</small><small>${escapeHtml(created)} · ${source}${item.note?` · ${escapeHtml(item.note)}`:''}</small><small class="last-action">آخر إجراء: ${escapeHtml(lastAction)}</small></div><select data-appointment-request-status="${escapeHtml(item.id)}" aria-label="حالة طلب ${escapeHtml(item.name)}">${Object.entries(APPOINTMENT_STATUS_LABELS).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select></article>`;
-  }).join(''):'<p class="appointment-request-empty">لا توجد طلبات مواعيد مسجلة.</p>';
-  renderOperationsCenter();updateTreatmentPlanCenterTrigger();
+    const lastAction=latest?`${appointmentStatusLabel(latest.status)} · ${latest.by|| (lang==='en'?'System':'النظام')}${latest.note?` · ${latest.note}`:''}`:(lang==='en'?'Awaiting first action':'بانتظار أول إجراء');
+    const identityLabel=lang==='en'?'ID':'هوية',lastActionLabel=lang==='en'?'Last action':'آخر إجراء',statusAria=lang==='en'?'Appointment request status':'حالة طلب';
+    const reference=item.phone||item.file||item.identity||'—';
+    return `<article class="appointment-request-item ${item.status==='new'?'is-new':''} ${item.source==='doctor_earliest'?'is-earliest':''}" data-appointment-request="${escapeHtml(item.id)}"><div><strong><a href="./appointment-requests.html?focus=${encodeURIComponent(item.id)}">${escapeHtml(item.name)} · ${escapeHtml(reference)}</a></strong><small>${item.file?`${lang==='en'?'File':'ملف'} ${escapeHtml(item.file)} · `:''}${identityLabel} ${escapeHtml(item.identity||'—')} · ${escapeHtml(service)}</small><small>${escapeHtml(created)} · ${source}${item.doctorName?` · ${escapeHtml(item.doctorName)}`:''}${item.note?` · ${escapeHtml(item.note)}`:''}</small><small class="last-action">${lastActionLabel}: ${escapeHtml(lastAction)}</small></div><select data-appointment-request-status="${escapeHtml(item.id)}" aria-label="${statusAria} ${escapeHtml(item.name)}">${appointmentStatusEntries().map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select></article>`;
+  }).join(''):`<p class="appointment-request-empty">${lang==='en'?'No appointment requests recorded.':'لا توجد طلبات مواعيد مسجلة.'}</p>`;
+  renderOperationsCenter();updateTreatmentPlanCenterTrigger();updateAdminInterventionBadge();
 }
 async function refreshAppointmentRequests({notify=true}={}){
   if(VIEW_MODE!=='admin'||authUser?.role!=='admin'||appointmentRequests.busy)return;
@@ -4076,7 +4403,7 @@ async function updateAppointmentRequestStatus(id,status,select){
     const index=appointmentRequests.items.findIndex(item=>item.id===id);
     if(index>=0)appointmentRequests.items[index]=data.request;
     appointmentRequestChannel?.postMessage({type:'updated',id});
-    renderAppointmentRequests();renderOperationsCenter();updateTreatmentPlanCenterTrigger();
+    renderAppointmentRequests();renderOperationsCenter();renderAdminPatientHub();updateTreatmentPlanCenterTrigger();
   }catch(error){toast('تعذر تحديث طلب الموعد','تحقق من الاتصال وأعد المحاولة.');renderAppointmentRequests()}
 }
 function updateClock(){
@@ -4190,6 +4517,7 @@ saveUser=async function(){const body={username:$('newUsername').value.trim(),dis
 $('saveUserBtn').addEventListener('click',saveUser);
 $('flowStage').addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button)return;
+  if(button.dataset.nextCallId)callPatient(button.dataset.nextCallId);
   if(button.dataset.callId)callPatient(button.dataset.callId);
   if(button.dataset.actualId)startActualTreatment(button.dataset.actualId);
   if(button.dataset.finishId)finishPatient(button.dataset.finishId);
@@ -4244,6 +4572,12 @@ els.patientRows.addEventListener('change',async event=>{
   }
   const id=event.target.dataset.statusId;if(!id)return;
   const status=event.target.value;
+  if(status===EARLIEST_APPOINTMENT_ACTION){
+    const patient=patientById(id);
+    event.target.value=patient?.status||'waiting';
+    await requestEarliestAppointment(id,event.target);
+    return;
+  }
   if(status==='done'){
     const patient=patientById(id);
     event.target.value=patient?.status||'waiting';
