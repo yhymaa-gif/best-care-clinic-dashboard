@@ -734,3 +734,13 @@ html[data-theme="dark"] .patient-directory-review-panel{border-color:#71404a;bac
 html[data-theme="dark"] .next-patient-detail-grid span{border-color:#3f6272;background:#1b2d35}html[data-theme="dark"] .next-patient-detail-grid small{color:#9fc0cc!important}html[data-theme="dark"] .next-patient-detail-grid b{color:#b9e3ef!important}
 html[data-theme="dark"] .next-patient-callout{background:linear-gradient(135deg,#183641,#1b2830);border-color:#4b9fbd}html[data-theme="dark"] .next-patient-callout strong{color:#c5edf5}html[data-theme="dark"] .next-patient-callout span{color:#a6c3cc}
 @media(max-width:680px){.next-patient-callout{grid-template-columns:36px minmax(0,1fr);align-items:start}.next-patient-copy{grid-column:2}.next-patient-detail-grid{grid-column:2;gap:4px}.next-patient-actions{grid-column:2;grid-row:auto;align-items:center;justify-content:flex-start;padding-top:2px}.next-patient-actions>b{font-size:14px!important}.next-patient-actions button{flex:1;min-width:125px}.next-patient-detail-grid span{padding:5px 4px}.next-patient-detail-grid b{font-size:11px!important}}
+
+/* V7.60: completed treatment without a payment order is an explicit admin action. */
+.payment-missing-badge{display:flex;width:max-content;max-width:100%;align-items:center;gap:5px;margin-top:6px;padding:5px 9px;border:1px solid #e7aab5;border-radius:999px;background:#fff0f2;color:#a3283d;font-size:11px;font-weight:950;box-shadow:0 4px 12px rgba(163,40,61,.12);animation:paymentMissingPulse 2.2s ease-in-out infinite}
+.payment-missing-badge>span{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#c72e48;color:#fff;font-size:11px;line-height:1}
+.payment-missing-action{border-color:#c72e48!important;background:#c72e48!important;color:#fff!important;box-shadow:0 6px 15px rgba(199,46,72,.2)}
+.payment-missing-action:hover{background:#a8243a!important;border-color:#a8243a!important}
+.admin-action-tag.payment_missing{background:#fff0f2;color:#a3283d;border:1px solid #e7aab5;box-shadow:0 4px 12px rgba(163,40,61,.1)}
+.admin-patient-item.priority-urgent:has(.admin-action-tag.payment_missing){background:linear-gradient(135deg,#fffafb,#fff2f4)}
+@keyframes paymentMissingPulse{0%,100%{box-shadow:0 4px 12px rgba(163,40,61,.1)}50%{box-shadow:0 4px 16px rgba(199,46,72,.25)}}
+html[data-theme="dark"] .payment-missing-badge{border-color:#a85c69;background:#3b2027;color:#ffd9df}html[data-theme="dark"] .payment-missing-badge>span{background:#d74b64}html[data-theme="dark"] .admin-action-tag.payment_missing{border-color:#a85c69;background:#3b2027;color:#ffd9df}html[data-theme="dark"] .admin-patient-item.priority-urgent:has(.admin-action-tag.payment_missing){background:linear-gradient(135deg,#2d2024,#3b2027)}
