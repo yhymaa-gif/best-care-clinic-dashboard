@@ -218,7 +218,7 @@ test('administration endpoints enrich names without exposing full names to the c
     read('netlify/functions/admin-patients.mjs')
   ]);
   assert.match(state, /if\(auth\.user\?\.role!=='admin'\)return reply\(\{exists:true,\.\.\.state/);
-  assert.match(state, /enrichPatientNameFromDirectory\(patientDirectory,patient\)/);
+  assert.match(state, /enrichPatientFromDirectory\(patientDirectory,patient\)/);
   assert.match(adminPatients, /patients\.map\(patient =>/);
   assert.match(adminPatients, /enrichPatientFromDirectory\(patientDirectory, patient\)/);
 });
