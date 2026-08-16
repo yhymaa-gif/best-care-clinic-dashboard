@@ -641,6 +641,18 @@ function purgeSensitiveLocalData(){
 }
 const stateUrl=(date,nonce=false)=>`${API}?date=${encodeURIComponent(date)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}${nonce?`&_=${Date.now()}`:''}`;
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
+function riyadhDateKey(value=Date.now()){
+  const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value));
+  const read=type=>parts.find(part=>part.type===type)?.value||'';
+  return `${read('year')}-${read('month')}-${read('day')}`;
+}
+function dailyQuickActionsVisible(date=selectedDate){
+  const active=String(date||today()),current=riyadhDateKey();
+  if(active<current)return false;
+  if(active>current)return true;
+  const hour=Number(new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',hour:'2-digit',hourCycle:'h23'}).format(new Date()));
+  return hour<23;
+}
 const firstName=v=>String(v||'مريض').trim().split(/\s+/)[0];
 const mins=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return h*60+m};
 const timeDate=t=>{const d=/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)?new Date(`${selectedDate}T00:00:00`):new Date();const [h,m]=String(t||'0:0').split(':').map(Number);d.setHours(h,m,0,0);return d};
@@ -1126,7 +1138,9 @@ function adminPatientReasons(patient){
   if(statusCopy[status])add(...statusCopy[status]);
   if(isZeroFileNumber(patient?.file)&&['arrived','early_arrival','active'].includes(status))add('identity','يلزم تحديث رقم الملف عند وصول المريض',0);
   const hasOpenAction=reasons.some(reason=>reason.type==='payment'||reason.type==='plan');
-  if(status==='done'&&!hasOpenAction&&!patient?.paymentCompletedAt&&planStatus!=='approved_signed'){
+  if(paymentMissingAfterCompletion(patient)){
+    add('payment_missing',lang==='en'?'Complete the patient’s remaining payment':'استكمال دفع المبلغ المتبقي على المريض',0);
+  }else if(status==='done'&&!hasOpenAction&&!patient?.paymentCompletedAt&&planStatus!=='approved_signed'){
     add('done',lang==='en'?'Treatment completed — review next action':'اكتمل العلاج — راجع الإجراء التالي',2);
   }
   if(Number(patient?.adminUpdatedAt||0)>0&&status==='waiting'&&!hasOpenAction){
@@ -1217,10 +1231,10 @@ function renderAdminPatientHub(){
   if($('adminHubSearch'))$('adminHubSearch').placeholder=lang==='en'?'Search name, file, phone, or clinic':'بحث بالاسم أو الملف أو الجوال أو العيادة';
   setText('#adminHubRefresh',adminPatientHub.loading?(lang==='en'?'Refreshing…':'جارٍ التحديث…'):(lang==='en'?'Refresh':'تحديث'));
   const all=adminHubAllPatients(),attention=all.filter(item=>item.reasons.length);
-  $('adminHubPaymentCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>reason.type==='payment')).length);
+  $('adminHubPaymentCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>['payment','payment_missing'].includes(reason.type))).length);
   $('adminHubPlanCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>reason.type==='plan')).length);
   $('adminHubEarliestCount').textContent=String(appointmentRequests.items.filter(item=>item.source==='doctor_earliest'&&['new','contacted'].includes(item.status)).length);
-  $('adminHubUpdateCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>!['payment','plan','earliest'].includes(reason.type))).length);
+  $('adminHubUpdateCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>!['payment','payment_missing','plan','earliest'].includes(reason.type))).length);
   $('adminHubTotalCount').textContent=String(all.length);
   setText('#adminHubPaymentLabel',lang==='en'?'Payment':'الدفع');
   setText('#adminHubPlanLabel',lang==='en'?'Plans':'الخطط');
@@ -1252,6 +1266,7 @@ function renderAdminPatientHub(){
     const status=derivedStatus(patient);
     const hasPlan=item.reasons.some(reason=>reason.type==='plan');
     const hasPayment=item.reasons.some(reason=>reason.type==='payment');
+    const hasMissingPayment=item.reasons.some(reason=>reason.type==='payment_missing');
     const hasEarliest=item.reasons.some(reason=>reason.type==='earliest');
     return `<article class="admin-patient-item priority-${tone}">
       <div class="admin-patient-main">
@@ -1268,6 +1283,7 @@ function renderAdminPatientHub(){
         ${hasEarliest&&patient.earliestAppointmentRequestId?`<a class="primary earliest" href="./appointment-requests.html?focus=${encodeURIComponent(patient.earliestAppointmentRequestId)}">${lang==='en'?'Follow up urgently':'متابعة عاجلة ⚡'}</a>`:''}
         ${hasPlan?`<a class="primary" href="${escapeHtml(adminPlanUrl(item))}">${lang==='en'?'Open plan':'فتح الخطة'}</a>`:''}
         ${hasPayment?`<a class="primary payment" href="${escapeHtml(adminClinicUrl(item.clinic.id,'paymentPanel'))}">${lang==='en'?'Open payment':'فتح الدفع'}</a>`:''}
+        ${hasMissingPayment?`<a class="primary payment-missing-action" href="${escapeHtml(adminClinicUrl(item.clinic.id,'patientListTitle'))}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</a>`:''}
         <a href="${escapeHtml(adminClinicUrl(item.clinic.id))}">${lang==='en'?'Open clinic list':'فتح قائمة العيادة'}</a>
       </div>
     </article>`;
@@ -1624,6 +1640,18 @@ function clinicToneFor(patient,activelyTreating=false){
 }
 function stageFor(p){if(!p)return'stage-idle';const st=timeDate(p.start).getTime(),en=timeDate(p.end).getTime(),now=Date.now();const ratio=Math.max(0,Math.min(1,(now-st)/Math.max(1,en-st)));if(ratio<.5)return'stage-green';if(ratio<.75)return'stage-yellow';if(ratio<.9)return'stage-orange';return'stage-red';}
 function paymentStage(p){if(!p?.paymentRequired)return'';if(p.paymentCompletedAt)return'completed';if(p.paymentAcknowledgedAt)return'received';return'requested'}
+function paymentOrderExists(p){
+  return Boolean(p?.paymentRequired||Number(p?.paymentRequestedAt||0)>0||String(p?.paymentAction||'').trim()||(Array.isArray(p?.paymentItems)&&p.paymentItems.length));
+}
+function paymentMissingAfterCompletion(p){
+  return VIEW_MODE==='admin'&&dailyQuickActionsVisible()&&derivedStatus(p)==='done'&&!paymentOrderExists(p)&&!Number(p?.paymentCompletedAt||0);
+}
+function paymentMissingBadgeMarkup(p){
+  if(!paymentMissingAfterCompletion(p))return'';
+  const label=lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي';
+  const help=lang==='en'?'Treatment completed — review and collect the remaining balance':'اكتمل العلاج — راجع المبلغ المتبقي واستكمل تحصيله';
+  return `<span class="payment-missing-badge" role="status" title="${escapeHtml(help)}"><span aria-hidden="true">!</span>${escapeHtml(label)}</span>`;
+}
 function paymentBadgeMarkup(p){
   const stage=paymentStage(p);if(!stage)return'';
   const labels=lang==='en'?{requested:'Payment requested',received:'Request received',completed:'Payment completed'}:{requested:'بانتظار استلام طلب الدفع',received:'تم استلام طلب الدفع',completed:'✓ تم تنفيذ الدفع'};
@@ -1661,6 +1689,7 @@ function labCaseBadgeMarkup(patient){
   const lead=active[0],tone=['received_clinic','delivered_coordination'].includes(lead.status)?'received':'';
   const elapsed=labElapsedDays(lead);
   const label=active.length>1?`${active.length} ${lang==='en'?'lab cases':'حالات بالمعمل'}`:`${labStatusText(lead.status)}${elapsed?` · ${elapsed}`:''}`;
+  if(VIEW_MODE==='clinic')return`<button class="lab-row-badge ${tone} clinic-compact-badge" type="button" data-lab-patient="${escapeHtml(patient.id)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span aria-hidden="true">🦷</span></button>`;
   return `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="${lang==='en'?'Open dental lab cases':'فتح حالات معمل الأسنان'}">${escapeHtml(label)}</button>`;
 }
 async function refreshLabCases({force=false}={}){
@@ -1887,7 +1916,9 @@ function treatmentPlanBadgeMarkup(patient){
   if(!PLAN_STATUS_VALUES.includes(status))return'';
   const labels=planStatusLabels();
   const detail=status==='rejected'&&record?.status===status&&record?.rejectionReason?` — ${record.rejectionReason}`:status==='cancelled'&&record?.status===status&&record?.cancellationReason?` — ${record.cancellationReason}`:'';
-  return`<span class="plan-status-badge plan-status-${status}" title="${escapeHtml(labels[status]+detail)}">${escapeHtml(labels[status])}</span>`;
+  const title=escapeHtml(labels[status]+detail);
+  if(VIEW_MODE==='clinic')return`<span class="plan-status-badge plan-status-${status} clinic-compact-badge" role="img" aria-label="${title}" title="${title}"><span aria-hidden="true">📋</span></span>`;
+  return`<span class="plan-status-badge plan-status-${status}" title="${title}">${escapeHtml(labels[status])}</span>`;
 }
 function canChangePlanStatus(current,next){
   if(current===next)return true;
@@ -2475,7 +2506,9 @@ function patientStatusOptionsMarkup(patient){
 }
 function earliestAppointmentBadgeMarkup(patient){
   if(!Number(patient?.earliestAppointmentRequestedAt||0))return'';
-  return `<span class="earliest-appointment-badge" title="${lang==='en'?'Administration is following up for an earlier appointment':'طلب الطبيب التواصل عاجلًا لتقديم أقرب موعد'}">⚡ ${lang==='en'?'Earliest appointment requested':'أقرب موعد مطلوب'}</span>`;
+  const label=lang==='en'?'Administration is following up for an earlier appointment':'طلب الطبيب التواصل عاجلًا لتقديم أقرب موعد';
+  if(VIEW_MODE==='clinic')return`<span class="earliest-appointment-badge clinic-compact-badge" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span aria-hidden="true">⚡</span></span>`;
+  return `<span class="earliest-appointment-badge" title="${escapeHtml(label)}">⚡ ${lang==='en'?'Earliest appointment requested':'أقرب موعد مطلوب'}</span>`;
 }
 async function requestEarliestAppointment(patientId,select){
   const patient=patientById(patientId);
@@ -2528,7 +2561,7 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000;return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong></span>${earliestAppointmentBadgeMarkup(p)}<button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong></span>${earliestAppointmentBadgeMarkup(p)}${dailyQuickActionsVisible()?(VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):`<button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>`):''}${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -2541,9 +2574,10 @@ function renderTable(){
         <td class="hide-screen">
           <div class="row-actions">
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
-            <button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>
-            <button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>
-            ${VIEW_MODE==='clinic'&&displayStatus==='done'?`<button class="mini" type="button" data-completion-id="${escapeHtml(p.id)}">${lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة'}</button>`:''}
+            ${VIEW_MODE==='clinic'?clinicIconAction('🦷',lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض',`data-lab-entry-id="${escapeHtml(p.id)}"`,'clinic-row-action lab'): `<button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>`}
+            ${VIEW_MODE==='clinic'?clinicIconAction('📋',treatmentPlanButtonText(p),`data-plan-id="${escapeHtml(p.id)}"`,'clinic-row-action plan'): `<button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>`}
+             ${VIEW_MODE==='clinic'&&displayStatus==='done'?clinicIconAction('💳',lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة',`data-completion-id="${escapeHtml(p.id)}"`,'clinic-row-action payment'):''}
+             ${VIEW_MODE==='admin'&&paymentMissingAfterCompletion(p)?`<button class="mini payment-missing-action" type="button" data-payment-missing-id="${escapeHtml(p.id)}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</button>`:''}
             <button type="button" class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button type="button" class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
@@ -2916,6 +2950,19 @@ function finishPatient(id){
   openModal('paymentModal');
   updatePaymentCatalogFromSettings({notify:false});
 }
+function openMissingPaymentOrder(id){
+  const p=patientById(id);
+  if(!p||!paymentMissingAfterCompletion(p))return;
+  pendingCompletionId=String(id);
+  $('paymentPatientText').textContent=lang==='en'?`Complete the remaining payment for ${firstName(p.name)}.`:`استكمل دفع المبلغ المتبقي على المريض ${firstName(p.name)}.`;
+  $('paymentRequiredCheck').checked=true;
+  $('planDraftCheck').checked=false;
+  $('prescriptionCheck').checked=false;
+  resetPaymentProcedureEditor();
+  $('paymentActionField').hidden=false;
+  openModal('paymentModal');
+  updatePaymentCatalogFromSettings({notify:false});
+}
 async function confirmPatientCompletion(){
   const p=patientById(pendingCompletionId);if(!p)return;
   const paymentRequired=$('paymentRequiredCheck').checked;
@@ -2983,12 +3030,23 @@ function renderCompactTimeline(cur){
     return `<div class="timeline-chip${currentClass}${stateClass}" title="${escapeHtml(statusText(status)+paymentLabel)}"><strong>${escapeHtml(p.start||'--:--')} · ${escapeHtml(firstName(p.name))}</strong><small>${escapeHtml(statusText(status)+paymentLabel)}</small></div>`;
   }).join(''):`<div class="queue-empty">${escapeHtml(tr('noAppointments'))}</div>`;
 }
+function clinicIconAction(icon,label,attributes='',className=''){
+  const safeLabel=escapeHtml(label);
+  return `<button type="button" class="clinic-icon-action ${className}" ${attributes} aria-label="${safeLabel}" title="${safeLabel}"><span class="clinic-action-symbol" aria-hidden="true">${icon}</span><span class="clinic-action-label">${safeLabel}</span></button>`;
+}
 function queueCardMarkup(p,index){
   const called=Number(p.callCount||0)>0;
   const position=index+1;
   const callLabel=called?tr('recall'):tr('callNext');
   const lastCall=called&&p.lastCalledAt?` · ${tr('lastCall')} ${new Date(Number(p.lastCalledAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`:'';
   const visualStatus=derivedStatus(p);
+  const compactActions=VIEW_MODE==='clinic';
+  const callAction=compactActions
+    ? clinicIconAction(called?'↻':'📣',callLabel,`data-call-id="${escapeHtml(p.id)}"`,'clinic-queue-action')
+    : `<button type="button" data-call-id="${escapeHtml(p.id)}">${escapeHtml(callLabel)}</button>`;
+  const actualAction=compactActions
+    ? clinicIconAction('▶',tr('startActual'),`data-actual-id="${escapeHtml(p.id)}"`,'clinic-queue-action')
+    : `<button type="button" data-actual-id="${escapeHtml(p.id)}">${escapeHtml(tr('startActual'))}</button>`;
   return `<article class="queue-card rank-${position} queue-${position} status-${escapeHtml(visualStatus)}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
     <div class="queue-card-top"><div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div><span class="queue-orbit" aria-hidden="true">#${position+1}</span></div>
     <div class="queue-name">${escapeHtml(firstName(p.name))}${treatmentPlanBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</div>
@@ -2996,7 +3054,7 @@ function queueCardMarkup(p,index){
     ${appointmentTimeDetailsMarkup(p)}
     <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
     <span class="queue-proximity-meter" aria-hidden="true"><i></i></span>
-    ${position===1?`<div class="queue-actions"><button type="button" data-call-id="${escapeHtml(p.id)}">${escapeHtml(callLabel)}</button><button type="button" data-actual-id="${escapeHtml(p.id)}">${escapeHtml(tr('startActual'))}</button></div>`:''}
+    ${position===1?`<div class="queue-actions">${callAction}${actualAction}</div>`:''}
   </article>`;
 }
 function treemapMarkup(queue,index=0){
@@ -3198,7 +3256,14 @@ function renderLive(updateStructure=true){
   if(updateStructure){
     renderCompactTimeline(lead);
     renderUpcoming(lead);
-    $('currentActions').innerHTML=lead?`<button type="button" data-call-id="${escapeHtml(lead.id)}">${escapeHtml(Number(lead.callCount||0)>0?tr('recall'):tr('callPatient'))}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${escapeHtml(lead.actualStartedAt?tr('actualRunning'):tr('startActual'))}</button><button type="button" data-plan-id="${escapeHtml(lead.id)}">${escapeHtml(treatmentPlanButtonText(lead))}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">${escapeHtml(tr('finishPatient'))}</button>`:''}`:'';
+    const callLabel=Number(lead?.callCount||0)>0?tr('recall'):tr('callPatient');
+    const actualLabel=lead?.actualStartedAt?tr('actualRunning'):tr('startActual');
+    const currentActions=lead
+      ? VIEW_MODE==='clinic'
+        ? `${clinicIconAction(Number(lead.callCount||0)>0?'↻':'📣',callLabel,`data-call-id="${escapeHtml(lead.id)}"`,'clinic-current-action')}${clinicIconAction(lead.actualStartedAt?'⏱':'▶',actualLabel,`data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}`,'clinic-current-action')}${clinicIconAction('📋',treatmentPlanButtonText(lead),`data-plan-id="${escapeHtml(lead.id)}"`,'clinic-current-action')}${activelyTreating?clinicIconAction('✓',tr('finishPatient'),`data-finish-id="${escapeHtml(lead.id)}"`,'clinic-current-action finish'):''}`
+        : `<button type="button" data-call-id="${escapeHtml(lead.id)}">${escapeHtml(callLabel)}</button><button type="button" data-actual-id="${escapeHtml(lead.id)}" ${lead.actualStartedAt?'disabled':''}>${escapeHtml(actualLabel)}</button><button type="button" data-plan-id="${escapeHtml(lead.id)}">${escapeHtml(treatmentPlanButtonText(lead))}</button>${activelyTreating?`<button type="button" class="finish" data-finish-id="${escapeHtml(lead.id)}">${escapeHtml(tr('finishPatient'))}</button>`:''}`
+      : '';
+    $('currentActions').innerHTML=currentActions;
     renderAlertUI();
   }
 }
@@ -4587,13 +4652,14 @@ els.patientRows.addEventListener('change',async event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
-  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
   if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
   if(review)openReviewComposer(review);
   if(plan)openTreatmentPlan(plan);
   if(prescription)openPrescription(prescription);
   if(completion&&VIEW_MODE==='clinic')finishPatient(completion);
+  if(paymentMissing&&VIEW_MODE==='admin')openMissingPaymentOrder(paymentMissing);
   if(edit)openPatient(edit);
   if(del&&confirm('حذف هذا المريض؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
 });
