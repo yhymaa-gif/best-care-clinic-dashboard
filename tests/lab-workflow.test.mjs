@@ -35,3 +35,20 @@ test('lab and administration lists resolve old names from the central patient di
   assert.match(adminApi, /getPatientDirectory\(\)\.catch/);
   assert.match(adminApi, /enrichPatientFromDirectory\(patientDirectory, patient\)/);
 });
+
+test('patient completion exposes inline laboratory delivery updates without a second data store', async () => {
+  const [html, script, styles] = await Promise.all([
+    read('index.html'),
+    read('dashboard.js'),
+    read('dashboard.css')
+  ]);
+  assert.match(html, /id="completionLabField"/);
+  assert.match(html, /id="completionLabList"/);
+  assert.match(script, /const LAB_STATUS_ORDER=\[/);
+  assert.match(script, /data-lab-status-inline-id/);
+  assert.match(script, /data-completion-lab-status/);
+  assert.match(script, /updateDashboardLabStatus/);
+  assert.match(script, /collectCompletionLabUpdates/);
+  assert.match(styles, /\.completion-lab-field\{/);
+  assert.match(styles, /\.lab-status-inline-select\{/);
+});
