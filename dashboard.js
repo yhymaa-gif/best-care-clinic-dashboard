@@ -1670,7 +1670,8 @@ function patientLabCases(patient,{activeOnly=true}={}){
   const terminal=new Set(['delivered_patient','cancelled']);
   return labCasesState.cases.filter(item=>labCaseMatchesPatient(item,patient)&&(!activeOnly||!terminal.has(item.status))).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
 }
-function labStatusText(status){return (lang==='en'?{pending_send:'Awaiting lab handoff',sent:'Handed to lab',in_production:'In production',ready_at_lab:'Ready at lab',received_clinic:'Received by clinic',delivered_coordination:'Handed to coordination',delivered_patient:'Delivered to patient',needs_adjustment:'Needs adjustment',returned_lab:'Returned to lab',cancelled:'Cancelled'}:{pending_send:'بانتظار التسليم للمعمل',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_coordination:'تم تسليمها لموظفي التنسيق',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||(lang==='en'?'Lab case':'حالة معمل')}
+const LAB_STATUS_ORDER=['pending_send','sent_coordination','sent','in_production','ready_at_lab','received_clinic','delivered_coordination','delivered_patient','needs_adjustment','returned_lab','cancelled'];
+function labStatusText(status){return (lang==='en'?{pending_send:'Awaiting lab handoff',sent_coordination:'Sent to coordination',sent:'Handed to lab',in_production:'In production',ready_at_lab:'Ready at lab',received_clinic:'Received by clinic',delivered_coordination:'Handed to coordination',delivered_patient:'Delivered to patient',needs_adjustment:'Needs adjustment',returned_lab:'Returned to lab',cancelled:'Cancelled'}:{pending_send:'بانتظار التسليم للمعمل',sent_coordination:'أُرسلت للتنسيق',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_coordination:'تم تسليمها لموظفي التنسيق',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||(lang==='en'?'Lab case':'حالة معمل')}
 function labElapsedDays(item){
   const start=Number(item?.sentAt||0);if(!start)return'';
   const end=['received_clinic','delivered_coordination'].includes(item?.status)&&Number(item?.receivedAt)>0?Number(item.receivedAt):Date.now();
@@ -1684,13 +1685,24 @@ function labElapsedDays(item){
   if(hours)return`${hours} ساعة`;
   return`${minutes} دقيقة`;
 }
+function labStatusOptionsMarkup(current){
+  return LAB_STATUS_ORDER.map(status=>`<option value="${status}"${status===current?' selected':''}>${escapeHtml(labStatusText(status))}</option>`).join('');
+}
+function labQuickStatusMarkup(item,patient){
+  const label=lang==='en'?'Update laboratory delivery status':'تحديث حالة تسليم المعمل';
+  return `<select class="lab-status-inline-select" data-lab-status-inline-id="${escapeHtml(item.id)}" data-lab-status-inline-clinic="${escapeHtml(item.clinicId||ACTIVE_CLINIC_ID)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}">${labStatusOptionsMarkup(item.status)}</select>`;
+}
 function labCaseBadgeMarkup(patient){
   const active=patientLabCases(patient);if(!active.length)return'';
   const lead=active[0],tone=['received_clinic','delivered_coordination'].includes(lead.status)?'received':'';
   const elapsed=labElapsedDays(lead);
   const label=active.length>1?`${active.length} ${lang==='en'?'lab cases':'حالات بالمعمل'}`:`${labStatusText(lead.status)}${elapsed?` · ${elapsed}`:''}`;
-  if(VIEW_MODE==='clinic')return`<button class="lab-row-badge ${tone} clinic-compact-badge" type="button" data-lab-patient="${escapeHtml(patient.id)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span aria-hidden="true">🦷</span></button>`;
-  return `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="${lang==='en'?'Open dental lab cases':'فتح حالات معمل الأسنان'}">${escapeHtml(label)}</button>`;
+  const badge=VIEW_MODE==='clinic'
+    ? `<button class="lab-row-badge ${tone} clinic-compact-badge" type="button" data-lab-patient="${escapeHtml(patient.id)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span aria-hidden="true">🦷</span></button>`
+    : `<button class="lab-row-badge ${tone}" type="button" data-lab-patient="${escapeHtml(patient.id)}" title="${lang==='en'?'Open dental lab cases':'فتح حالات معمل الأسنان'}">${escapeHtml(label)}</button>`;
+  // Keep the selector beside the patient identity so the delivery stage can be
+  // advanced without leaving the patient list. The full history remains in lab.html.
+  return `<span class="lab-inline-control">${badge}${labQuickStatusMarkup(lead,patient)}${active.length>1?`<small class="lab-inline-more">+${active.length-1}</small>`:''}</span>`;
 }
 async function refreshLabCases({force=false}={}){
   const cadence=syncCadence().workHours?120000:600000;
@@ -2143,6 +2155,29 @@ async function changeOperationLabStatus(id,clinicId,status,select){
   }catch(error){select.value=previous;toast('تعذر تحديث حالة المعمل',String(error.message||error))}
   finally{select.disabled=false}
 }
+async function updateDashboardLabStatus(id,clinicId,status,select,{silent=false}={}){
+  const item=labCasesState.cases.find(entry=>String(entry.id)===String(id));
+  if(!item||item.status===status)return item;
+  const previous=item.status;
+  if(select)select.disabled=true;
+  try{
+    const response=await request('/api/lab-cases',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({id,clinicId:clinicId||ACTIVE_CLINIC_ID,status})});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'تعذر تحديث حالة المعمل');
+    const updated=data.case||{...item,status};
+    const index=labCasesState.cases.findIndex(entry=>String(entry.id)===String(id));
+    if(index>=0)labCasesState.cases[index]=updated;
+    const operationsIndex=operationsCenter.labCases.findIndex(entry=>String(entry.id)===String(id));
+    if(operationsIndex>=0)operationsCenter.labCases[operationsIndex]=updated;
+    renderFloatingLabButton();renderTable();renderOperationsCenter();updateTreatmentPlanCenterTrigger();
+    if(!silent)toast(lang==='en'?'Laboratory status updated':'تم تحديث حالة المعمل',`${updated.patient?.name||'المريض'} — ${labStatusText(status)}`);
+    return updated;
+  }catch(error){
+    if(select)select.value=previous;
+    if(!silent)toast(lang==='en'?'Could not update laboratory status':'تعذر تحديث حالة المعمل',String(error.message||error));
+    throw error;
+  }finally{if(select)select.disabled=false}
+}
 function openTreatmentPlanCenter(){
   operationsCenter.filter='all';openModal('treatmentPlanCenterModal');renderTreatmentPlanCenter();renderOperationsCenter();
   Promise.allSettled([refreshTreatmentPlanCenter(),refreshAppointmentRequests({notify:false}),refreshOperationsLabCases(),refreshOperationsPrescriptions()]);
@@ -2549,7 +2584,7 @@ async function requestEarliestAppointment(patientId,select){
   }
 }
 function renderTable(){
-  const activeStatusSelect=document.activeElement?.matches?.('.status-select,.plan-status-select');
+  const activeStatusSelect=document.activeElement?.matches?.('.status-select,.plan-status-select,.lab-status-inline-select');
   if(activeStatusSelect)return;
 
   const q=els.search.value.trim();
@@ -2938,6 +2973,25 @@ function paymentItemsSummary(items,discount=''){
   if(discount)parts.push(`الخصم: ${discount}`);
   return parts.join('، ');
 }
+function renderCompletionLabOptions(patient){
+  const field=$('completionLabField'),list=$('completionLabList');
+  if(!field||!list)return;
+  const active=patientLabCases(patient);
+  if(!active.length){field.hidden=true;list.innerHTML='';return}
+  field.hidden=false;
+  list.innerHTML=active.map(item=>{
+    const laboratory=item.labName==='other'?(item.customLabName||'معمل آخر'):(item.labName||'المعمل');
+    const work=(item.items||[]).map(entry=>`${entry.name} ×${entry.quantity}`).join('، ')||(lang==='en'?'Laboratory case':'حالة معمل');
+    const elapsed=labElapsedDays(item);
+    return `<div class="completion-lab-item"><div class="completion-lab-copy"><strong>${escapeHtml(laboratory)}</strong><small>${escapeHtml(work)}${elapsed?` · ${escapeHtml(elapsed)}`:''}</small></div><label><span>${lang==='en'?'Delivery stage':'مرحلة التسليم'}</span><select data-completion-lab-status="${escapeHtml(item.id)}" data-completion-lab-clinic="${escapeHtml(item.clinicId||ACTIVE_CLINIC_ID)}" aria-label="${lang==='en'?'Laboratory delivery stage':'مرحلة تسليم حالة المعمل'}">${labStatusOptionsMarkup(item.status)}</select></label></div>`;
+  }).join('');
+}
+function collectCompletionLabUpdates(){
+  return [...document.querySelectorAll('[data-completion-lab-status]')].map(select=>{
+    const item=labCasesState.cases.find(entry=>String(entry.id)===String(select.dataset.completionLabStatus));
+    return item&&select.value!==item.status?{id:item.id,clinicId:select.dataset.completionLabClinic||item.clinicId,status:select.value}:null;
+  }).filter(Boolean);
+}
 function finishPatient(id){
   const p=patientById(id);if(!p)return;
   pendingCompletionId=String(id);
@@ -2947,8 +3001,12 @@ function finishPatient(id){
   $('prescriptionCheck').checked=false;
   $('paymentActionField').hidden=true;
   resetPaymentProcedureEditor();
+  renderCompletionLabOptions(p);
   openModal('paymentModal');
   updatePaymentCatalogFromSettings({notify:false});
+  // Refresh only the lab collection used by this patient; this does not write
+  // appointment state and keeps the existing synchronization cadence intact.
+  refreshLabCases({force:true}).then(()=>renderCompletionLabOptions(patientById(id)||p)).catch(()=>{});
 }
 function openMissingPaymentOrder(id){
   const p=patientById(id);
@@ -2960,8 +3018,10 @@ function openMissingPaymentOrder(id){
   $('prescriptionCheck').checked=false;
   resetPaymentProcedureEditor();
   $('paymentActionField').hidden=false;
+  renderCompletionLabOptions(p);
   openModal('paymentModal');
   updatePaymentCatalogFromSettings({notify:false});
+  refreshLabCases({force:true}).then(()=>renderCompletionLabOptions(patientById(id)||p)).catch(()=>{});
 }
 async function confirmPatientCompletion(){
   const p=patientById(pendingCompletionId);if(!p)return;
@@ -2971,6 +3031,7 @@ async function confirmPatientCompletion(){
   const selection=collectPaymentItems();
   if(selection.error){toast(lang==='en'?'Payment action required':'بيانات الإجراء ناقصة',selection.error);$('paymentOtherInput').focus();return}
   if(paymentRequired&&!selection.items.length){toast(lang==='en'?'Payment action required':'اختر إجراء الدفع',lang==='en'?'Select at least one procedure.':'اختر إجراءً واحدًا على الأقل لإرساله إلى الإدارة.');return}
+  const labUpdates=collectCompletionLabUpdates();
   const paymentAction=paymentRequired?paymentItemsSummary(selection.items,selection.discount):'';
   const confirmButton=$('confirmCompletionBtn');
   const originalConfirmText=confirmButton.textContent;
@@ -3006,6 +3067,13 @@ async function confirmPatientCompletion(){
     // wait for the normal background cadence, otherwise the administration
     // screen may not see the missing-payment action until a later refresh.
     if(sync.dirty)await pushState();
+    let labUpdateFailures=0;
+    if(labUpdates.length){
+      const results=await Promise.allSettled(labUpdates.map(update=>updateDashboardLabStatus(update.id,update.clinicId,update.status,null,{silent:true})));
+      labUpdateFailures=results.filter(result=>result.status==='rejected').length;
+      if(labUpdateFailures)toast(lang==='en'?'Visit completed, but some laboratory stages need retry':'اكتمل العلاج، لكن تعذر تحديث بعض حالات المعمل','افتح حالة المعمل من القائمة وأعد المحاولة.');
+      else toast(lang==='en'?'Laboratory delivery stages updated':'تم تحديث مراحل تسليم المعمل','ظهرت التحديثات لدى الإدارة والمعمل.');
+    }
     closeModal('paymentModal');
     pendingCompletionId=null;
     if(createPrescription){
@@ -4364,6 +4432,8 @@ function applyLang(){
   setText('#planDraftChoiceHelp',lang==='en'?'Open the plan form, complete it, then approve it as the doctor.':'فتح نموذج الخطة وإكمالها ثم اعتمادها من الطبيب.');
   setText('#prescriptionChoiceTitle',lang==='en'?'Prepare a prescription':'إعداد وصفة علاجية');
   setText('#prescriptionChoiceHelp',lang==='en'?'Choose the category, complete the clinician-authored fields, then send it to administration.':'اختر نوع العلاج، ثم يعتمد الطبيب الوصفة لتصل إلى مركز الوصفات بالإدارة.');
+  setText('#completionLabTitle',lang==='en'?'Laboratory case linked to this patient':'حالة المعمل المرتبطة بالمريض');
+  setText('#completionLabHelp',lang==='en'?'Update the delivery stage when completing the visit; administration and the laboratory will see it immediately.':'حدّث مرحلة التسليم عند إكمال الزيارة لتظهر مباشرة لدى الإدارة والمعمل.');
   $('completionFlowNote').innerHTML=lang==='en'?'<strong>Workflow:</strong> The doctor completes and approves the draft, then administration receives it to finish the process.':'<strong>المسار:</strong> يُكمل الطبيب المسودة ويعتمدها، ثم تستلمها الإدارة لاستكمال الإجراءات.';
   setText('#confirmCompletionBtn',lang==='en'?'Confirm completion and continue':'اعتماد إكمال العلاج والمتابعة');
   setText('#paymentItemsLabel',lang==='en'?'Payment order procedures':'إجراءات أمر الدفع');
@@ -4668,6 +4738,11 @@ $('operationsAlertList')?.addEventListener('change',async event=>{
   else if(labId)await changeOperationLabStatus(labId,event.target.dataset.operationLabClinic,event.target.value,event.target);
 });
 els.patientRows.addEventListener('change',async event=>{
+  const inlineLabId=event.target.dataset.labStatusInlineId;
+  if(inlineLabId){
+    await updateDashboardLabStatus(inlineLabId,event.target.dataset.labStatusInlineClinic,event.target.value,event.target);
+    return;
+  }
   const planId=event.target.dataset.planStatusId;
   if(planId){
     await changeTreatmentPlanStatus(planId,event.target.value,event.target);
