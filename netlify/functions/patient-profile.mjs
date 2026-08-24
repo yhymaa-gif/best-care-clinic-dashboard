@@ -3,6 +3,7 @@ import { getStore } from '@netlify/blobs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { normalizePatientFile, normalizePatientNationalId, normalizePatientPhone, patientIdentityKeys } from './lib/patient-identity.mjs';
 import { correctDirectoryPatient, getPatientDirectory } from './lib/patient-directory.mjs';
+import { hydrateTreatmentPlanRegistry } from './lib/treatment-plan-history.mjs';
 
 const headers = apiHeaders('GET,PATCH,POST,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -266,12 +267,23 @@ export default async request => {
   const daysStore = store('clinic-dashboard-days');
   const labsStore = store('clinic-lab-cases');
   const plansStore = store('clinic-treatment-plans');
-  const registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {} };
+  let registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {} };
   const communicationRegistry = await communicationsStore.get('registry/global', { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {} };
   const prescriptionRegistry = await prescriptionsStore.get('registry/global', { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {} };
   const directoryRegistry = await getPatientDirectory();
   const directoryCanonical = directoryRegistry.aliases?.[lookupAlias(type, normalized)];
   const directoryRecord = directoryCanonical ? directoryRegistry.records?.[directoryCanonical] : null;
+  // The central plan index may predate the versioned plan archive. Hydrate only
+  // clinics related to this patient (or the requested clinic) so a profile search
+  // can recover older plans without scanning every clinic on every request.
+  const historyClinics = scope.all
+    ? [...new Set([directoryRecord?.latestClinicId, ...(Array.isArray(directoryRecord?.clinicIds) ? directoryRecord.clinicIds : [])].filter(value => clinicPattern.test(value || '')))]
+    : [scope.clinicId];
+  if (historyClinics.length) {
+    for (const historyClinicId of historyClinics.slice(0, 15)) {
+      registry = await hydrateTreatmentPlanRegistry({ registryStore, planStore: plansStore, current: registry, clinicId: historyClinicId });
+    }
+  }
   patientIdentityKeys(directoryRecord).forEach(alias => lookupAliases.add(alias));
   const initialPlans = registryMatches(registry, lookupAliases, scope);
   initialPlans.forEach(({ record }) => patientIdentityKeys(record).forEach(alias => lookupAliases.add(alias)));

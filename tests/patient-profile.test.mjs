@@ -17,6 +17,13 @@ test('patient profile links appointments by any stable patient identity', () => 
   assert.equal(profile.hasAlias({ file: 'A121', phone: '0500000000' }, aliases), false);
 });
 
+test('patient profile hydrates historical treatment plans before matching a searched patient', async () => {
+  const source = await readFile(new URL('../netlify/functions/patient-profile.mjs', import.meta.url), 'utf8');
+  assert.match(source, /hydrateTreatmentPlanRegistry/);
+  assert.match(source, /historyClinics/);
+  assert.match(source, /planStore: plansStore/);
+});
+
 test('patient profile parses both legacy and clinic-scoped appointment keys', () => {
   assert.deepEqual(profile.parseDayKey('days/2026-08-02'), { clinicId: 'clinic-1', date: '2026-08-02' });
   assert.deepEqual(profile.parseDayKey('clinics/clinic-15/days/2026-08-03'), { clinicId: 'clinic-15', date: '2026-08-03' });
