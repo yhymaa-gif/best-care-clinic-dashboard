@@ -50,6 +50,7 @@
       <article class="panel kpi"><div class="kpi-head"><span class="kpi-label">المرضى المسجلون</span><span class="kpi-icon">♙</span></div><strong data-kpi="uniquePatients">—</strong><small>مرضى فريدون حسب الملف أو الجوال</small></article>
       <article class="panel kpi" style="--tone:#e5f5ec"><div class="kpi-head"><span class="kpi-label">نسبة الإنجاز</span><span class="kpi-icon">✓</span></div><strong data-kpi="completionRate">—</strong><small>من المواعيد غير الملغاة</small></article>
       <article class="panel kpi" style="--tone:#fff1df"><div class="kpi-head"><span class="kpi-label">متوسط التأخير</span><span class="kpi-icon">◷</span></div><strong data-kpi="averageDelayMinutes">—</strong><small>بالدقائق للحالات التي بدأ علاجها</small></article>
+      <article class="panel kpi" style="--tone:#e5f0fb"><div class="kpi-head"><span class="kpi-label">متوسط مدة بقاء المريض</span><span class="kpi-icon">⏱</span></div><strong data-kpi="averageStayMinutes">—</strong><small>من وقت الوصول حتى إكمال العلاج</small></article>
       <article class="panel kpi" style="--tone:#fff0f2"><div class="kpi-head"><span class="kpi-label">طلبات الدفع المعلقة</span><span class="kpi-icon">﷼</span></div><strong data-kpi="paymentPending">—</strong><small>تحتاج متابعة الإدارة</small></article>
       <article class="panel kpi" style="--tone:#eef0fb"><div class="kpi-head"><span class="kpi-label">الخطط العلاجية</span><span class="kpi-icon">▤</span></div><strong data-kpi="planTotal">—</strong><small>الخطط المحدثة خلال الفترة</small></article>
       <article class="panel kpi" style="--tone:#e5f5f7"><div class="kpi-head"><span class="kpi-label">حالات المعمل النشطة</span><span class="kpi-icon">🦷</span></div><strong data-kpi="labActive">—</strong><small>لم تُسلّم للمريض بعد</small></article>
@@ -84,7 +85,7 @@
       </article>
       <article class="panel chart-card">
         <div class="card-head"><div><h3>مقارنة العيادات</h3><p>عدد المواعيد ونسبة الإنجاز والإجراءات المعلقة</p></div></div>
-        <div class="table-wrap"><table class="clinic-table"><thead><tr><th>العيادة والطبيب</th><th>المواعيد</th><th>المنجز</th><th>الملغي</th><th>دفع معلق</th><th>الخطط</th><th>الإنجاز</th></tr></thead><tbody id="clinicRows"></tbody></table></div>
+        <div class="table-wrap"><table class="clinic-table"><thead><tr><th>العيادة والطبيب</th><th>المواعيد</th><th>المنجز</th><th>الملغي</th><th>دفع معلق</th><th>الخطط</th><th>مدة البقاء</th><th>الإنجاز</th></tr></thead><tbody id="clinicRows"></tbody></table></div>
       </article>
     </section>
     <footer class="footer">جميع المؤشرات للمتابعة التشغيلية الداخلية — تطوير يحيى هادي</footer>

@@ -2545,6 +2545,14 @@ function earliestAppointmentBadgeMarkup(patient){
   if(VIEW_MODE==='clinic')return`<span class="earliest-appointment-badge clinic-compact-badge" role="img" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span aria-hidden="true">⚡</span></span>`;
   return `<span class="earliest-appointment-badge" title="${escapeHtml(label)}">⚡ ${lang==='en'?'Earliest appointment requested':'أقرب موعد مطلوب'}</span>`;
 }
+function earliestAppointmentActionMarkup(patient,displayStatus){
+  if(VIEW_MODE!=='clinic'||displayStatus!=='done')return'';
+  const requested=Number(patient?.earliestAppointmentRequestedAt||0)>0;
+  const label=lang==='en'
+    ?(requested?'Urgent appointment requested':'Needs urgent appointment')
+    :(requested?'تم طلب موعد عاجل':'يحتاج موعدًا عاجلًا');
+  return clinicIconAction('⚡',label,`data-earliest-id="${escapeHtml(patient.id)}"${requested?' disabled':''}`,`clinic-row-action earliest${requested?' is-requested':''}`);
+}
 async function requestEarliestAppointment(patientId,select){
   const patient=patientById(patientId);
   if(!patient||patient.status!=='done'){
@@ -2611,6 +2619,7 @@ function renderTable(){
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
             ${VIEW_MODE==='clinic'?clinicIconAction('🦷',lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض',`data-lab-entry-id="${escapeHtml(p.id)}"`,'clinic-row-action lab'): `<button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>`}
             ${VIEW_MODE==='clinic'?clinicIconAction('📋',treatmentPlanButtonText(p),`data-plan-id="${escapeHtml(p.id)}"`,'clinic-row-action plan'): `<button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>`}
+             ${earliestAppointmentActionMarkup(p,displayStatus)}
              ${VIEW_MODE==='clinic'&&displayStatus==='done'?clinicIconAction('💳',lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة',`data-completion-id="${escapeHtml(p.id)}"`,'clinic-row-action payment'):''}
              ${VIEW_MODE==='admin'&&paymentMissingAfterCompletion(p)?`<button class="mini payment-missing-action" type="button" data-payment-missing-id="${escapeHtml(p.id)}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</button>`:''}
             <button type="button" class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
@@ -4765,12 +4774,13 @@ els.patientRows.addEventListener('change',async event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
-  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
   if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
   if(review)openReviewComposer(review);
   if(plan)openTreatmentPlan(plan);
   if(prescription)openPrescription(prescription);
+  if(earliest&&VIEW_MODE==='clinic')requestEarliestAppointment(earliest,event.target.closest('[data-earliest-id]'));
   if(completion&&VIEW_MODE==='clinic')finishPatient(completion);
   if(paymentMissing&&VIEW_MODE==='admin')openMissingPaymentOrder(paymentMissing);
   if(edit)openPatient(edit);

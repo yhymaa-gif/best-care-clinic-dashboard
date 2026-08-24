@@ -788,10 +788,16 @@ body.view-clinic .row-actions .clinic-row-action{width:36px;min-width:36px;heigh
 body.view-clinic .row-actions .clinic-row-action.lab{border-color:#8bc5d5;background:linear-gradient(145deg,#effbfe,#dceff6);color:#1c718c}
 body.view-clinic .row-actions .clinic-row-action.plan{border-color:#b8c8e1;background:linear-gradient(145deg,#f1f5ff,#e1eafa);color:#3c6091}
 body.view-clinic .row-actions .clinic-row-action.payment{border-color:#ddbf72;background:linear-gradient(145deg,#fff9e5,#ffefbd);color:#8a6100}
+body.view-clinic .row-actions .clinic-row-action.earliest{border-color:#e39b35;background:linear-gradient(145deg,#fff7dd,#ffe5a7);color:#9a5a00;box-shadow:0 5px 14px rgba(211,137,27,.18)}
+body.view-clinic .row-actions .clinic-row-action.earliest:not(:disabled){animation:earliestAppointmentPulse 2s ease-in-out infinite}
+body.view-clinic .row-actions .clinic-row-action.earliest.is-requested{border-color:#aeb9bf;background:linear-gradient(145deg,#f3f6f7,#e7edef);color:#5b6b73;box-shadow:none;animation:none}
+@keyframes earliestAppointmentPulse{50%{transform:translateY(-2px) scale(1.04);box-shadow:0 0 0 5px rgba(227,155,53,.12),0 8px 18px rgba(211,137,27,.22)}}
 html[data-theme="dark"] body.view-clinic .clinic-icon-action{border-color:#3c6273;background:linear-gradient(145deg,#203e4b,#19313c);color:#bde8f5;box-shadow:0 5px 13px rgba(0,0,0,.22)}
 html[data-theme="dark"] body.view-clinic .clinic-icon-action:hover{border-color:#65b6d1;background:#254c5c}
 html[data-theme="dark"] body.view-clinic .clinic-compact-badge{box-shadow:0 3px 8px rgba(0,0,0,.22)}
 html[data-theme="dark"] body.view-clinic .clinic-row-action.prescription{border-color:#765996;background:#302344;color:#e4c9f4}
+html[data-theme="dark"] body.view-clinic .row-actions .clinic-row-action.earliest{border-color:#a8792d;background:linear-gradient(145deg,#4b3a1d,#59451e);color:#ffe6a2}
+html[data-theme="dark"] body.view-clinic .row-actions .clinic-row-action.earliest.is-requested{border-color:#53656c;background:#29383d;color:#b6c5c9}
 html[data-theme="dark"] body.view-clinic .patient-actions .clinic-current-action.finish{border-color:#3fbb82;background:linear-gradient(145deg,#1a7855,#12543e);color:#fff}
 @media(max-width:680px){body.view-clinic .patient-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}body.view-clinic .patient-actions .clinic-current-action{width:100%;min-width:0;height:42px}body.view-clinic .queue-actions .clinic-queue-action{width:40px;min-width:40px}body.view-clinic .row-actions .clinic-row-action{width:38px;min-width:38px}}
 

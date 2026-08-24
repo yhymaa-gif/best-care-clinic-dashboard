@@ -28,7 +28,7 @@ test('summary counts appointments, unique patients, payments, plans and lab case
         clinicId: 'clinic-1',
         date: '2026-07-30',
         patients: [
-          { file: '100', phone: '0500000001', status: 'done', start: '14:00', actualStartedAt: Date.UTC(2026, 6, 30, 11, 10), paymentRequired: true, paymentCompletedAt: 1 },
+          { file: '100', phone: '0500000001', status: 'done', start: '14:00', arrivedAt: Date.UTC(2026, 6, 30, 11), completedAt: Date.UTC(2026, 6, 30, 12, 30), actualStartedAt: Date.UTC(2026, 6, 30, 11, 10), paymentRequired: true, paymentCompletedAt: 1 },
           { file: '200', phone: '0500000002', status: 'cancel', start: '15:00' },
         ],
       },
@@ -58,6 +58,9 @@ test('summary counts appointments, unique patients, payments, plans and lab case
   assert.equal(output.summary.planTotal, 1);
   assert.equal(output.summary.labActive, 1);
   assert.equal(output.summary.averageDelayMinutes, 10);
+  assert.equal(output.summary.averageStayMinutes, 90);
+  assert.equal(output.summary.stayMeasured, 1);
+  assert.equal(output.clinics[0].averageStayMinutes, 90);
   assert.equal(output.summary.reviewWhatsappShares, 2);
   assert.deepEqual(output.communicationCounts, { planWhatsapp: 1, reviewWhatsapp: 2 });
 });
@@ -92,5 +95,7 @@ test('empty summary remains finite and zeroed', () => {
   assert.equal(output.summary.appointments, 0);
   assert.equal(output.summary.completionRate, 0);
   assert.equal(output.summary.averageDelayMinutes, 0);
+  assert.equal(output.summary.averageStayMinutes, 0);
+  assert.equal(output.summary.stayMeasured, 0);
   assert.equal(output.summary.reviewWhatsappShares, 0);
 });
