@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
 <title>عيادات أفضل عناية الاستشارية للأسنان</title>
 <script src="./theme-boot.js"></script>
-<link rel="stylesheet" href="./dashboard.css?v=20260816-clinic-next-details">
+<link rel="stylesheet" href="./dashboard.css?v=20260825-yahya-assistant">
 <link rel="stylesheet" href="./theme.css">
 </head>
 <body class="auth-checking">
@@ -301,6 +301,32 @@
   <strong id="floatingLabCount" class="floating-lab-count">0</strong>
 </button>
 </div>
+<div id="yahyaAssistantRoot" class="yahya-assistant-root hide-screen">
+  <button id="yahyaAssistantBtn" class="yahya-assistant-fab" type="button" aria-haspopup="dialog" aria-controls="yahyaAssistantPanel" aria-expanded="false" aria-label="فتح المساعد الذكي يحيى" title="اسأل المساعد يحيى">
+    <span class="yahya-assistant-orbit" aria-hidden="true"></span>
+    <span class="yahya-assistant-avatar" aria-hidden="true">ي</span>
+    <span class="yahya-assistant-fab-copy"><strong>اسأل يحيى</strong><small>مساعدك الذكي</small></span>
+  </button>
+  <section id="yahyaAssistantPanel" class="yahya-assistant-panel" role="dialog" aria-modal="false" aria-labelledby="yahyaAssistantTitle" hidden>
+    <header class="yahya-assistant-head">
+      <div class="yahya-assistant-head-icon" aria-hidden="true">ي</div>
+      <div><h2 id="yahyaAssistantTitle">المساعد الذكي يحيى</h2><p id="yahyaAssistantSubtitle">اسألني عن أي خطوة في الداشبورد</p></div>
+      <button id="yahyaAssistantClose" class="yahya-assistant-close" type="button" aria-label="إغلاق المساعد">×</button>
+    </header>
+    <div id="yahyaAssistantMessages" class="yahya-assistant-messages" aria-live="polite"></div>
+    <div class="yahya-assistant-quick" aria-label="أسئلة سريعة">
+      <button type="button" data-yahya-question="كيف أضيف مريضاً جديداً؟">إضافة مريض</button>
+      <button type="button" data-yahya-question="كيف أتابع المزامنة؟">المزامنة</button>
+      <button type="button" data-yahya-question="أين أجد الخطط العلاجية؟">الخطط</button>
+      <button type="button" data-yahya-question="كيف أرفع أمر دفع؟">الدفع</button>
+    </div>
+    <form id="yahyaAssistantForm" class="yahya-assistant-form">
+      <label class="sr-only" for="yahyaAssistantInput">اكتب سؤالك</label>
+      <input id="yahyaAssistantInput" type="search" autocomplete="off" placeholder="اكتب سؤالك هنا…" aria-label="اكتب سؤالك للمساعد">
+      <button type="submit" aria-label="إرسال السؤال">إرسال</button>
+    </form>
+  </section>
+</div>
 <button id="exitScreenBtn" class="exit-full" type="button">⤢ إلغاء ملء الشاشة</button>
 <input id="hiddenCsv" type="file" hidden>
 <div id="treatmentPlanCenterModal" class="modal"><div class="modal-card treatment-plan-center-card" role="dialog" aria-modal="true" aria-labelledby="treatmentPlanCenterTitle">
@@ -458,5 +484,5 @@
 </div></div>
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
-<script src="./dashboard.js?v=20260816-clinic-next-details"></script>
+<script src="./dashboard.js?v=20260825-yahya-assistant"></script>
 </body></html>

@@ -4929,6 +4929,63 @@ $('roleClinicContinueBtn').addEventListener('click',()=>{
   if(!clinic||!String(clinic.doctorName||'').trim()){$('roleClinicError').textContent=lang==='en'?'Choose a clinic with an assigned doctor first.':'اختر العيادة والطبيب أولًا.';return}
   location.href=viewUrl('clinic',clinicId);
 });
+
+/* Local, lightweight help assistant. It is deliberately read-only: it explains
+   the existing dashboard and opens its existing controls without touching sync
+   state, patient records, or creating another data store. */
+const yahyaAssistantKnowledge=[
+  {keys:['اضافه مريض','اضيف مريض','مريض جديد','اسم المريض','new patient'],ar:'لإضافة مريض: افتح «إضافة مريض»، أدخل الاسم الكامل ورقم الجوال ورقم الملف، ثم راجع وقت البداية والنهاية واضغط «حفظ وإضافة المريض». الحقول الإلزامية تمنع الحفظ الناقص.',en:'To add a patient, open “Add patient”, enter the full name, mobile number, file number, start and end time, then choose “Save and add patient”. Required fields prevent incomplete saves.',action:'settingsBtn',actionAr:'فتح الإعدادات',actionEn:'Open settings'},
+  {keys:['مزامنه','مزامنة','تزامن','تحديث جهاز','sync','synchronization'],ar:'المزامنة تعمل من نفس مصدر البيانات بين الأجهزة. راجع شارة المزامنة في الرأس؛ خارج ساعات العمل تكون مخفّضة، ولا تحتاج إلى تحديث الصفحة كل دقيقة. عند تعذر الاتصال، اترك الصفحة مفتوحة وسيعاد المحاولة تلقائياً.',en:'All devices use the same data source. Check the sync badge in the header; outside working hours sync is reduced. Do not refresh every minute—the app retries automatically after a connection issue.',action:'syncBadge',actionAr:'عرض حالة المزامنة',actionEn:'View sync status'},
+  {keys:['خطة علاج','خطط علاجية','اعتماد خطة','مسوده','الخطة'],ar:'الخطة العلاجية تمر عادةً بهذه المراحل: مسودة الطبيب ← اعتماد الطبيب ← مراجعة الإدارة ← موافقة المريض وتوقيعه ← خطة معتمدة وموقعة. افتح مركز الخطط لمراجعة الحالة، ولا تُحذف الخطة السابقة عند إنشاء خطة لاحقة.',en:'A treatment plan normally moves through: doctor draft → doctor approval → administration review → patient consent/signature → approved and signed. Open the Plans Center to review the status; a later plan does not delete the previous one.',action:'treatmentPlanCenterBtn',actionAr:'فتح مركز الخطط',actionEn:'Open Plans Center'},
+  {keys:['امر دفع','اوامر دفع','فاتورة','الدفع','payment','invoice'],ar:'أمر الدفع يرسل من صف المريض بعد اكتمال الإجراء. حدّد الإجراءات والعدد، ثم راجع الإجمالي والخصم والضريبة قبل الاعتماد. إذا اكتمل العلاج بلا أمر دفع يظهر تنبيه للإدارة لاستكمال المبلغ المتبقي.',en:'Create a payment order from the patient row after treatment. Select procedures and quantities, then review total, discount, and tax before approval. If treatment is completed without an order, administration receives a remaining-payment alert.',action:'paymentPanel',actionAr:'فتح إجراءات الدفع',actionEn:'Open payment actions'},
+  {keys:['معمل','حاله معمل','مختبر','lab'],ar:'لإضافة حالة معمل اضغط «حالة جديدة» في مركز المعمل، واربطها برقم الملف أو الجوال أو الهوية عند الحاجة. اختر اسم المعمل وعدد الوحدات، ثم حرّك الحالة عبر: جاهزة للطباعة، أُرسلت للتنسيق، أُرسلت للمعمل، استلمها المعمل، تم تسليمها للمريض. العداد يحسب المدة منذ الإرسال.',en:'In the Lab Center choose “New case” and link it by file number, mobile, or ID when needed. Select the lab and units, then move it through ready to print, sent to coordination, sent to lab, received by lab, and delivered to patient. The timer starts at dispatch.',action:'floatingLabBtn',actionAr:'فتح حالات المعمل',actionEn:'Open Lab Cases'},
+  {keys:['وصفه','وصفة','دواء','prescription','medicine'],ar:'الوصفة تُنشأ من إجراءات المريض بعد اكتمال العلاج. اختر الفئة (مضاد، مسكن، مضمضة)، ثم الدواء والجرعة والتكرار والمدة، واعتمدها قبل مشاركتها. يمكن فتح الوصفة لاحقاً من مركز الوصفات وطباعتها أو مشاركتها عبر واتساب.',en:'Create a prescription from the patient actions after treatment. Choose a category (antibiotic, analgesic, mouthwash), then medicine, dose, frequency, and duration. Approve before sharing; prescriptions remain available in the Prescriptions Center for printing or WhatsApp.',action:'treatmentPlanCenterBtn',actionAr:'فتح مركز العمليات',actionEn:'Open Operations Center'},
+  {keys:['موعد عاجل','اقرب موعد','أقرب موعد','طلب موعد','appointment','urgent'],ar:'من شاشة الطبيب اختر «أقرب موعد ⚡» للمريض الذي يحتاج تواصلاً عاجلاً. يظهر الطلب في مركز المواعيد والإدارة مع اسم المريض وملفه وعيادته، ويمكن للتنسيق تسجيل الاتصال أو تحديد الموعد أو تصعيده للمشرف.',en:'From the doctor screen choose “Earliest appointment ⚡” for a patient needing urgent contact. The request appears in Appointment Center and Administration with patient, file, and clinic details; coordination can contact, schedule, or escalate it.',action:'appointmentRequestButton',actionAr:'فتح طلبات المواعيد',actionEn:'Open appointment requests'},
+  {keys:['تقييم','جوجل','واتس','مراجعه','review','whatsapp'],ar:'بعد اكتمال الزيارة افتح «طلب تقييم تجربة المريض». يملأ النظام رقم الجوال من بيانات المريض ويجهز رسالة واتساب ورابط التقييم، ثم يسجل عدد مرات الإرسال في الإحصائيات. راجع الرقم قبل الإرسال.',en:'After a visit, open “Patient experience review”. The patient mobile is taken from the record and a WhatsApp message with the review link is prepared; send counts are recorded in Statistics. Verify the number before sending.',action:'patientIdentitySearchBtn',actionAr:'فتح ملف المريض',actionEn:'Open patient record'},
+  {keys:['احصائيات','إحصائيات','احصاء','statistics','stats'],ar:'الإحصائيات تعرض المرضى، الخطط، الدفع، المعمل، الوصفات، طلبات التقييم، ومدة بقاء المريض. مدة البقاء تُحسب من وقت الوصول حتى اكتمال العلاج عندما تتوفر الطوابع الزمنية.',en:'Statistics cover patients, plans, payments, lab, prescriptions, review requests, and patient stay. Stay duration is calculated from arrival until treatment completion when timestamps are available.',action:'statisticsTopLink',actionAr:'فتح الإحصائيات',actionEn:'Open statistics'},
+  {keys:['استيراد','csv','ملف مرضى','قائمه مرضى','excel'],ar:'من الإدارة افتح «استيراد CSV / Excel». يطابق النظام الهوية أو رقم الملف أولاً، ثم الجوال، ويدمج السجل دون تكرار. الاسم الكامل يبقى في الإدارة والملف المركزي، بينما شاشة العيادة تعرض الاسم المختصر فقط.',en:'From Administration open “Import CSV / Excel”. Records are matched by ID or file number first, then mobile, and merged without duplicates. Full names remain in Administration and the master list; the clinic display can show the short name.',action:'settingsBtn',actionAr:'فتح الإعدادات',actionEn:'Open settings'},
+  {keys:['بحث عن مريض','ابحث عن مريض','رقم الملف','هوية المريض','ملف المريض','search patient'],ar:'استخدم «البحث عن مريض» واكتب الاسم أو الجوال أو رقم الملف أو الهوية. افتح بطاقة النتيجة لعرض المواعيد والخطط والوصفات والدفع وحالات المعمل والتقييمات، ثم عدّل البيانات من المصدر نفسه.',en:'Use Patient Search with the name, mobile, file number, or ID. Open the result to view appointments, plans, prescriptions, payments, lab cases, and reviews, then edit the source record.',action:'patientIdentitySearchBtn',actionAr:'فتح البحث عن مريض',actionEn:'Open patient search'},
+  {keys:['اللغه','اللغة','انجليزي','English','ترجمه'],ar:'بدّل اللغة من زر «English / العربية». تُحدّث العناوين والحالات والأزرار واتجاه الواجهة. إذا بقي نص قديم، أغلق القائمة وأعد فتحها أو حدّث الصفحة مرة واحدة.',en:'Switch language with the “English / العربية” button. Labels, statuses, buttons, and direction update together. If a label remains old, close the menu and reload once.',action:'langBtn',actionAr:'فتح زر اللغة',actionEn:'Open language control'},
+  {keys:['الوضع الداكن','داكن','فاتح','dark mode','theme'],ar:'بدّل المظهر من أيقونة نصف القمر/الشمس في طرف الشاشة. التغيير محلي لهذا الجهاز ولا يمس البيانات أو المزامنة.',en:'Toggle dark or light mode with the moon/sun button. The preference is local to this device and does not affect data or synchronization.',action:'themeToggleBtn',actionAr:'تبديل المظهر',actionEn:'Toggle theme'},
+  {keys:['تسجيل الدخول','كلمة المرور','دخول','login','password'],ar:'استخدم اسم المستخدم وكلمة المرور الحالية في شاشة الدخول. إذا رفضت الخدمة الدخول، تأكد من فتح الرابط النهائي لا معاينة Deploy Preview، ثم امسح التخزين المؤقت أو افتح نافذة خاصة. لا تشارك كلمة المرور داخل الدردشة.',en:'Use the current username and password. If sign-in fails, confirm you are on the production URL rather than a Deploy Preview, then clear site data or use a private window. Never share a password in chat.'},
+  {keys:['شاشة العياده','شاشة العيادة','المريض الحالي','التالي','clinic display'],ar:'في شاشة العيادة يظهر المريض الحالي باللون الأخضر، التالي بالأزرق، القريب من النهاية بالبرتقالي، والمتجاوز بالأحمر. سيبقى الحالي المتأخر واضحاً، ويظهر التالي منفصلاً مع وقت الدخول والخروج المتوقع ومدة الموعد.',en:'On the clinic display, the current patient is green, the next is blue, near-end is orange, and overdue is red. A late current patient remains visible while the next patient is shown separately with entry time, expected exit, and duration.'},
+  {keys:['تنبيه','اشعار','إشعار','notifications','تنبيهات'],ar:'افتح مركز العمليات لرؤية التنبيهات. فتح التنبيه يعني مشاهدته فقط وليس حله. التنبيهات الموجهة تظهر بحسب العيادة والمسؤولية الحالية، ويمكن إغلاقها بعد تنفيذ الإجراء المرتبط.',en:'Open Operations Center to view alerts. Opening an alert only marks it seen; it does not resolve it. Routed alerts follow the active clinic and responsibility and close after the linked action is completed.',action:'treatmentPlanCenterBtn',actionAr:'فتح مركز التنبيهات',actionEn:'Open alert center'}
+];
+function yahyaAssistantNormalize(value){return String(value||'').toLocaleLowerCase('ar').replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/[\u064B-\u065F]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim()}
+function yahyaAssistantText(entry){return lang==='en'?entry.en:entry.ar}
+function yahyaAssistantLabels(){
+  const en=lang==='en';
+  setText('#yahyaAssistantTitle',en?'Yahya Smart Assistant':'المساعد الذكي يحيى');
+  setText('#yahyaAssistantSubtitle',en?'Ask about any dashboard step':'اسألني عن أي خطوة في الداشبورد');
+  const input=$('yahyaAssistantInput');if(input)input.placeholder=en?'Type your question…':'اكتب سؤالك هنا…';
+  const btn=$('yahyaAssistantBtn');if(btn){btn.setAttribute('aria-label',en?'Open Yahya Smart Assistant':'فتح المساعد الذكي يحيى');btn.title=en?'Ask Yahya':'اسأل المساعد يحيى'}
+}
+function yahyaAssistantAddMessage(text,role='bot'){
+  const box=$('yahyaAssistantMessages');if(!box)return;
+  const bubble=document.createElement('div');bubble.className=`yahya-message ${role}`;bubble.textContent=text;box.appendChild(bubble);box.scrollTop=box.scrollHeight;
+}
+function yahyaAssistantOpenTarget(target){const node=$(target);if(node){if(target==='paymentPanel'){node.scrollIntoView({behavior:'smooth',block:'center'});return true}node.click();return true}return false}
+function yahyaAssistantMatch(question){
+  const normalized=yahyaAssistantNormalize(question);if(!normalized)return null;
+  let best=null,bestScore=0;
+  yahyaAssistantKnowledge.forEach(entry=>{let score=0;entry.keys.forEach(key=>{const token=yahyaAssistantNormalize(key);if(token&&normalized.includes(token))score+=token.includes(' ')?3:1});if(score>bestScore){best=entry;bestScore=score}});
+  return best;
+}
+function yahyaAssistantAnswer(question){
+  const entry=yahyaAssistantMatch(question),en=lang==='en';
+  if(!entry){yahyaAssistantAddMessage(en?'I can help with patients, appointments, sync, plans, payments, lab, prescriptions, reviews, statistics, language, theme, and sign-in. Try one of these topics.':'أستطيع مساعدتك في المرضى والمواعيد والمزامنة والخطط والدفع والمعمل والوصفات والتقييمات والإحصائيات واللغة والمظهر وتسجيل الدخول. جرّب كتابة موضوع السؤال بوضوح.');return}
+  yahyaAssistantAddMessage(yahyaAssistantText(entry));
+  if(entry.action){const action=document.createElement('button');action.type='button';action.className='yahya-message-action';action.textContent=en?entry.actionEn:entry.actionAr;action.addEventListener('click',()=>{if(!yahyaAssistantOpenTarget(entry.action)){yahyaAssistantAddMessage(en?'This control is not available in the current view. Use the relevant page from the menu.':'هذا الخيار غير متاح في العرض الحالي. افتح القسم المناسب من القائمة.')}});$('yahyaAssistantMessages').appendChild(action);$('yahyaAssistantMessages').scrollTop=$('yahyaAssistantMessages').scrollHeight}
+}
+function initYahyaAssistant(){
+  const button=$('yahyaAssistantBtn'),panel=$('yahyaAssistantPanel'),close=$('yahyaAssistantClose'),form=$('yahyaAssistantForm'),input=$('yahyaAssistantInput');if(!button||!panel||!close||!form||!input)return;
+  yahyaAssistantLabels();yahyaAssistantAddMessage(lang==='en'?'Hello, I am Yahya. Ask me about any dashboard icon or procedure, and I will guide you step by step.':'مرحباً، أنا يحيى. اسألني عن أي أيقونة أو إجراء في الداشبورد وسأرشدك خطوة بخطوة.');
+  const setOpen=open=>{panel.hidden=!open;button.setAttribute('aria-expanded',String(open));if(open){yahyaAssistantLabels();setTimeout(()=>input.focus(),30)}};
+  button.addEventListener('click',()=>setOpen(panel.hidden));close.addEventListener('click',()=>setOpen(false));
+  form.addEventListener('submit',event=>{event.preventDefault();const question=input.value.trim();if(!question)return;yahyaAssistantAddMessage(question,'user');input.value='';yahyaAssistantAnswer(question)});
+  document.querySelectorAll('[data-yahya-question]').forEach(quick=>quick.addEventListener('click',()=>{const question=quick.dataset.yahyaQuestion||'';yahyaAssistantAddMessage(question,'user');yahyaAssistantAnswer(question)}));
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)setOpen(false)});
+}
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;if(!isStandalone())$('installBtn').hidden=false});
 window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true;toast('تم التثبيت','أصبح Best Care Flow متاحًا كتطبيق على الجهاز')});
 selectedDate=new URLSearchParams(location.search).get('date')||today();
@@ -4937,6 +4994,7 @@ applyViewMode();
 setupModernAdminMetrics();
 setupModernSidebarScroll();
 applyLang();
+initYahyaAssistant();
 initAuth();
 if(isIosDevice()&&!isStandalone())$('installBtn').hidden=false;
 resetPatientForm(false);
