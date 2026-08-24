@@ -12,7 +12,7 @@ const $=id=>document.getElementById(id);
     function setRange(days){$('toDate').value=isoDate(new Date());$('fromDate').value=addDays($('toDate').value,1-days);document.querySelectorAll('[data-days]').forEach(button=>button.classList.toggle('active',Number(button.dataset.days)===days));loadStats()}
     function setStatus(text,type=''){const el=$('statusNotice');el.className=`notice ${type}`.trim();el.querySelector('span').textContent=text}
     function format(value){return nf.format(Number(value||0))}
-    function renderKpis(summary){document.querySelectorAll('[data-kpi]').forEach(el=>{const key=el.dataset.kpi;const suffix=key==='completionRate'?'%':key==='averageDelayMinutes'?' د':'';el.textContent=`${format(summary[key])}${suffix}`});const counts=latest?.communicationCounts||{reviewWhatsapp:0,planWhatsapp:0};renderMetrics('communicationMetrics',counts,communicationLabels);$('communicationsTotal').textContent=`${format(Number(counts.reviewWhatsapp||0)+Number(counts.planWhatsapp||0))} مشاركة`}
+    function renderKpis(summary){document.querySelectorAll('[data-kpi]').forEach(el=>{const key=el.dataset.kpi;const suffix=key==='completionRate'?'%':['averageDelayMinutes','averageStayMinutes'].includes(key)?' د':'';el.textContent=`${format(summary[key])}${suffix}`});const counts=latest?.communicationCounts||{reviewWhatsapp:0,planWhatsapp:0};renderMetrics('communicationMetrics',counts,communicationLabels);$('communicationsTotal').textContent=`${format(Number(counts.reviewWhatsapp||0)+Number(counts.planWhatsapp||0))} مشاركة`}
     function renderDonut(id,legendId,counts,labels,totalId){
       const entries=Object.entries(counts).filter(([,value])=>Number(value)>0),total=entries.reduce((sum,[,value])=>sum+Number(value),0);
       let cursor=0;const stops=entries.map(([key,value],index)=>{const start=cursor;cursor+=total?Number(value)/total*100:0;return`${colors[index%colors.length]} ${start}% ${cursor}%`});
@@ -25,7 +25,7 @@ const $=id=>document.getElementById(id);
       const body=$('clinicRows');
       if(!items.length){
         const row=document.createElement('tr'),cell=document.createElement('td');
-        cell.colSpan=7;cell.className='empty';cell.textContent='لا توجد بيانات للعيادات.';
+        cell.colSpan=8;cell.className='empty';cell.textContent='لا توجد بيانات للعيادات.';
         row.append(cell);body.replaceChildren(row);return;
       }
       const fragment=document.createDocumentFragment();
@@ -41,6 +41,9 @@ const $=id=>document.getElementById(id);
         [item.appointments,item.completed,item.cancelled,item.paymentPending,item.plans].forEach(value=>{
           const cell=document.createElement('td');cell.textContent=format(Number(value)||0);row.append(cell);
         });
+        const stayCell=document.createElement('td');
+        stayCell.textContent=item.stayMeasured?`${format(Number(item.averageStayMinutes)||0)} د`:'—';
+        row.append(stayCell);
         const rateCell=document.createElement('td'),rateBadge=document.createElement('span');
         rateBadge.className='rate';rateBadge.textContent=`${format(rate)}%`;rateCell.append(rateBadge);row.append(rateCell);
         fragment.append(row);

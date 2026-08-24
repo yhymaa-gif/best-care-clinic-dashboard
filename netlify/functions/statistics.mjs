@@ -129,11 +129,15 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
     cancelled: 0,
     paymentPending: 0,
     plans: 0,
+    stayTotalMinutes: 0,
+    stayMeasured: 0,
   }]));
   const payments = { requested: 0, acknowledged: 0, completed: 0, pending: 0 };
   let appointments = 0;
   let delaysTotalMinutes = 0;
   let delaysMeasured = 0;
+  let stayTotalMinutes = 0;
+  let stayMeasured = 0;
 
   records.forEach(record => {
     const dailyItem = dailyMap.get(record.date);
@@ -159,6 +163,19 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       if (patient?.paymentAcknowledgedAt && !patient?.paymentCompletedAt) payments.acknowledged += 1;
       if (patient?.paymentCompletedAt) payments.completed += 1;
       if (patient?.paymentRequired && !patient?.paymentCompletedAt) payments.pending += 1;
+      const arrivedAt = numeric(patient?.arrivedAt);
+      const completedAt = numeric(patient?.completedAt || patient?.actualEndedAt);
+      if (status === 'done' && arrivedAt > 0 && completedAt >= arrivedAt) {
+        const stayMinutes = Math.round((completedAt - arrivedAt) / 60_000);
+        if (stayMinutes >= 0) {
+          stayTotalMinutes += stayMinutes;
+          stayMeasured += 1;
+          if (clinicItem) {
+            clinicItem.stayTotalMinutes += stayMinutes;
+            clinicItem.stayMeasured += 1;
+          }
+        }
+      }
       const actualStartedAt = numeric(patient?.actualStartedAt);
       const planned = scheduledStart(record.date, patient?.start);
       if (actualStartedAt > 0 && planned > 0) {
@@ -215,6 +232,8 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       cancelled,
       completionRate: activeAppointments ? Math.round((completed / activeAppointments) * 100) : 0,
       averageDelayMinutes: delaysMeasured ? Math.round(delaysTotalMinutes / delaysMeasured) : 0,
+      averageStayMinutes: stayMeasured ? Math.round(stayTotalMinutes / stayMeasured) : 0,
+      stayMeasured,
       paymentPending: payments.pending,
       planTotal,
       labActive: labTotal - numeric(labStatusCounts.delivered_patient) - numeric(labStatusCounts.cancelled),
@@ -226,7 +245,14 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
     labStatusCounts,
     communicationCounts,
     daily,
-    clinics: [...clinicMetrics.values()].filter(item => clinicFilter === 'all' || item.clinicId === clinicFilter),
+    clinics: [...clinicMetrics.values()].map(item => {
+      const { stayTotalMinutes, stayMeasured, ...clinic } = item;
+      return {
+        ...clinic,
+        stayMeasured,
+        averageStayMinutes: stayMeasured ? Math.round(stayTotalMinutes / stayMeasured) : 0,
+      };
+    }).filter(item => clinicFilter === 'all' || item.clinicId === clinicFilter),
   };
 }
 

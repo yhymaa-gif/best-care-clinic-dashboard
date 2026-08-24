@@ -12,6 +12,8 @@ test('doctor completion menu exposes an idempotent earliest-appointment action',
   assert.match(dashboard, /source:'doctor_earliest'/);
   assert.match(dashboard, /idempotencyKey:`earliest:\$\{ACTIVE_CLINIC_ID\}:\$\{selectedDate\}:\$\{patient\.id\}`/);
   assert.match(dashboard, /if\(status===EARLIEST_APPOINTMENT_ACTION\)/);
+  assert.match(dashboard, /function earliestAppointmentActionMarkup\(patient,displayStatus\)/);
+  assert.match(dashboard, /data-earliest-id=/);
   assert.doesNotMatch(dashboard, /p\.status\s*=\s*EARLIEST_APPOINTMENT_ACTION/);
 });
 
