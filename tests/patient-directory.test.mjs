@@ -207,9 +207,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260825-yahya-assistant-patient-details/);
+  assert.match(html, /dashboard\.js\?v=20260825-yahya-assistant-patient-dossier/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260825-yahya-assistant-patient-details/);
+  assert.match(serviceWorker, /20260825-yahya-assistant-patient-dossier/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

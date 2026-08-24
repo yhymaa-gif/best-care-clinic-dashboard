@@ -4992,17 +4992,31 @@ function yahyaAssistantPatientAnswer(question){
   const normalized=yahyaAssistantNormalize(question),en=lang==='en';
   const wantsCount=/(كم|عدد|اجمالي|إجمالي|how many|count|today.?s patients|patients today)/i.test(question)||normalized.includes('مرضى اليوم');
   const patient=yahyaAssistantFindPatient(question);
-  if(!patient&&!wantsCount)return null;
+  if(!patient&&!wantsCount){
+    const asksPatient=/(بيانات|تفاصيل|معلومات|حالة|وضع|دفع|خطة|معمل|وصفة|appointments|details|record|status|payment|plan|lab|prescription)/i.test(question)&&/(مريض|مريضه|مرضى|patient|patients|ملف|file|هوية|identity|جوال|mobile)/i.test(question);
+    return asksPatient?(en?'Please provide the patient full name, file number, mobile, or national ID so I can retrieve the correct record.':'اكتب الاسم الكامل للمريض أو رقم الملف أو الجوال أو الهوية لأستخرج السجل الصحيح دون تخمين.'):null;
+  }
   if(!patient&&wantsCount){
-    const list=patients||[],done=list.filter(item=>item.status==='done').length,active=list.filter(item=>['active','arrived','early_arrival'].includes(item.status)).length,waiting=list.filter(item=>['waiting','late'].includes(item.status)).length;
-    return en?`Today there are ${list.length} patients: ${active} in arrival/treatment, ${waiting} waiting or late, and ${done} completed. Open the patient list for full names and details.`:`عدد مرضى اليوم ${list.length}: ${active} وصلوا أو قيد العلاج، ${waiting} بانتظار الموعد أو متأخرون، و${done} مكتملون. افتح قائمة المرضى لعرض الأسماء والبيانات كاملة.`;
+    const list=patients||[],done=list.filter(item=>item.status==='done').length,active=list.filter(item=>['active','arrived','early_arrival'].includes(item.status)).length,waiting=list.filter(item=>['waiting','late'].includes(item.status)).length,cancelled=list.filter(item=>['cancel','left'].includes(item.status)).length;
+    const names=list.slice().sort((a,b)=>String(a.start||'').localeCompare(String(b.start||''))).slice(0,8).map(item=>`${item.name||'—'} (${item.start||'—'})`).join('، ');
+    return en?`Today’s complete overview\n• Total: ${list.length}\n• Arrived/in treatment: ${active}\n• Waiting or late: ${waiting}\n• Completed: ${done}\n• Cancelled/left: ${cancelled}\n• First appointments: ${names||'—'}\n\nAsk with a patient name or file number for the full dossier.`:`ملخص مرضى اليوم الكامل\n• الإجمالي: ${list.length}\n• وصلوا أو قيد العلاج: ${active}\n• بانتظار الموعد أو متأخرون: ${waiting}\n• مكتملون: ${done}\n• ملغى أو غادر: ${cancelled}\n• أول المواعيد: ${names||'—'}\n\nاكتب اسم المريض أو رقم ملفه لعرض ملفه الكامل.`;
   }
   const status=yahyaAssistantPatientLabel(patient),plan=effectiveTreatmentPlanStatus(patient)||'';
-  const payment=paymentStage(patient);const lab=patientLabCases(patient,{activeOnly:false});
-  const prescriptionCount=Number(patient.prescriptionCount||0)||operationsCenter.prescriptions.filter(item=>String(item.sourcePatientId||item.patient?.id||'')===String(patient.id||'')).length;
-  const reviewCount=Number(patient.reviewRequestCount||0);
-  const timing=patient.start&&patient.end?(en?`appointment ${patient.start}–${patient.end}`:`الموعد ${patient.start}–${patient.end}`):'';
-  const lines=en?[`Patient: ${patient.name||'Unnamed'}`,`File: ${patient.file||'—'} · Mobile: ${patient.phone||patient.mobile||'—'}`,`Status: ${status}${timing?` · ${timing}`:''}`,`Treatment plan: ${plan||'No plan recorded'}`,`Payment: ${payment||'No payment order recorded'}`,`Lab cases: ${lab.length||Number(patient.labCount||0)}`,`Prescriptions: ${prescriptionCount}`,`Review requests sent: ${reviewCount}`]:[`المريض: ${patient.name||'بدون اسم'}`,`الملف: ${patient.file||'—'} · الجوال: ${patient.phone||patient.mobile||'—'}`,`الحالة: ${status}${timing?` · ${timing}`:''}`,`الخطة العلاجية: ${plan?planStatusText(plan):'لا توجد خطة مسجلة'}`,`الدفع: ${payment||'لا يوجد أمر دفع مسجل'}`,`حالات المعمل: ${lab.length||Number(patient.labCount||0)}`,`الوصفات: ${prescriptionCount}`,`طلبات التقييم المرسلة: ${reviewCount}`];
+  const payment=paymentStage(patient),lab=patientLabCases(patient,{activeOnly:false});
+  const prescriptionItems=operationsCenter.prescriptions.filter(item=>String(item.sourcePatientId||item.patient?.id||'')===String(patient.id||'')||String(item.patient?.file||'')===String(patient.file||''));
+  const prescriptionCount=Number(patient.prescriptionCount||0)||prescriptionItems.length,reviewCount=Number(patient.reviewRequestCount||0);
+  const timing=patient.start&&patient.end?(en?`${patient.start}–${patient.end}`:`${patient.start}–${patient.end}`):'—';
+  const clinic=clinicDirectory.find(item=>String(item.id)===String(patient.clinicId||ACTIVE_CLINIC_ID));
+  const pending=[];
+  if(!patient.file||isZeroFileNumber(patient.file))pending.push(en?'update file number':'تحديث رقم الملف');
+  if(!patient.phone)pending.push(en?'complete mobile':'استكمال الجوال');
+  if(!plan)pending.push(en?'treatment plan':'خطة علاجية');
+  if(payment==='requested')pending.push(en?'payment collection':'تحصيل الدفع');
+  if(lab.some(item=>!['delivered_patient','cancelled'].includes(item.status)))pending.push(en?'follow up lab case':'متابعة حالة المعمل');
+  const labLines=lab.length?lab.map(item=>`${item.labName||item.lab|| (en?'Dental lab':'المعمل')} — ${labStatusText(item.status)}${item.sentAt?` (${patientProfileDateTime(item.sentAt)})`:''}`).join('؛ '):(en?'None recorded':'لا توجد مسجلة');
+  const planText=plan?(en?plan:planStatusText(plan)):(en?'No plan recorded':'لا توجد خطة مسجلة');
+  const paymentText=payment?(en?payment:({requested:'بانتظار التحصيل',received:'تم استلام طلب الدفع',completed:'تم تنفيذ الدفع'}[payment]||payment)):(en?'No payment order':'لا يوجد أمر دفع');
+  const lines=en?[`PATIENT DOSSIER`,`Name: ${patient.name||'Unnamed'}`,`File: ${patient.file||'—'} · Mobile: ${patient.phone||patient.mobile||'—'} · ID: ${patient.nationalId||'—'}`,`Clinic: ${clinic?.name||patient.clinicId||'—'} · Appointment: ${timing}`,`Current status: ${status}`,`Treatment plan: ${planText}`,`Payment: ${paymentText}`,`Dental lab: ${labLines}`,`Prescriptions: ${prescriptionCount}${prescriptionItems.length?` (${prescriptionItems.map(item=>item.prescriptionNo||item.statusLabel||'saved').join(', ')})`:''}`,`Review requests sent: ${reviewCount}`,`Next actions: ${pending.length?pending.join(', '):'No outstanding action detected'}`]:[`ملف المريض الكامل`,`الاسم: ${patient.name||'بدون اسم'}`,`الملف: ${patient.file||'—'} · الجوال: ${patient.phone||patient.mobile||'—'} · الهوية: ${patient.nationalId||'—'}`,`العيادة: ${clinic?.name||patient.clinicId||'—'} · الموعد: ${timing}`,`الحالة الحالية: ${status}`,`الخطة العلاجية: ${planText}`,`الدفع: ${paymentText}`,`المعمل: ${labLines}`,`الوصفات: ${prescriptionCount}${prescriptionItems.length?` (${prescriptionItems.map(item=>item.prescriptionNo||item.statusLabel||'محفوظة').join('، ')})`:''}`,`طلبات التقييم المرسلة: ${reviewCount}`,`الإجراءات المتبقية: ${pending.length?pending.join('، '):'لا توجد إجراءات معلقة مكتشفة'}`];
   return lines.join('\n');
 }
 function yahyaAssistantMatch(question){
