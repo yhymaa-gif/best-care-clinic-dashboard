@@ -5,9 +5,10 @@
     const patientId=params.get('patientId')||'';
     const appointmentDate=params.get('date')||'';
     const clinicId=/^clinic-(?:[1-9]|1[0-5])$/.test(params.get('clinic')||'')?params.get('clinic'):'clinic-1';
+    const requestedPlanNo=(params.get('planNo')||'').trim().slice(0,40);
     const viewMode=params.get('view')==='clinic'?'clinic':'admin';
     const SOURCE_KEY=`bestcare_treatment_source_${patientId}`;
-    const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}`;
+    const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}_${requestedPlanNo||'latest'}`;
     const LOCAL_DRAFT_TTL_MS=12*60*60*1000;
     const PLAN_API='/api/treatment-plan';
     const PATIENT_PROFILE_API='/api/patient-profile';
@@ -53,7 +54,7 @@
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
       clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:source.nationalId||'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -197,6 +198,7 @@
           date:appointmentDate,
           clinic:clinicId
         });
+        if(requestedPlanNo)identityParams.set('planNo',requestedPlanNo);
         if(source?.file)identityParams.set('fileNo',source.file);
         if(source?.phone)identityParams.set('mobile',source.phone);
         if(source?.nationalId)identityParams.set('nationalId',source.nationalId);
@@ -512,7 +514,7 @@
           method:'PUT',credentials:'include',headers:{'content-type':'application/json'},
           body:JSON.stringify({
             patient:state.patient,status,rejectionReason,
-            planNo:state.meta.planNo,sourcePatientId:patientId,sourceDate:appointmentDate,
+            planNo:state.meta.planNo,parentPlanNo:state.meta.parentPlanNo||'',relation:state.meta.relation||'standalone',sourcePatientId:patientId,sourceDate:appointmentDate,
             patientAcceptedAt:state.meta.patientAcceptedAt||0,
             patientAcceptedBy:state.meta.patientAcceptedBy||'',
             approvedAt:state.meta.approvedAt||0,
@@ -987,14 +989,18 @@
         state.patient.fileNo=source.file||'';
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
-      }else if(remoteResult?.carriedForward){
+      }else if(remoteResult?.carriedForward&&!local){
+        const previousPlanNo=state.meta.planNo||'';
+        state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
+        state.consent={photoConsent:false};
+        state.signatures={patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''};
         if(source.file)state.patient.fileNo=source.file;
         if(source.phone)state.patient.mobile=source.phone;
       }
       const compact=localStorage.getItem('bestcare_treatment_compact')!=='0';document.body.classList.toggle('compact-entry',compact);$('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
       hydrateFields();setupSignature();bindEvents();render();
-      $('saveStatus').textContent=remoteResult?.carriedForward?'تم استرجاع خطة المريض من موعد سابق':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
-      $('saveStatus').classList.toggle('saved',Boolean(remote));
+      $('saveStatus').textContent=remoteResult?.carriedForward?'أُنشئ ملحق جديد مبني على خطة سابقة':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
+      $('saveStatus').classList.toggle('saved',Boolean(remote&&!remoteResult?.carriedForward));
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected','cancelled'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
       setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},15000);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));

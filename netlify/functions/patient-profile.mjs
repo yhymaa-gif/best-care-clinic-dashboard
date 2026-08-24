@@ -26,6 +26,7 @@ const parseDayKey = key => {
 };
 const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
 const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
+const versionedPlanKey = (clinicId, date, patientId, planNo) => `clinics/${clinicId}/versions/${hash(`${date}|${patientId}|${planNo}`)}`;
 const legacyPrescriptionKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
 const permanentPrescriptionKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
 const communicationKinds = new Set(['plan_whatsapp', 'review_whatsapp']);
@@ -96,9 +97,18 @@ async function loadMatchedDays(scope, aliases) {
 }
 
 function registryMatches(registry, aliases, scope) {
-  const canonicalKeys = new Set([...aliases].map(alias => registry.aliases?.[alias]).filter(Boolean));
-  return [...canonicalKeys].map(canonical => ({ canonical, record: registry.records?.[canonical] }))
-    .filter(item => item.record && (scope.all || item.record.clinicId === scope.clinicId));
+  const requested = new Set(aliases);
+  const aliasesForCanonical = canonical => Object.entries(registry.aliases || {})
+    .filter(([, target]) => target === canonical)
+    .map(([alias]) => alias);
+  return Object.entries(registry.records || {})
+    .map(([canonical, record]) => ({ canonical, record }))
+    .filter(item => {
+      if (!item.record || (!scope.all && item.record.clinicId !== scope.clinicId)) return false;
+      return [...new Set([...patientIdentityKeys(item.record), ...aliasesForCanonical(item.canonical)])]
+        .some(alias => requested.has(alias));
+    })
+    .sort((left, right) => Number(right.record?.updatedAt || 0) - Number(left.record?.updatedAt || 0));
 }
 
 async function loadLabMatches(scope, aliases) {
@@ -370,13 +380,24 @@ export default async request => {
   await Promise.all(plans.map(async ({ record }) => {
     const oldAliases = patientIdentityKeys(record);
     const keys = [
-      ...oldAliases.map(alias => permanentPlanKey(record.clinicId, alias)),
-      ...(record.sourcePatientId && record.sourceDate ? [legacyPlanKey(record.clinicId, record.sourceDate, record.sourcePatientId)] : [])
+      ...(record.planNo && record.sourcePatientId && record.sourceDate ? [versionedPlanKey(record.clinicId, record.sourceDate, record.sourcePatientId, record.planNo)] : []),
+      ...(record.sourcePatientId && record.sourceDate ? [legacyPlanKey(record.clinicId, record.sourceDate, record.sourcePatientId)] : []),
+      ...oldAliases.map(alias => permanentPlanKey(record.clinicId, alias))
     ];
     const stored = (await Promise.all(keys.map(key => plansStore.get(key, { type: 'json', consistency: 'strong' })))).find(Boolean);
     if (!stored?.plan) return;
     const updated = { ...stored, plan: { ...stored.plan, patient: { ...(stored.plan.patient || {}), fullName: next.name, fileNo: next.file, mobile: next.phone, nationalId: next.nationalId } }, updatedAt: Date.now(), updatedBy: cleanText(auth.user?.displayName || auth.user?.username, 120) };
-    await Promise.all([...new Set([...keys, ...nextAliases.map(alias => permanentPlanKey(record.clinicId, alias))])].map(key => plansStore.setJSON(key, updated)));
+    const currentLegacy = record.sourcePatientId && record.sourceDate
+      ? await plansStore.get(legacyPlanKey(record.clinicId, record.sourceDate, record.sourcePatientId), { type: 'json', consistency: 'strong' }).catch(() => null)
+      : null;
+    const writeKeys = [
+      ...(record.planNo && record.sourcePatientId && record.sourceDate ? [versionedPlanKey(record.clinicId, record.sourceDate, record.sourcePatientId, record.planNo)] : []),
+      ...(record.sourcePatientId && record.sourceDate && (!currentLegacy?.plan?.meta?.planNo || currentLegacy.plan.meta.planNo === record.planNo)
+        ? [legacyPlanKey(record.clinicId, record.sourceDate, record.sourcePatientId)]
+        : []),
+      ...(!record.sourcePatientId || !record.sourceDate ? oldAliases.map(alias => permanentPlanKey(record.clinicId, alias)) : [])
+    ];
+    await Promise.all([...new Set([...writeKeys, ...(record.sourcePatientId && record.sourceDate ? [] : nextAliases.map(alias => permanentPlanKey(record.clinicId, alias)))])].map(key => plansStore.setJSON(key, updated)));
     planUpdates += 1;
   }));
 
