@@ -4965,6 +4965,46 @@ function yahyaAssistantAddMessage(text,role='bot'){
   const bubble=document.createElement('div');bubble.className=`yahya-message ${role}`;bubble.textContent=text;box.appendChild(bubble);box.scrollTop=box.scrollHeight;
 }
 function yahyaAssistantOpenTarget(target){const node=$(target);if(node){if(target==='paymentPanel'){node.scrollIntoView({behavior:'smooth',block:'center'});return true}node.click();return true}return false}
+function yahyaAssistantPatientLabel(patient){
+  const status=String(patient?.status||'waiting');
+  const labels=lang==='en'?EN:STATUS;
+  return labels[status]||status;
+}
+function yahyaAssistantPatientRecords(){
+  const records=[];const seen=new Set();
+  const add=(patient)=>{if(!patient)return;const identity=[patient.id,patient.file,patient.phone,patient.nationalId,patient.name].map(v=>String(v||'').trim()).join('|');if(!identity||seen.has(identity))return;seen.add(identity);records.push(patient)};
+  patients.forEach(patient=>add(patientWithDirectoryIdentity(patient)));
+  try{patientIdentityRows().forEach(row=>add({id:row.patientId,name:row.fullName,file:row.fileNo,phone:row.mobile,nationalId:row.nationalId,status:row.status,date:row.date,start:row.start,clinicId:row.clinicId,planCount:row.planCount,prescriptionCount:row.prescriptionCount,labCount:row.labCount,communicationCount:row.communicationCount}))}catch(error){/* directory may not be loaded in clinic view */}
+  return records;
+}
+function yahyaAssistantFindPatient(question){
+  const normalized=yahyaAssistantNormalize(question);if(!normalized)return null;
+  const digits=toLatinDigits(question).replace(/\D/g,'');let best=null,bestScore=0;
+  yahyaAssistantPatientRecords().forEach(patient=>{
+    let score=0;const name=yahyaAssistantNormalize(patient.name);if(name&&normalized.includes(name))score+=10;
+    const nameParts=name.split(' ').filter(part=>part.length>1);score+=nameParts.filter(part=>normalized.includes(part)).length*2;
+    [patient.file,patient.phone,patient.mobile,patient.nationalId].forEach(value=>{const valueDigits=toLatinDigits(value||'').replace(/\D/g,'');if(valueDigits&&digits.length>=3&&digits.includes(valueDigits))score+=12});
+    if(score>bestScore){best=patient;bestScore=score}
+  });
+  return bestScore>=4?best:null;
+}
+function yahyaAssistantPatientAnswer(question){
+  const normalized=yahyaAssistantNormalize(question),en=lang==='en';
+  const wantsCount=/(كم|عدد|اجمالي|إجمالي|how many|count|today.?s patients|patients today)/i.test(question)||normalized.includes('مرضى اليوم');
+  const patient=yahyaAssistantFindPatient(question);
+  if(!patient&&!wantsCount)return null;
+  if(!patient&&wantsCount){
+    const list=patients||[],done=list.filter(item=>item.status==='done').length,active=list.filter(item=>['active','arrived','early_arrival'].includes(item.status)).length,waiting=list.filter(item=>['waiting','late'].includes(item.status)).length;
+    return en?`Today there are ${list.length} patients: ${active} in arrival/treatment, ${waiting} waiting or late, and ${done} completed. Open the patient list for full names and details.`:`عدد مرضى اليوم ${list.length}: ${active} وصلوا أو قيد العلاج، ${waiting} بانتظار الموعد أو متأخرون، و${done} مكتملون. افتح قائمة المرضى لعرض الأسماء والبيانات كاملة.`;
+  }
+  const status=yahyaAssistantPatientLabel(patient),plan=effectiveTreatmentPlanStatus(patient)||'';
+  const payment=paymentStage(patient);const lab=patientLabCases(patient,{activeOnly:false});
+  const prescriptionCount=Number(patient.prescriptionCount||0)||operationsCenter.prescriptions.filter(item=>String(item.sourcePatientId||item.patient?.id||'')===String(patient.id||'')).length;
+  const reviewCount=Number(patient.reviewRequestCount||0);
+  const timing=patient.start&&patient.end?(en?`appointment ${patient.start}–${patient.end}`:`الموعد ${patient.start}–${patient.end}`):'';
+  const lines=en?[`Patient: ${patient.name||'Unnamed'}`,`File: ${patient.file||'—'} · Mobile: ${patient.phone||patient.mobile||'—'}`,`Status: ${status}${timing?` · ${timing}`:''}`,`Treatment plan: ${plan||'No plan recorded'}`,`Payment: ${payment||'No payment order recorded'}`,`Lab cases: ${lab.length||Number(patient.labCount||0)}`,`Prescriptions: ${prescriptionCount}`,`Review requests sent: ${reviewCount}`]:[`المريض: ${patient.name||'بدون اسم'}`,`الملف: ${patient.file||'—'} · الجوال: ${patient.phone||patient.mobile||'—'}`,`الحالة: ${status}${timing?` · ${timing}`:''}`,`الخطة العلاجية: ${plan?planStatusText(plan):'لا توجد خطة مسجلة'}`,`الدفع: ${payment||'لا يوجد أمر دفع مسجل'}`,`حالات المعمل: ${lab.length||Number(patient.labCount||0)}`,`الوصفات: ${prescriptionCount}`,`طلبات التقييم المرسلة: ${reviewCount}`];
+  return lines.join('\n');
+}
 function yahyaAssistantMatch(question){
   const normalized=yahyaAssistantNormalize(question);if(!normalized)return null;
   let best=null,bestScore=0;
@@ -4972,6 +5012,7 @@ function yahyaAssistantMatch(question){
   return best;
 }
 function yahyaAssistantAnswer(question){
+  const patientAnswer=yahyaAssistantPatientAnswer(question);if(patientAnswer){yahyaAssistantAddMessage(patientAnswer);return}
   const entry=yahyaAssistantMatch(question),en=lang==='en';
   if(!entry){yahyaAssistantAddMessage(en?'I can help with patients, appointments, sync, plans, payments, lab, prescriptions, reviews, statistics, language, theme, and sign-in. Try one of these topics.':'أستطيع مساعدتك في المرضى والمواعيد والمزامنة والخطط والدفع والمعمل والوصفات والتقييمات والإحصائيات واللغة والمظهر وتسجيل الدخول. جرّب كتابة موضوع السؤال بوضوح.');return}
   yahyaAssistantAddMessage(yahyaAssistantText(entry));
@@ -4980,8 +5021,10 @@ function yahyaAssistantAnswer(question){
 function initYahyaAssistant(){
   const button=$('yahyaAssistantBtn'),panel=$('yahyaAssistantPanel'),close=$('yahyaAssistantClose'),form=$('yahyaAssistantForm'),input=$('yahyaAssistantInput');if(!button||!panel||!close||!form||!input)return;
   yahyaAssistantLabels();yahyaAssistantAddMessage(lang==='en'?'Hello, I am Yahya. Ask me about any dashboard icon or procedure, and I will guide you step by step.':'مرحباً، أنا يحيى. اسألني عن أي أيقونة أو إجراء في الداشبورد وسأرشدك خطوة بخطوة.');
-  const setOpen=open=>{panel.hidden=!open;button.setAttribute('aria-expanded',String(open));if(open){yahyaAssistantLabels();setTimeout(()=>input.focus(),30)}};
-  button.addEventListener('click',()=>setOpen(panel.hidden));close.addEventListener('click',()=>setOpen(false));
+  const setOpen=open=>{panel.hidden=!open;panel.setAttribute('aria-hidden',String(!open));button.setAttribute('aria-expanded',String(open));if(open){yahyaAssistantLabels();setTimeout(()=>input.focus(),30)}};
+  const closeAssistant=event=>{event?.preventDefault();event?.stopPropagation();setOpen(false);button.focus()};
+  button.addEventListener('click',()=>setOpen(panel.hidden));close.addEventListener('click',closeAssistant);close.addEventListener('pointerup',closeAssistant);
+  document.addEventListener('click',event=>{if(event.target.closest('#yahyaAssistantClose'))closeAssistant(event)});
   form.addEventListener('submit',event=>{event.preventDefault();const question=input.value.trim();if(!question)return;yahyaAssistantAddMessage(question,'user');input.value='';yahyaAssistantAnswer(question)});
   document.querySelectorAll('[data-yahya-question]').forEach(quick=>quick.addEventListener('click',()=>{const question=quick.dataset.yahyaQuestion||'';yahyaAssistantAddMessage(question,'user');yahyaAssistantAnswer(question)}));
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)setOpen(false)});

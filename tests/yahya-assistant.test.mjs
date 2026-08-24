@@ -15,9 +15,14 @@ test('Yahya assistant is a namespaced, animated read-only dashboard helper',()=>
   assert.match(html,/id="yahyaAssistantForm"/);
   assert.match(js,/yahyaAssistantKnowledge/);
   assert.match(js,/yahyaAssistantAnswer/);
+  assert.match(js,/yahyaAssistantPatientAnswer/);
+  assert.match(js,/yahyaAssistantFindPatient/);
+  assert.match(js,/patientLabCases\(patient/);
   assert.match(js,/initYahyaAssistant\(\)/);
   assert.match(css,/\.yahya-assistant-fab/);
+  assert.match(css,/\.yahya-assistant-panel\[hidden\]\{display:none!important\}/);
   assert.match(css,/yahyaAssistantSpin/);
+  assert.match(js,/close\.addEventListener\('click',closeAssistant\)/);
   assert.doesNotMatch(js,/fetch\([^)]*assistant/i,'The local helper must not introduce an external assistant endpoint');
 });
 
