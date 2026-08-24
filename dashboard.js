@@ -1209,7 +1209,7 @@ function adminClinicUrl(clinicId,hash='patientListTitle'){
   return `${location.pathname}?${params.toString()}#${hash}`;
 }
 function adminPlanUrl(item){
-  const params=new URLSearchParams({patientId:String(item.patient.id||''),date:selectedDate,clinic:item.clinic.id,view:'admin'});
+  const params=new URLSearchParams({patientId:String(item.patient.id||''),date:selectedDate,planNo:String(item.planNo||''),clinic:item.clinic.id,view:'admin'});
   return `./treatment-plan.html?${params.toString()}`;
 }
 function renderAdminPatientHub(){
@@ -2105,7 +2105,7 @@ function renderTreatmentPlanCenter(){
 async function refreshTreatmentPlanCenter(){
   if(treatmentPlanCenter.loading)return;
   treatmentPlanCenter.loading=true;treatmentPlanCenter.error='';renderTreatmentPlanCenter();
-  try{const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&_=${Date.now()}`,{},15000),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'تعذر تحميل الخطط');treatmentPlanCenter={records:data.records||{},aliases:data.aliases||{},loading:false,error:'',loadedAt:Date.now()};renderTreatmentPlanCenter()}catch(error){treatmentPlanCenter.loading=false;treatmentPlanCenter.error=String(error.message||error);renderTreatmentPlanCenter()}
+  try{const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&includeHistory=1&_=${Date.now()}`,{},15000),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'تعذر تحميل الخطط');treatmentPlanCenter={records:data.records||{},aliases:data.aliases||{},loading:false,error:'',loadedAt:Date.now()};renderTreatmentPlanCenter()}catch(error){treatmentPlanCenter.loading=false;treatmentPlanCenter.error=String(error.message||error);renderTreatmentPlanCenter()}
 }
 async function refreshOperationsLabCases(){
   if(operationsCenter.labLoading)return operationsCenter.labCases;
@@ -2185,7 +2185,7 @@ function openTreatmentPlanCenter(){
 function openPlanCenterRecord(canonical){
   const record=treatmentPlanCenter.records?.[canonical];if(!record?.sourcePatientId||!record?.sourceDate)return;
   cacheTreatmentSource(record.sourcePatientId,{id:record.sourcePatientId,name:record.fullName||'',file:record.fileNo||'',phone:record.mobile||'',nationalId:record.nationalId||'',date:record.sourceDate,start:'',view:'admin',returnUrl:location.href});
-  location.href=`./treatment-plan.html?${new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,clinic:record.clinicId||'clinic-1',view:'admin'}).toString()}`;
+  location.href=`./treatment-plan.html?${new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin'}).toString()}`;
 }
 async function changePlanCenterStatus(canonical,nextStatus,select){
   const record=treatmentPlanCenter.records?.[canonical],previous=record?.status;if(!record||!PLAN_STATUS_VALUES.includes(nextStatus)){if(select)select.value=previous||'draft';return}
@@ -2196,10 +2196,10 @@ async function changePlanCenterStatus(canonical,nextStatus,select){
   }else if(!confirm(`تغيير حالة خطة ${record.fullName||'المريض'} إلى «${planStatusText(nextStatus)}»؟`)){if(select)select.value=previous;return}
   select.disabled=true;
   try{
-    const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,clinic:record.clinicId||'clinic-1'}),loaded=await request(`/api/treatment-plan?${params.toString()}`),data=await loaded.json();if(!loaded.ok||!data.exists||!data.plan)throw new Error('تعذر العثور على ملف الخطة الكامل');
+    const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1'}),loaded=await request(`/api/treatment-plan?${params.toString()}`),data=await loaded.json();if(!loaded.ok||!data.exists||!data.plan)throw new Error('تعذر العثور على ملف الخطة الكامل');
     applyPlanStatusMetadata(data.plan,nextStatus,'',cancellationReason);
     const saved=await request(`/api/treatment-plan?${params.toString()}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:data.plan})});if(!saved.ok)throw new Error('تعذر حفظ حالة الخطة');
-    const registry=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(record.clinicId||'clinic-1')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({patient:{fullName:record.fullName,fileNo:record.fileNo,mobile:record.mobile,nationalId:record.nationalId},status:nextStatus,planNo:record.planNo,sourcePatientId:record.sourcePatientId,sourceDate:record.sourceDate,cancelledAt:data.plan.meta?.cancelledAt||0,cancelledBy:data.plan.meta?.cancelledBy||'',cancellationReason:data.plan.meta?.cancellationReason||''})});if(!registry.ok)throw new Error('حُفظت الخطة وتعذر تحديث الفهرس');
+    const registry=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(record.clinicId||'clinic-1')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({canonical,patient:{fullName:record.fullName,fileNo:record.fileNo,mobile:record.mobile,nationalId:record.nationalId},status:nextStatus,planNo:record.planNo,parentPlanNo:record.parentPlanNo||'',relation:record.relation||'standalone',sourcePatientId:record.sourcePatientId,sourceDate:record.sourceDate,cancelledAt:data.plan.meta?.cancelledAt||0,cancelledBy:data.plan.meta?.cancelledBy||'',cancellationReason:data.plan.meta?.cancellationReason||''})});if(!registry.ok)throw new Error('حُفظت الخطة وتعذر تحديث الفهرس');
     await refreshTreatmentPlanCenter();treatmentPlanRegistry.lastFetchedAt=0;await refreshTreatmentPlanRegistry(true);toast('تم تحديث حالة الخطة',`${record.fullName||'المريض'} — ${planStatusText(nextStatus)}`)
   }catch(error){select.value=previous;toast('تعذر تحديث الخطة',String(error.message||error))}finally{select.disabled=false}
 }
@@ -2511,7 +2511,7 @@ function openPatientIdentityResult(button){const lookup=patientProfileLookupFrom
 function openPatientProfilePlan(canonical){
   const record=(patientProfileState.profile?.plans||[]).find(item=>item.canonical===canonical);if(!record?.sourcePatientId||!record?.sourceDate)return;
   try{cacheTreatmentSource(record.sourcePatientId,{id:record.sourcePatientId,name:record.fullName||patientProfileState.profile?.patient?.name||'',file:record.fileNo||patientProfileState.profile?.patient?.file||'',phone:record.mobile||patientProfileState.profile?.patient?.phone||'',nationalId:record.nationalId||patientProfileState.profile?.patient?.nationalId||'',date:record.sourceDate,start:'',view:'admin',returnUrl:location.href})}catch{}
-  location.href=`./treatment-plan.html?${new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,clinic:record.clinicId||'clinic-1',view:'admin'})}`;
+  location.href=`./treatment-plan.html?${new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin'})}`;
 }
 async function savePatientProfile(event){
   event.preventDefault();if(!patientProfileState.lookup||patientProfileState.loading||authUser?.role!=='admin')return;
@@ -2707,7 +2707,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
   const record=treatmentPlanRecord(patient);
   const sourcePatientId=String(record?.sourcePatientId||patient.id);
   const sourceDate=String(record?.sourceDate||selectedDate);
-  const planUrl=`/api/treatment-plan?patientId=${encodeURIComponent(sourcePatientId)}&date=${encodeURIComponent(sourceDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`;
+  const planUrl=`/api/treatment-plan?patientId=${encodeURIComponent(sourcePatientId)}&date=${encodeURIComponent(sourceDate)}&planNo=${encodeURIComponent(record?.planNo||'')}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`;
   let originalPlan=null;
   try{
     const loaded=await request(planUrl);
@@ -2724,7 +2724,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
       method:'PUT',headers:{'content-type':'application/json'},
       body:JSON.stringify({
         patient:updatedPlan.patient,status:nextStatus,rejectionReason,cancellationReason,
-        planNo:updatedPlan.meta?.planNo||'',sourcePatientId,sourceDate,
+        planNo:updatedPlan.meta?.planNo||'',parentPlanNo:updatedPlan.meta?.parentPlanNo||'',relation:updatedPlan.meta?.relation||'standalone',sourcePatientId,sourceDate,
         patientAcceptedAt:updatedPlan.meta?.patientAcceptedAt||0,
         patientAcceptedBy:updatedPlan.meta?.patientAcceptedBy||'',
         approvedAt:updatedPlan.meta?.approvedAt||0,

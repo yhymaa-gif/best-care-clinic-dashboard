@@ -19,6 +19,7 @@ const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const validPatientId = value => /^[a-zA-Z0-9._:-]{1,80}$/.test(value || '');
 const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/${date}/patients/${hash(patientId)}`;
 const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
+const versionedPlanKey = (clinicId, date, patientId, planNo) => `clinics/${clinicId}/versions/${hash(`${date}|${patientId}|${planNo}`)}`;
 
 const cleanItem = item => ({
   code: cleanText(item?.code, 50),
@@ -55,6 +56,8 @@ const cleanPlan = plan => ({
     copyType: plan?.meta?.copyType === 'file' ? 'file' : 'patient',
     revision: Math.max(1, Number(plan?.meta?.revision || 1)),
     status: ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'].includes(plan?.meta?.status) ? plan.meta.status : 'draft',
+    parentPlanNo: cleanText(plan?.meta?.parentPlanNo, 40),
+    relation: plan?.meta?.relation === 'addendum' ? 'addendum' : 'standalone',
     doctorApprovedAt: cleanNumber(plan?.meta?.doctorApprovedAt, 0, Number.MAX_SAFE_INTEGER),
     doctorApprovedBy: cleanText(plan?.meta?.doctorApprovedBy, 120),
     submittedAt: cleanNumber(plan?.meta?.submittedAt, 0, Number.MAX_SAFE_INTEGER),
@@ -133,12 +136,19 @@ export default async request => {
   const patientId = url.searchParams.get('patientId') || '';
   const date = url.searchParams.get('date') || '';
   const clinicId = url.searchParams.get('clinic') || 'clinic-1';
+  const requestedPlanNo = cleanText(url.searchParams.get('planNo'), 40);
   if (!validPatientId(patientId) || !validDate(date) || !validClinic(clinicId)) return reply({ error: 'Invalid treatment plan key' }, 400);
   if (!canAccessClinic(auth.user, clinicId)) return reply({ error: 'Clinic access denied' }, 403);
 
   const key = legacyPlanKey(clinicId, date, patientId);
   if (request.method === 'GET') {
-    let record = await store.get(key, { type: 'json', consistency: 'strong' });
+    let record = requestedPlanNo
+      ? await store.get(versionedPlanKey(clinicId, date, patientId, requestedPlanNo), { type: 'json', consistency: 'strong' })
+      : await store.get(key, { type: 'json', consistency: 'strong' });
+    if (requestedPlanNo && !record) {
+      const legacy = await store.get(key, { type: 'json', consistency: 'strong' });
+      if (legacy?.plan?.meta?.planNo === requestedPlanNo || !legacy?.plan?.meta?.planNo) record = legacy;
+    }
     let carriedForward = false;
     const lookupPatient = {
       fileNo: url.searchParams.get('fileNo') || '',
@@ -146,12 +156,12 @@ export default async request => {
       nationalId: url.searchParams.get('nationalId') || ''
     };
     const keys = patientIdentityKeys(lookupPatient);
-    if (!record && keys.length) {
+    if (!record && !requestedPlanNo && keys.length) {
       const matches = await Promise.all(keys.map(identity => store.get(permanentPlanKey(clinicId, identity), { type: 'json', consistency: 'strong' })));
       record = matches.filter(Boolean).sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0))[0] || null;
       carriedForward = Boolean(record);
     }
-    if (!record && keys.length) {
+    if (!record && !requestedPlanNo && keys.length) {
       const registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || {};
       const planReference = keys
         .map(identity => registry.records?.[registry.aliases?.[identity]])
@@ -179,14 +189,23 @@ export default async request => {
     if (!body?.plan || typeof body.plan !== 'object') return reply({ error: 'Invalid plan' }, 400);
     const existing = await store.get(key, { type: 'json', consistency: 'strong' });
     const plan = cleanPlan(body.plan);
+    const existingVersioned = plan.meta.planNo
+      ? await store.get(versionedPlanKey(clinicId, date, patientId, plan.meta.planNo), { type: 'json', consistency: 'strong' })
+      : null;
+    const existingForPlan = existingVersioned || (existing?.plan?.meta?.planNo === plan.meta.planNo ? existing : null);
     if (auth.user?.role !== 'admin' && !['draft', 'submitted', 'rejected'].includes(plan.meta.status)) {
       return reply({ error: 'Administration approval is required for this plan status' }, 403);
     }
-    if (auth.user?.role !== 'admin' && ['approved', 'approved_signed', 'cancelled'].includes(existing?.plan?.meta?.status)) {
+    if (auth.user?.role !== 'admin' && ['approved', 'approved_signed', 'cancelled'].includes(existingForPlan?.plan?.meta?.status)) {
       return reply({ error: 'An approved plan can only be changed by administration' }, 403);
     }
     const record = { patientId, clinicId, date, plan, revision: Number(existing?.revision || 0) + 1, updatedAt: Date.now(), updatedBy: String(auth.user?.displayName || auth.user?.username || '').slice(0, 120) };
+    const preservation = existing?.plan?.meta?.planNo && existing.plan.meta.planNo !== plan.meta.planNo
+      ? store.setJSON(versionedPlanKey(clinicId, date, patientId, existing.plan.meta.planNo), existing)
+      : Promise.resolve();
     await store.setJSON(key, record);
+    await preservation;
+    if (plan.meta.planNo) await store.setJSON(versionedPlanKey(clinicId, date, patientId, plan.meta.planNo), record);
     const keys = patientIdentityKeys(plan.patient);
     await Promise.all(keys.map(identity => store.setJSON(permanentPlanKey(clinicId, identity), record)));
     return reply({ ok: true, revision: record.revision, updatedAt: record.updatedAt });
