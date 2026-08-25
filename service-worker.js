@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260825-yahya-assistant-patient-dossier';
+const CACHE_NAME='bestcare-dashboard-v1-20260825-hassina-assistant';
 const APP_SHELL=[
   './',
   './index.html',

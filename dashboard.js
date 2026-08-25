@@ -4955,10 +4955,10 @@ function yahyaAssistantNormalize(value){return String(value||'').toLocaleLowerCa
 function yahyaAssistantText(entry){return lang==='en'?entry.en:entry.ar}
 function yahyaAssistantLabels(){
   const en=lang==='en';
-  setText('#yahyaAssistantTitle',en?'Yahya Smart Assistant':'المساعد الذكي يحيى');
-  setText('#yahyaAssistantSubtitle',en?'Ask about any dashboard step':'اسألني عن أي خطوة في الداشبورد');
+  setText('#yahyaAssistantTitle',en?'Hassina Smart Assistant':'المساعدة الذكية حسينة');
+  setText('#yahyaAssistantSubtitle',en?'Ask Hassina about any dashboard step':'اسأليني عن أي خطوة في الداشبورد');
   const input=$('yahyaAssistantInput');if(input)input.placeholder=en?'Type your question…':'اكتب سؤالك هنا…';
-  const btn=$('yahyaAssistantBtn');if(btn){btn.setAttribute('aria-label',en?'Open Yahya Smart Assistant':'فتح المساعد الذكي يحيى');btn.title=en?'Ask Yahya':'اسأل المساعد يحيى'}
+  const btn=$('yahyaAssistantBtn');if(btn){btn.setAttribute('aria-label',en?'Open Hassina Smart Assistant':'فتح المساعدة الذكية حسينة');btn.title=en?'Ask Hassina':'اسأل المساعدة حسينة'}
 }
 function yahyaAssistantAddMessage(text,role='bot'){
   const box=$('yahyaAssistantMessages');if(!box)return;
@@ -5034,7 +5034,7 @@ function yahyaAssistantAnswer(question){
 }
 function initYahyaAssistant(){
   const button=$('yahyaAssistantBtn'),panel=$('yahyaAssistantPanel'),close=$('yahyaAssistantClose'),form=$('yahyaAssistantForm'),input=$('yahyaAssistantInput');if(!button||!panel||!close||!form||!input)return;
-  yahyaAssistantLabels();yahyaAssistantAddMessage(lang==='en'?'Hello, I am Yahya. Ask me about any dashboard icon or procedure, and I will guide you step by step.':'مرحباً، أنا يحيى. اسألني عن أي أيقونة أو إجراء في الداشبورد وسأرشدك خطوة بخطوة.');
+  yahyaAssistantLabels();yahyaAssistantAddMessage(lang==='en'?'Hello, I am Hassina. Ask me about any dashboard icon or procedure, and I will guide you step by step.':'مرحباً، أنا حسينة. اسأليني عن أي أيقونة أو إجراء في الداشبورد وسأرشدك خطوة بخطوة.');
   const setOpen=open=>{panel.hidden=!open;panel.setAttribute('aria-hidden',String(!open));button.setAttribute('aria-expanded',String(open));if(open){yahyaAssistantLabels();setTimeout(()=>input.focus(),30)}};
   const closeAssistant=event=>{event?.preventDefault();event?.stopPropagation();setOpen(false);button.focus()};
   button.addEventListener('click',()=>setOpen(panel.hidden));close.addEventListener('click',closeAssistant);close.addEventListener('pointerup',closeAssistant);

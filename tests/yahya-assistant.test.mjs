@@ -12,9 +12,11 @@ const css=fs.readFileSync(path.join(root,'dashboard.css'),'utf8');
 test('Yahya assistant is a namespaced, animated read-only dashboard helper',()=>{
   assert.match(html,/id="yahyaAssistantBtn"/);
   assert.match(html,/id="yahyaAssistantPanel"/);
+  assert.match(html,/اسأل حسينة/);
   assert.match(html,/id="yahyaAssistantForm"/);
   assert.match(js,/yahyaAssistantKnowledge/);
   assert.match(js,/yahyaAssistantAnswer/);
+  assert.match(js,/المساعدة الذكية حسينة/);
   assert.match(js,/yahyaAssistantPatientAnswer/);
   assert.match(js,/yahyaAssistantFindPatient/);
   assert.match(js,/patientLabCases\(patient/);
