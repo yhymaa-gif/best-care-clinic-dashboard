@@ -6,7 +6,8 @@
 - Netlify site ID: `3c4d489e-36cb-4ed2-a934-99e87e4f79e7`
 - Last known good Netlify production commit: `f5f794cd60477a39e4c7863c07eaa8a6738dcb19`
 - Last known good Netlify deploy: `6a8d7be2c529fd000886ec2d`
-- Cloudflare candidate URL: pending
+- Temporary Cloudflare preview URL: `https://best-care-dashboard-candidate.empty-pomegranate.workers.dev`
+- Persistent account-owned Cloudflare candidate URL: pending authenticated Cloudflare access
 - Production custom domain: none
 - DNS before migration: no custom production DNS; the application uses the Netlify subdomain
 - DNS after parallel deployment: unchanged

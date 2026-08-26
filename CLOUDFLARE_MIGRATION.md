@@ -157,7 +157,9 @@ Production Blobs stores discovered in source include:
 - Cloudflare verification command: `pnpm run check:cloudflare`.
 - Cloudflare deploy command: `pnpm exec wrangler deploy`.
 - Worker name: `best-care-dashboard-candidate`.
-- Cloudflare preview/candidate URL: pending authenticated Cloudflare access.
+- Temporary Cloudflare preview URL: `https://best-care-dashboard-candidate.empty-pomegranate.workers.dev`.
+- Temporary Worker version: `19f5d33a-c1bb-4371-8cc4-250cfe3e3711`.
+- Persistent account-owned candidate URL: pending authenticated Cloudflare access.
 - Production custom domain: not assigned; no cutover authorized.
 
 ## 9. Tests and acceptance status
@@ -168,6 +170,8 @@ Production Blobs stores discovered in source include:
 - `wrangler deploy --dry-run`: PASS — 61 static assets, Worker bundle 3.48 KiB (1.39 KiB gzip), expected bindings only.
 - Direct HTTP routes: PASS for `/`, appointment requests, notifications, laboratory, prescriptions, statistics, treatment plans, offline shell, manifest, and service worker.
 - Browser smoke test: PASS for representative public/protected pages, RTL, direct navigation, deep-link refresh, and zero console entries.
+- Remote Cloudflare smoke test: PASS on the temporary `workers.dev` URL for static routes, security headers, deep-link refresh, and zero browser console entries.
+- Remote API statuses: PASS — session `401`, unknown endpoint `404`, unauthenticated same-origin mutation `401`, and cross-origin mutation `403`.
 - API proxy smoke test: PASS — unauthenticated session returns the expected `401`; unknown APIs return `404`; state-changing requests require the Cloudflare same origin before the Worker rewrites Origin server-side.
 - PWA static validation: PASS — manifest, icons, service worker, offline shell, update assets, and cache headers are included. Remote install/update testing still requires the persistent Cloudflare URL.
 - Secret pattern scan: no confirmed source credential was found. Pattern-like bytes occurred only inside bundled OCR WASM JavaScript assets and were treated as binary false positives.
@@ -175,7 +179,7 @@ Production Blobs stores discovered in source include:
 
 ### Pending acceptance gates
 
-- Persistent Cloudflare candidate deployment and URL.
+- Claim or redeploy the tested temporary version into the user's authenticated Cloudflare account to obtain a persistent account-owned candidate.
 - Authenticated login/logout and production-data CRUD through the candidate origin.
 - Two-device synchronization and Web Push comparison against Netlify.
 - Android Chrome and desktop Chrome install/update/offline testing against the remote candidate.
