@@ -141,24 +141,53 @@ Production Blobs stores discovered in source include:
 
 ## 7. Changed files
 
-This section will be finalized after implementation. The safety snapshot documents are the first repository changes on the migration branch.
+- `wrangler.jsonc`: Workers Static Assets, selective `/api/*` Worker routing, observability, and candidate Worker name.
+- `cloudflare/worker.mjs`: allow-listed API proxy to the unchanged Netlify backend with Cloudflare-side CSRF validation and no API caching.
+- `cloudflare/static/_headers`: Cloudflare equivalents for security and PWA cache headers.
+- `cloudflare/static/_redirects`: root entry rewrite, favicon fallback, and the existing public redirects.
+- `scripts/build-cloudflare-assets.mjs`: creates a dedicated static artifact without Functions, repository metadata, dependencies, or secret files.
+- `tests/cloudflare-migration.test.mjs`: build-boundary, routing, proxy, cookie, CSRF, failure, and allow-list tests.
+- `package.json`, `pnpm-lock.yaml`, and `pnpm-workspace.yaml`: pinned Wrangler tooling and deterministic migration commands.
+- `.gitignore`: excludes generated Cloudflare artifacts and local secret files.
 
 ## 8. Build and deployment
 
 - Netlify: unchanged.
-- Planned Cloudflare build command: `pnpm run build:cloudflare`.
-- Planned Cloudflare deploy command: `pnpm exec wrangler deploy`.
-- Planned Worker name: `best-care-dashboard-candidate`.
+- Cloudflare build command: `pnpm run build:cloudflare`.
+- Cloudflare verification command: `pnpm run check:cloudflare`.
+- Cloudflare deploy command: `pnpm exec wrangler deploy`.
+- Worker name: `best-care-dashboard-candidate`.
 - Cloudflare preview/candidate URL: pending authenticated Cloudflare access.
 - Production custom domain: not assigned; no cutover authorized.
 
 ## 9. Tests and acceptance status
 
-Pending implementation and execution. A failed critical gate keeps Netlify primary.
+### Completed locally on 2026-08-26
+
+- `pnpm run check:cloudflare`: PASS — 100 tests, 0 failures.
+- `wrangler deploy --dry-run`: PASS — 61 static assets, Worker bundle 3.48 KiB (1.39 KiB gzip), expected bindings only.
+- Direct HTTP routes: PASS for `/`, appointment requests, notifications, laboratory, prescriptions, statistics, treatment plans, offline shell, manifest, and service worker.
+- Browser smoke test: PASS for representative public/protected pages, RTL, direct navigation, deep-link refresh, and zero console entries.
+- API proxy smoke test: PASS — unauthenticated session returns the expected `401`; unknown APIs return `404`; state-changing requests require the Cloudflare same origin before the Worker rewrites Origin server-side.
+- PWA static validation: PASS — manifest, icons, service worker, offline shell, update assets, and cache headers are included. Remote install/update testing still requires the persistent Cloudflare URL.
+- Secret pattern scan: no confirmed source credential was found. Pattern-like bytes occurred only inside bundled OCR WASM JavaScript assets and were treated as binary false positives.
+- Dependency audit: two high advisories remain through `@netlify/blobs -> @netlify/dev-utils -> image-size`. The vulnerable image parsers are not used by the application path found in this audit. Upgrading `@netlify/blobs` would change the Netlify runtime requirement and is deferred to a separately tested backend maintenance change rather than mixed into hosting migration.
+
+### Pending acceptance gates
+
+- Persistent Cloudflare candidate deployment and URL.
+- Authenticated login/logout and production-data CRUD through the candidate origin.
+- Two-device synchronization and Web Push comparison against Netlify.
+- Android Chrome and desktop Chrome install/update/offline testing against the remote candidate.
+- Performance comparison between persistent Netlify and Cloudflare URLs.
+- Workers Builds Git integration validation.
+
+Until these gates pass, the decision remains: **keep Netlify primary**.
 
 ## 10. Known limitations and remaining work
 
 - A Cloudflare account session/API token with Workers deployment permission is required to create the persistent candidate URL and connect Workers Builds to GitHub.
+- The first static/API candidate is ready to deploy, but no persistent Cloudflare URL can be claimed until Wrangler is authenticated to the target account.
 - A user who is already signed in on the Netlify hostname will sign in separately on the Cloudflare candidate hostname because cookies are host-scoped. Both sessions still use the same server-side session store.
 - Netlify remains an intentional backend dependency during this first phase. This is documented, reversible, and avoids data duplication.
 
