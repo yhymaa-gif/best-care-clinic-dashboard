@@ -596,7 +596,8 @@ async function logoutApp(){
   }
 }
 function isProtectedWorkWindow(value=Date.now()){const hour=Number(new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',hour:'2-digit',hourCycle:'h23'}).format(new Date(value)));return hour>=14&&hour<23}
-function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(isProtectedWorkWindow()){authLastActivity=Date.now()}else if(Date.now()-authLastActivity>=5*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}if(Date.now()-authKeepAliveAt>10*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
+function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(isProtectedWorkWindow()){authLastActivity=Date.now()}else if(Date.now()-authLastActivity>=5*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}// Normal API traffic already refreshes lastSeenAt; this is only a quiet-screen fallback.
+if(Date.now()-authKeepAliveAt>30*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
 const statusText=status=>(lang==='en'?EN[status]:STATUS[status])||status;
 let sync={
   revision:0,
