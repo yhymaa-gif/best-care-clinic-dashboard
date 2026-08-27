@@ -159,7 +159,7 @@ Production Blobs stores discovered in source include:
 - Worker name: `best-care-dashboard-candidate`.
 - Temporary Cloudflare preview URL: `https://best-care-dashboard-candidate.empty-pomegranate.workers.dev`.
 - Temporary Worker version: `19f5d33a-c1bb-4371-8cc4-250cfe3e3711`.
-- Persistent account-owned candidate URL: pending authenticated Cloudflare access.
+- Persistent account-owned candidate URL: `https://best-care-dashboard-candidate.best-care-dashboard-v4.workers.dev`.
 - Production custom domain: not assigned; no cutover authorized.
 
 ## 9. Tests and acceptance status
@@ -221,3 +221,19 @@ The Netlify API was checked again before changes: the production repository, `ma
 Wrangler reports unauthenticated. The available Chrome and in-app Cloudflare pages both display sign-in. No permanent Cloudflare URL, remote authenticated CRUD, multi-device test, Android installation, performance comparison or Git deployment is claimed. Netlify stays primary.
 
 Configuration references: [Static Assets](https://developers.cloudflare.com/workers/static-assets/), [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/), [Workers logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/).
+
+## 13. Owned parallel deployment — 2026-08-28 (Riyadh)
+
+This section supersedes the authentication blocker in section 12. The user signed in and authorized Wrangler. The target account is explicitly bound in configuration: `87ccad3480f8c87af4402a5bf50c64d1`. No secret was committed.
+
+- Source: `migration/cloudflare`, commit `1afea2a`.
+- Owned candidate: `https://best-care-dashboard-candidate.best-care-dashboard-v4.workers.dev`.
+- Deployed Worker version: `2b91670b-2baf-4cc6-b656-3b4079472638`.
+- `pnpm run check:cloudflare`: PASS, 101/101. A preceding test run was blocked by the local development server holding the output directory on Windows; after stopping that task-owned server, the complete suite passed and the artifact was rebuilt.
+- Authenticated account deployment: PASS; 61 static files, expected binding only, no Netlify secret copied.
+- Initial HTTPS provisioning briefly failed; subsequent HTTPS checks succeeded without disabling TLS verification.
+- Remote HTTP: home, laboratory, statistics, appointment requests, treatment plan, manifest and service worker return 200. The private session returns the expected 401, an unknown API returns 404, and cross-origin POST is rejected with 403. API responses are non-cacheable; static security headers are present.
+- Remote browser verification is not claimed: the initial TLS failure was followed by a Browser URL-policy rejection on reload. That block was not bypassed. Local browser smoke had passed with no console errors.
+- GitHub App setup was prepared for only the two approved repositories; the final Install & Authorize step requires the user's approval. Workers Builds is not yet connected.
+
+Netlify remains primary and its published deploy is unchanged. This is a persistent parallel candidate, not an accepted cutover. Authenticated CRUD, real two-device synchronization, notification delivery, Android/desktop PWA installation, performance comparison and Git-triggered deployment remain acceptance gates. **NOT READY — KEEP NETLIFY PRIMARY**.

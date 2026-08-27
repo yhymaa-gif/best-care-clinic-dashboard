@@ -7,7 +7,8 @@
 - Last known good Netlify production commit: `f5f794cd60477a39e4c7863c07eaa8a6738dcb19`
 - Last known good Netlify deploy: `6a8d7be2c529fd000886ec2d`
 - Temporary Cloudflare preview URL: `https://best-care-dashboard-candidate.empty-pomegranate.workers.dev`
-- Persistent account-owned Cloudflare candidate URL: pending authenticated Cloudflare access
+- Persistent account-owned Cloudflare candidate URL: `https://best-care-dashboard-candidate.best-care-dashboard-v4.workers.dev`
+- Candidate source/version: `1afea2a` / `2b91670b-2baf-4cc6-b656-3b4079472638`
 - Production custom domain: none
 - DNS before migration: no custom production DNS; the application uses the Netlify subdomain
 - DNS after parallel deployment: unchanged
@@ -16,7 +17,7 @@
 
 Netlify is still primary and has not been disabled, deleted, unlinked, or modified. No rollback action is currently required.
 
-Reverified on 2026-08-27: the production deploy and source SHA above are unchanged. The current local candidate uses Wrangler 4.127.0 and has not been deployed to an owned Cloudflare account; no DNS or environment change was made.
+Reverified on 2026-08-27: the production deploy and source SHA above are unchanged. The candidate was subsequently deployed to the user's account on 2026-08-28 Riyadh time using Wrangler 4.127.0. Cloudflare registered its own workers.dev subdomain; no production DNS or Netlify environment setting was changed.
 
 ## Emergency rollback procedure after a future cutover
 
