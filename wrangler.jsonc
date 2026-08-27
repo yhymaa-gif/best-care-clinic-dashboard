@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "best-care-dashboard-candidate",
+  "account_id": "87ccad3480f8c87af4402a5bf50c64d1",
   "main": "./cloudflare/worker.mjs",
   "compatibility_date": "2026-08-27",
   "workers_dev": true,
