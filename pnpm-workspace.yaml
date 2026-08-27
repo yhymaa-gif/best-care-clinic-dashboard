@@ -6,8 +6,8 @@ allowBuilds:
   workerd: true
 
 minimumReleaseAgeExclude:
-  - miniflare@5.20260825.0-alpha
-  - wrangler@4.126.0
+  - miniflare@5.20260826.0-alpha
+  - wrangler@4.127.0
 
 overrides:
   "@opentelemetry/core": "2.8.0"

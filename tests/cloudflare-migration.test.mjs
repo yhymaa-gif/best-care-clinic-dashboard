@@ -147,3 +147,11 @@ test('the proxy exposes exactly the production API surface', () => {
   assert.ok(__test.API_PATHS.has('/api/state'));
   assert.ok(!__test.API_PATHS.has('/.netlify/functions/auth'));
 });
+
+test('Cloudflare observability does not persist API query URLs or tracing metadata', async () => {
+  const config = JSON.parse(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
+  assert.equal(config.observability.logs.invocation_logs, false);
+  assert.equal(config.observability.traces.enabled, false);
+  assert.equal(config.workers_dev, true);
+  assert.equal(config.routes, undefined);
+});

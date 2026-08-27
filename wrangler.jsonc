@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "best-care-dashboard-candidate",
   "main": "./cloudflare/worker.mjs",
-  "compatibility_date": "2026-08-26",
+  "compatibility_date": "2026-08-27",
   "workers_dev": true,
   "upload_source_maps": true,
   "assets": {
@@ -18,6 +18,13 @@
   },
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 0.1
+    "head_sampling_rate": 0.1,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": false
+    },
+    "traces": {
+      "enabled": false
+    }
   }
 }

@@ -198,3 +198,26 @@ Until these gates pass, the decision remains: **keep Netlify primary**.
 ## 11. Rollback
 
 See `MIGRATION_ROLLBACK.md`. Until an explicit later cutover, rollback is simply continuing to use the unchanged Netlify production URL.
+
+## 12. Resume verification — 2026-08-27
+
+The Netlify API was checked again before changes: the production repository, `main` branch, site ID, deploy `6a8d7be2c529fd000886ec2d`, and source `f5f794cd60477a39e4c7863c07eaa8a6738dcb19` still match the baseline above. No custom domain exists. Netlify builds remain enabled; this work does not change that setting.
+
+- Pinned stable Wrangler to `4.127.0`; compatibility date is `2026-08-27`.
+- Disabled automatic invocation logs and tracing, which could otherwise retain API query URLs. Worker exceptions remain observable with sampling. No secret values were copied.
+- `pnpm run check:cloudflare`: PASS, 101 tests, 0 failures.
+- `wrangler deploy --dry-run`: PASS, 61 assets; Worker 3.68 KiB / 1.44 KiB gzip. This command did **not** deploy.
+- Local HTTP smoke: home, laboratory, statistics, manifest and service worker return 200; unauthenticated session returns the expected 401 and `no-store`.
+- Browser smoke: the local Worker origin displays the RTL login form after loading. No production user, patient or appointment was created or changed.
+- The historical temporary URL above is **not** a durable, account-owned production candidate and was not redeployed this time.
+
+### Access gate
+
+- **BLOCKED ACTION:** deploy the persistent Worker and link Workers Builds to GitHub.
+- **REQUIRED ACCESS:** sign in to the user's Cloudflare account and authorize Wrangler; authorize the specific GitHub repository for Builds.
+- **WHY IT IS REQUIRED:** an anonymous temporary account cannot provide durable ownership or repeatable production deployment.
+- **MINIMUM PERMISSION NEEDED:** account/user read and Workers Scripts edit for the target account; Workers Tail read for diagnostics. No DNS, Pages, database, KV or R2 permissions are needed for this candidate.
+
+Wrangler reports unauthenticated. The available Chrome and in-app Cloudflare pages both display sign-in. No permanent Cloudflare URL, remote authenticated CRUD, multi-device test, Android installation, performance comparison or Git deployment is claimed. Netlify stays primary.
+
+Configuration references: [Static Assets](https://developers.cloudflare.com/workers/static-assets/), [Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/), [Workers logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/).

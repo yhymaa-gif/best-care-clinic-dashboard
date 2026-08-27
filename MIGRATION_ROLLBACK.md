@@ -16,6 +16,8 @@
 
 Netlify is still primary and has not been disabled, deleted, unlinked, or modified. No rollback action is currently required.
 
+Reverified on 2026-08-27: the production deploy and source SHA above are unchanged. The current local candidate uses Wrangler 4.127.0 and has not been deployed to an owned Cloudflare account; no DNS or environment change was made.
+
 ## Emergency rollback procedure after a future cutover
 
 1. Stop routing users to the Cloudflare candidate/custom domain.
