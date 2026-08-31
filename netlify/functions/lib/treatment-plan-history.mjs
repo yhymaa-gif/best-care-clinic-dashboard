@@ -123,7 +123,7 @@ const aliasesFor = record => patientIdentityKeys({
  * Rebuilds missing registry entries from the existing per-appointment blobs.
  * This is intentionally opt-in and throttled so normal dashboard polling stays light.
  */
-export async function hydrateTreatmentPlanRegistry({ registryStore, planStore, current = {}, clinicId, force = false }) {
+export async function hydrateTreatmentPlanRegistry({ registryStore, planStore, current = {}, clinicId, force = false, persist = true }) {
   if (!validClinic(clinicId)) return current;
   const now = Date.now();
   const hydratedAt = Number(current.historyHydratedAtByClinic?.[clinicId] || 0);
@@ -172,7 +172,7 @@ export async function hydrateTreatmentPlanRegistry({ registryStore, planStore, c
     revision: Number(current.revision || 0) + (changed ? 1 : 0),
     updatedAt: changed ? now : Number(current.updatedAt || 0)
   };
-  await registryStore.setJSON('registry/global', next);
+  if (persist) await registryStore.setJSON('registry/global', next);
   return next;
 }
 

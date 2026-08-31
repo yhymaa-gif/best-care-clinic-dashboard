@@ -186,6 +186,9 @@ let patientIdentityDisplayLimit=120;
 let patientDirectoryReviewOnly=false;
 let patientDirectoryImportDraft={fileName:'',rows:[],validRows:[],invalidRows:[]};
 let patientProfileState={lookup:null,profile:null,loading:false,error:'',tab:'appointments'};
+const patientSummaryCache=window.BestCarePatientSummary.createCache();
+let patientSummaryOpen=null;
+let patientSummaryRequest=Promise.resolve();
 let labCasesState={cases:[],revision:0,updatedAt:0,lastFetchedAt:0,loading:false};
 const REQUESTED_VIEW=new URLSearchParams(location.search).get('view');
 const VIEW_MODE=REQUESTED_VIEW==='admin'?'admin':'clinic';
@@ -275,6 +278,7 @@ function lockApp(message='انتهت الجلسة بسبب الخمول. سجّ�
   stopOperationsPrescriptionPolling();
   authReady=false;
   authUser=null;
+  patientSummaryOpen=null;patientSummaryCache.clear();patientSummaryRequest=Promise.resolve();
   purgeSensitiveLocalData();
   clearTimeout(sync?.autoTimer);
   clearTimeout(sync?.pushTimer);
@@ -2498,8 +2502,8 @@ function renderPatientProfile(){
   $('patientProfileLastReviewWhatsapp').textContent=communication.lastReviewWhatsappAt?`آخر إرسال: ${patientProfileDateTime(communication.lastReviewWhatsappAt)}`:'لم يرسل طلب تقييم بعد';
   renderPatientProfileTimeline();
 }
-async function loadPatientProfile(lookup){
-  patientProfileState={lookup,profile:null,loading:true,error:'',tab:'appointments'};$('patientIdentitySearchView').hidden=true;$('patientProfileView').hidden=false;renderPatientProfile();
+async function loadPatientProfile(lookup,{tab='appointments'}={}){
+  patientProfileState={lookup,profile:null,loading:true,error:'',tab};$('patientIdentitySearchView').hidden=true;$('patientProfileView').hidden=false;renderPatientProfile();
   try{
     const scope=authUser?.role==='admin'?'all':ACTIVE_CLINIC_ID;
     const response=await request(`${PATIENT_PROFILE_API}?${new URLSearchParams({type:lookup.type,value:lookup.value,clinic:scope})}`,{cache:'no-store'},30000),data=await response.json().catch(()=>({}));
@@ -2522,6 +2526,7 @@ async function savePatientProfile(event){
   try{
     const response=await request(PATIENT_PROFILE_API,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({lookup:patientProfileState.lookup,clinic:'all',patient})},45000),data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر حفظ بيانات المريض');
+    patientSummaryCache.clear();patientSummaryOpen=null;
     const updated=data.updated||{};toast('تم تحديث ملف المريض',`المواعيد ${updated.appointments||0} · الخطط ${updated.plans||0} · المعمل ${updated.labs||0}`);
     patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};patientIdentityAliasIndex=new Map();adminPatientHub.updatedAt=0;treatmentPlanRegistry.lastFetchedAt=0;
     const nextLookup=patient.file?{type:'file',value:patient.file}:patient.phone?{type:'phone',value:patient.phone}:{type:'national',value:patient.nationalId};
@@ -2591,9 +2596,74 @@ async function requestEarliestAppointment(patientId,select){
     renderTable();
   }
 }
+function patientSummaryScope(){return`${ACTIVE_CLINIC_ID}|${selectedDate}`}
+function fitPatientSummaryPanel(){
+  const panel=$('patientSummaryPanel');if(!panel)return;
+  panel.style.maxInlineSize=`${Math.max(0,(els.patientRows.closest('.table-wrap')?.clientWidth||innerWidth)-20)}px`;
+}
+function patientSummaryButtonMarkup(patient){
+  if(VIEW_MODE!=='admin'||authUser?.role!=='admin')return'';
+  const open=patientSummaryOpen?.id===String(patient.id)&&patientSummaryOpen.scope===patientSummaryScope();
+  return`<button class="patient-summary-toggle" type="button" data-summary-toggle="${escapeHtml(patient.id)}" aria-expanded="${open}" aria-controls="patientSummaryPanel"><span aria-hidden="true">⌄</span>${lang==='en'?'More details':'تفاصيل أكثر'}</button>`;
+}
+function renderPatientSummaryPanel(){
+  const panel=$('patientSummaryPanel'),state=patientSummaryOpen;if(!panel||!state||VIEW_MODE!=='admin'||authUser?.role!=='admin')return;
+  fitPatientSummaryPanel();
+  const patient=patientById(state.id);if(!patient)return;
+  const identity=patientWithDirectoryIdentity(patient),entry=patientSummaryCache.peek(state.key);
+  if(!state.lookup){
+    panel.innerHTML=`<div class="patient-summary-state" role="status"><span>${lang==='en'?'Update the file number or national ID to link the patient history safely.':'أكمل رقم الملف أو الهوية لربط سجل المريض بأمان.'}</span><button type="button" data-edit-id="${escapeHtml(state.id)}">${lang==='en'?'Edit patient':'تصحيح بيانات المريض'}</button><button type="button" data-summary-toggle="${escapeHtml(state.id)}">${lang==='en'?'Close':'إغلاق'}</button></div>`;return;
+  }
+  const loading=Boolean(entry?.pending),failed=Boolean(entry?.error);
+  panel.setAttribute('aria-busy',String(loading));
+  if(entry?.data){
+    // Overlay this appointment from the existing synchronized list; never write
+    // the fetched history into the day state, or replace other historical visits.
+    const profile={...entry.data,appointments:(entry.data.appointments||[]).map(item=>
+      item.date===selectedDate&&item.clinicId===ACTIVE_CLINIC_ID&&String(item.id)===state.id?{...item,...patient,date:item.date,clinicId:item.clinicId}:item)};
+    panel.innerHTML=window.BestCarePatientSummary.render(profile,{lang,patientId:state.id,patientName:identity.name,date:selectedDate,clinicId:ACTIVE_CLINIC_ID,planStatus:planStatusText,labStatus:labStatusText});
+    const stale=state.revision!==sync.revision||state.directoryRevision!==patientIdentityDirectory.revision;
+    const updated=new Date(entry.at).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'});
+    const notice=document.createElement('p');notice.className='patient-summary-muted';notice.setAttribute('role','status');
+    notice.textContent=failed?(lang==='en'?'Refresh failed. Showing the last loaded summary; retry when connected.':'تعذر التحديث. يُعرض آخر ملخص محمّل؛ أعد المحاولة عند الاتصال.'):
+      loading?(lang==='en'?'Refreshing summary…':'جارٍ تحديث الملخص…'):
+      stale?(lang==='en'?'New list data received. Refresh to reload the full history.':'وصل تحديث للقائمة. اضغط تحديث لإعادة تحميل السجل الكامل.'):
+      `${lang==='en'?'Loaded at':'تم التحميل الساعة'} ${updated}`;
+    panel.prepend(notice);
+    panel.querySelectorAll('[data-summary-refresh]').forEach(button=>button.disabled=loading);
+    return;
+  }
+  panel.innerHTML=`<div class="patient-summary-state" role="${failed?'alert':'status'}"><span>${failed?(lang==='en'?'Could not load the history. This does not mean the patient has no records.':'تعذر تحميل السجل. لا يعني ذلك عدم وجود بيانات للمريض.'):(lang==='en'?'Loading the patient summary…':'جارٍ تحميل ملخص المريض…')}</span>${failed?`<button type="button" data-summary-refresh="${escapeHtml(state.id)}">${lang==='en'?'Retry':'إعادة المحاولة'}</button>`:''}<button type="button" data-summary-toggle="${escapeHtml(state.id)}">${lang==='en'?'Close':'إغلاق'}</button></div>`;
+}
+async function loadPatientSummary({force=false}={}){
+  const state=patientSummaryOpen;if(!state?.lookup||!authReady||authUser?.role!=='admin')return;
+  const user=authUser;
+  const pending=patientSummaryCache.load(state.key,()=>patientSummaryRequest=patientSummaryRequest.catch(()=>{}).then(async()=>{
+    if(!authReady||authUser!==user||patientSummaryOpen?.key!==state.key)throw new Error('summary-superseded');
+    const response=await request(`${PATIENT_PROFILE_API}?${new URLSearchParams({...state.lookup,clinic:'all',summary:'1'})}`,{cache:'no-store'},45000);
+    if(response.status===401){lockApp();throw new Error('summary-session-expired')}
+    if(!response.ok)throw new Error('summary-unavailable');
+    const profile=await response.json();if(!profile?.found||!profile?.patient)throw new Error('summary-unavailable');
+    return profile;
+  }),{force});
+  renderPatientSummaryPanel();
+  try{await pending;if(patientSummaryOpen===state){state.revision=sync.revision;state.directoryRevision=patientIdentityDirectory.revision;}}
+  catch{/* Keep the failure visible without logging patient identifiers. */}
+  if(patientSummaryOpen===state)renderPatientSummaryPanel();
+}
+function togglePatientSummary(id){
+  if(VIEW_MODE!=='admin'||authUser?.role!=='admin')return;
+  if(patientSummaryOpen?.id===String(id)){patientSummaryOpen=null;renderTable();els.patientRows.querySelector(`[data-summary-toggle="${CSS.escape(String(id))}"]`)?.focus();return;}
+  const patient=patientById(id);if(!patient)return;
+  const lookup=window.BestCarePatientSummary.lookup(patient);
+  patientSummaryOpen={id:String(id),lookup,scope:patientSummaryScope(),key:lookup?`${lookup.type}|${lookup.value}`:'',revision:sync.revision,directoryRevision:patientIdentityDirectory.revision};
+  renderTable();loadPatientSummary();
+  els.patientRows.querySelector(`[data-summary-toggle="${CSS.escape(String(id))}"]`)?.focus();
+}
 function renderTable(){
   const activeStatusSelect=document.activeElement?.matches?.('.status-select,.plan-status-select,.lab-status-inline-select');
   if(activeStatusSelect)return;
+  if(patientSummaryOpen&&(patientSummaryOpen.scope!==patientSummaryScope()||!patientById(patientSummaryOpen.id))){patientSummaryOpen=null;patientSummaryCache.clear();}
 
   const q=els.search.value.trim();
   const filter=els.filter.value;
@@ -2604,7 +2674,7 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000;return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong></span>${earliestAppointmentBadgeMarkup(p)}${dailyQuickActionsVisible()?(VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):`<button class="patient-prescription-badge" type="button" data-prescription-id="${escapeHtml(p.id)}" title="عرض وصفات المريض أو إعداد وصفة جديدة"><span class="patient-prescription-capsule" aria-hidden="true">💊</span><span>الوصفات</span></button>`):''}${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -2626,8 +2696,13 @@ function renderTable(){
             <button type="button" class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
         </td>
-      </tr>`}).join('')
+      </tr>${VIEW_MODE==='admin'&&patientSummaryOpen?.id===String(p.id)?`<tr class="patient-summary-row"><td colspan="8"><section class="patient-summary" id="patientSummaryPanel" aria-label="${lang==='en'?'Patient summary':'ملخص المريض'}"></section></td></tr>`:''}`}).join('')
     : `<tr><td colspan="8" class="empty">${escapeHtml(tr('noAppointments'))}</td></tr>`;
+  renderPatientSummaryPanel();
+  els.patientRows.querySelectorAll('[data-summary-toggle]').forEach(button=>{
+    if(button.dataset.summaryToggle===patientSummaryOpen?.id)button.setAttribute('aria-controls','patientSummaryPanel');
+    else button.removeAttribute('aria-controls');
+  });
   visible.forEach(patient=>{
     if(!patient.reviewRequestedAt)return;
     const button=els.patientRows.querySelector(`[data-review-id="${CSS.escape(String(patient.id))}"]`);if(!button)return;
@@ -4774,6 +4849,14 @@ els.patientRows.addEventListener('change',async event=>{
   mutate(()=>{const p=patientById(id);if(p){p.status=status;applyAutomaticStatusAlert(p,status)}});
 });
 els.patientRows.addEventListener('click',event=>{
+  const summaryToggle=event.target.closest('[data-summary-toggle]');
+  if(summaryToggle){togglePatientSummary(summaryToggle.dataset.summaryToggle);return;}
+  if(event.target.closest('[data-summary-refresh]')){loadPatientSummary({force:true});return;}
+  const summaryProfile=event.target.closest('[data-summary-profile]');
+  if(summaryProfile&&patientSummaryOpen?.lookup){
+    openModal('patientIdentitySearchModal');
+    loadPatientProfile(patientSummaryOpen.lookup,{tab:summaryProfile.dataset.summaryTab||'appointments'});return;
+  }
   const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
   if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
@@ -4893,6 +4976,11 @@ $('paymentPanel').addEventListener('click',event=>{
   const missingId=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId;
   if(missingId)openMissingPaymentOrder(missingId);
 });
+window.addEventListener('resize',fitPatientSummaryPanel,{passive:true});
+if(VIEW_MODE==='admin'&&typeof ResizeObserver!=='undefined'){
+  const summaryWidthObserver=new ResizeObserver(fitPatientSummaryPanel);
+  summaryWidthObserver.observe(els.patientRows.closest('.table-wrap'));
+}
 $('paymentQueue').addEventListener('click',event=>{
   const ackId=event.target.closest('[data-payment-ack-id]')?.dataset.paymentAckId;
   const completeId=event.target.closest('[data-payment-complete-id]')?.dataset.paymentCompleteId;

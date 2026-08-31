@@ -1,9 +1,11 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260825-hassina-assistant';
+const CACHE_NAME='bestcare-dashboard-v1-20260831-patient-summary';
 const APP_SHELL=[
   './',
   './index.html',
   './dashboard.css',
   './dashboard.js',
+  './patient-summary.js',
+  './patient-summary.css',
   './theme.css',
   './theme-boot.js',
   './splash.js',

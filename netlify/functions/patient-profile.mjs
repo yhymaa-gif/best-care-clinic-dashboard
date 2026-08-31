@@ -4,6 +4,7 @@ import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './l
 import { normalizePatientFile, normalizePatientNationalId, normalizePatientPhone, patientIdentityKeys } from './lib/patient-identity.mjs';
 import { correctDirectoryPatient, getPatientDirectory } from './lib/patient-directory.mjs';
 import { hydrateTreatmentPlanRegistry } from './lib/treatment-plan-history.mjs';
+import { matchesSummaryIdentity, loadPlanSummaries } from './lib/patient-summary.mjs';
 
 const headers = apiHeaders('GET,PATCH,POST,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -171,6 +172,11 @@ function profilePayload(patient, dayMatches, plans, labs, communications = [], p
     procedure: cleanText(item.procedure, 180), status: cleanText(item.status, 30), statusLabel: statusLabel(item.status),
     paymentRequired: Boolean(item.paymentRequired), paymentAction: cleanText(item.paymentAction, 180), paymentRequestedAt: Number(item.paymentRequestedAt || 0),
     paymentAcknowledgedAt: Number(item.paymentAcknowledgedAt || 0), paymentCompletedAt: Number(item.paymentCompletedAt || 0),
+    arrivedAt: Number(item.arrivedAt || 0), actualStartedAt: Number(item.actualStartedAt || 0), completedAt: Number(item.completedAt || 0),
+    paymentItems: (Array.isArray(item.paymentItems) ? item.paymentItems : []).slice(0, 100).map(entry => ({
+      code: cleanText(entry?.code, 50), name: cleanText(entry?.name, 160),
+      quantity: Number.isFinite(Number(entry?.quantity)) && Number(entry.quantity) > 0 ? Math.min(99, Number(entry.quantity)) : null
+    })),
     treatmentPlanStatus: cleanText(item.treatmentPlanStatus, 30), updatedAt: Number(day.state?.updatedAt || 0)
   }))).sort((left, right) => `${right.date} ${right.start}`.localeCompare(`${left.date} ${left.start}`));
   const planItems = plans.map(({ canonical, record }) => ({ canonical, ...record }));
@@ -256,6 +262,9 @@ export default async request => {
     return reply({ ok: true, communications: communicationPayload([{ canonical, record }]) });
   }
   const type = cleanText(request.method === 'GET' ? url.searchParams.get('type') : body?.lookup?.type, 20);
+  const compactSummary = request.method === 'GET' && url.searchParams.get('summary') === '1';
+  if (compactSummary && auth.user?.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
+  if (compactSummary && !['file', 'national'].includes(type)) return reply({ error: 'File number or national identity required' }, 400);
   const normalized = normalizeLookup(type, request.method === 'GET' ? url.searchParams.get('value') : body?.lookup?.value);
   if (!['file', 'phone', 'national'].includes(type) || !normalized) return reply({ error: 'Valid patient identity is required' }, 400);
   const scope = clinicScope(auth.user, request.method === 'GET' ? (url.searchParams.get('clinic') || '') : (body?.clinic || ''));
@@ -281,22 +290,37 @@ export default async request => {
     : [scope.clinicId];
   if (historyClinics.length) {
     for (const historyClinicId of historyClinics.slice(0, 15)) {
-      registry = await hydrateTreatmentPlanRegistry({ registryStore, planStore: plansStore, current: registry, clinicId: historyClinicId });
+      registry = await hydrateTreatmentPlanRegistry({ registryStore, planStore: plansStore, current: registry, clinicId: historyClinicId, persist: !compactSummary });
     }
   }
-  patientIdentityKeys(directoryRecord).forEach(alias => lookupAliases.add(alias));
+  patientIdentityKeys(directoryRecord).filter(alias => !compactSummary || !alias.startsWith('phone:')).forEach(alias => lookupAliases.add(alias));
   const initialPlans = registryMatches(registry, lookupAliases, scope);
-  initialPlans.forEach(({ record }) => patientIdentityKeys(record).forEach(alias => lookupAliases.add(alias)));
-  const dayMatches = await loadMatchedDays(scope, lookupAliases);
-  dayMatches.forEach(day => day.matches.forEach(patient => patientIdentityKeys(patient).forEach(alias => lookupAliases.add(alias))));
-  const plans = registryMatches(registry, lookupAliases, scope);
-  const labs = await loadLabMatches(scope, lookupAliases);
-  const communications = communicationMatches(communicationRegistry, lookupAliases, scope);
-  const prescriptions = prescriptionMatches(prescriptionRegistry, lookupAliases, scope);
+  if (!compactSummary) initialPlans.forEach(({ record }) => patientIdentityKeys(record).forEach(alias => lookupAliases.add(alias)));
+  let dayMatches = await loadMatchedDays(scope, lookupAliases);
+  if (!compactSummary) dayMatches.forEach(day => day.matches.forEach(patient => patientIdentityKeys(patient).forEach(alias => lookupAliases.add(alias))));
+  let plans = registryMatches(registry, lookupAliases, scope);
+  let labs = await loadLabMatches(scope, lookupAliases);
+  let communications = communicationMatches(communicationRegistry, lookupAliases, scope);
+  let prescriptions = prescriptionMatches(prescriptionRegistry, lookupAliases, scope);
+  if (compactSummary) {
+    const identity = directoryRecord || (type === 'file' ? { file: normalized } : { nationalId: normalized });
+    dayMatches = dayMatches.map(day => ({ ...day, matches: day.matches.filter(item => matchesSummaryIdentity(item, identity)) })).filter(day => day.matches.length);
+    plans = plans.filter(({ record }) => matchesSummaryIdentity(record, identity));
+    labs = labs.filter(item => matchesSummaryIdentity(item.patient, identity));
+    prescriptions = prescriptions.filter(({ record }) => matchesSummaryIdentity(record.patient || record, identity));
+    communications = communications.filter(({ record }) => matchesSummaryIdentity(record.patient, identity));
+  }
   const patient = primaryPatient(dayMatches, plans, labs, communications, prescriptions, directoryRecord);
   if (!patient.name && !patient.file && !patient.phone && !patient.nationalId) return reply({ found: false, patient: null, appointments: [], plans: [], labs: [] }, 404);
 
-  if (request.method === 'GET') return reply({ found: true, ...profilePayload(patient, dayMatches, plans, labs, communications, prescriptions, directoryRecord) });
+  if (request.method === 'GET') {
+    const payload = profilePayload(patient, dayMatches, plans, labs, communications, prescriptions, directoryRecord);
+    if (compactSummary) {
+      try { payload.planDetails = await loadPlanSummaries(plansStore, plans); }
+      catch { payload.planDetails = []; payload.planDetailsUnavailable = true; }
+    }
+    return reply({ found: true, ...payload });
+  }
 
   const allowIncomplete = Boolean(body?.allowIncomplete);
   const suppliedPatient = body?.patient && typeof body.patient === 'object' ? body.patient : {};
@@ -418,4 +442,4 @@ export default async request => {
   return reply({ ok: true, patient: next, updated: { appointments: appointmentUpdates, plans: planUpdates, prescriptions: prescriptionUpdates, labs: labUpdates } });
 };
 
-export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel, communicationMatches, communicationPayload, prescriptionMatches };
+export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel, communicationMatches, communicationPayload, prescriptionMatches, profilePayload };
