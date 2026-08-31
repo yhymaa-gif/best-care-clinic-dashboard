@@ -16,7 +16,7 @@ test('completed patients without a payment order create an administration action
   assert.match(script, /add\('payment_missing'/);
   assert.match(script, /function paymentMissingBadgeMarkup\(p\)[\s\S]*payment-missing-badge/);
   assert.match(script, /data-payment-missing-id=/);
-  assert.match(script, /dailyQuickActionsVisible\(\)\?\(VIEW_MODE==='clinic'\?clinicIconAction\('💊'/);
+  assert.match(script, /dailyQuickActionsVisible\(\)&&VIEW_MODE==='clinic'\?clinicIconAction\('💊'/);
   assert.match(script, /function openMissingPaymentOrder\(id\)/);
   assert.match(script, /if\(paymentMissing&&VIEW_MODE==='admin'\)openMissingPaymentOrder\(paymentMissing\)/);
   assert.match(script, /p\.paymentMissingAlertAt=Date\.now\(\)/);

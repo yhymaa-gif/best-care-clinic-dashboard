@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 
 const rootScripts = [
   'dashboard.js',
+  'patient-summary.js',
   'splash.js',
   'treatment-plan.js',
   'statistics.js',

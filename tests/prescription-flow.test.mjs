@@ -37,7 +37,10 @@ test('prescription flow is patient-linked, categorized, recoverable, and stored 
   assert.match(fn, /permanentKey/);
   assert.match(fn, /expectedRevision/);
   assert.match(fn, /ready_for_admin/);
-  assert.match(dashboard, /patient-prescription-badge/);
+  assert.match(dashboard, /patientSummaryButtonMarkup\(p\)/);
+  const patientSummary = await read('patient-summary.js');
+  assert.match(patientSummary, /button\('data-prescription-id'/);
+  assert.match(dashboard, /if\(prescription\)openPrescription\(prescription\)/);
   assert.doesNotMatch(dashboard, /class="mini prescription-row-btn"/);
   assert.match(index, /id="prescriptionCheck"/);
   assert.match(index, /id="operationPrescriptionsCount"/);
