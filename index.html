@@ -272,7 +272,7 @@
       <h2 id="patientFormTitle">إضافة مريض جديد</h2>
       <p>أدخل بيانات الموعد ثم اضغط حفظ؛ ستتم المزامنة تلقائيًا مع الأجهزة الأخرى.</p>
     </div>
-    <div class="quick-add-head-actions"><button id="patientDirectoryImportShortcutBtn" class="patient-directory-import-shortcut" type="button"><span aria-hidden="true">⇧</span><span><strong>استيراد قائمة مرضى</strong><small>CSV أو Excel</small></span></button><button id="newLabCaseShortcutBtn" class="new-lab-case-shortcut" type="button"><span aria-hidden="true">🦷</span><span id="newLabCaseShortcutLabel">حالة معمل جديدة</span></button><span id="patientFormMode" class="form-mode">إضافة</span></div>
+    <div class="quick-add-head-actions"><button id="patientFormDirectorySearchBtn" class="patient-directory-search-shortcut" type="button"><span aria-hidden="true">⌕</span><span><strong id="patientFormDirectorySearchTitle">اختيار مريض مسجل</strong><small id="patientFormDirectorySearchHelp">بحث بالاسم أو الملف</small></span></button><button id="patientDirectoryImportShortcutBtn" class="patient-directory-import-shortcut" type="button"><span aria-hidden="true">⇧</span><span><strong>استيراد قائمة مرضى</strong><small>CSV أو Excel</small></span></button><button id="newLabCaseShortcutBtn" class="new-lab-case-shortcut" type="button"><span aria-hidden="true">🦷</span><span id="newLabCaseShortcutLabel">حالة معمل جديدة</span></button><span id="patientFormMode" class="form-mode">إضافة</span></div>
   </div>
   <div class="quick-add-grid">
     <div><label for="fName">الاسم الكامل *</label><input id="fName" type="text" autocomplete="name" placeholder="الاسم الأول واسم العائلة" minlength="3" maxlength="120" required></div>
@@ -367,7 +367,7 @@
       <section id="patientDirectoryImportPanel" class="patient-directory-panel import-preview" hidden>
         <div class="patient-directory-panel-head"><div><strong>مراجعة قائمة المرضى</strong><small id="patientDirectoryImportFileName">—</small></div><button id="patientDirectoryImportCancel" type="button" aria-label="إلغاء الاستيراد">×</button></div>
         <div id="patientDirectoryImportSummary" class="patient-directory-import-summary"></div>
-        <p class="patient-directory-import-note">تتم المطابقة برقم الملف أو الهوية أولًا. الجوال المشترك لا يدمج مريضين، والسجلات الناقصة تُحفظ مع تنبيه واضح للتصحيح دون تخمين البيانات.</p>
+        <p class="patient-directory-import-note">رقم الملف هو المرجع الأساسي: إذا كان موجودًا يُصحَّح الاسم الكامل وتُستكمل البيانات في السجل نفسه دون تكرار. لا تُستبدل قيمة صحيحة ببيان فارغ، والجوال المشترك يبقى معلّمًا للمراجعة.</p>
         <div id="patientDirectoryImportPreview" class="patient-directory-import-preview"></div>
         <p id="patientDirectoryImportError" class="patient-directory-error" hidden></p>
         <div class="patient-directory-form-actions"><button id="patientDirectoryImportSave" class="primary" type="button">اعتماد واستيراد الأسماء الصحيحة</button></div>
@@ -382,6 +382,7 @@
       <div id="patientProfileLoading" class="patient-identity-loading" hidden>جارٍ تحميل ملف المريض وإجراءاته…</div>
       <div id="patientProfileContent" hidden>
         <div class="patient-profile-hero"><div class="patient-profile-avatar" aria-hidden="true">♙</div><div><small>ملف المريض</small><h4 id="patientProfileName">—</h4><p id="patientProfileIdentity">—</p></div><span id="patientProfileClinic">—</span></div>
+        <div class="patient-profile-schedule-action"><span class="patient-profile-schedule-icon" aria-hidden="true">＋</span><div><strong id="patientProfileScheduleTitle">إضافة المريض لقائمة المواعيد</strong><small id="patientProfileScheduleHelp">اليوم هو التاريخ الافتراضي، ويمكنك اختيار تاريخ آخر قبل الإضافة.</small></div><button id="patientProfileScheduleBtn" class="primary" type="button">📅 إضافة للقائمة</button></div>
         <section class="patient-communication-counters" aria-label="متابعة التواصل مع المريض">
           <article class="patient-communication-counter plan"><span aria-hidden="true">▤</span><div><small>الخطط المرسلة عبر واتساب</small><strong><b id="patientProfilePlanWhatsappCount">0</b> مرة</strong><p id="patientProfileLastPlanWhatsapp">لم ترسل خطة بعد</p></div></article>
           <article class="patient-communication-counter review"><span aria-hidden="true">★</span><div><small>طلبات التقييم المرسلة</small><strong><b id="patientProfileReviewWhatsappCount">0</b> مرة</strong><p id="patientProfileLastReviewWhatsapp">لم يرسل طلب تقييم بعد</p></div></article>
@@ -483,8 +484,15 @@
   </div>
   <div class="modal-actions"><button id="presenceRefreshBtn" type="button">تحديث الآن</button><button id="presenceCloseBtn" type="button" data-close="presenceModal">إغلاق</button></div>
 </div></div>
+<div id="patientScheduleModal" class="modal"><div class="modal-card patient-schedule-card" role="dialog" aria-modal="true" aria-labelledby="patientScheduleTitle">
+  <div class="patient-schedule-head"><span aria-hidden="true">📅</span><div><h3 id="patientScheduleTitle">إضافة المريض لقائمة المواعيد</h3><p id="patientScheduleHelp">سيتم استخدام بيانات ملف المريض نفسه دون إنشاء نسخة مكررة.</p></div><button type="button" data-close="patientScheduleModal" aria-label="إغلاق">×</button></div>
+  <div class="patient-schedule-patient"><strong id="patientScheduleName">—</strong><small id="patientScheduleIdentity">—</small></div>
+  <label class="patient-schedule-date"><span id="patientScheduleDateLabel">تاريخ الإضافة</span><input id="patientScheduleDate" type="date" required></label>
+  <p id="patientScheduleNotice" class="patient-schedule-notice">ستفتح بيانات الموعد مكتملة بالاسم والملف والجوال؛ راجع الوقت والإجراء ثم احفظ.</p>
+  <div class="modal-actions"><button id="patientScheduleCancel" type="button" data-close="patientScheduleModal">إلغاء</button><button id="patientScheduleConfirm" class="primary" type="button">متابعة وإكمال الموعد</button></div>
+</div></div>
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
-<script src="./patient-summary.js?v=20260831-patient-summary"></script>
-<script src="./dashboard.js?v=20260831-patient-summary"></script>
+<script src="./patient-summary.js?v=20260902-patient-scheduling"></script>
+<script src="./dashboard.js?v=20260902-patient-scheduling"></script>
 </body></html>

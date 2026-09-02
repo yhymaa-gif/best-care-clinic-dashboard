@@ -31,6 +31,14 @@ test('central patient directory prefers the more complete name and keeps correct
   assert.equal(directory.preferValue('7041', '9999', { force: true, locked: true }), '9999');
 });
 
+test('CSV import uses an existing file number to correct the name without blank-data regression', () => {
+  assert.equal(directory.authoritativeImportName('دعاء الحسن العطوي', 'ملاك الحسن الحفظي', { matchedByFile: true, locked: true }), 'ملاك الحسن الحفظي');
+  assert.equal(directory.authoritativeImportName('ملاك الحسن الحفظي', 'ملاك', { matchedByFile: true, locked: true }), 'ملاك الحسن الحفظي');
+  assert.equal(directory.authoritativeImportField('0551112233', '', { matchedByFile: true }), '0551112233');
+  assert.equal(directory.authoritativeImportField('0551112233', '0559998877', { matchedByFile: true, valid: true }), '0559998877');
+  assert.equal(directory.authoritativeImportField('0551112233', '123', { matchedByFile: true, valid: false }), '0551112233');
+});
+
 test('legacy appointments resolve to the complete central patient identity', () => {
   const record = {
     canonical: 'patient-7041',
@@ -207,9 +215,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260831-patient-summary/);
+  assert.match(html, /dashboard\.js\?v=20260902-patient-scheduling/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260831-patient-summary/);
+  assert.match(serviceWorker, /20260902-patient-scheduling/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {
@@ -225,7 +233,7 @@ test('administration endpoints enrich names without exposing full names to the c
 
 test('central patient directory visually distinguishes complete and incomplete records', async () => {
   const [dashboard, styles] = await Promise.all([read('dashboard.js'), read('dashboard.css')]);
-  assert.match(dashboard, /recordComplete=completeName&&completeFile&&completeMobile/);
+  assert.match(dashboard, /scheduleReady=completeName&&completeFile&&completeMobile,recordComplete=scheduleReady/);
   assert.match(dashboard, /patient-directory-table-head/);
   assert.match(dashboard, /عرض التفاصيل/);
   assert.match(styles, /patient-identity-result\.complete/);

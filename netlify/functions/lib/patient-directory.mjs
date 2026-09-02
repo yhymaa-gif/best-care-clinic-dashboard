@@ -79,6 +79,23 @@ const nameScore = value => {
   return name ? name.split(/\s+/).filter(Boolean).length * 1000 + name.length : 0;
 };
 
+// A CSV row with an existing file number is an explicit master-record update.
+// It may correct a different name (not only a longer one), while blank or
+// obviously incomplete imported values can never erase verified data.
+const authoritativeImportName = (current, incoming, { matchedByFile = false, locked = false } = {}) => {
+  const oldValue = cleanText(current, 120);
+  const nextValue = cleanText(incoming, 120);
+  const completeIncoming = nextValue.split(/\s+/).filter(Boolean).length >= 2;
+  if (matchedByFile && completeIncoming) return nextValue;
+  return preferValue(oldValue, nextValue, { name: true, locked });
+};
+const authoritativeImportField = (current, incoming, { matchedByFile = false, valid = true } = {}) => {
+  const oldValue = cleanText(current, 80);
+  const nextValue = cleanText(incoming, 80);
+  if (!nextValue || !valid) return oldValue;
+  return matchedByFile ? nextValue : (oldValue || nextValue);
+};
+
 export function resolveDirectoryPatient(registry = {}, value = {}) {
   const records = registry?.records && typeof registry.records === 'object' ? registry.records : {};
   const aliases = registry?.aliases && typeof registry.aliases === 'object' ? registry.aliases : {};
@@ -300,7 +317,7 @@ export async function importPatientDirectory(values, meta = {}) {
   const aliases = { ...(registry.aliases || {}) };
   const records = { ...(registry.records || {}) };
   const now = Date.now();
-  const result = { received: input.length, created: 0, updated: 0, skipped: 0, conflicts: 0, reviewRequired: 0, sharedPhones: 0, errors: [] };
+  const result = { received: input.length, created: 0, updated: 0, correctedNames: 0, correctedFields: 0, completedFields: 0, skipped: 0, conflicts: 0, reviewRequired: 0, sharedPhones: 0, errors: [] };
 
   for (let index = 0; index < input.length; index += 1) {
     const patient = directoryPatient(input[index]);
@@ -318,15 +335,20 @@ export async function importPatientDirectory(values, meta = {}) {
     }
     const canonical = resolution.canonical;
     const existing = records[canonical] || {};
+    const fileAlias = identityAliases.find(alias => alias.startsWith('file:')) || '';
+    const matchedByFile = Boolean(fileAlias && aliases[fileAlias] === canonical && Object.keys(existing).length);
     const clinicId = cleanText(input[index]?.clinicId || meta.clinicId, 20);
+    const nextName = authoritativeImportName(existing.fullName, patient.fullName, { matchedByFile, locked: Boolean(existing.correctedAt) && existing.lockedFields?.includes('fullName') });
+    const nextMobile = authoritativeImportField(existing.mobile, patient.mobile, { matchedByFile: matchedByFile && !resolution.sharedPhoneCanonical, valid: /^05\d{8}$/.test(patient.mobile) });
+    const nextNationalId = authoritativeImportField(existing.nationalId, patient.nationalId, { matchedByFile, valid: /^\d{10}$/.test(patient.nationalId) });
     const next = {
       ...existing,
       canonical,
       id: existing.id || patient.id,
-      fullName: preferValue(existing.fullName, patient.fullName, { name: true, locked: Boolean(existing.correctedAt) && existing.lockedFields?.includes('fullName') }),
+      fullName: nextName,
       fileNo: existing.fileNo || patient.fileNo,
-      mobile: existing.mobile || patient.mobile,
-      nationalId: existing.nationalId || patient.nationalId,
+      mobile: nextMobile,
+      nationalId: nextNationalId,
       adminNotes: mergeNotes(existing.adminNotes, patient.adminNotes),
       aliases: [...new Set([...(existing.aliases || []), ...identityAliases])],
       clinicIds: [...new Set([...(existing.clinicIds || []), ...(clinicId ? [clinicId] : [])])],
@@ -339,6 +361,11 @@ export async function importPatientDirectory(values, meta = {}) {
       importedAt: now,
       updatedBy: cleanText(meta.actor, 120)
     };
+    if (matchedByFile && existing.fullName && next.fullName !== existing.fullName) result.correctedNames += 1;
+    if (matchedByFile) {
+      result.correctedFields += ['mobile', 'nationalId'].filter(field => existing[field] && next[field] !== existing[field]).length;
+      result.completedFields += ['mobile', 'nationalId'].filter(field => !existing[field] && Boolean(next[field])).length;
+    }
     next.dataQualityFlags = reviewFlagsFor({ ...next, notesReviewed: Boolean(next.notesReviewedAt) }, { sharedPhone: Boolean(resolution.sharedPhoneCanonical) });
     next.reviewRequired = next.dataQualityFlags.length > 0;
     records[canonical] = next;
@@ -369,4 +396,4 @@ export async function importPatientDirectory(values, meta = {}) {
   return { ...result, revision: nextRegistry.revision, records: nextRegistry.records };
 }
 
-export const __test = { directoryPatient, aliasesFor, strongAliasesFor, phoneAliasFor, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, resolveDirectoryPatient, enrichPatientFromDirectory, nameScore, preferValue, appointmentSnapshot, mergeRecords };
+export const __test = { directoryPatient, aliasesFor, strongAliasesFor, phoneAliasFor, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, resolveDirectoryPatient, enrichPatientFromDirectory, nameScore, preferValue, authoritativeImportName, authoritativeImportField, appointmentSnapshot, mergeRecords };
