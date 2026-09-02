@@ -39,6 +39,46 @@ test('CSV import uses an existing file number to correct the name without blank-
   assert.equal(directory.authoritativeImportField('0551112233', '123', { matchedByFile: true, valid: false }), '0551112233');
 });
 
+test('smart reconciliation keeps one complete patient record per file number', () => {
+  const registry = {
+    records: {
+      old: { canonical: 'old', fullName: 'ملاك', fileNo: '7041', mobile: '0501111111', aliases: ['file:7041'], updatedAt: 10 },
+      updated: { canonical: 'updated', fullName: 'ملاك الحسن الحفظي', fileNo: '7041', nationalId: '1234567890', aliases: ['file:7041', 'national:1234567890'], importedAt: 20, updatedAt: 20 },
+      separate: { canonical: 'separate', fullName: 'مريض آخر كامل', fileNo: '9000', mobile: '0501111111', aliases: ['file:9000'], updatedAt: 30 }
+    },
+    aliases: { 'file:7041': 'updated', 'national:1234567890': 'updated', 'file:9000': 'separate', 'phone:0501111111': 'old' },
+    revision: 5,
+    updatedAt: 5
+  };
+  const result = directory.reconcileDirectorySnapshot(registry, { now: 100, actor: 'test' });
+  assert.equal(result.changed, true);
+  assert.equal(result.duplicateRecordsMerged, 1);
+  assert.equal(result.correctedNames, 1);
+  assert.equal(Object.keys(result.registry.records).length, 2);
+  assert.equal(result.registry.records.updated.fullName, 'ملاك الحسن الحفظي');
+  assert.equal(result.registry.records.updated.mobile, '0501111111');
+  assert.equal(result.registry.aliases['file:7041'], 'updated');
+  assert.equal(result.registry.records.separate.fullName, 'مريض آخر كامل');
+});
+
+test('smart name correction is idempotent after duplicate cleanup', () => {
+  const registry = { records: { one: { canonical: 'one', fullName: 'اسم مريض كامل', fileNo: '12', aliases: ['file:12'] } }, aliases: { 'file:12': 'one' }, revision: 2, updatedAt: 1 };
+  const result = directory.reconcileDirectorySnapshot(registry, { now: 100 });
+  assert.equal(result.changed, false);
+  assert.equal(result.duplicateRecordsMerged, 0);
+  assert.equal(result.registry.revision, 2);
+});
+
+test('administration exposes an intelligent file-based name correction control', async () => {
+  const [html, dashboard, endpoint, source, styles] = await Promise.all([read('index.html'), read('dashboard.js'), read('netlify/functions/patients.mjs'), read('netlify/functions/lib/patient-directory.mjs'), read('dashboard.css')]);
+  assert.match(html, /id="patientNameSmartCorrectionBtn"/);
+  assert.match(dashboard, /function runSmartPatientNameCorrection\(/);
+  assert.match(dashboard, /action:'reconcile_names'/);
+  assert.match(endpoint, /body\?\.action === 'reconcile_names'/);
+  assert.match(source, /reconcileDirectorySnapshot\(nextRegistry/);
+  assert.match(styles, /patient-directory-action\.smart-correction/);
+});
+
 test('legacy appointments resolve to the complete central patient identity', () => {
   const record = {
     canonical: 'patient-7041',
@@ -215,9 +255,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260902-appointment-entry/);
+  assert.match(html, /dashboard\.js\?v=20260902-smart-name-correction/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260902-appointment-entry/);
+  assert.match(serviceWorker, /20260902-smart-name-correction/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

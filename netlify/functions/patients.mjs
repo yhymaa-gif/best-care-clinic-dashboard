@@ -1,6 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
-import { getPatientDirectory, importPatientDirectory, upsertPatientDirectory } from './lib/patient-directory.mjs';
+import { getPatientDirectory, importPatientDirectory, reconcilePatientDirectoryNames, upsertPatientDirectory } from './lib/patient-directory.mjs';
 import { patientIdentityKeys } from './lib/patient-identity.mjs';
 
 const headers = apiHeaders('GET,POST,OPTIONS');
@@ -117,6 +117,11 @@ export default async request => {
     if (!sameOriginRequest(request)) return reply({ error: 'Origin mismatch' }, 403);
     let body;
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
+    if (body?.action === 'reconcile_names') {
+      const reconciled = await reconcilePatientDirectoryNames({ actor: String(auth.user?.displayName || auth.user?.username || 'admin').slice(0, 120) });
+      const { registry: _registry, ...summary } = reconciled;
+      return reply({ ok: true, ...summary });
+    }
     if (!Array.isArray(body?.patients) || !body.patients.length || body.patients.length > 3000) return reply({ error: 'Invalid patient import' }, 400);
     const clinicId = validClinic(body.clinicId) ? body.clinicId : '';
     const imported = await importPatientDirectory(body.patients, {

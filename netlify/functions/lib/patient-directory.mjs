@@ -182,6 +182,89 @@ const mergeRecords = (target = {}, source = {}) => ({
   updatedAt: Math.max(Number(target.updatedAt || 0), Number(source.updatedAt || 0))
 });
 
+const authoritativeNameRecord = records => [...records].sort((left, right) => {
+  const complete = value => cleanText(value, 120).split(/\s+/).filter(Boolean).length >= 2 ? 1 : 0;
+  const completeDifference = complete(right?.fullName) - complete(left?.fullName);
+  if (completeDifference) return completeDifference;
+  const leftVerified = Number(left?.correctedAt || left?.importedAt || 0);
+  const rightVerified = Number(right?.correctedAt || right?.importedAt || 0);
+  if (rightVerified !== leftVerified) return rightVerified - leftVerified;
+  return nameScore(right?.fullName) - nameScore(left?.fullName) || Number(right?.updatedAt || 0) - Number(left?.updatedAt || 0);
+})[0] || {};
+
+// File number is the authoritative patient key. This repairs legacy duplicate
+// records and replaces an incomplete name with the complete or explicitly
+// corrected name without ever merging patients by a shared phone or name alone.
+export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
+  const records = { ...(registry.records || {}) };
+  const aliases = { ...(registry.aliases || {}) };
+  const groups = new Map();
+  Object.entries(records).forEach(([canonical, record]) => {
+    const fileNo = directoryPatient(record).fileNo;
+    if (!fileNo || /^0+$/.test(fileNo)) return;
+    const entries = groups.get(fileNo) || [];
+    entries.push({ canonical, record });
+    groups.set(fileNo, entries);
+  });
+  const now = Number(meta.now || Date.now());
+  let filesReviewed = 0, duplicateRecordsMerged = 0, correctedNames = 0;
+  const correctedFiles = [];
+
+  groups.forEach((entries, fileNo) => {
+    filesReviewed += 1;
+    const fileAlias = aliasesFor({ fileNo }).find(alias => alias.startsWith('file:')) || '';
+    const linkedCanonical = fileAlias ? aliases[fileAlias] : '';
+    const target = entries.find(entry => entry.canonical === linkedCanonical) || [...entries].sort((left, right) => Number(right.record?.correctedAt || right.record?.importedAt || right.record?.updatedAt || 0) - Number(left.record?.correctedAt || left.record?.importedAt || left.record?.updatedAt || 0))[0];
+    if (!target) return;
+    const authoritativeName = cleanText(authoritativeNameRecord(entries.map(entry => entry.record)).fullName, 120);
+    const distinctNames = [...new Set(entries.map(entry => normalizedName(entry.record?.fullName)).filter(Boolean))];
+    let merged = { ...target.record };
+    entries.forEach(entry => { if (entry.canonical !== target.canonical) merged = mergeRecords(merged, entry.record); });
+    if (authoritativeName) correctedNames += entries.filter(entry => normalizedName(entry.record?.fullName) !== normalizedName(authoritativeName)).length;
+    if (entries.length > 1 || distinctNames.length > 1) correctedFiles.push(fileNo);
+    duplicateRecordsMerged += Math.max(0, entries.length - 1);
+    merged = {
+      ...merged,
+      canonical: target.canonical,
+      fileNo,
+      fullName: authoritativeName || cleanText(merged.fullName, 120),
+      aliases: [...new Set([...(merged.aliases || []), ...entries.flatMap(entry => entry.record?.aliases || []), ...(fileAlias ? [fileAlias] : [])])],
+      updatedAt: Math.max(Number(merged.updatedAt || 0), entries.length > 1 || distinctNames.length > 1 ? now : 0),
+      updatedBy: entries.length > 1 || distinctNames.length > 1 ? cleanText(meta.actor || 'name-reconciliation', 120) : merged.updatedBy
+    };
+    merged.dataQualityFlags = reviewFlagsFor({ ...merged, notesReviewed: Boolean(merged.notesReviewedAt) });
+    merged.reviewRequired = merged.dataQualityFlags.length > 0;
+    records[target.canonical] = merged;
+    entries.forEach(entry => {
+      if (entry.canonical === target.canonical) return;
+      delete records[entry.canonical];
+      Object.keys(aliases).forEach(alias => { if (aliases[alias] === entry.canonical) aliases[alias] = target.canonical; });
+    });
+    merged.aliases.forEach(alias => {
+      if (alias.startsWith('phone:') && aliases[alias] && aliases[alias] !== target.canonical) return;
+      aliases[alias] = target.canonical;
+    });
+    if (fileAlias) aliases[fileAlias] = target.canonical;
+  });
+
+  const changed = duplicateRecordsMerged > 0 || correctedNames > 0;
+  return {
+    registry: { records, aliases, revision: Number(registry.revision || 0) + (changed ? 1 : 0), updatedAt: changed ? now : Number(registry.updatedAt || 0) },
+    changed,
+    filesReviewed,
+    duplicateRecordsMerged,
+    correctedNames,
+    correctedFiles: correctedFiles.slice(0, 100)
+  };
+}
+
+export async function reconcilePatientDirectoryNames(meta = {}) {
+  const current = await getPatientDirectory();
+  const result = reconcileDirectorySnapshot(current, meta);
+  if (result.changed) await directoryStore().setJSON(DIRECTORY_KEY, result.registry);
+  return result;
+}
+
 export async function getPatientDirectory() {
   return await directoryStore().get(DIRECTORY_KEY, { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {}, revision: 0, updatedAt: 0 };
 }
@@ -392,8 +475,9 @@ export async function importPatientDirectory(values, meta = {}) {
     revision: Number(registry.revision || 0) + 1,
     updatedAt: now
   };
-  await directoryStore().setJSON(DIRECTORY_KEY, nextRegistry);
-  return { ...result, revision: nextRegistry.revision, records: nextRegistry.records };
+  const reconciled = reconcileDirectorySnapshot(nextRegistry, { actor: meta.actor || 'patient-import', now });
+  await directoryStore().setJSON(DIRECTORY_KEY, reconciled.registry);
+  return { ...result, duplicateRecordsMerged: reconciled.duplicateRecordsMerged, filesReviewed: reconciled.filesReviewed, correctedNames: result.correctedNames + reconciled.correctedNames, revision: reconciled.registry.revision, records: reconciled.registry.records };
 }
 
-export const __test = { directoryPatient, aliasesFor, strongAliasesFor, phoneAliasFor, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, resolveDirectoryPatient, enrichPatientFromDirectory, nameScore, preferValue, authoritativeImportName, authoritativeImportField, appointmentSnapshot, mergeRecords };
+export const __test = { directoryPatient, aliasesFor, strongAliasesFor, phoneAliasFor, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, resolveDirectoryPatient, enrichPatientFromDirectory, nameScore, preferValue, authoritativeImportName, authoritativeImportField, appointmentSnapshot, mergeRecords, authoritativeNameRecord, reconcileDirectorySnapshot };

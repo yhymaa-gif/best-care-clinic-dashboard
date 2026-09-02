@@ -4145,9 +4145,24 @@ async function submitPatientDirectoryRows(rows,button){
     const response=await request(PATIENTS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({clinicId:ACTIVE_CLINIC_ID,patients:rows})},60000),data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر تحديث قاعدة المرضى');
     await refreshPatientIdentityDirectory();
-    toast(lang==='en'?'Patient database updated':'تم تحديث قاعدة المرضى',lang==='en'?`New ${Number(data.created||0)} · Updated ${Number(data.updated||0)} · Names corrected ${Number(data.correctedNames||0)} · Fields completed ${Number(data.completedFields||0)} · Needs review ${Number(data.reviewRequired||0)}`:`جديد ${Number(data.created||0)} · تم تحديثه ${Number(data.updated||0)} · أسماء صُححت ${Number(data.correctedNames||0)} · بيانات استُكملت ${Number(data.completedFields||0)} · يحتاج تصحيح ${Number(data.reviewRequired||0)} · جوال مشترك ${Number(data.sharedPhones||0)} · متعارض ${Number(data.conflicts||0)} · متجاوز ${Number(data.skipped||0)}`);
+    toast(lang==='en'?'Patient database updated':'تم تحديث قاعدة المرضى',lang==='en'?`New ${Number(data.created||0)} · Updated ${Number(data.updated||0)} · Names corrected ${Number(data.correctedNames||0)} · Duplicates merged ${Number(data.duplicateRecordsMerged||0)} · Fields completed ${Number(data.completedFields||0)} · Needs review ${Number(data.reviewRequired||0)}`:`جديد ${Number(data.created||0)} · تم تحديثه ${Number(data.updated||0)} · أسماء صُححت ${Number(data.correctedNames||0)} · تكرارات دُمجت ${Number(data.duplicateRecordsMerged||0)} · بيانات استُكملت ${Number(data.completedFields||0)} · يحتاج تصحيح ${Number(data.reviewRequired||0)} · جوال مشترك ${Number(data.sharedPhones||0)} · متعارض ${Number(data.conflicts||0)} · متجاوز ${Number(data.skipped||0)}`);
     return data;
   }finally{button.disabled=false;button.textContent=original}
+}
+async function runSmartPatientNameCorrection(){
+  const button=$('patientNameSmartCorrectionBtn');if(!button||button.disabled)return;
+  const title=$('patientNameSmartCorrectionTitle'),originalTitle=title?.textContent||'';button.disabled=true;button.classList.add('is-working');if(title)title.textContent=lang==='en'?'Reviewing names and duplicates…':'جارٍ مراجعة الأسماء والتكرار…';
+  try{
+    const response=await request(PATIENTS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'reconcile_names'})},60000),data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'تعذر تشغيل التصحيح الذكي');
+    await refreshPatientIdentityDirectory();
+    if(!sync.dirty)await pullState(true);
+    if(VIEW_MODE==='admin')await refreshAdminPatientHub({force:true});
+    renderPatientIdentitySearch();
+    const details=lang==='en'?`Files reviewed ${Number(data.filesReviewed||0)} · Names corrected ${Number(data.correctedNames||0)} · Duplicate records merged ${Number(data.duplicateRecordsMerged||0)}`:`ملفات روجعت ${Number(data.filesReviewed||0)} · أسماء صُححت ${Number(data.correctedNames||0)} · سجلات مكررة دُمجت ${Number(data.duplicateRecordsMerged||0)}`;
+    toast(lang==='en'?'Smart name correction completed':'اكتمل التصحيح الذكي للأسماء',details);
+  }catch(error){toast(lang==='en'?'Name correction failed':'تعذر تصحيح الأسماء',String(error.message||error))}
+  finally{button.disabled=false;button.classList.remove('is-working');if(title)title.textContent=originalTitle}
 }
 async function savePatientDirectoryImport(){
   const error=$('patientDirectoryImportError'),button=$('patientDirectoryImportSave');error.hidden=true;
@@ -4497,6 +4512,8 @@ function applyLang(){
   setText('#appointmentRequestsPageBtn',lang==='en'?'📅 Appointment request tracking':'📅 متابعة طلبات المواعيد');
   setText('#appointmentEntryPageBtn',lang==='en'?'+ Add appointments':'+ إضافة المواعيد');
   setText('#appointmentEntryTopLink strong',lang==='en'?'Add appointments':'إضافة المواعيد');
+  setText('#patientNameSmartCorrectionTitle',lang==='en'?'Smart name correction':'التصحيح الذكي للأسماء');
+  setText('#patientNameSmartCorrectionHelp',lang==='en'?'Matches by file number, keeps the complete name, and removes incomplete duplicates':'يطابق رقم الملف ويحفظ الاسم الكامل ويلغي السجل الناقص المكرر');
   setText('#appointmentRequestLabel',lang==='en'?'Appointment requests':'طلبات المواعيد');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
   setText('#roleModalTitle',lang==='en'?'Choose your task':'اختر مهمتك');
@@ -4786,6 +4803,7 @@ document.querySelector('.patient-profile-summary').addEventListener('click',even
 $('patientProfileTimeline').addEventListener('click',event=>{const button=event.target.closest('[data-profile-open-plan]');if(button)openPatientProfilePlan(button.dataset.profileOpenPlan)});
 $('patientDirectoryImportShortcutBtn')?.addEventListener('click',openPatientDirectoryImportPicker);
 $('patientDirectoryImportBtn')?.addEventListener('click',openPatientDirectoryImportPicker);
+$('patientNameSmartCorrectionBtn')?.addEventListener('click',runSmartPatientNameCorrection);
 $('patientDirectoryFileInput')?.addEventListener('change',event=>event.target.files[0]&&preparePatientDirectoryImport(event.target.files[0]));
 $('patientDirectoryAddBtn').addEventListener('click',openPatientDirectoryAddPanel);
 $('patientDirectoryAddCancel').addEventListener('click',()=>{$('patientDirectoryAddPanel').hidden=true});
