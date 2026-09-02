@@ -1,7 +1,11 @@
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
 
 export const normalizePatientFile = value => {
-  const normalized = cleanText(value, 40).toUpperCase().replace(/[\s-]+/g, '');
+  const latinDigits = cleanText(value, 40)
+    .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+    .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)));
+  const compact = latinDigits.toUpperCase().replace(/[\s,،٬-]+/g, '');
+  const normalized = /^\d+\.0+$/.test(compact) ? compact.replace(/\.0+$/, '') : compact;
   return normalized && !/^0+$/.test(normalized) ? normalized : '';
 };
 

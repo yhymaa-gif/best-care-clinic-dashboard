@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { __test as directory } from '../netlify/functions/lib/patient-directory.mjs';
 import { __test as patients } from '../netlify/functions/patients.mjs';
+import { normalizePatientFile } from '../netlify/functions/lib/patient-identity.mjs';
 
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 
@@ -37,6 +38,70 @@ test('CSV import uses an existing file number to correct the name without blank-
   assert.equal(directory.authoritativeImportField('0551112233', '', { matchedByFile: true }), '0551112233');
   assert.equal(directory.authoritativeImportField('0551112233', '0559998877', { matchedByFile: true, valid: true }), '0559998877');
   assert.equal(directory.authoritativeImportField('0551112233', '123', { matchedByFile: true, valid: false }), '0551112233');
+});
+
+test('literal name audit restores the exact imported name and removes hidden formatting', () => {
+  const registry = {
+    records: {
+      patient: {
+        canonical: 'patient',
+        fullName: 'دعاء الحسن العطوي',
+        authoritativeFullName: '\u200fملاك   الحسن الحفظي\ufeff',
+        fileNo: '١٢٬٢٠٦',
+        aliases: ['file:12206'],
+        importedAt: 50,
+        nameVerifiedAt: 50,
+        nameVerificationSource: 'file_import'
+      }
+    },
+    aliases: { 'file:12206': 'patient' },
+    revision: 3,
+    updatedAt: 20
+  };
+  const result = directory.reconcileDirectorySnapshot(registry, { now: 100, actor: 'literal-audit' });
+  assert.equal(directory.enrichPatientFromDirectory(registry, { name: 'دعاء', file: '12206' }).name, 'ملاك الحسن الحفظي');
+  assert.equal(result.changed, true);
+  assert.equal(result.correctedNames, 1);
+  assert.equal(result.registry.records.patient.fullName, 'ملاك الحسن الحفظي');
+  assert.equal(result.registry.records.patient.authoritativeFullName, 'ملاك الحسن الحفظي');
+  assert.equal(result.registry.records.patient.fileNo, '12206');
+  assert.ok(result.registry.records.patient.lockedFields.includes('fullName'));
+  assert.equal(normalizePatientFile('١٢٬٢٠٦.0'), '12206');
+});
+
+test('an exact imported name remains authoritative over an older appointment spelling', () => {
+  const registry = {
+    records: {
+      patient: {
+        canonical: 'patient',
+        fullName: 'ملاك الحسن الحفظي',
+        authoritativeFullName: 'ملاك الحسن الحفظي',
+        fileNo: '12206',
+        importedAt: 80,
+        lockedFields: ['fullName'],
+        aliases: ['file:12206']
+      }
+    },
+    aliases: { 'file:12206': 'patient' }
+  };
+  const enriched = directory.enrichPatientFromDirectory(registry, { name: 'دعاء الحسن العطوي', file: '12206' });
+  assert.equal(enriched.name, 'ملاك الحسن الحفظي');
+  assert.equal(directory.nameForRoutineUpdate(registry.records.patient, 'دعاء الحسن العطوي'), 'ملاك الحسن الحفظي');
+});
+
+test('the smart audit promotes names from earlier imports into protected literal references', () => {
+  const registry = {
+    records: { patient: { canonical: 'patient', fullName: 'ملاك الحسن الحفظي', fileNo: '12206', importedAt: 80, aliases: ['file:12206'] } },
+    aliases: { 'file:12206': 'patient' },
+    revision: 1
+  };
+  const first = directory.reconcileDirectorySnapshot(registry, { now: 100 });
+  assert.equal(first.changed, true);
+  assert.equal(first.registry.records.patient.authoritativeFullName, 'ملاك الحسن الحفظي');
+  assert.ok(first.registry.records.patient.lockedFields.includes('fullName'));
+  const second = directory.reconcileDirectorySnapshot(first.registry, { now: 110 });
+  assert.equal(second.changed, false);
+  assert.equal(second.registry.revision, first.registry.revision);
 });
 
 test('smart reconciliation keeps one complete patient record per file number', () => {
@@ -255,9 +320,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260902-smart-name-correction/);
+  assert.match(html, /dashboard\.js\?v=20260902-literal-name-audit/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260902-smart-name-correction/);
+  assert.match(serviceWorker, /20260902-literal-name-audit/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

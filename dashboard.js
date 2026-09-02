@@ -2355,9 +2355,10 @@ function directoryPatientFor(patient){
 function patientWithDirectoryIdentity(patient){
   const record=directoryPatientFor(patient);
   if(!record)return patient;
+  const resolvedName=cleanDirectoryName(record.authoritativeFullName||record.fullName);
   return{
     ...patient,
-    name:record.fullName||patient.name||'',
+    name:resolvedName||patient.name||'',
     file:record.fileNo||patient.file||'',
     phone:record.mobile||patient.phone||'',
     nationalId:record.nationalId||patient.nationalId||''
@@ -4151,7 +4152,7 @@ async function submitPatientDirectoryRows(rows,button){
 }
 async function runSmartPatientNameCorrection(){
   const button=$('patientNameSmartCorrectionBtn');if(!button||button.disabled)return;
-  const title=$('patientNameSmartCorrectionTitle'),originalTitle=title?.textContent||'';button.disabled=true;button.classList.add('is-working');if(title)title.textContent=lang==='en'?'Reviewing names and duplicates…':'جارٍ مراجعة الأسماء والتكرار…';
+  const title=$('patientNameSmartCorrectionTitle'),originalTitle=title?.textContent||'';button.disabled=true;button.classList.add('is-working');if(title)title.textContent=lang==='en'?'Auditing exact names by file number…':'جارٍ تدقيق الأسماء حرفيًا حسب رقم الملف…';
   try{
     const response=await request(PATIENTS_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'reconcile_names'})},60000),data=await response.json().catch(()=>({}));
     if(!response.ok)throw new Error(data.error||'تعذر تشغيل التصحيح الذكي');
@@ -4159,8 +4160,8 @@ async function runSmartPatientNameCorrection(){
     if(!sync.dirty)await pullState(true);
     if(VIEW_MODE==='admin')await refreshAdminPatientHub({force:true});
     renderPatientIdentitySearch();
-    const details=lang==='en'?`Files reviewed ${Number(data.filesReviewed||0)} · Names corrected ${Number(data.correctedNames||0)} · Duplicate records merged ${Number(data.duplicateRecordsMerged||0)}`:`ملفات روجعت ${Number(data.filesReviewed||0)} · أسماء صُححت ${Number(data.correctedNames||0)} · سجلات مكررة دُمجت ${Number(data.duplicateRecordsMerged||0)}`;
-    toast(lang==='en'?'Smart name correction completed':'اكتمل التصحيح الذكي للأسماء',details);
+    const details=lang==='en'?`Files reviewed ${Number(data.filesReviewed||0)} · Exact names corrected ${Number(data.correctedNames||0)} · Duplicate records merged ${Number(data.duplicateRecordsMerged||0)}`:`ملفات روجعت ${Number(data.filesReviewed||0)} · أسماء صُححت حرفيًا ${Number(data.correctedNames||0)} · سجلات مكررة دُمجت ${Number(data.duplicateRecordsMerged||0)}`;
+    toast(lang==='en'?'Literal patient-name audit completed':'اكتملت المراجعة الحرفية الذكية للأسماء',details);
   }catch(error){toast(lang==='en'?'Name correction failed':'تعذر تصحيح الأسماء',String(error.message||error))}
   finally{button.disabled=false;button.classList.remove('is-working');if(title)title.textContent=originalTitle}
 }
@@ -4512,8 +4513,8 @@ function applyLang(){
   setText('#appointmentRequestsPageBtn',lang==='en'?'📅 Appointment request tracking':'📅 متابعة طلبات المواعيد');
   setText('#appointmentEntryPageBtn',lang==='en'?'+ Add appointments':'+ إضافة المواعيد');
   setText('#appointmentEntryTopLink strong',lang==='en'?'Add appointments':'إضافة المواعيد');
-  setText('#patientNameSmartCorrectionTitle',lang==='en'?'Smart name correction':'التصحيح الذكي للأسماء');
-  setText('#patientNameSmartCorrectionHelp',lang==='en'?'Matches by file number, keeps the complete name, and removes incomplete duplicates':'يطابق رقم الملف ويحفظ الاسم الكامل ويلغي السجل الناقص المكرر');
+  setText('#patientNameSmartCorrectionTitle',lang==='en'?'Smart literal name audit':'المراجعة الحرفية الذكية للأسماء');
+  setText('#patientNameSmartCorrectionHelp',lang==='en'?'Uses the latest complete imported name by file number and prevents old spellings from returning':'يعتمد آخر اسم كامل مستورد حسب رقم الملف ويمنع عودة الصياغة القديمة');
   setText('#appointmentRequestLabel',lang==='en'?'Appointment requests':'طلبات المواعيد');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
   setText('#roleModalTitle',lang==='en'?'Choose your task':'اختر مهمتك');

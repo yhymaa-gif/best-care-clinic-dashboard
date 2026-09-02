@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260902-smart-name-correction';
+const CACHE_NAME='bestcare-dashboard-v1-20260902-literal-name-audit';
 const APP_SHELL=[
   './',
   './index.html',

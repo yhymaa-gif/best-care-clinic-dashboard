@@ -1,19 +1,23 @@
 import { createHash } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
-import { normalizePatientNationalId, normalizePatientPhone, patientIdentityKeys } from './patient-identity.mjs';
+import { normalizePatientFile, normalizePatientNationalId, normalizePatientPhone, patientIdentityKeys } from './patient-identity.mjs';
 
 const DIRECTORY_STORE = 'clinic-patient-directory';
 const DIRECTORY_KEY = 'registry/global';
 const MAX_RECORDS = 10000;
 const MAX_RECENT_APPOINTMENTS = 24;
 const cleanText = (value, max = 120) => String(value ?? '').trim().replace(/\s+/g, ' ').slice(0, max);
+const literalPatientName = value => cleanText(String(value ?? '')
+  .normalize('NFC')
+  .replace(/[\u200b-\u200f\u202a-\u202e\u2060\ufeff]/g, '')
+  .replace(/\s*([،,])\s*/g, ' '), 120);
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const directoryStore = () => getStore({ name: DIRECTORY_STORE, consistency: 'strong' });
 
 export const directoryPatient = value => ({
   id: cleanText(value?.id ?? value?.sourcePatientId, 100),
-  fullName: cleanText(value?.fullName ?? value?.name, 120),
-  fileNo: cleanText(value?.fileNo ?? value?.file, 40),
+  fullName: literalPatientName(value?.fullName ?? value?.name),
+  fileNo: normalizePatientFile(value?.fileNo ?? value?.file),
   mobile: normalizePatientPhone(value?.mobile ?? value?.phone),
   nationalId: normalizePatientNationalId(value?.nationalId),
   adminNotes: cleanText(value?.adminNotes ?? value?.adminNote ?? value?.notes ?? value?.note, 1600),
@@ -34,10 +38,10 @@ const mergeNotes = (current, incoming) => {
   return lines.join(' | ').slice(0, 1600);
 };
 const identityConflict = (record = {}, patient = {}) => Boolean(
-  (record.fileNo && patient.fileNo && cleanText(record.fileNo, 40) !== cleanText(patient.fileNo, 40)) ||
+  (record.fileNo && patient.fileNo && normalizePatientFile(record.fileNo) !== normalizePatientFile(patient.fileNo)) ||
   (record.nationalId && patient.nationalId && record.nationalId !== patient.nationalId)
 );
-const normalizedName = value => cleanText(value, 120).toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/[ًٌٍَُِّْـ]/g, '');
+const normalizedName = value => literalPatientName(value).toLowerCase().replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/[ًٌٍَُِّْـ]/g, '');
 const namesCompatible = (left, right) => {
   const a = normalizedName(left), b = normalizedName(right);
   if (!a || !b) return false;
@@ -95,6 +99,10 @@ const authoritativeImportField = (current, incoming, { matchedByFile = false, va
   if (!nextValue || !valid) return oldValue;
   return matchedByFile ? nextValue : (oldValue || nextValue);
 };
+const nameForRoutineUpdate = (existing = {}, incoming = '') => literalPatientName(existing.authoritativeFullName) || preferValue(existing.fullName, literalPatientName(incoming), {
+  name: true,
+  locked: Array.isArray(existing.lockedFields) && existing.lockedFields.includes('fullName') || Boolean(existing.importedAt)
+});
 
 export function resolveDirectoryPatient(registry = {}, value = {}) {
   const records = registry?.records && typeof registry.records === 'object' ? registry.records : {};
@@ -123,10 +131,11 @@ export function resolveDirectoryPatient(registry = {}, value = {}) {
 export const enrichPatientFromDirectory = (registry = {}, value = {}) => {
   const match = resolveDirectoryPatient(registry, value);
   if (!match) return { ...value };
+  const resolvedName = literalPatientName(match.authoritativeFullName || match.fullName);
   return {
     ...value,
-    name: match.fullName || value?.name || value?.fullName || '',
-    fullName: match.fullName || value?.fullName || value?.name || '',
+    name: resolvedName || value?.name || value?.fullName || '',
+    fullName: resolvedName || value?.fullName || value?.name || '',
     file: match.fileNo || value?.file || value?.fileNo || '',
     fileNo: match.fileNo || value?.fileNo || value?.file || '',
     phone: match.mobile || value?.phone || value?.mobile || '',
@@ -183,13 +192,16 @@ const mergeRecords = (target = {}, source = {}) => ({
 });
 
 const authoritativeNameRecord = records => [...records].sort((left, right) => {
+  const leftTrusted = Number(Boolean(left?.authoritativeFullName)) * 4 + Number(Boolean(left?.correctedAt)) * 2 + Number(Boolean(left?.importedAt));
+  const rightTrusted = Number(Boolean(right?.authoritativeFullName)) * 4 + Number(Boolean(right?.correctedAt)) * 2 + Number(Boolean(right?.importedAt));
+  if (rightTrusted !== leftTrusted) return rightTrusted - leftTrusted;
   const complete = value => cleanText(value, 120).split(/\s+/).filter(Boolean).length >= 2 ? 1 : 0;
-  const completeDifference = complete(right?.fullName) - complete(left?.fullName);
+  const completeDifference = complete(right?.authoritativeFullName || right?.fullName) - complete(left?.authoritativeFullName || left?.fullName);
   if (completeDifference) return completeDifference;
   const leftVerified = Number(left?.correctedAt || left?.importedAt || 0);
   const rightVerified = Number(right?.correctedAt || right?.importedAt || 0);
   if (rightVerified !== leftVerified) return rightVerified - leftVerified;
-  return nameScore(right?.fullName) - nameScore(left?.fullName) || Number(right?.updatedAt || 0) - Number(left?.updatedAt || 0);
+  return nameScore(right?.authoritativeFullName || right?.fullName) - nameScore(left?.authoritativeFullName || left?.fullName) || Number(right?.updatedAt || 0) - Number(left?.updatedAt || 0);
 })[0] || {};
 
 // File number is the authoritative patient key. This repairs legacy duplicate
@@ -200,7 +212,7 @@ export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
   const aliases = { ...(registry.aliases || {}) };
   const groups = new Map();
   Object.entries(records).forEach(([canonical, record]) => {
-    const fileNo = directoryPatient(record).fileNo;
+    const fileNo = normalizePatientFile(record?.fileNo);
     if (!fileNo || /^0+$/.test(fileNo)) return;
     const entries = groups.get(fileNo) || [];
     entries.push({ canonical, record });
@@ -208,6 +220,7 @@ export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
   });
   const now = Number(meta.now || Date.now());
   let filesReviewed = 0, duplicateRecordsMerged = 0, correctedNames = 0;
+  let trustedMetadataChanged = false;
   const correctedFiles = [];
 
   groups.forEach((entries, fileNo) => {
@@ -216,19 +229,35 @@ export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
     const linkedCanonical = fileAlias ? aliases[fileAlias] : '';
     const target = entries.find(entry => entry.canonical === linkedCanonical) || [...entries].sort((left, right) => Number(right.record?.correctedAt || right.record?.importedAt || right.record?.updatedAt || 0) - Number(left.record?.correctedAt || left.record?.importedAt || left.record?.updatedAt || 0))[0];
     if (!target) return;
-    const authoritativeName = cleanText(authoritativeNameRecord(entries.map(entry => entry.record)).fullName, 120);
+    const authority = authoritativeNameRecord(entries.map(entry => entry.record));
+    const authoritativeName = literalPatientName(authority.authoritativeFullName || authority.fullName);
+    const trustedName = literalPatientName(authority.authoritativeFullName || ((authority.correctedAt || authority.importedAt) ? authority.fullName : ''));
     const distinctNames = [...new Set(entries.map(entry => normalizedName(entry.record?.fullName)).filter(Boolean))];
+    const entryCorrections = authoritativeName
+      ? entries.filter(entry => literalPatientName(entry.record?.fullName) !== authoritativeName).length
+      : 0;
     let merged = { ...target.record };
     entries.forEach(entry => { if (entry.canonical !== target.canonical) merged = mergeRecords(merged, entry.record); });
-    if (authoritativeName) correctedNames += entries.filter(entry => normalizedName(entry.record?.fullName) !== normalizedName(authoritativeName)).length;
-    if (entries.length > 1 || distinctNames.length > 1) correctedFiles.push(fileNo);
+    correctedNames += entryCorrections;
+    if (entries.length > 1 || distinctNames.length > 1 || entryCorrections > 0) correctedFiles.push(fileNo);
+    if (trustedName && (
+      literalPatientName(target.record?.authoritativeFullName) !== trustedName ||
+      !Array.isArray(target.record?.lockedFields) || !target.record.lockedFields.includes('fullName') ||
+      normalizePatientFile(target.record?.fileNo) !== String(target.record?.fileNo || '')
+    )) trustedMetadataChanged = true;
     duplicateRecordsMerged += Math.max(0, entries.length - 1);
     merged = {
       ...merged,
       canonical: target.canonical,
       fileNo,
       fullName: authoritativeName || cleanText(merged.fullName, 120),
+      authoritativeFullName: trustedName,
+      nameVerifiedAt: Number(authority.nameVerifiedAt || authority.correctedAt || authority.importedAt || 0),
+      nameVerificationSource: cleanText(authority.nameVerificationSource || (authority.correctedAt ? 'admin_correction' : authority.importedAt ? 'file_import' : ''), 40),
       aliases: [...new Set([...(merged.aliases || []), ...entries.flatMap(entry => entry.record?.aliases || []), ...(fileAlias ? [fileAlias] : [])])],
+      lockedFields: authoritativeName && (authority.authoritativeFullName || authority.correctedAt || authority.importedAt)
+        ? [...new Set([...(merged.lockedFields || []), 'fullName'])]
+        : [...new Set(merged.lockedFields || [])],
       updatedAt: Math.max(Number(merged.updatedAt || 0), entries.length > 1 || distinctNames.length > 1 ? now : 0),
       updatedBy: entries.length > 1 || distinctNames.length > 1 ? cleanText(meta.actor || 'name-reconciliation', 120) : merged.updatedBy
     };
@@ -247,7 +276,7 @@ export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
     if (fileAlias) aliases[fileAlias] = target.canonical;
   });
 
-  const changed = duplicateRecordsMerged > 0 || correctedNames > 0;
+  const changed = duplicateRecordsMerged > 0 || correctedNames > 0 || trustedMetadataChanged;
   return {
     registry: { records, aliases, revision: Number(registry.revision || 0) + (changed ? 1 : 0), updatedAt: changed ? now : Number(registry.updatedAt || 0) },
     changed,
@@ -304,7 +333,7 @@ export async function upsertPatientDirectory(patients, meta = {}) {
     const next = {
       ...existing,
       canonical,
-      fullName: preferValue(existing.fullName, patient.fullName, { name: true, locked: lockedFields.includes('fullName') }),
+      fullName: nameForRoutineUpdate(existing, patient.fullName),
       fileNo: preferValue(existing.fileNo, patient.fileNo, { locked: lockedFields.includes('fileNo') }),
       mobile: preferValue(existing.mobile, patient.mobile, { locked: lockedFields.includes('mobile') }),
       nationalId: preferValue(existing.nationalId, patient.nationalId, { locked: lockedFields.includes('nationalId') }),
@@ -372,6 +401,7 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
     ...existing,
     canonical,
     fullName: preferValue(existing.fullName, patient.fullName, { force: true, name: true }),
+    authoritativeFullName: literalPatientName(patient.fullName),
     fileNo: preferValue(existing.fileNo, patient.fileNo, { force: true }),
     mobile: preferValue(existing.mobile, patient.mobile, { force: true }),
     nationalId: patient.nationalId || '',
@@ -382,6 +412,8 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
     updatedAt: now,
     lastSeenAt: Math.max(Number(existing.lastSeenAt || 0), now),
     correctedAt: now,
+    nameVerifiedAt: now,
+    nameVerificationSource: 'admin_correction',
     lastCorrectionId: correctionId || existing.lastCorrectionId || '',
     updatedBy: cleanText(meta.actor, 120)
   };
@@ -422,6 +454,7 @@ export async function importPatientDirectory(values, meta = {}) {
     const matchedByFile = Boolean(fileAlias && aliases[fileAlias] === canonical && Object.keys(existing).length);
     const clinicId = cleanText(input[index]?.clinicId || meta.clinicId, 20);
     const nextName = authoritativeImportName(existing.fullName, patient.fullName, { matchedByFile, locked: Boolean(existing.correctedAt) && existing.lockedFields?.includes('fullName') });
+    const importedNameIsAuthoritative = Boolean(patient.fileNo && patient.fullName.split(/\s+/).filter(Boolean).length >= 2);
     const nextMobile = authoritativeImportField(existing.mobile, patient.mobile, { matchedByFile: matchedByFile && !resolution.sharedPhoneCanonical, valid: /^05\d{8}$/.test(patient.mobile) });
     const nextNationalId = authoritativeImportField(existing.nationalId, patient.nationalId, { matchedByFile, valid: /^\d{10}$/.test(patient.nationalId) });
     const next = {
@@ -429,6 +462,7 @@ export async function importPatientDirectory(values, meta = {}) {
       canonical,
       id: existing.id || patient.id,
       fullName: nextName,
+      authoritativeFullName: importedNameIsAuthoritative ? literalPatientName(patient.fullName) : (existing.authoritativeFullName || ''),
       fileNo: existing.fileNo || patient.fileNo,
       mobile: nextMobile,
       nationalId: nextNationalId,
@@ -437,7 +471,9 @@ export async function importPatientDirectory(values, meta = {}) {
       clinicIds: [...new Set([...(existing.clinicIds || []), ...(clinicId ? [clinicId] : [])])],
       latestClinicId: existing.latestClinicId || clinicId,
       latestPatientId: existing.latestPatientId || patient.id,
-      lockedFields: [...new Set(existing.lockedFields || [])],
+      lockedFields: [...new Set([...(existing.lockedFields || []), ...(importedNameIsAuthoritative ? ['fullName'] : [])])],
+      nameVerifiedAt: importedNameIsAuthoritative ? now : Number(existing.nameVerifiedAt || 0),
+      nameVerificationSource: importedNameIsAuthoritative ? 'file_import' : (existing.nameVerificationSource || ''),
       firstSeenAt: Number(existing.firstSeenAt || now),
       lastSeenAt: Math.max(Number(existing.lastSeenAt || 0), now),
       updatedAt: now,
@@ -480,4 +516,4 @@ export async function importPatientDirectory(values, meta = {}) {
   return { ...result, duplicateRecordsMerged: reconciled.duplicateRecordsMerged, filesReviewed: reconciled.filesReviewed, correctedNames: result.correctedNames + reconciled.correctedNames, revision: reconciled.registry.revision, records: reconciled.registry.records };
 }
 
-export const __test = { directoryPatient, aliasesFor, strongAliasesFor, phoneAliasFor, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, resolveDirectoryPatient, enrichPatientFromDirectory, nameScore, preferValue, authoritativeImportName, authoritativeImportField, appointmentSnapshot, mergeRecords, authoritativeNameRecord, reconcileDirectorySnapshot };
+export const __test = { directoryPatient, literalPatientName, aliasesFor, strongAliasesFor, phoneAliasFor, identityConflict, normalizedName, namesCompatible, reviewFlagsFor, resolveCanonical, resolveDirectoryPatient, enrichPatientFromDirectory, nameScore, preferValue, authoritativeImportName, authoritativeImportField, nameForRoutineUpdate, appointmentSnapshot, mergeRecords, authoritativeNameRecord, reconcileDirectorySnapshot };

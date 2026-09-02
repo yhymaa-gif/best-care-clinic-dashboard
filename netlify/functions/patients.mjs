@@ -157,6 +157,7 @@ export default async request => {
       return [canonical, {
         ...record,
         canonical,
+        fullName: String(record.authoritativeFullName || record.fullName || '').trim(),
         planCount: plans.length,
         prescriptionCount: prescriptions.length,
         labCount: labs.length,
