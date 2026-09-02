@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <script src="./theme-boot.js"></script>
+  <meta name="theme-color" content="#174d3a">
+  <title>إضافة المواعيد | أفضل عناية</title>
+  <link rel="icon" href="./assets/icons/icon-192.png">
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./appointment-entry.css?v=20260902-appointment-entry">
+</head>
+<body>
+<main class="appointment-entry-shell">
+  <header class="entry-topbar">
+    <div class="entry-brand"><img src="./assets/best-care-logo-header.png" width="181" height="260" alt="Best Care"><div><small id="pageKicker">مساحة الإدارة</small><h1 id="pageTitle">إضافة المواعيد</h1><p id="pageSubtitle">إضافة سريعة من قاعدة المرضى إلى قائمة العيادة</p></div></div>
+    <nav><a id="requestsLink" href="./appointment-requests.html">طلبات المواعيد</a><a id="adminLink" class="primary" href="./?view=admin">العودة للإدارة</a></nav>
+  </header>
+
+  <section class="entry-context" aria-labelledby="contextTitle">
+    <div class="entry-section-copy"><small id="contextKicker">حدد مسار الموعد</small><h2 id="contextTitle">التاريخ والعيادة</h2></div>
+    <div class="date-presets"><button id="todayBtn" type="button">اليوم</button><button id="tomorrowBtn" type="button">غدًا</button></div>
+    <label><span id="dateLabel">التاريخ</span><input id="entryDate" type="date"></label>
+    <label><span id="clinicLabel">العيادة والطبيب</span><select id="entryClinic"></select></label>
+    <button id="refreshBtn" class="icon-button" type="button" title="تحديث">↻</button>
+    <div id="syncState" class="entry-sync loading"><i></i><span>جارٍ تحميل قائمة اليوم…</span></div>
+  </section>
+
+  <section class="patient-finder" aria-labelledby="finderTitle">
+    <div class="entry-section-copy"><small id="finderKicker">الخطوة 1</small><h2 id="finderTitle">ابحث عن المريض</h2><p id="finderHelp">اكتب الاسم أو رقم الملف أو الجوال أو الهوية.</p></div>
+    <div class="finder-input"><span aria-hidden="true">⌕</span><input id="patientSearch" type="search" autocomplete="off" placeholder="ابدأ بالاسم أو رقم الملف…"><button id="clearSearch" type="button" aria-label="مسح البحث">×</button></div>
+    <div id="searchState" class="search-state">أدخل حرفين من الاسم أو ثلاثة أرقام على الأقل.</div>
+    <div id="patientResults" class="patient-results"></div>
+  </section>
+
+  <section id="patientCorrection" class="patient-correction" hidden aria-labelledby="correctionTitle">
+    <div class="entry-section-copy"><small id="correctionKicker">تصحيح قبل الإضافة</small><h2 id="correctionTitle">أكمل بيانات المريض</h2><p id="correctionHelp">لن يُنشأ موعد حتى تكتمل البيانات، وسيُحدّث السجل المركزي نفسه.</p></div>
+    <div class="correction-grid"><label><span>الاسم الكامل</span><input id="correctName" maxlength="120"></label><label><span>رقم الملف</span><input id="correctFile" inputmode="numeric" maxlength="40"></label><label><span>الجوال</span><input id="correctPhone" inputmode="tel" maxlength="20"></label><label><span>الهوية</span><input id="correctNational" inputmode="numeric" maxlength="10"></label></div>
+    <p id="correctionError" class="inline-error" hidden></p><button id="saveCorrection" class="primary-action" type="button">حفظ التصحيح والمتابعة</button>
+  </section>
+
+  <section id="appointmentComposer" class="appointment-composer" hidden aria-labelledby="composerTitle">
+    <div class="selected-patient"><span class="selected-icon" aria-hidden="true">✓</span><div><small id="selectedLabel">المريض المحدد</small><h2 id="selectedName">—</h2><p id="selectedIdentity">—</p></div><button id="changePatient" type="button">تغيير</button></div>
+    <div class="entry-section-copy"><small id="composerKicker">الخطوة 2</small><h2 id="composerTitle">حدد الوقت والإجراء</h2></div>
+    <div class="composer-grid">
+      <label><span id="startLabel">وقت البداية</span><input id="startTime" type="time" step="300"></label>
+      <fieldset><legend id="durationLabel">مدة الموعد</legend><div class="duration-options"><button type="button" data-duration="15">15</button><button type="button" data-duration="30" class="active">30</button><button type="button" data-duration="45">45</button><button type="button" data-duration="60">60</button><label><input id="customDuration" type="number" min="5" max="240" step="5" placeholder="أخرى"><span id="minuteLabel">دقيقة</span></label></div></fieldset>
+      <label><span id="endLabel">وقت النهاية</span><output id="endTime">—</output></label>
+      <label class="procedure-field"><span id="procedureLabel">الإجراء</span><input id="procedure" list="procedureOptions" maxlength="180" placeholder="مثال: كشف جديد"><datalist id="procedureOptions"><option value="كشف وتشخيص"><option value="مراجعة"><option value="حشوة"><option value="علاج عصب"><option value="تركيبات"><option value="تنظيف"></datalist></label>
+    </div>
+    <div id="conflictBox" class="conflict-box" hidden><strong id="conflictTitle">تنبيه تداخل في الوقت</strong><p id="conflictText"></p><label><input id="allowOverlap" type="checkbox"><span id="allowOverlapLabel">راجعت التعارض وأرغب بالإضافة رغم ذلك</span></label></div>
+    <p id="composerError" class="inline-error" hidden></p>
+    <button id="saveAppointment" class="save-appointment" type="button"><span aria-hidden="true">＋</span><span><strong id="saveAppointmentTitle">إضافة إلى قائمة المواعيد</strong><small id="saveAppointmentHelp">حفظ فوري مع المزامنة بين الأجهزة</small></span></button>
+  </section>
+
+  <section class="day-board" aria-labelledby="boardTitle">
+    <div class="board-head"><div class="entry-section-copy"><small id="boardKicker">قائمة التاريخ المحدد</small><h2 id="boardTitle">المواعيد المحفوظة</h2><p id="boardHelp">تظهر أحدث البيانات من نفس قائمة الداشبورد.</p></div><div class="board-metrics"><span><b id="appointmentCount">0</b><small id="countLabel">موعد</small></span><span><b id="availableTime">—</b><small id="availableLabel">أقرب وقت شاغر</small></span></div></div>
+    <div id="recentActions" class="recent-actions" hidden></div>
+    <div id="dayList" class="day-list"><div class="empty-state">جارٍ تحميل المواعيد…</div></div>
+  </section>
+</main>
+<div id="toastWrap" class="entry-toasts" aria-live="polite"></div>
+<script type="module" src="./appointment-entry.js?v=20260902-appointment-entry"></script>
+</body>
+</html>

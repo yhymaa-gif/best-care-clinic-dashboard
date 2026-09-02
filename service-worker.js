@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260902-patient-scheduling';
+const CACHE_NAME='bestcare-dashboard-v1-20260902-appointment-entry';
 const APP_SHELL=[
   './',
   './index.html',
@@ -19,6 +19,10 @@ const APP_SHELL=[
   './appointment-request.js',
   './appointment-requests.html',
   './appointment-requests.js',
+  './appointment-entry.html',
+  './appointment-entry.css',
+  './appointment-entry.js',
+  './appointment-entry-core.js',
   './admin-notifications.html',
   './admin-notifications.js',
   './offline.html',
@@ -81,6 +85,8 @@ self.addEventListener('fetch',event=>{
           ?'./appointment-request.html'
           :url.pathname.endsWith('/appointment-requests.html')
             ?'./appointment-requests.html'
+          :url.pathname.endsWith('/appointment-entry.html')
+            ?'./appointment-entry.html'
           :url.pathname.endsWith('/admin-notifications.html')
             ?'./admin-notifications.html'
           :url.pathname.endsWith('/lab.html')

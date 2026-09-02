@@ -46,8 +46,8 @@ function applyAdminLayout(mode,{save=false}={}){
   if(save)try{localStorage.setItem(ADMIN_LAYOUT_KEY,adminLayoutMode)}catch{}
 }
 const MODERN_ADMIN_COPY={
-  ar:{brand:'إدارة أفضل عناية',workspace:'مساحة العمل الحديثة',home:'نظرة عامة',groups:['الطلبات والمتابعة','المرضى والمواعيد','الإعدادات والإدارة','الوصول والتفضيلات'],overviewKicker:'مساحة العمل الحديثة',overviewTitle:'الأولوية الآن',overviewHelp:'الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.',metrics:['مواعيد جديدة','طلبات دفع','خطط تحتاج مراجعة'],actions:{appointments:['طلبات المواعيد','طلبات الرابط العام'],payments:['إجراءات الدفع','بانتظار تدخل الإدارة'],plans:['الخطط العلاجية','اعتماد ومراجعة الخطط'],labs:['حالات المعمل','متابعة الحالات النشطة'],'patient-record':['ملف المريض','بحث وتعديل وتتبع'],patients:['مرضى اليوم','القائمة والتحديثات'],'add-patient':['إضافة مريض','موعد جديد'],alert:['إرسال تنبيه','عام أو لعيادة محددة'],statistics:['الإحصائيات','مؤشرات الأداء'],clinics:['العيادات والأطباء','إدارة حتى 15 عيادة'],catalog:['الخدمات والأسعار','إجراءات الدفع والخطط'],import:['استيراد قائمة','CSV أو Excel'],settings:['كل الإعدادات','أدوات النظام'],doctor:['صفحة الطبيب','فتح العيادة المحددة'],language:['تبديل اللغة','العربية أو الإنجليزية'],theme:['مظهر التطبيق','فاتح أو داكن'],notifications:['إشعارات النظام','تفعيل أو إيقاف الإشعارات'],sound:['التنبيهات الصوتية','التحكم بصوت التنبيه'],export:['تصدير القائمة','تنزيل ملف CSV'],logout:['تسجيل الخروج','إنهاء الجلسة بأمان'],classic:['الواجهة الكلاسيكية','العودة للتصميم السابق']}},
-  en:{brand:'Best Care Administration',workspace:'Modern workspace',home:'Overview',groups:['Requests and follow-up','Patients and appointments','Settings and management','Access and preferences'],overviewKicker:'Modern workspace',overviewTitle:'Priority now',overviewHelp:'Reach every request that needs action without leaving today’s dashboard.',metrics:['New appointments','Payment requests','Plans to review'],actions:{appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Review and approval'],labs:['Dental lab cases','Track active cases'],'patient-record':['Patient record','Search, edit, and follow up'],patients:["Today’s patients",'List and updates'],'add-patient':['Add patient','New appointment'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payments and plans'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],doctor:['Doctor page','Open selected clinic'],language:['Switch language','Arabic or English'],theme:['App appearance','Light or dark'],notifications:['System notifications','Enable or disable notifications'],sound:['Sound alerts','Control alert sound'],export:['Export list','Download CSV file'],logout:['Sign out','End the session securely'],classic:['Classic interface','Return to previous design']}}
+  ar:{brand:'إدارة أفضل عناية',workspace:'مساحة العمل الحديثة',home:'نظرة عامة',groups:['الطلبات والمتابعة','المرضى والمواعيد','الإعدادات والإدارة','الوصول والتفضيلات'],overviewKicker:'مساحة العمل الحديثة',overviewTitle:'الأولوية الآن',overviewHelp:'الوصول إلى الطلبات التي تحتاج إجراءً دون مغادرة لوحة اليوم.',metrics:['مواعيد جديدة','طلبات دفع','خطط تحتاج مراجعة'],actions:{appointments:['طلبات المواعيد','طلبات الرابط العام'],payments:['إجراءات الدفع','بانتظار تدخل الإدارة'],plans:['الخطط العلاجية','اعتماد ومراجعة الخطط'],labs:['حالات المعمل','متابعة الحالات النشطة'],'patient-record':['ملف المريض','بحث وتعديل وتتبع'],patients:['مرضى اليوم','القائمة والتحديثات'],'add-patient':['إضافة مريض','موعد جديد'],'add-appointments':['إضافة المواعيد','من قاعدة المرضى'],alert:['إرسال تنبيه','عام أو لعيادة محددة'],statistics:['الإحصائيات','مؤشرات الأداء'],clinics:['العيادات والأطباء','إدارة حتى 15 عيادة'],catalog:['الخدمات والأسعار','إجراءات الدفع والخطط'],import:['استيراد قائمة','CSV أو Excel'],settings:['كل الإعدادات','أدوات النظام'],doctor:['صفحة الطبيب','فتح العيادة المحددة'],language:['تبديل اللغة','العربية أو الإنجليزية'],theme:['مظهر التطبيق','فاتح أو داكن'],notifications:['إشعارات النظام','تفعيل أو إيقاف الإشعارات'],sound:['التنبيهات الصوتية','التحكم بصوت التنبيه'],export:['تصدير القائمة','تنزيل ملف CSV'],logout:['تسجيل الخروج','إنهاء الجلسة بأمان'],classic:['الواجهة الكلاسيكية','العودة للتصميم السابق']}},
+  en:{brand:'Best Care Administration',workspace:'Modern workspace',home:'Overview',groups:['Requests and follow-up','Patients and appointments','Settings and management','Access and preferences'],overviewKicker:'Modern workspace',overviewTitle:'Priority now',overviewHelp:'Reach every request that needs action without leaving today’s dashboard.',metrics:['New appointments','Payment requests','Plans to review'],actions:{appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Review and approval'],labs:['Dental lab cases','Track active cases'],'patient-record':['Patient record','Search, edit, and follow up'],patients:["Today’s patients",'List and updates'],'add-patient':['Add patient','New appointment'],'add-appointments':['Add appointments','From patient database'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payments and plans'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],doctor:['Doctor page','Open selected clinic'],language:['Switch language','Arabic or English'],theme:['App appearance','Light or dark'],notifications:['System notifications','Enable or disable notifications'],sound:['Sound alerts','Control alert sound'],export:['Export list','Download CSV file'],logout:['Sign out','End the session securely'],classic:['Classic interface','Return to previous design']}}
 };
 function renderModernAdminCopy(){
   const copy=MODERN_ADMIN_COPY[lang]||MODERN_ADMIN_COPY.ar,sidebar=$('modernAdminSidebar');if(!sidebar)return;
@@ -2457,22 +2457,10 @@ async function confirmPatientSchedule(){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)){toast(lang==='en'?'Choose a valid date':'اختر تاريخًا صحيحًا','');return}
   const button=$('patientScheduleConfirm');button.disabled=true;button.textContent=lang==='en'?'Loading appointment…':'جارٍ فتح الموعد…';
   try{
-    if(targetDate!==selectedDate)await setDate(targetDate);
     const draft=patientScheduleDraft;
-    const duplicate=patients.find(patient=>normalizeDirectoryFile(patient.file)===draft.fileNo||(draft.nationalId&&normalizeDirectoryNationalId(patient.nationalId)===draft.nationalId));
     closeModal('patientScheduleModal');closeModal('patientIdentitySearchModal');
-    if(duplicate){
-      openPatient(duplicate.id);
-      toast(lang==='en'?'Patient already on this date':'المريض موجود في هذا التاريخ',lang==='en'?'The existing appointment was opened to avoid a duplicate.':'تم فتح الموعد الموجود لتجنب تكرار المريض.');
-      return;
-    }
-    resetPatientForm(false);$('patientFormCard').open=true;$('patientFormCard').scrollIntoView({behavior:'smooth',block:'center'});
-    $('appointmentDateField').hidden=false;$('fDate').value=targetDate;$('fDate').disabled=true;
-    $('fName').value=draft.fullName;$('fFile').value=draft.fileNo;$('fPhone').value=draft.mobile;$('fNationalId').value=draft.nationalId||'';
-    $('patientFormTitle').textContent=lang==='en'?'Add existing patient appointment':'إضافة موعد لمريض مسجل';
-    $('patientFormMode').textContent=lang==='en'?'From patient record':'من ملف المريض';
-    updatePatientFormReadiness();
-    $('fStart').focus();
+    sessionStorage.setItem('bestcare_appointment_entry_draft_v1',JSON.stringify({patient:{id:draft.id||'',name:draft.fullName,file:draft.fileNo,phone:draft.mobile,nationalId:draft.nationalId||''},date:targetDate,clinicId:ACTIVE_CLINIC_ID,at:Date.now()}));
+    location.href=`./appointment-entry.html?date=${encodeURIComponent(targetDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`;
   }catch(error){toast(lang==='en'?'Could not prepare appointment':'تعذر تجهيز الموعد',String(error.message||error))}
   finally{button.disabled=false;button.textContent=lang==='en'?'Continue to appointment':'متابعة وإكمال الموعد'}
 }
@@ -3630,6 +3618,7 @@ function handleModernAdminAction(action){
   if(action==='patient-record'){$('patientIdentitySearchBtn')?.click();return}
   if(action==='patients'){scrollAdminTarget('adminPatientHub',{open:true});return}
   if(action==='add-patient'){$('addBtn')?.click();return}
+  if(action==='add-appointments'){location.href=`./appointment-entry.html?date=${encodeURIComponent(selectedDate||today())}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`;return}
   if(action==='alert'){$('alertBtn')?.click();return}
   if(action==='statistics'){window.open('./statistics.html','bestcare-statistics','noopener');return}
   if(action==='clinics'){$('clinicsBtn')?.click();return}
@@ -3646,6 +3635,7 @@ function handleModernAdminAction(action){
   if(action==='logout'){$('logoutBtn')?.click();return}
   if(action==='classic'){applyAdminLayout('classic',{save:true});toast(lang==='en'?'Classic interface':'الواجهة الكلاسيكية',lang==='en'?'The previous administration layout is active.':'تمت العودة إلى تصميم الإدارة المعتاد.')}
 }
+function openAppointmentEntryPage(){location.href=`./appointment-entry.html?date=${encodeURIComponent(selectedDate||today())}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`}
 function ensurePaymentMissingAlert(){
   const panel=$('paymentPanel');
   if(!panel)return null;
@@ -4483,7 +4473,7 @@ function applyLang(){
   setText('#modernSyncLabel',lang==='en'?'Live synchronization':'المزامنة المباشرة');
   setLocalizedTexts('.modern-overview-metrics button small',['New appointments','Payment requests','Plans to review'],['مواعيد جديدة','طلبات دفع','خطط تحتاج مراجعة']);
   if(lang==='en'){
-    const modernCopy={overview:['Overview',''],appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Plan approval and review'],labs:['Laboratory cases','Track active cases'],'patient-record':['Patient database','View, correct, and track'],patients:['Today’s patients','List and updates'],'add-patient':['Add patient','New appointment'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payment and plan procedures'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],doctor:['Doctor page','Open selected clinic'],language:['Switch language','Arabic or English'],theme:['App appearance','Light or dark'],notifications:['System notifications','Enable or disable notifications'],'admin-alerts':['Admin alerts','Overdue and required actions'],sound:['Sound alerts','Alert sound control'],export:['Export list','Download CSV'],logout:['Sign out','End the session safely'],presence:['Connected devices','Live synchronization'],classic:['Classic interface','Return to the previous design']};
+    const modernCopy={overview:['Overview',''],appointments:['Appointment requests','Public booking requests'],payments:['Payment actions','Waiting for administration'],plans:['Treatment plans','Plan approval and review'],labs:['Laboratory cases','Track active cases'],'patient-record':['Patient database','View, correct, and track'],patients:['Today’s patients','List and updates'],'add-patient':['Add patient','New appointment'],'add-appointments':['Add appointments','From patient database'],alert:['Send alert','All clinics or one clinic'],statistics:['Statistics','Performance indicators'],clinics:['Clinics and doctors','Manage up to 15 clinics'],catalog:['Services and prices','Payment and plan procedures'],import:['Import list','CSV or Excel'],settings:['All settings','System tools'],doctor:['Doctor page','Open selected clinic'],language:['Switch language','Arabic or English'],theme:['App appearance','Light or dark'],notifications:['System notifications','Enable or disable notifications'],'admin-alerts':['Admin alerts','Overdue and required actions'],sound:['Sound alerts','Alert sound control'],export:['Export list','Download CSV'],logout:['Sign out','End the session safely'],presence:['Connected devices','Live synchronization'],classic:['Classic interface','Return to the previous design']};
     Object.entries(modernCopy).forEach(([action,copy])=>{const node=document.querySelector(`[data-modern-action="${action}"]`);if(!node)return;setLocalizedNode(node.querySelector('strong'),copy[0]);if(copy[1])setLocalizedNode(node.querySelector('small'),copy[1]);});
     document.querySelectorAll('.modern-sidebar-group>summary strong').forEach((node,index)=>setLocalizedNode(node,['Requests and follow-up','Patients and appointments','Settings and administration','Access and preferences'][index]||node.textContent));
     setLocalizedNode(document.querySelector('.modern-sidebar-home>span:last-child'),'Overview');
@@ -4505,6 +4495,8 @@ function applyLang(){
   }
   updateAdminInterventionBadge();
   setText('#appointmentRequestsPageBtn',lang==='en'?'📅 Appointment request tracking':'📅 متابعة طلبات المواعيد');
+  setText('#appointmentEntryPageBtn',lang==='en'?'+ Add appointments':'+ إضافة المواعيد');
+  setText('#appointmentEntryTopLink strong',lang==='en'?'Add appointments':'إضافة المواعيد');
   setText('#appointmentRequestLabel',lang==='en'?'Appointment requests':'طلبات المواعيد');
   setText('#roleBtn',lang==='en'?'↔ Change task':'↔ تغيير المهمة');
   setText('#roleModalTitle',lang==='en'?'Choose your task':'اختر مهمتك');
@@ -4828,6 +4820,8 @@ document.addEventListener('pointerdown',()=>{if(soundAlertsEnabled())prepareAudi
 document.addEventListener('keydown',()=>{if(soundAlertsEnabled())prepareAudio()},{once:true});
 $('treatmentCatalogBtn').addEventListener('click',openTreatmentCatalog);
 $('labCasesBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);openLabCasesPage()});
+$('appointmentEntryPageBtn')?.addEventListener('click',()=>{setSettingsMenuOpen(false);openAppointmentEntryPage()});
+$('appointmentEntryTopLink')?.addEventListener('click',event=>{event.preventDefault();openAppointmentEntryPage()});
 $('appointmentRequestsPageBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);location.href='./appointment-requests.html'});
 $('floatingLabBtn').addEventListener('click',()=>openLabCasesPage());
 $('clinicsBtn').addEventListener('click',openClinicDirectory);

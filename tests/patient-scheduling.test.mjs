@@ -13,9 +13,10 @@ test('patient record and search results expose the existing-patient appointment 
   assert.match(dashboard, /data-identity-schedule/);
   assert.match(dashboard, /function openPatientSchedule\(/);
   assert.match(dashboard, /function confirmPatientSchedule\(/);
-  assert.match(dashboard, /targetDate!==selectedDate\)await setDate\(targetDate\)/);
+  assert.match(dashboard, /bestcare_appointment_entry_draft_v1/);
+  assert.match(dashboard, /appointment-entry\.html\?date=/);
   assert.match(dashboard, /if\(!wasEditing&&targetDate!==selectedDate\)await setDate\(targetDate\)/);
-  assert.match(dashboard, /normalizeDirectoryFile\(patient\.file\)===draft\.fileNo/);
+  assert.match(dashboard, /name:draft\.fullName,file:draft\.fileNo,phone:draft\.mobile/);
   assert.match(styles, /\.patient-profile-schedule-action/);
   assert.match(styles, /\.patient-schedule-card/);
   assert.match(styles, /#savePatientBtn\.patient-form-ready/);

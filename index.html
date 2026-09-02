@@ -69,6 +69,7 @@
       </aside>
       <button id="patientIdentitySearchBtn" class="primary patient-record-trigger admin-only" type="button"><span aria-hidden="true">⌕</span><span><strong>قاعدة المرضى</strong><small>عرض · تصحيح · متابعة</small></span><b id="patientDirectoryReviewBadge" class="patient-directory-review-badge" hidden>0</b></button>
       <button id="addBtn" type="button">إضافة مريض</button>
+      <a id="appointmentEntryTopLink" class="top-icon-link admin-only" href="./appointment-entry.html" title="إضافة موعد من قاعدة المرضى"><span aria-hidden="true">＋</span><strong>إضافة المواعيد</strong></a>
       <a id="statisticsTopLink" class="top-icon-link admin-only" href="./statistics.html" title="فتح مركز الإحصائيات"><span aria-hidden="true">▥</span><strong>الإحصائيات</strong></a>
       <a id="adminNotificationsTopLink" class="top-icon-link admin-only" href="./admin-notifications.html" title="فتح تنبيهات تحتاج تدخل الإدارة"><span aria-hidden="true">⚠</span><strong>تنبيهات الإدارة</strong><small id="adminNotificationsTopCount">0</small></a>
       <button id="treatmentPlanCenterBtn" class="plan-center-trigger admin-only" type="button" aria-haspopup="dialog" aria-controls="treatmentPlanCenterModal" title="فتح مركز العمليات"><span class="plan-center-trigger-icon" aria-hidden="true">◎</span><span><strong>مركز العمليات</strong><small>المواعيد · الخطط · المعمل · الوصفات</small></span><b id="treatmentPlanCenterCount">0</b></button>
@@ -84,6 +85,7 @@
         <button id="soundAlertsBtn" type="button">🔊 التنبيهات الصوتية مفعلة</button>
         <button id="treatmentCatalogBtn" type="button">🧾 الإجراءات والخدمات والأسعار</button>
         <button id="labCasesBtn" class="lab-page-link" type="button">◆ حالات معمل الأسنان</button>
+        <button id="appointmentEntryPageBtn" class="admin-only" type="button">＋ إضافة المواعيد</button>
         <button id="appointmentRequestsPageBtn" class="admin-only" type="button">📅 متابعة طلبات المواعيد</button>
         <button id="clinicsBtn" class="admin-only" type="button">🏥 إدارة العيادات والأطباء</button>
         <button id="usersBtn" type="button">👤 إدارة مستخدمي النظام</button>
@@ -129,6 +131,7 @@
         <button type="button" data-modern-action="patient-record"><span aria-hidden="true">◎</span><span><strong>قاعدة المرضى</strong><small>عرض وتصحيح وتتبع</small></span></button>
         <button type="button" data-modern-action="patients"><span aria-hidden="true">≡</span><span><strong>مرضى اليوم</strong><small>القائمة والتحديثات</small></span><b id="modernPatientsCount">0</b></button>
         <button type="button" data-modern-action="add-patient"><span aria-hidden="true">＋</span><span><strong>إضافة مريض</strong><small>موعد جديد</small></span></button>
+        <button type="button" data-modern-action="add-appointments"><span aria-hidden="true">◷</span><span><strong>إضافة المواعيد</strong><small>من قاعدة المرضى</small></span></button>
         <button type="button" data-modern-action="alert"><span aria-hidden="true">!</span><span><strong>إرسال تنبيه</strong><small>عام أو لعيادة محددة</small></span></button>
       </div>
     </details>
@@ -493,6 +496,6 @@
 </div></div>
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
-<script src="./patient-summary.js?v=20260902-patient-scheduling"></script>
-<script src="./dashboard.js?v=20260902-patient-scheduling"></script>
+<script src="./patient-summary.js?v=20260902-appointment-entry"></script>
+<script src="./dashboard.js?v=20260902-appointment-entry"></script>
 </body></html>
