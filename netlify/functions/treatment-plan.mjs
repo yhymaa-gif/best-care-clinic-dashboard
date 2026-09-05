@@ -121,6 +121,7 @@ const cleanPlan = plan => ({
   },
   consent: {
     photoConsent: Boolean(plan?.consent?.photoConsent),
+    photoConsentRecorded: plan?.consent?.photoConsentRecorded === true || (Number(plan?.consent?.termsVersion || 0) >= 2 && Number(plan?.meta?.patientAcceptedAt || 0) > 0),
     photoConsentDefaultVersion: Math.max(0, Math.min(2, Number(plan?.consent?.photoConsentDefaultVersion || 0))),
     photoConsentAcceptedAt: cleanNumber(plan?.consent?.photoConsentAcceptedAt, 0, Number.MAX_SAFE_INTEGER),
     termsVersion: cleanNumber(plan?.consent?.termsVersion, 0, 100)

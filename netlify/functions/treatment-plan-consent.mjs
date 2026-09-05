@@ -151,6 +151,9 @@ async function updateRegistry(link, plan, now, signerName) {
     approvedBy: 'اعتماد تلقائي بعد توقيع المريض',
     consentMethod: 'patient_link',
     consentEvidenceId: link.id,
+    photoConsent: plan?.consent?.photoConsent === true,
+    photoConsentRecorded: true,
+    consentTermsVersion: Number(plan?.consent?.termsVersion || CONSENT_VERSION),
     lastPrintedAt: Number(plan?.meta?.lastPrintedAt || 0),
     createdAt: Number(previous.createdAt || now),
     updatedAt: now,
@@ -247,7 +250,7 @@ async function signConsent(request, body) {
   const plan = record?.plan;
   if (!plan) return reply({ error: 'لم تعد الخطة متاحة. تواصل مع العيادة.' }, 404);
   if (Number(link.usedAt || 0) || (plan?.meta?.status === 'approved_signed' && plan?.meta?.consentEvidenceId === link.id)) {
-    return reply({ ok: true, duplicate: true, status: 'signed', signedAt: Number(link.usedAt || plan?.meta?.patientAcceptedAt || 0) });
+    return reply({ ok: true, duplicate: true, status: 'signed', signedAt: Number(link.usedAt || plan?.meta?.patientAcceptedAt || 0), photoConsent: plan?.consent?.photoConsent === true });
   }
   if (plan?.meta?.status !== 'submitted' || consentDigest(plan) !== link.planDigest) {
     return reply({ error: 'تم تعديل الخطة بعد إرسال الرابط. اطلب النسخة الأحدث من العيادة.' }, 409);
@@ -296,6 +299,7 @@ async function signConsent(request, body) {
   updatedPlan.consent = {
     ...(updatedPlan.consent || {}),
     photoConsent,
+    photoConsentRecorded: true,
     photoConsentDefaultVersion: 2,
     photoConsentAcceptedAt: photoConsent ? now : 0,
     termsVersion: CONSENT_VERSION
@@ -338,7 +342,7 @@ async function signConsent(request, body) {
     url: `/treatment-plan.html?${new URLSearchParams({ patientId: link.patientId, date: link.date, planNo: link.planNo, clinic: link.clinicId, view: 'admin' })}`,
     updatedAt: now
   }).catch(() => null);
-  return reply({ ok: true, status: 'signed', signedAt: now, planNo: link.planNo });
+  return reply({ ok: true, status: 'signed', signedAt: now, planNo: link.planNo, photoConsent });
 }
 
 export default async request => {
