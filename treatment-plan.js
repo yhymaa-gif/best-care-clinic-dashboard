@@ -62,7 +62,7 @@
       phases:[blankPhase(0)],
       alternatives:'',noTreatment:'',risks:'',
       financial:{vatMode:'borne_by_state',vatConfirmed:false,paymentPlan:[]},
-      consent:{photoConsent:true},
+      consent:{photoConsent:true,photoConsentDefaultVersion:2},
       signatures:{patientSignature:'',signerName:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''}
     });
     let state;
@@ -139,7 +139,7 @@
     }
     function normalizeState(input){
       const next=input&&typeof input==='object'?input:{},fallback=defaultState(next.meta?.planNo||'');
-      return {
+      const normalized={
         ...fallback,...next,
         meta:{...fallback.meta,...(next.meta||{})},
         clinic:{...fallback.clinic,...(next.clinic||{})},
@@ -154,6 +154,12 @@
           items:(Array.isArray(phase.items)&&phase.items.length?phase.items:[blankItem()]).map(item=>({...blankItem(),...item,teeth:Array.isArray(item.teeth)?item.teeth.map(String):[]}))
         }))
       };
+      const consentLocked=Boolean(Number(normalized.meta.patientAcceptedAt||0))||['patient_accepted','approved','approved_signed','cancelled'].includes(normalized.meta.status);
+      if(!consentLocked&&Number(next.consent?.photoConsentDefaultVersion||0)<2){
+        normalized.consent.photoConsent=true;
+        normalized.consent.photoConsentDefaultVersion=2;
+      }
+      return normalized;
     }
     async function verifyAuth(){
       const setLocked=locked=>{
@@ -271,6 +277,7 @@
       state.financial.vatMode=$('vatMode').value;
       state.financial.vatConfirmed=$('vatConfirmed').checked;
       state.consent.photoConsent=$('photoConsent').checked;
+      state.consent.photoConsentDefaultVersion=2;
       state.signatures.signerName=$('signerName').value.trim()||state.patient.fullName;
       if(!$('signerName').value.trim())$('signerName').value=state.signatures.signerName;
     }
@@ -992,7 +999,7 @@
       }else if(remoteResult?.carriedForward&&!local){
         const previousPlanNo=state.meta.planNo||'';
         state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
-        state.consent={photoConsent:true};
+        state.consent={photoConsent:true,photoConsentDefaultVersion:2};
         state.signatures={patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''};
         if(source.file)state.patient.fileNo=source.file;
         if(source.phone)state.patient.mobile=source.phone;
