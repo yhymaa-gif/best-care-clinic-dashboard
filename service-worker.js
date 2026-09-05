@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260905-plan-consent-v2';
+const CACHE_NAME='bestcare-dashboard-v1-20260905-photo-consent-alert';
 const APP_SHELL=[
   './',
   './index.html',

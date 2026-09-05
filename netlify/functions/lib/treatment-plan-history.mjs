@@ -44,6 +44,7 @@ const candidateFromStored = (stored, key, requestedClinic) => {
   if (!validDate(sourceDate) || !validPatientId(sourcePatientId)) return null;
   const meta = stored.plan.meta || {};
   const patient = stored.plan.patient || {};
+  const consent = stored.plan.consent || {};
   const updatedAt = Number(stored.updatedAt || 0) || Date.parse(meta.issuedAt || '') || 0;
   return {
     clinicId: planClinic,
@@ -67,6 +68,9 @@ const candidateFromStored = (stored, key, requestedClinic) => {
     approvedBy: cleanText(meta.approvedBy, 120),
     consentMethod: ['patient_link', 'in_clinic'].includes(meta.consentMethod) ? meta.consentMethod : '',
     consentEvidenceId: cleanText(meta.consentEvidenceId, 80),
+    photoConsent: consent.photoConsent === true,
+    photoConsentRecorded: consent.photoConsentRecorded === true || (Number(consent.termsVersion || 0) >= 2 && Number(meta.patientAcceptedAt || 0) > 0),
+    consentTermsVersion: Math.max(0, Number(consent.termsVersion || 0)),
     lastPrintedAt: Number(meta.lastPrintedAt || 0),
     updatedAt,
     updatedBy: cleanText(stored.updatedBy, 120),

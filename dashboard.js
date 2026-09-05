@@ -1960,6 +1960,17 @@ function planStatusLabels(){
     :{draft:'مسودة غير معتمدة',submitted:'اعتمدها الطبيب · بانتظار توقيع المريض',patient_accepted:'موافقة قديمة · التوقيع معلق',approved:'خطة معتمدة',approved_signed:'خطة معتمدة وموقعة',rejected:'تحتاج تعديل',cancelled:'خطة ملغاة'};
 }
 function planStatusText(status){return planStatusLabels()[status]||String(status||'')}
+function photoConsentAlertState(record){
+  if(!record||!['approved','approved_signed'].includes(record.status))return null;
+  const recorded=record.photoConsentRecorded===true||(Number(record.consentTermsVersion||0)>=2&&Number(record.patientAcceptedAt||0)>0);
+  if(!recorded)return{kind:'unrecorded',label:lang==='en'?'Photography consent is not documented':'موافقة التصوير غير موثقة'};
+  if(record.photoConsent!==true)return{kind:'declined',label:lang==='en'?'Patient did not sign photography consent':'المريض لم يوقّع على موافقة التصوير'};
+  return null;
+}
+function photoConsentAlertMarkup(record){
+  const alert=photoConsentAlertState(record);if(!alert)return'';
+  return`<span class="photo-consent-alert is-${alert.kind}" role="alert"><span aria-hidden="true">⚠</span>${escapeHtml(alert.label)}</span>`;
+}
 function treatmentPlanBadgeMarkup(patient){
   const record=treatmentPlanRecord(patient);
   const status=effectiveTreatmentPlanStatus(patient);
@@ -1991,7 +2002,7 @@ function treatmentPlanStatusControlMarkup(patient){
   const labels=planStatusLabels();
   const options=PLAN_STATUS_VALUES.map(value=>`<option value="${value}" ${value===status?'selected':''} ${canChangePlanStatus(status,value)?'':'disabled'}>${escapeHtml(labels[value])}</option>`).join('');
   const warning=planCenterIsUnapproved(status)?`<span class="unapproved-plan-warning">⚠ ${lang==='en'?'Unapproved plan':'خطة غير معتمدة'}</span>`:'';
-  return`<div class="plan-status-stack"><label class="plan-status-control plan-status-control-${status}" data-label="${lang==='en'?'Plan':'خطة'}" title="${lang==='en'?'Change treatment plan status':'تعديل حالة اعتماد الخطة'}"><select class="plan-status-select" data-plan-status-id="${escapeHtml(patient.id)}" aria-label="${lang==='en'?'Treatment plan status':'حالة اعتماد الخطة'}">${options}</select></label>${warning}</div>`;
+  return`<div class="plan-status-stack"><label class="plan-status-control plan-status-control-${status}" data-label="${lang==='en'?'Plan':'خطة'}" title="${lang==='en'?'Change treatment plan status':'تعديل حالة اعتماد الخطة'}"><select class="plan-status-select" data-plan-status-id="${escapeHtml(patient.id)}" aria-label="${lang==='en'?'Treatment plan status':'حالة اعتماد الخطة'}">${options}</select></label>${warning}${photoConsentAlertMarkup(treatmentPlanRecord(patient))}</div>`;
 }
 async function refreshTreatmentPlanRegistry(force=false){
   if(!authReady)return false;
@@ -2137,7 +2148,7 @@ function renderTreatmentPlanCenter(){
     const clinic=clinicDirectory.find(item=>item.id===record.clinicId)||defaultClinic(clinicNumber(record.clinicId));
     const zeroFile=isZeroFileNumber(record.fileNo)||/^file:0+$/i.test(canonical),canOpen=record.sourcePatientId&&/^\d{4}-\d{2}-\d{2}$/.test(record.sourceDate||'');
     const options=PLAN_STATUS_VALUES.map(status=>`<option value="${status}" ${status===record.status?'selected':''}>${escapeHtml(labels[status])}</option>`).join('');
-    return`<article class="treatment-plan-center-item status-${escapeHtml(PLAN_STATUS_VALUES.includes(record.status)?record.status:'draft')} ${planCenterIsUnapproved(record.status)?'needs-approval':'is-approved'} ${zeroFile?'has-zero-file':''}" data-plan-center-key="${escapeHtml(canonical)}"><div class="plan-center-patient"><strong>${escapeHtml(record.fullName||(lang==='en'?'Unnamed patient':'مريض بدون اسم'))}</strong><small>${record.planNo?`${lang==='en'?'Plan number':'رقم الخطة'} ${escapeHtml(record.planNo)} · `:''}${lang==='en'?'File':'ملف'} ${escapeHtml(record.fileNo|| (lang==='en'?'Not registered':'غير مسجل'))}${record.mobile?` · ${escapeHtml(record.mobile)}`:''}</small>${zeroFile?`<span class="plan-zero-file-alert">⚠ ${lang==='en'?'File number 0 is shared — correct the patient identity':'رقم الملف 0 مشترك — يجب تصحيحه من الخطة أو بيانات المريض'}</span>`:''}</div><div class="plan-center-clinic"><b>${escapeHtml(clinicDisplayName(clinic))}</b><small>${record.updatedAt?new Date(record.updatedAt).toLocaleString(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'}):'—'}</small></div><label class="plan-center-status"><span>${lang==='en'?'Approval status':'حالة الاعتماد'}</span><select data-plan-center-status="${escapeHtml(canonical)}">${options}</select></label><div class="plan-center-actions"><button type="button" class="primary" data-plan-center-open="${escapeHtml(canonical)}" ${canOpen?'':'disabled'}>${lang==='en'?'Open and edit':'فتح وتعديل'}</button><button type="button" class="danger" data-plan-center-delete="${escapeHtml(canonical)}">${lang==='en'?'Delete plan':'حذف الخطة'}</button></div></article>`;
+    return`<article class="treatment-plan-center-item status-${escapeHtml(PLAN_STATUS_VALUES.includes(record.status)?record.status:'draft')} ${planCenterIsUnapproved(record.status)?'needs-approval':'is-approved'} ${zeroFile?'has-zero-file':''}" data-plan-center-key="${escapeHtml(canonical)}"><div class="plan-center-patient"><strong>${escapeHtml(record.fullName||(lang==='en'?'Unnamed patient':'مريض بدون اسم'))}</strong><small>${record.planNo?`${lang==='en'?'Plan number':'رقم الخطة'} ${escapeHtml(record.planNo)} · `:''}${lang==='en'?'File':'ملف'} ${escapeHtml(record.fileNo|| (lang==='en'?'Not registered':'غير مسجل'))}${record.mobile?` · ${escapeHtml(record.mobile)}`:''}</small>${zeroFile?`<span class="plan-zero-file-alert">⚠ ${lang==='en'?'File number 0 is shared — correct the patient identity':'رقم الملف 0 مشترك — يجب تصحيحه من الخطة أو بيانات المريض'}</span>`:''}${photoConsentAlertMarkup(record)}</div><div class="plan-center-clinic"><b>${escapeHtml(clinicDisplayName(clinic))}</b><small>${record.updatedAt?new Date(record.updatedAt).toLocaleString(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'}):'—'}</small></div><label class="plan-center-status"><span>${lang==='en'?'Approval status':'حالة الاعتماد'}</span><select data-plan-center-status="${escapeHtml(canonical)}">${options}</select></label><div class="plan-center-actions"><button type="button" class="primary" data-plan-center-open="${escapeHtml(canonical)}" ${canOpen?'':'disabled'}>${lang==='en'?'Open and edit':'فتح وتعديل'}</button><button type="button" class="danger" data-plan-center-delete="${escapeHtml(canonical)}">${lang==='en'?'Delete plan':'حذف الخطة'}</button></div></article>`;
   }).join('');
 }
 async function refreshTreatmentPlanCenter(){
@@ -2913,6 +2924,9 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
         patientAcceptedBy:updatedPlan.meta?.patientAcceptedBy||'',
         approvedAt:updatedPlan.meta?.approvedAt||0,
         approvedBy:updatedPlan.meta?.approvedBy||'',
+        photoConsent:updatedPlan.consent?.photoConsent===true,
+        photoConsentRecorded:updatedPlan.consent?.photoConsentRecorded===true||(Number(updatedPlan.consent?.termsVersion||0)>=2&&Number(updatedPlan.meta?.patientAcceptedAt||0)>0),
+        consentTermsVersion:Number(updatedPlan.consent?.termsVersion||0),
         lastPrintedAt:updatedPlan.meta?.lastPrintedAt||0,
         cancelledAt:updatedPlan.meta?.cancelledAt||0,
         cancelledBy:updatedPlan.meta?.cancelledBy||''
