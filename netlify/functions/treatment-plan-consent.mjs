@@ -10,7 +10,7 @@ const planStore = getStore({ name: 'clinic-treatment-plans', consistency: 'stron
 const registryStore = getStore({ name: 'clinic-treatment-plan-registry', consistency: 'strong' });
 const consentStore = getStore({ name: 'clinic-treatment-plan-consents', consistency: 'strong' });
 const CONSENT_VERSION = 2;
-const MAX_LINK_LIFETIME = 15 * 24 * 60 * 60 * 1000;
+const LINK_VALIDITY_POLICY = 'until_signed_replaced_or_plan_changed';
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const cleanText = (value, max = 500) => String(value ?? '').trim().replace(/\s+/g, ' ').slice(0, max);
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
@@ -176,7 +176,6 @@ async function validateActiveLink(token) {
   if (!link) return { error: 'رابط التوقيع غير صالح أو تم استبداله.', status: 404 };
   const active = await consentStore.get(activeKey(link), { type: 'json', consistency: 'strong' });
   if (active?.tokenHash !== tokenHash) return { error: 'تم استبدال هذا الرابط برابط أحدث. اطلب من العيادة إعادة الإرسال.', status: 409 };
-  if (Date.now() > Number(link.expiresAt || 0)) return { error: 'انتهت صلاحية رابط التوقيع. اطلب رابطًا جديدًا من العيادة.', status: 410 };
   return { link, tokenHash };
 }
 
@@ -214,7 +213,8 @@ async function createConsentLink(request, body) {
     planRevision: Math.max(1, Number(plan?.meta?.revision || 1)),
     createdAt: now,
     createdBy: cleanText(auth.user?.displayName || auth.user?.username || 'الإدارة', 120),
-    expiresAt: Math.min(planExpiresAt, now + MAX_LINK_LIFETIME),
+    validityPolicy: LINK_VALIDITY_POLICY,
+    expiresAt: 0,
     usedAt: 0
   };
   await Promise.all([
@@ -223,7 +223,7 @@ async function createConsentLink(request, body) {
   ]);
   const consentUrl = new URL('/plan-consent.html', request.url);
   consentUrl.searchParams.set('token', token);
-  return reply({ ok: true, consentId: link.id, url: consentUrl.toString(), expiresAt: link.expiresAt });
+  return reply({ ok: true, consentId: link.id, url: consentUrl.toString(), expiresAt: null, validityPolicy: LINK_VALIDITY_POLICY });
 }
 
 async function readConsentLink(token) {
@@ -239,7 +239,7 @@ async function readConsentLink(token) {
   if (plan?.meta?.status !== 'submitted' || consentDigest(plan) !== link.planDigest) {
     return reply({ error: 'تم تعديل الخطة بعد إرسال الرابط. اطلب النسخة الأحدث من العيادة.' }, 409);
   }
-  return reply({ ok: true, status: 'ready', expiresAt: link.expiresAt, consentVersion: CONSENT_VERSION, summary: publicSummary(plan) });
+  return reply({ ok: true, status: 'ready', expiresAt: null, validityPolicy: LINK_VALIDITY_POLICY, consentVersion: CONSENT_VERSION, summary: publicSummary(plan) });
 }
 
 async function signConsent(request, body) {
@@ -358,4 +358,4 @@ export default async request => {
   return reply({ error: 'Invalid consent action' }, 400);
 };
 
-export const __test = { consentDigest, publicSummary, cleanSignature, validToken, moneyTotals, CONSENT_VERSION };
+export const __test = { consentDigest, publicSummary, cleanSignature, validToken, moneyTotals, CONSENT_VERSION, LINK_VALIDITY_POLICY };

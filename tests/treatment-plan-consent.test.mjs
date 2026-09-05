@@ -20,16 +20,27 @@ test('doctor-approved plan sharing creates and includes a patient signature link
   assert.match(config, /from = "\/api\/treatment-plan-consent"/);
 });
 
-test('patient signature link is version-bound, expiring, single-active, and server-timestamped', async () => {
+test('patient signature link is version-bound, time-independent, single-active, and server-timestamped', async () => {
   const endpoint = await read('netlify/functions/treatment-plan-consent.mjs');
   assert.match(endpoint, /planDigest: consentDigest\(plan\)/);
   assert.match(endpoint, /active\?\.tokenHash !== tokenHash/);
-  assert.match(endpoint, /Date\.now\(\) > Number\(link\.expiresAt \|\| 0\)/);
+  assert.match(endpoint, /until_signed_replaced_or_plan_changed/);
+  assert.match(endpoint, /expiresAt: 0/);
+  assert.doesNotMatch(endpoint, /Date\.now\(\) > Number\(link\.expiresAt \|\| 0\)/);
   assert.match(endpoint, /consentDigest\(plan\) !== link\.planDigest/);
   assert.match(endpoint, /const now = Date\.now\(\)/);
   assert.match(endpoint, /status: 'approved_signed'/);
   assert.match(endpoint, /consentMethod: 'patient_link'/);
   assert.match(endpoint, /signatureDigest: hash\(signature\)/);
+});
+
+test('public signature page retries transient loading failures and offers manual reload', async () => {
+  const [html, script] = await Promise.all([read('plan-consent.html'), read('plan-consent.js')]);
+  assert.match(html, /id="retryLoad"/);
+  assert.match(html, /يبقى صالحًا حتى التوقيع أو تحديث الخطة/);
+  assert.match(script, /for\(let attempt=0;attempt<3;attempt\+=1\)/);
+  assert.match(script, /response\.status>=500\|\|response\.status===408\|\|response\.status===429/);
+  assert.match(script, /\$\('retryLoad'\)\.addEventListener\('click',load\)/);
 });
 
 test('public consent page requires complete informed, treatment, and financial acceptance plus drawn signature', async () => {
