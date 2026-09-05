@@ -268,7 +268,7 @@ function unlockApp(user=null){
   startPresence();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
-    if(VIEW_MODE==='admin'){startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshPatientIdentityDirectory().catch(()=>{})}
+    if(VIEW_MODE==='admin'){startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
     if(NEED_ROLE_CHOICE&&authUser?.role==='admin')requestAnimationFrame(()=>openRoleChoice());
   });
 }
@@ -1106,17 +1106,19 @@ async function stopPresence(remove=false){
   presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
   renderPresence();
 }
-function adminPatientReasons(patient){
+function adminPatientReasons(patient,clinicId=ACTIVE_CLINIC_ID){
   const reasons=[];
   const add=(type,label,priority=3)=>reasons.push({type,label,priority});
   const payment=paymentStage(patient);
   if(payment==='requested')add('payment',lang==='en'?'Payment order awaiting receipt':'أمر دفع بانتظار الاستلام',0);
   else if(payment==='received')add('payment',lang==='en'?'Payment order awaiting completion':'أمر دفع بانتظار التنفيذ',0);
   const planStatus=effectiveTreatmentPlanStatus(patient);
+  const planCompliance=treatmentPlanComplianceState(patient,clinicId);
   const planCopy=lang==='en'
-    ?{draft:'Unapproved treatment-plan draft',submitted:'Plan awaiting administration review',patient_accepted:'Patient accepted — final approval required',approved:'Approved plan — signature pending',rejected:'Plan returned for revision'}
-    :{draft:'مسودة خطة غير معتمدة',submitted:'خطة بانتظار مراجعة الإدارة',patient_accepted:'وافق المريض — تحتاج اعتمادًا نهائيًا',approved:'خطة معتمدة — التوقيع معلق',rejected:'خطة معادة للتعديل'};
-  if(planCopy[planStatus])add('plan',planCopy[planStatus],planStatus==='rejected'?1:0);
+    ?{draft:'Unapproved treatment-plan draft',submitted:'Doctor approved — share for patient signature',patient_accepted:'Legacy consent — signature completion required',approved:'Approved plan — signature pending',rejected:'Plan returned for revision'}
+    :{draft:'مسودة خطة غير معتمدة',submitted:'اعتمدها الطبيب — أرسلها لتوقيع المريض',patient_accepted:'موافقة قديمة — يلزم استكمال التوقيع',approved:'خطة معتمدة — التوقيع معلق',rejected:'خطة معادة للتعديل'};
+  if(planCompliance)add(planCompliance.type,planCompliance.label,0);
+  else if(planCopy[planStatus])add('plan',planCopy[planStatus],planStatus==='rejected'?1:0);
   const status=String(patient?.status||'waiting');
   const earliestRequestId=String(patient?.earliestAppointmentRequestId||'');
   const earliestRequest=earliestRequestId?appointmentRequests.items.find(item=>String(item.id)===earliestRequestId):null;
@@ -1142,7 +1144,7 @@ function adminPatientReasons(patient){
     };
   if(statusCopy[status])add(...statusCopy[status]);
   if(isZeroFileNumber(patient?.file)&&['arrived','early_arrival','active'].includes(status))add('identity','يلزم تحديث رقم الملف عند وصول المريض',0);
-  const hasOpenAction=reasons.some(reason=>reason.type==='payment'||reason.type==='plan');
+  const hasOpenAction=reasons.some(reason=>reason.type==='payment'||reason.type.startsWith('plan'));
   if(paymentMissingAfterCompletion(patient)){
     add('payment_missing',lang==='en'?'Complete the patient’s remaining payment':'استكمال دفع المبلغ المتبقي على المريض',0);
   }else if(status==='done'&&!hasOpenAction&&!patient?.paymentCompletedAt&&planStatus!=='approved_signed'){
@@ -1159,6 +1161,7 @@ function adminPatientActivityAt(patient,recordUpdatedAt=0){
     Number(patient?.paymentAcknowledgedAt||0),
     Number(patient?.paymentCompletedAt||0),
     Number(patient?.treatmentPlanUpdatedAt||0),
+    Number(patient?.treatmentPlanPrintedAt||0),
     Number(patient?.completedAt||0),
     Number(patient?.arrivedAt||0),
     Number(patient?.actualStartedAt||0),
@@ -1172,7 +1175,7 @@ function adminHubAllPatients(){
     patient,
     clinic:record.clinic||defaultClinic(clinicNumber(record?.clinic?.id)),
     recordUpdatedAt:Number(record?.updatedAt||0),
-    reasons:adminPatientReasons(patient)
+    reasons:adminPatientReasons(patient,record.clinic?.id)
   })));
 }
 function adminHubVisiblePatients(){
@@ -1237,9 +1240,9 @@ function renderAdminPatientHub(){
   setText('#adminHubRefresh',adminPatientHub.loading?(lang==='en'?'Refreshing…':'جارٍ التحديث…'):(lang==='en'?'Refresh':'تحديث'));
   const all=adminHubAllPatients(),attention=all.filter(item=>item.reasons.length);
   $('adminHubPaymentCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>['payment','payment_missing'].includes(reason.type))).length);
-  $('adminHubPlanCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>reason.type==='plan')).length);
+  $('adminHubPlanCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>reason.type.startsWith('plan'))).length);
   $('adminHubEarliestCount').textContent=String(appointmentRequests.items.filter(item=>item.source==='doctor_earliest'&&['new','contacted'].includes(item.status)).length);
-  $('adminHubUpdateCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>!['payment','payment_missing','plan','earliest'].includes(reason.type))).length);
+  $('adminHubUpdateCount').textContent=String(attention.filter(item=>item.reasons.some(reason=>!['payment','payment_missing','earliest'].includes(reason.type)&&!reason.type.startsWith('plan'))).length);
   $('adminHubTotalCount').textContent=String(all.length);
   setText('#adminHubPaymentLabel',lang==='en'?'Payment':'الدفع');
   setText('#adminHubPlanLabel',lang==='en'?'Plans':'الخطط');
@@ -1264,12 +1267,13 @@ function renderAdminPatientHub(){
     const patient=item.patient,reasonPriority=Math.min(...item.reasons.map(reason=>reason.priority),9);
     const clinicHue=(135+clinicNumber(item.clinic.id)*37)%360;
     const doctor=String(item.clinic.doctorName||'').trim();
-    const tone=reasonPriority===0?'urgent':reasonPriority===1?'warning':item.reasons.some(reason=>reason.type==='plan')?'plan':'general';
+    const tone=reasonPriority===0?'urgent':reasonPriority===1?'warning':item.reasons.some(reason=>reason.type.startsWith('plan'))?'plan':'general';
     const badges=item.reasons.length
       ?item.reasons.map(reason=>`<span class="admin-action-tag ${escapeHtml(reason.type)}">${escapeHtml(reason.label)}</span>`).join('')
       :`<span class="admin-action-tag">${lang==='en'?'No administration action':'لا يحتاج إجراء إداري'}</span>`;
     const status=derivedStatus(patient);
-    const hasPlan=item.reasons.some(reason=>reason.type==='plan');
+    const hasPlan=item.reasons.some(reason=>reason.type.startsWith('plan'));
+    const planComplianceReason=item.reasons.find(reason=>reason.type.startsWith('plan_started_'));
     const hasPayment=item.reasons.some(reason=>reason.type==='payment');
     const hasMissingPayment=item.reasons.some(reason=>reason.type==='payment_missing');
     const hasEarliest=item.reasons.some(reason=>reason.type==='earliest');
@@ -1286,7 +1290,7 @@ function renderAdminPatientHub(){
       <div class="admin-action-tags">${badges}</div>
       <div class="admin-patient-actions">
         ${hasEarliest&&patient.earliestAppointmentRequestId?`<a class="primary earliest" href="./appointment-requests.html?focus=${encodeURIComponent(patient.earliestAppointmentRequestId)}">${lang==='en'?'Follow up urgently':'متابعة عاجلة ⚡'}</a>`:''}
-        ${hasPlan?`<a class="primary" href="${escapeHtml(adminPlanUrl(item))}">${lang==='en'?'Open plan':'فتح الخطة'}</a>`:''}
+        ${hasPlan?`<a class="primary${planComplianceReason?' plan-required-action':''}" href="${escapeHtml(adminPlanUrl(item))}">${planComplianceReason?(planComplianceReason.type==='plan_started_unprinted'?(lang==='en'?'Print plan now':'طباعة الخطة الآن'):(lang==='en'?'Approve and print':'اعتماد وطباعة الخطة')):(lang==='en'?'Open plan':'فتح الخطة')}</a>`:''}
         ${hasPayment?`<a class="primary payment" href="${escapeHtml(adminClinicUrl(item.clinic.id,'paymentPanel'))}">${lang==='en'?'Open payment':'فتح الدفع'}</a>`:''}
         ${hasMissingPayment?`<a class="primary payment-missing-action" href="${escapeHtml(adminClinicUrl(item.clinic.id,'patientListTitle'))}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</a>`:''}
         <a href="${escapeHtml(adminClinicUrl(item.clinic.id))}">${lang==='en'?'Open clinic list':'فتح قائمة العيادة'}</a>
@@ -1767,7 +1771,7 @@ function patientMatchesSearch(patient,rawQuery){
   const name=normalizeSearchText(patient?.name??patient?.fullName),compact=query.replace(/[\s-]/g,''),file=normalizeSearchText(patient?.file??patient?.fileNo).replace(/[\s-]/g,''),phone=normalizeSearchPhone(patient?.phone??patient?.mobile),digits=normalizeSearchPhone(rawQuery);
   return name.includes(query)||Boolean(compact&&file.includes(compact))||Boolean(digits&&phone.includes(digits));
 }
-function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0))}
+function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0))}
 function copyPatientGroup(target,source,fields){fields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(source||{},field))target[field]=source[field]})}
 function mergePatientVersions(remote={},local={}){
   const remoteStamp=patientVersionStamp(remote),localStamp=patientVersionStamp(local);
@@ -1777,6 +1781,7 @@ function mergePatientVersions(remote={},local={}){
     [['status','statusUpdatedAt','arrivedAt','actualStartedAt','actualEndedAt','completedAt','lastCalledAt','callCount'],value=>Math.max(Number(value?.statusUpdatedAt||0),Number(value?.arrivedAt||0),Number(value?.actualStartedAt||0),Number(value?.actualEndedAt||0),Number(value?.completedAt||0),Number(value?.lastCalledAt||0))],
     [['paymentRequired','paymentAction','paymentItems','paymentDiscount','paymentRequestedAt','paymentAcknowledgedAt','paymentCompletedAt'],value=>Math.max(Number(value?.paymentRequestedAt||0),Number(value?.paymentAcknowledgedAt||0),Number(value?.paymentCompletedAt||0))],
     [['treatmentPlanStatus','treatmentPlanUpdatedAt'],value=>Number(value?.treatmentPlanUpdatedAt||0)],
+    [['treatmentPlanPrintedAt'],value=>Number(value?.treatmentPlanPrintedAt||0)],
     [['reviewRequestedAt','reviewRequestCount','reviewLastEventId'],value=>Number(value?.reviewRequestedAt||0)],
     [['earliestAppointmentRequestId','earliestAppointmentRequestedAt','earliestAppointmentRequestedBy'],value=>Number(value?.earliestAppointmentRequestedAt||0)]
   ];
@@ -1807,7 +1812,7 @@ function receiveServiceWorkerSyncSignal(message){
   adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub({force:true}),80);
   const tag=String(payload.tag||''),type=String(payload.type||'');
   if(type==='appointment_request')setTimeout(()=>refreshAppointmentRequests({notify:true}),100);
-  if(type==='lab')setTimeout(()=>refreshLabCases({force:true}),100);
+  if(type==='lab')setTimeout(()=>Promise.allSettled([refreshLabCases({force:true}),refreshOperationsLabCases()]),100);
   if(type==='prescription')setTimeout(()=>refreshOperationsPrescriptions(),100);
   if(type==='treatment_plan'||tag.includes('treatment-plan'))setTimeout(()=>refreshTreatmentPlanRegistry(true),100);
 }
@@ -1921,10 +1926,38 @@ function effectiveTreatmentPlanStatus(patient){
   if(treatmentPlanRegistry.lastFetchedAt&&planRegistryIdentityKeys(patient).length)return'';
   return PLAN_STATUS_VALUES.includes(direct)?direct:'';
 }
+function treatmentEvidenceLabCases(patient,clinicId=ACTIVE_CLINIC_ID){
+  const source=operationsCenter.labLoadedAt?operationsCenter.labCases:labCasesState.cases;
+  return source.filter(item=>String(item?.clinicId||ACTIVE_CLINIC_ID)===String(clinicId||ACTIVE_CLINIC_ID)&&item?.status!=='cancelled'&&labCaseMatchesPatient(item,patient));
+}
+function treatmentPlanComplianceState(patient,clinicId=ACTIVE_CLINIC_ID){
+  if(!patient)return null;
+  const status=effectiveTreatmentPlanStatus(patient);
+  const appointmentStatus=derivedStatus(patient);
+  const hasStarted=Number(patient.actualStartedAt||0)>0||['active','done'].includes(appointmentStatus);
+  const hasPayment=paymentOrderExists(patient);
+  const hasLab=treatmentEvidenceLabCases(patient,clinicId).length>0;
+  if(!hasStarted&&!hasPayment&&!hasLab)return null;
+  const record=treatmentPlanRecord(patient);
+  const matchingRecord=!record?.clinicId||String(record.clinicId)===String(clinicId)?record:null;
+  const printedAt=Math.max(Number(patient.treatmentPlanPrintedAt||0),Number(matchingRecord?.lastPrintedAt||0));
+  const evidence=lang==='en'
+    ?[hasStarted?'treatment started':'',hasPayment?'payment order':'',hasLab?'lab case':''].filter(Boolean).join(' · ')
+    :[hasStarted?'بدأ العلاج':'',hasPayment?'أمر دفع':'',hasLab?'حالة معمل':''].filter(Boolean).join(' · ');
+  if(!status||status==='cancelled')return{type:'plan_started_missing',label:lang==='en'?'Treatment started — create, approve, and print the plan':'بدأ العلاج — أنشئ واعتمد واطبع الخطة',evidence};
+  if(status!=='approved_signed')return{type:'plan_started_unapproved',label:lang==='en'?'Treatment started — final approval and printing are required':'بدأ العلاج — استكمال اعتماد وطباعة الخطة إلزامي',evidence};
+  if(!printedAt)return{type:'plan_started_unprinted',label:lang==='en'?'Approved plan not printed — print it now':'الخطة معتمدة ولم تُطبع — اطبعها الآن',evidence};
+  return null;
+}
+function treatmentPlanComplianceBadgeMarkup(patient,clinicId=ACTIVE_CLINIC_ID){
+  if(VIEW_MODE!=='admin')return'';
+  const issue=treatmentPlanComplianceState(patient,clinicId);if(!issue)return'';
+  return`<span class="plan-compliance-alert ${escapeHtml(issue.type)}" role="alert" title="${escapeHtml(issue.evidence)}"><span aria-hidden="true">⚠</span><b>${escapeHtml(issue.label)}</b><small>${escapeHtml(issue.evidence)}</small></span>`;
+}
 function planStatusLabels(){
   return lang==='en'
-    ?{draft:'Unapproved draft',submitted:'Doctor approved · with admin',patient_accepted:'Patient signed',approved:'Plan approved',approved_signed:'Approved & signed',rejected:'Needs revision',cancelled:'Plan cancelled'}
-    :{draft:'مسودة غير معتمدة',submitted:'اعتمدها الطبيب · لدى الإدارة',patient_accepted:'وافق ووقّع',approved:'خطة معتمدة',approved_signed:'خطة معتمدة وموقعة',rejected:'تحتاج تعديل',cancelled:'خطة ملغاة'};
+    ?{draft:'Unapproved draft',submitted:'Doctor approved · awaiting patient signature',patient_accepted:'Legacy consent · signature pending',approved:'Plan approved',approved_signed:'Approved & signed',rejected:'Needs revision',cancelled:'Plan cancelled'}
+    :{draft:'مسودة غير معتمدة',submitted:'اعتمدها الطبيب · بانتظار توقيع المريض',patient_accepted:'موافقة قديمة · التوقيع معلق',approved:'خطة معتمدة',approved_signed:'خطة معتمدة وموقعة',rejected:'تحتاج تعديل',cancelled:'خطة ملغاة'};
 }
 function planStatusText(status){return planStatusLabels()[status]||String(status||'')}
 function treatmentPlanBadgeMarkup(patient){
@@ -1944,7 +1977,7 @@ function canChangePlanStatus(current,next){
   if(current==='cancelled')return next==='draft';
   const transitions={
     draft:['submitted'],
-    submitted:['patient_accepted','rejected'],
+    submitted:['rejected'],
     patient_accepted:['approved_signed','rejected'],
     approved:['approved_signed','rejected'],
     approved_signed:['rejected'],
@@ -2120,7 +2153,7 @@ async function refreshOperationsLabCases(){
     if(!response.ok)throw new Error(data.error||'تعذر تحميل حالات المعمل');
     operationsCenter.labCases=Array.isArray(data.cases)?data.cases:[];operationsCenter.labLoadedAt=Date.now();
   }catch(error){operationsCenter.labError=String(error.message||error)}
-  finally{operationsCenter.labLoading=false;renderOperationsCenter();updateTreatmentPlanCenterTrigger()}
+  finally{operationsCenter.labLoading=false;renderOperationsCenter();renderAdminPatientHub();updateTreatmentPlanCenterTrigger()}
   return operationsCenter.labCases;
 }
 async function refreshOperationsPrescriptions(){
@@ -2204,7 +2237,7 @@ async function changePlanCenterStatus(canonical,nextStatus,select){
     const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1'}),loaded=await request(`/api/treatment-plan?${params.toString()}`),data=await loaded.json();if(!loaded.ok||!data.exists||!data.plan)throw new Error('تعذر العثور على ملف الخطة الكامل');
     applyPlanStatusMetadata(data.plan,nextStatus,'',cancellationReason);
     const saved=await request(`/api/treatment-plan?${params.toString()}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:data.plan})});if(!saved.ok)throw new Error('تعذر حفظ حالة الخطة');
-    const registry=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(record.clinicId||'clinic-1')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({canonical,patient:{fullName:record.fullName,fileNo:record.fileNo,mobile:record.mobile,nationalId:record.nationalId},status:nextStatus,planNo:record.planNo,parentPlanNo:record.parentPlanNo||'',relation:record.relation||'standalone',sourcePatientId:record.sourcePatientId,sourceDate:record.sourceDate,cancelledAt:data.plan.meta?.cancelledAt||0,cancelledBy:data.plan.meta?.cancelledBy||'',cancellationReason:data.plan.meta?.cancellationReason||''})});if(!registry.ok)throw new Error('حُفظت الخطة وتعذر تحديث الفهرس');
+    const registry=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(record.clinicId||'clinic-1')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({canonical,patient:{fullName:record.fullName,fileNo:record.fileNo,mobile:record.mobile,nationalId:record.nationalId},status:nextStatus,planNo:record.planNo,parentPlanNo:record.parentPlanNo||'',relation:record.relation||'standalone',sourcePatientId:record.sourcePatientId,sourceDate:record.sourceDate,lastPrintedAt:data.plan.meta?.lastPrintedAt||0,cancelledAt:data.plan.meta?.cancelledAt||0,cancelledBy:data.plan.meta?.cancelledBy||'',cancellationReason:data.plan.meta?.cancellationReason||''})});if(!registry.ok)throw new Error('حُفظت الخطة وتعذر تحديث الفهرس');
     await refreshTreatmentPlanCenter();treatmentPlanRegistry.lastFetchedAt=0;await refreshTreatmentPlanRegistry(true);toast('تم تحديث حالة الخطة',`${record.fullName||'المريض'} — ${planStatusText(nextStatus)}`)
   }catch(error){select.value=previous;toast('تعذر تحديث الخطة',String(error.message||error))}finally{select.disabled=false}
 }
@@ -2739,7 +2772,7 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000;return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${treatmentPlanComplianceBadgeMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -2809,17 +2842,18 @@ function applyPlanStatusMetadata(plan,nextStatus,rejectionReason='',cancellation
   const now=Date.now(),actor=VIEW_MODE==='clinic'?'الطبيب':'الإدارة';
   plan.meta=plan.meta&&typeof plan.meta==='object'?plan.meta:{};
   plan.meta.status=nextStatus;
+  plan.meta.lastPrintedAt=0;
   if(nextStatus!=='cancelled')Object.assign(plan.meta,{cancelledAt:0,cancelledBy:'',cancellationReason:''});
   if(nextStatus==='draft'){
-    Object.assign(plan.meta,{doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''});
+    Object.assign(plan.meta,{doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(nextStatus==='submitted'){
-    Object.assign(plan.meta,{doctorApprovedAt:now,doctorApprovedBy:actor,submittedAt:now,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''});
+    Object.assign(plan.meta,{doctorApprovedAt:now,doctorApprovedBy:actor,submittedAt:now,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(nextStatus==='patient_accepted'){
     Object.assign(plan.meta,{patientAcceptedAt:now,patientAcceptedBy:actor,approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(['approved','approved_signed'].includes(nextStatus)){
     Object.assign(plan.meta,{approvedAt:now,approvedBy:actor,rejectedAt:0,rejectedBy:'',rejectionReason:'',revision:Math.max(1,Number(plan.meta.revision||1)+1)});
   }else if(nextStatus==='rejected'){
-    Object.assign(plan.meta,{rejectedAt:now,rejectedBy:actor,rejectionReason:String(rejectionReason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500),patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:''});
+    Object.assign(plan.meta,{rejectedAt:now,rejectedBy:actor,rejectionReason:String(rejectionReason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500),patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0});
   }else if(nextStatus==='cancelled'){
     Object.assign(plan.meta,{cancelledAt:now,cancelledBy:actor,cancellationReason:String(cancellationReason||'أُلغيت الخطة بقرار الإدارة.').trim().slice(0,500)});
   }
@@ -2864,6 +2898,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
     if(!loaded.ok||!loadedData.exists||!loadedData.plan)throw new Error(lang==='en'?'Open and save the treatment plan first.':'افتح الخطة العلاجية واحفظها أولًا.');
     originalPlan=loadedData.plan;
     const updatedPlan=JSON.parse(JSON.stringify(originalPlan));
+    if(nextStatus==='approved_signed'&&!updatedPlan.signatures?.patientSignature)throw new Error(lang==='en'?'A recorded patient signature is required. Open the plan to complete it.':'يلزم وجود توقيع موثق للمريض. افتح الخطة واستكمل التوقيع.');
     applyPlanStatusMetadata(updatedPlan,nextStatus,rejectionReason,cancellationReason);
 
     const saved=await request(planUrl,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:updatedPlan})});
@@ -2878,6 +2913,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
         patientAcceptedBy:updatedPlan.meta?.patientAcceptedBy||'',
         approvedAt:updatedPlan.meta?.approvedAt||0,
         approvedBy:updatedPlan.meta?.approvedBy||'',
+        lastPrintedAt:updatedPlan.meta?.lastPrintedAt||0,
         cancelledAt:updatedPlan.meta?.cancelledAt||0,
         cancelledBy:updatedPlan.meta?.cancelledBy||''
       })
@@ -2889,7 +2925,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
 
     mutate(()=>{
       const target=patientById(id);
-      if(target){target.treatmentPlanStatus=nextStatus;target.treatmentPlanUpdatedAt=Date.now()}
+      if(target){target.treatmentPlanStatus=nextStatus;target.treatmentPlanUpdatedAt=Date.now();target.treatmentPlanPrintedAt=0}
       updateAlert={
         active:true,
         message:lang==='en'?`Treatment plan for ${firstName(patient.name)}: ${planStatusText(nextStatus)}`:`تم تحديث خطة المريض ${firstName(patient.name)} إلى: ${planStatusText(nextStatus)}`,

@@ -237,6 +237,7 @@ export default async request => {
       planNo: cleanText(body?.details?.planNo, 80),
       planStatus: cleanText(body?.details?.planStatus, 40),
       copyType: cleanText(body?.details?.copyType, 30),
+      consentId: cleanText(body?.details?.consentId, 80),
       actor: cleanText(auth.user?.displayName || auth.user?.username, 120)
     };
     const previousPatient = patientView(existing.patient || {});

@@ -320,9 +320,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260902-literal-name-audit/);
+  assert.match(html, /dashboard\.js\?v=20260905-plan-compliance/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260905-photo-consent-legacy/);
+  assert.match(serviceWorker, /20260905-plan-consent-v1/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

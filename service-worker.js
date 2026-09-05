@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260905-photo-consent-legacy';
+const CACHE_NAME='bestcare-dashboard-v1-20260905-plan-consent-v1';
 const APP_SHELL=[
   './',
   './index.html',
@@ -11,6 +11,9 @@ const APP_SHELL=[
   './splash.js',
   './treatment-plan.html',
   './treatment-plan.js',
+  './plan-consent.html',
+  './plan-consent.css',
+  './plan-consent.js',
   './treatment-plans.html',
   './treatment-plans.js',
   './statistics.html',
@@ -79,6 +82,8 @@ self.addEventListener('fetch',event=>{
       ?'./treatment-plans.html'
       :url.pathname.endsWith('/treatment-plan.html')
       ?'./treatment-plan.html'
+      :url.pathname.endsWith('/plan-consent.html')
+        ?'./plan-consent.html'
       :url.pathname.endsWith('/statistics.html')
         ?'./statistics.html'
         :url.pathname.endsWith('/appointment-request.html')

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#176344">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>مراجعة وتوقيع الخطة العلاجية | أفضل عناية</title>
+  <link rel="icon" href="./assets/icons/icon-192.png">
+  <link rel="stylesheet" href="./plan-consent.css?v=20260905-plan-consent-v1">
+</head>
+<body>
+  <main class="consent-app">
+    <section class="consent-shell">
+      <header class="consent-hero">
+        <img src="./best-care-logo.png" width="613" height="900" alt="شعار عيادات أفضل عناية">
+        <div><span>BEST CARE CLINIC FLOW</span><h1>مراجعة وتوقيع الخطة العلاجية</h1><p>رابط خاص وآمن لمرة واحدة</p></div>
+      </header>
+
+      <section id="loadingView" class="state-card loading-state" aria-live="polite"><span class="spinner" aria-hidden="true"></span><strong>جارٍ تحميل الخطة المعتمدة من الطبيب…</strong></section>
+      <section id="errorView" class="state-card error-state" hidden role="alert"><span aria-hidden="true">!</span><h2>تعذر فتح رابط التوقيع</h2><p id="errorMessage">تحقق من الرابط أو اطلب رابطًا جديدًا من العيادة.</p></section>
+      <section id="signedView" class="state-card signed-state" hidden aria-live="polite"><span aria-hidden="true">✓</span><h2>تم توقيع الخطة بنجاح</h2><p>وصلت موافقتك إلى العيادة، وأصبحت الخطة معتمدة وموقعة. يمكنك إغلاق هذه الصفحة.</p><small id="signedAt"></small></section>
+
+      <div id="consentContent" hidden>
+        <section class="identity-card" aria-labelledby="planTitle">
+          <div><small>الخطة العلاجية المعتمدة من الطبيب</small><h2 id="planTitle">الخطة العلاجية</h2><p id="patientName"></p></div>
+          <dl><div><dt>رقم الخطة</dt><dd id="planNo">—</dd></div><div><dt>الإصدار</dt><dd id="planRevision">—</dd></div><div><dt>تاريخ الخطة</dt><dd id="issuedAt">—</dd></div><div><dt>الطبيب</dt><dd id="doctorName">—</dd></div></dl>
+        </section>
+
+        <section class="plan-summary" aria-labelledby="summaryTitle">
+          <div class="section-head"><div><small>النسخة التي ستوقّع عليها</small><h2 id="summaryTitle">ملخص الخطة والإجراءات</h2></div><span class="locked-badge">نسخة ثابتة</span></div>
+          <div id="phases" class="phase-list"></div>
+          <div class="totals"><span><small>الإجمالي قبل الخصم</small><strong id="beforeTotal">—</strong></span><span class="net"><small>الصافي بعد الخصم</small><strong id="afterTotal">—</strong></span></div>
+        </section>
+
+        <form id="consentForm" class="consent-form" novalidate>
+          <div class="section-head"><div><small>توثيق الموافقة</small><h2>الإقرار والتوقيع</h2></div><b class="required-label">إلزامي</b></div>
+          <div class="notice"><strong>قبل التوقيع</strong><p>أقر بأن الطبيب شرح لي الخطة العلاجية والإجراءات المقترحة والفوائد والمخاطر والبدائل المتاحة، وأُتيحت لي فرصة طرح الأسئلة وفهمت أن الاستجابة للعلاج تختلف من شخص لآخر.</p></div>
+          <label class="check-row"><input id="understood" type="checkbox" required><span>اطلعت على الخطة المعروضة أعلاه وفهمت محتواها.</span></label>
+          <label class="check-row"><input id="accepted" type="checkbox" required><span>أوافق على تنفيذ الخطة العلاجية وفق الإجراءات والأسعار الموضحة.</span></label>
+          <div class="form-grid">
+            <label>صفة الموقّع<select id="signerRole"><option value="patient">المريض نفسه</option><option value="guardian">ولي الأمر أو الوصي</option></select></label>
+            <label>الاسم الكامل للموقّع<input id="signerName" maxlength="120" autocomplete="name" required placeholder="اكتب الاسم الكامل"></label>
+            <label id="guardianRelationField" hidden>صلة القرابة أو الصفة<input id="guardianRelation" maxlength="80" placeholder="مثال: الأب، الأم، الوصي"></label>
+          </div>
+          <fieldset class="signature-fieldset"><legend>وقّع داخل المربع بإصبعك أو القلم</legend><canvas id="signatureCanvas" width="900" height="300" aria-label="مساحة توقيع المريض"></canvas><div class="signature-tools"><span id="signatureHint">لم يتم إدخال التوقيع بعد</span><button id="clearSignature" type="button">مسح التوقيع</button></div></fieldset>
+          <p id="formMessage" class="form-message" role="alert" aria-live="polite"></p>
+          <button id="submitConsent" class="submit-consent" type="submit">تأكيد الموافقة وإرسال التوقيع</button>
+          <p class="privacy-note">عند الإرسال تُربط الموافقة بهذه النسخة تحديدًا ويُسجل وقت التوقيع في ملف الخطة. لا تشارك هذا الرابط مع أي شخص.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script src="./plan-consent.js?v=20260905-plan-consent-v1" defer></script>
+</body>
+</html>

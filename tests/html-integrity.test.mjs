@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-const pages = ['index.html', 'statistics.html', 'appointment-request.html', 'appointment-requests.html', 'lab.html', 'treatment-plan.html'];
+const pages = ['index.html', 'statistics.html', 'appointment-request.html', 'appointment-requests.html', 'lab.html', 'treatment-plan.html', 'plan-consent.html'];
 
 test('HTML pages have unique element ids', async () => {
   for (const page of pages) {
