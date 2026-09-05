@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>مراجعة وتوقيع الخطة العلاجية | أفضل عناية</title>
   <link rel="icon" href="./assets/icons/icon-192.png">
-  <link rel="stylesheet" href="./plan-consent.css?v=20260905-photo-consent-alert">
+  <link rel="stylesheet" href="./plan-consent.css?v=20260905-resilient-consent-link">
   <style>.signed-photo-notice{margin-top:14px!important;padding:10px 12px;border:1px solid #efb4bc;border-radius:12px;background:#fff1f3;color:#9a2738;font-weight:800}</style>
 </head>
 <body>
@@ -15,11 +15,11 @@
     <section class="consent-shell">
       <header class="consent-hero">
         <img src="./best-care-logo.png" width="613" height="900" alt="شعار عيادات أفضل عناية">
-        <div><span>BEST CARE CLINIC FLOW</span><h1>مراجعة وتوقيع الخطة العلاجية</h1><p>رابط خاص وآمن لمرة واحدة</p></div>
+        <div><span>BEST CARE CLINIC FLOW</span><h1>مراجعة وتوقيع الخطة العلاجية</h1><p>رابط خاص وآمن يبقى صالحًا حتى التوقيع أو تحديث الخطة</p></div>
       </header>
 
       <section id="loadingView" class="state-card loading-state" aria-live="polite"><span class="spinner" aria-hidden="true"></span><strong>جارٍ تحميل الخطة المعتمدة من الطبيب…</strong></section>
-      <section id="errorView" class="state-card error-state" hidden role="alert"><span aria-hidden="true">!</span><h2>تعذر فتح رابط التوقيع</h2><p id="errorMessage">تحقق من الرابط أو اطلب رابطًا جديدًا من العيادة.</p></section>
+      <section id="errorView" class="state-card error-state" hidden role="alert"><span aria-hidden="true">!</span><h2>تعذر فتح رابط التوقيع</h2><p id="errorMessage">تحقق من اتصال الإنترنت ثم أعد المحاولة.</p><button id="retryLoad" class="retry-load" type="button">إعادة تحميل الخطة</button></section>
       <section id="signedView" class="state-card signed-state" hidden aria-live="polite"><span aria-hidden="true">✓</span><h2>تم توقيع الخطة بنجاح</h2><p>وصلت موافقتك إلى العيادة، وأصبحت الخطة معتمدة وموقعة. يمكنك إغلاق هذه الصفحة.</p><p id="signedPhotoNotice" class="signed-photo-notice" hidden></p><small id="signedAt"></small></section>
 
       <div id="consentContent" hidden>
@@ -80,6 +80,6 @@
       </div>
     </section>
   </main>
-  <script src="./plan-consent.js?v=20260905-photo-consent-alert" defer></script>
+  <script src="./plan-consent.js?v=20260905-resilient-consent-link" defer></script>
 </body>
 </html>
