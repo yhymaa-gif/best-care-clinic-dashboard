@@ -62,7 +62,7 @@
       phases:[blankPhase(0)],
       alternatives:'',noTreatment:'',risks:'',
       financial:{vatMode:'borne_by_state',vatConfirmed:false,paymentPlan:[]},
-      consent:{photoConsent:false},
+      consent:{photoConsent:true},
       signatures:{patientSignature:'',signerName:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''}
     });
     let state;
@@ -992,7 +992,7 @@
       }else if(remoteResult?.carriedForward&&!local){
         const previousPlanNo=state.meta.planNo||'';
         state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
-        state.consent={photoConsent:false};
+        state.consent={photoConsent:true};
         state.signatures={patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''};
         if(source.file)state.patient.fileNo=source.file;
         if(source.phone)state.patient.mobile=source.phone;
