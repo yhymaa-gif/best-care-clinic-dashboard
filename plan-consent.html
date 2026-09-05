@@ -7,7 +7,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>مراجعة وتوقيع الخطة العلاجية | أفضل عناية</title>
   <link rel="icon" href="./assets/icons/icon-192.png">
-  <link rel="stylesheet" href="./plan-consent.css?v=20260905-plan-consent-v1">
+  <link rel="stylesheet" href="./plan-consent.css?v=20260905-plan-consent-v2">
 </head>
 <body>
   <main class="consent-app">
@@ -35,9 +35,37 @@
 
         <form id="consentForm" class="consent-form" novalidate>
           <div class="section-head"><div><small>توثيق الموافقة</small><h2>الإقرار والتوقيع</h2></div><b class="required-label">إلزامي</b></div>
-          <div class="notice"><strong>قبل التوقيع</strong><p>أقر بأن الطبيب شرح لي الخطة العلاجية والإجراءات المقترحة والفوائد والمخاطر والبدائل المتاحة، وأُتيحت لي فرصة طرح الأسئلة وفهمت أن الاستجابة للعلاج تختلف من شخص لآخر.</p></div>
+          <div class="notice"><strong>قبل التوقيع</strong><p>راجع الخطة والأسعار والبنود التالية. هذه الموافقة توثّق الخطة التي اعتمدها الطبيب، ولا تستبدل الشرح السريري أو حقك في السؤال وطلب التوضيح قبل تنفيذ أي إجراء.</p></div>
+          <section class="terms-card" aria-labelledby="termsTitle">
+            <div class="terms-title"><span aria-hidden="true">§</span><div><small>الشروط والأحكام</small><h3 id="termsTitle">الشروط المالية والتنفيذية</h3></div></div>
+            <ol class="consent-terms financial-terms">
+              <li>هذا العرض ساري لمدة <b id="validityDays">15</b> يومًا من تاريخ الإصدار، وتخضع الأسعار للتحديث بعد انتهاء مدة الصلاحية.</li>
+              <li>يلتزم المريض بسداد تكلفة كل إجراء يوافق عليه ويتم تنفيذه فعليًا، وفق السعر الموضح في هذه الخطة.</li>
+              <li>يتم سداد كامل المبلغ المستحق والمتفق عليه قبل التركيب النهائي.</li>
+              <li>قد تختلف أوقات البدء والانتهاء بحسب المستجدات السريرية واستجابة الحالة.</li>
+              <li>أي إجراء غير مدرج في هذه الخطة يحتاج شرحًا وموافقة، ويوثّق ويُسعّر في خطة مستقلة قبل تنفيذه.</li>
+              <li>قرأت الملخص المالي وأفهم أن هذه الوثيقة عرض تقديري وليست فاتورة ضريبية.</li>
+            </ol>
+          </section>
+          <section class="terms-card informed-card" aria-labelledby="informedTitle">
+            <div class="terms-title"><span aria-hidden="true">✓</span><div><small>INFORMED CONSENT</small><h3 id="informedTitle">بنود الموافقة المستنيرة</h3></div></div>
+            <ol class="consent-terms">
+              <li>أقر بأن الطبيب شرح لي طبيعة الإجراءات المقترحة وأهدافها بلغة واضحة.</li>
+              <li>أُتيحت لي فرصة كافية لطرح الأسئلة، وتلقيت إجابات مفهومة عنها.</li>
+              <li>أفهم الفوائد المتوقعة والمخاطر والمضاعفات المحتملة لكل إجراء.</li>
+              <li>نوقشت معي البدائل العلاجية المتاحة، بما فيها عدم العلاج وعواقبه.</li>
+              <li>أفهم أن الاستجابة للعلاج تختلف، ولا يمكن للفريق الطبي ضمان نتيجة نهائية.</li>
+              <li>أوافق على الالتزام بالتعليمات والمراجعات الدورية والمحافظة على نظافة الفم.</li>
+              <li>أوافق على ما يلزم داخل حدود الخطة للتعامل مع المستجدات السريرية المبررة.</li>
+              <li>أي إجراء خارج الخطة يحتاج شرحًا وموافقة وخطة تكلفة جديدة.</li>
+              <li>أوافق على بدء العلاج وفق المراحل الموضحة بعد توقيعي واعتماد الطبيب.</li>
+              <li>أفهم أن لي حق طلب التوضيح أو رفض إجراء قبل تنفيذه، مع شرح الآثار المترتبة على ذلك.</li>
+            </ol>
+          </section>
           <label class="check-row"><input id="understood" type="checkbox" required><span>اطلعت على الخطة المعروضة أعلاه وفهمت محتواها.</span></label>
           <label class="check-row"><input id="accepted" type="checkbox" required><span>أوافق على تنفيذ الخطة العلاجية وفق الإجراءات والأسعار الموضحة.</span></label>
+          <label class="check-row financial-confirm"><input id="financialAccepted" type="checkbox" required><span><b>التزام مالي:</b> أوافق على سداد تكلفة الإجراءات التي أوافق عليها ويتم تنفيذها فعليًا وفق الأسعار الموضحة، وأفهم أن أي إجراء إضافي يتطلب موافقة وتسعيرًا مستقلًا.</span></label>
+          <label class="check-row photo-confirm"><input id="photoConsent" type="checkbox"><span><b>موافقة تصوير اختيارية:</b> أوافق على التصوير واستخدام الصور الطبية لغرض توثيق ومراجعة وضبط جودة النتيجة العلاجية، ولأغراض علمية وتعليمية بعد إخفاء الهوية. هذه الموافقة مستقلة وليست شرطًا للعلاج، ويمكن إلغاء اختيارها قبل إرسال التوقيع.</span></label>
           <div class="form-grid">
             <label>صفة الموقّع<select id="signerRole"><option value="patient">المريض نفسه</option><option value="guardian">ولي الأمر أو الوصي</option></select></label>
             <label>الاسم الكامل للموقّع<input id="signerName" maxlength="120" autocomplete="name" required placeholder="اكتب الاسم الكامل"></label>
@@ -51,6 +79,6 @@
       </div>
     </section>
   </main>
-  <script src="./plan-consent.js?v=20260905-plan-consent-v1" defer></script>
+  <script src="./plan-consent.js?v=20260905-plan-consent-v2" defer></script>
 </body>
 </html>

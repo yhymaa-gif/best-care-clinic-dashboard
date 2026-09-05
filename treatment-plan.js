@@ -63,7 +63,7 @@
       phases:[blankPhase(0)],
       alternatives:'',noTreatment:'',risks:'',
       financial:{vatMode:'borne_by_state',vatConfirmed:false,paymentPlan:[]},
-      consent:{photoConsent:true,photoConsentDefaultVersion:2},
+      consent:{photoConsent:true,photoConsentDefaultVersion:2,photoConsentAcceptedAt:0,termsVersion:0},
       signatures:{patientSignature:'',signerName:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''}
     });
     let state;
@@ -648,7 +648,8 @@
       }
       if(!confirm('هل تؤكد أن المريض/الوصي اطّلع على الخطة ووقّع عليها مباشرة على هذا الجهاز؟'))return;
       const previousMeta={...state.meta},now=Date.now();
-      state.meta.status='approved_signed';state.meta.patientAcceptedAt=now;state.meta.patientAcceptedBy=state.signatures.signerName;state.meta.approvedAt=now;state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.consentMethod='in_clinic';state.meta.consentEvidenceId=crypto.randomUUID?.()||`in-clinic-${now}`;state.meta.consentPlanRevision=Number(state.meta.revision||1);state.meta.consentVersion=1;
+      state.meta.status='approved_signed';state.meta.patientAcceptedAt=now;state.meta.patientAcceptedBy=state.signatures.signerName;state.meta.approvedAt=now;state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.consentMethod='in_clinic';state.meta.consentEvidenceId=crypto.randomUUID?.()||`in-clinic-${now}`;state.meta.consentPlanRevision=Number(state.meta.revision||1);state.meta.consentVersion=2;
+      state.consent.photoConsentAcceptedAt=state.consent.photoConsent?now:0;state.consent.termsVersion=2;
       const saved=await savePlan(true);if(!saved){state.meta=previousMeta;render();return}
       await Promise.all([syncPlanStatusToDashboard('approved_signed'),syncPlanRegistry('approved_signed')]);
       render();toast('تم اعتماد الخطة الموقعة','حُفظ توقيع المريض المباشر وأصبحت الخطة جاهزة للطباعة.');
@@ -658,7 +659,8 @@
       collectHeaderFields();const missing=approvalMissing();
       if(missing.length){toast('لا يمكن الاعتماد',`أكمل: ${missing.join('، ')}`);renderProgress();return}
       if(!state.signatures.patientSignature){$('digitalSignToggle').checked=true;$('signatureCanvasWrap').classList.add('active');$('signatureSection').scrollIntoView({behavior:'smooth',block:'center'});toast('يلزم إثبات التوقيع','وقّع المريض داخل اللوحة ثم ثبّت التوقيع لاستكمال هذه الخطة القديمة.');return}
-      const now=Date.now();state.meta.status='approved_signed';state.meta.approvedAt=now;state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.consentMethod=state.meta.consentMethod||'in_clinic';state.meta.consentEvidenceId=state.meta.consentEvidenceId||crypto.randomUUID?.()||`legacy-signature-${now}`;state.meta.consentPlanRevision=Number(state.meta.revision||1);state.meta.consentVersion=1;state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
+      const now=Date.now();state.meta.status='approved_signed';state.meta.approvedAt=now;state.meta.approvedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.consentMethod=state.meta.consentMethod||'in_clinic';state.meta.consentEvidenceId=state.meta.consentEvidenceId||crypto.randomUUID?.()||`legacy-signature-${now}`;state.meta.consentPlanRevision=Number(state.meta.revision||1);state.meta.consentVersion=2;state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
+      state.consent.photoConsentAcceptedAt=state.consent.photoConsent?now:0;state.consent.termsVersion=2;
       const saved=await savePlan(true);if(!saved){state.meta.status='patient_accepted';render();return}
       await Promise.all([syncPlanStatusToDashboard('approved_signed'),syncPlanRegistry('approved_signed')]);$('paper').classList.add('approved');render();toast('تم اعتماد الخطة الموقعة','ستظهر علامة «خطة معتمدة وموقعة» بجانب المريض في جميع مواعيده القادمة.');
     }
@@ -1072,7 +1074,7 @@
       }else if(remoteResult?.carriedForward&&!local){
         const previousPlanNo=state.meta.planNo||'';
         state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
-        state.consent={photoConsent:true,photoConsentDefaultVersion:2};
+        state.consent={photoConsent:true,photoConsentDefaultVersion:2,photoConsentAcceptedAt:0,termsVersion:0};
         state.signatures={patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''};
         if(source.file)state.patient.fileNo=source.file;
         if(source.phone)state.patient.mobile=source.phone;

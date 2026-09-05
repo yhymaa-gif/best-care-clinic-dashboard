@@ -32,15 +32,51 @@ test('patient signature link is version-bound, expiring, single-active, and serv
   assert.match(endpoint, /signatureDigest: hash\(signature\)/);
 });
 
-test('public consent page requires explicit understanding, acceptance, identity, and drawn signature', async () => {
-  const [html, script] = await Promise.all([read('plan-consent.html'), read('plan-consent.js')]);
+test('public consent page requires complete informed, treatment, and financial acceptance plus drawn signature', async () => {
+  const [html, script, endpoint] = await Promise.all([read('plan-consent.html'), read('plan-consent.js'), read('netlify/functions/treatment-plan-consent.mjs')]);
   assert.match(html, /id="understood" type="checkbox" required/);
   assert.match(html, /id="accepted" type="checkbox" required/);
+  assert.match(html, /id="financialAccepted" type="checkbox" required/);
+  assert.match(html, /id="photoConsent" type="checkbox"/);
+  assert.match(html, /يلتزم المريض بسداد تكلفة كل إجراء يوافق عليه ويتم تنفيذه فعليًا/);
+  assert.match(html, /بنود الموافقة المستنيرة/);
+  assert.match(html, /توثيق ومراجعة وضبط جودة النتيجة العلاجية/);
   assert.match(html, /id="signerName"[^>]*required/);
   assert.match(html, /id="signatureCanvas"/);
   assert.match(script, /if\(strokeLength<70\)/);
-  assert.match(script, /action:'sign',token,consentVersion:1/);
-  assert.doesNotMatch(html, /<input[^>]+(?:understood|accepted)[^>]+checked/i);
+  assert.match(script, /action:'sign',token,consentVersion:2/);
+  assert.match(script, /financialAccepted:\$\('financialAccepted'\)\.checked/);
+  assert.match(script, /photoConsent:\$\('photoConsent'\)\.checked/);
+  assert.match(endpoint, /body\?\.financialAccepted !== true/);
+  assert.match(endpoint, /photoConsentAcceptedAt: photoConsent \? now : 0/);
+  assert.match(endpoint, /termsVersion: CONSENT_VERSION/);
+  assert.doesNotMatch(html, /<input[^>]+(?:understood|accepted|financialAccepted)[^>]+checked/i);
+});
+
+test('signature page mirrors the principal plan terms and keeps photography consent independent', async () => {
+  const [mainPlan, consentPage] = await Promise.all([read('treatment-plan.html'), read('plan-consent.html')]);
+  const sharedClauses = [
+    'تكلفة كل إجراء يوافق عليه ويتم تنفيذه فعليًا',
+    'سداد كامل المبلغ',
+    'قد تختلف أوقات البدء والانتهاء',
+    'أي إجراء غير مدرج',
+    'شرح لي طبيعة الإجراءات المقترحة وأهدافها',
+    'أُتيحت لي فرصة كافية لطرح الأسئلة',
+    'الفوائد المتوقعة والمخاطر والمضاعفات المحتملة',
+    'البدائل العلاجية المتاحة',
+    'الاستجابة للعلاج تختلف',
+    'الالتزام بالتعليمات والمراجعات الدورية',
+    'أي إجراء خارج الخطة يحتاج شرحًا وموافقة',
+    'عرض تقديري وليست فاتورة ضريبية',
+    'بدء العلاج وفق المراحل الموضحة'
+  ];
+  for (const clause of sharedClauses) {
+    assert.ok(mainPlan.includes(clause), `principal plan is missing: ${clause}`);
+    assert.ok(consentPage.includes(clause), `signature page is missing: ${clause}`);
+  }
+  assert.match(consentPage, /موافقة تصوير اختيارية/);
+  assert.match(consentPage, /هذه الموافقة مستقلة وليست شرطًا للعلاج/);
+  assert.doesNotMatch(consentPage, /id="photoConsent"[^>]+required/);
 });
 
 test('manual administration status change cannot bypass patient signature evidence', async () => {
