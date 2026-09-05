@@ -121,7 +121,9 @@ const cleanPlan = plan => ({
   },
   consent: {
     photoConsent: Boolean(plan?.consent?.photoConsent),
-    photoConsentDefaultVersion: Math.max(0, Math.min(2, Number(plan?.consent?.photoConsentDefaultVersion || 0)))
+    photoConsentDefaultVersion: Math.max(0, Math.min(2, Number(plan?.consent?.photoConsentDefaultVersion || 0))),
+    photoConsentAcceptedAt: cleanNumber(plan?.consent?.photoConsentAcceptedAt, 0, Number.MAX_SAFE_INTEGER),
+    termsVersion: cleanNumber(plan?.consent?.termsVersion, 0, 100)
   },
   signatures: {
     patientSignature: cleanSignature(plan?.signatures?.patientSignature),

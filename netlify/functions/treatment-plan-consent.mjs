@@ -9,7 +9,7 @@ const reply = (data, status = 200) => new Response(JSON.stringify(data), { statu
 const planStore = getStore({ name: 'clinic-treatment-plans', consistency: 'strong' });
 const registryStore = getStore({ name: 'clinic-treatment-plan-registry', consistency: 'strong' });
 const consentStore = getStore({ name: 'clinic-treatment-plan-consents', consistency: 'strong' });
-const CONSENT_VERSION = 1;
+const CONSENT_VERSION = 2;
 const MAX_LINK_LIFETIME = 15 * 24 * 60 * 60 * 1000;
 const hash = value => createHash('sha256').update(String(value)).digest('hex');
 const cleanText = (value, max = 500) => String(value ?? '').trim().replace(/\s+/g, ' ').slice(0, max);
@@ -70,6 +70,7 @@ const publicSummary = plan => ({
   patientName: cleanText(plan?.patient?.fullName, 120),
   fileNo: cleanText(plan?.patient?.fileNo, 40),
   doctorName: cleanText(plan?.doctor?.name || plan?.doctor?.explainedBy, 120),
+  photoConsent: Boolean(plan?.consent?.photoConsent),
   phases: (Array.isArray(plan?.phases) ? plan.phases : []).slice(0, 12).map((phase, phaseIndex) => ({
     title: cleanText(phase?.title, 100) || `المرحلة ${phaseIndex + 1}`,
     items: (Array.isArray(phase?.items) ? phase.items : []).filter(item => item?.service).slice(0, 30).map(item => ({
@@ -251,8 +252,11 @@ async function signConsent(request, body) {
   if (plan?.meta?.status !== 'submitted' || consentDigest(plan) !== link.planDigest) {
     return reply({ error: 'تم تعديل الخطة بعد إرسال الرابط. اطلب النسخة الأحدث من العيادة.' }, 409);
   }
-  if (Number(body?.consentVersion) !== CONSENT_VERSION || body?.accepted !== true || body?.understood !== true) {
-    return reply({ error: 'يجب قراءة الإقرار وتأكيد الموافقة قبل التوقيع.' }, 400);
+  if (Number(body?.consentVersion) !== CONSENT_VERSION) {
+    return reply({ error: 'تم تحديث شروط الموافقة. حدّث الصفحة ثم راجع البنود وأعد التوقيع.' }, 409);
+  }
+  if (body?.accepted !== true || body?.understood !== true || body?.financialAccepted !== true) {
+    return reply({ error: 'يجب قراءة الإقرار وتأكيد الموافقة العلاجية والالتزام المالي قبل التوقيع.' }, 400);
   }
   const signerName = cleanText(body?.signerName, 120);
   const signerRole = body?.signerRole === 'guardian' ? 'guardian' : 'patient';
@@ -263,6 +267,7 @@ async function signConsent(request, body) {
   if (!signature) return reply({ error: 'يلزم توقيع واضح داخل مربع التوقيع.' }, 400);
 
   const now = Date.now();
+  const photoConsent = body?.photoConsent === true;
   const updatedPlan = structuredClone(plan);
   updatedPlan.meta = {
     ...(updatedPlan.meta || {}),
@@ -288,6 +293,13 @@ async function signConsent(request, body) {
     witnessName: '',
     witnessSignedAt: ''
   };
+  updatedPlan.consent = {
+    ...(updatedPlan.consent || {}),
+    photoConsent,
+    photoConsentDefaultVersion: 2,
+    photoConsentAcceptedAt: photoConsent ? now : 0,
+    termsVersion: CONSENT_VERSION
+  };
   const requestIp = cleanText(request.headers.get('x-nf-client-connection-ip') || request.headers.get('x-forwarded-for') || '', 120).split(',')[0];
   const evidence = {
     id: link.id,
@@ -298,6 +310,10 @@ async function signConsent(request, body) {
     planRevision: link.planRevision,
     planDigest: link.planDigest,
     consentVersion: CONSENT_VERSION,
+    understood: true,
+    treatmentAccepted: true,
+    financialAccepted: true,
+    photoConsent,
     method: 'patient_link',
     signerName,
     signerRole,
