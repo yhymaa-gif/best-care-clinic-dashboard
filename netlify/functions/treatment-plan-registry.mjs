@@ -134,6 +134,9 @@ export default async request => {
       patientAcceptedBy: cleanText(body?.patientAcceptedBy, 120) || previous.patientAcceptedBy || '',
       approvedAt: Number(body?.approvedAt ?? previous.approvedAt ?? 0),
       approvedBy: cleanText(body?.approvedBy, 120) || previous.approvedBy || '',
+      consentMethod: ['patient_link', 'in_clinic'].includes(body?.consentMethod) ? body.consentMethod : previous.consentMethod || '',
+      consentEvidenceId: cleanText(body?.consentEvidenceId, 80) || previous.consentEvidenceId || '',
+      lastPrintedAt: Math.max(0, Number(body?.lastPrintedAt ?? previous.lastPrintedAt ?? 0)),
       createdAt: Number(previous.createdAt || now),
       updatedAt: now,
       updatedBy: cleanText(user.displayName || user.username, 120)

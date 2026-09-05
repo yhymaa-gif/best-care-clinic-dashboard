@@ -30,7 +30,7 @@ test('treatment-plan actions are unavailable before session verification', async
 });
 
 test('HTML does not use inline event-handler attributes', async () => {
-  const names = ['index.html', 'treatment-plan.html', 'statistics.html', 'appointment-request.html', 'appointment-requests.html', 'lab.html', 'offline.html'];
+  const names = ['index.html', 'treatment-plan.html', 'plan-consent.html', 'statistics.html', 'appointment-request.html', 'appointment-requests.html', 'lab.html', 'offline.html'];
   for (const name of names) {
     const html = await read(name);
     assert.doesNotMatch(html, /\son(?:click|change|input|submit|load|error|keydown|keyup|focus|blur)\s*=/i, `${name} contains an inline event handler`);
@@ -109,7 +109,7 @@ test('dashboard buttons have an explicit type to prevent accidental form submiss
 });
 
 test('static images reserve layout space to avoid visual jumps', async () => {
-  const names = ['index.html', 'treatment-plan.html', 'statistics.html', 'appointment-request.html', 'appointment-requests.html', 'lab.html', 'offline.html'];
+  const names = ['index.html', 'treatment-plan.html', 'plan-consent.html', 'statistics.html', 'appointment-request.html', 'appointment-requests.html', 'lab.html', 'offline.html'];
   for (const name of names) {
     const html = await read(name);
     for (const match of html.matchAll(/<img\b[^>]*>/gi)) {

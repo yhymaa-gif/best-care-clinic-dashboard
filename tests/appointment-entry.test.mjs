@@ -44,7 +44,7 @@ test('new appointment page uses central lookup and revision-safe shared day stat
   assert.match(script,/method:'PATCH'/);assert.match(script,/clinic:'all'/);
   assert.match(script,/expectedRevision:latest\.revision/);assert.match(script,/response\.status===409/);assert.match(script,/for\(let attempt=0;attempt<3/);
   assert.match(script,/samePatient\(patient,checked\.patient\)/);assert.match(script,/appointmentConflicts/);assert.match(script,/bestcare-dashboard-sync-v1/);
-  assert.match(serviceWorker,/appointment-entry\.html/);assert.match(serviceWorker,/20260905-photo-consent-legacy/);assert.match(manifest,/appointment-entry\.html\?source=pwa/);
+  assert.match(serviceWorker,/appointment-entry\.html/);assert.match(serviceWorker,/20260905-plan-consent-v1/);assert.match(manifest,/appointment-entry\.html\?source=pwa/);
 });
 
 test('existing patient-list action remains and hands off to the appointment page',async()=>{

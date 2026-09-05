@@ -65,6 +65,11 @@ const cleanPlan = plan => ({
     patientAcceptedBy: cleanText(plan?.meta?.patientAcceptedBy, 120),
     approvedAt: cleanNumber(plan?.meta?.approvedAt, 0, Number.MAX_SAFE_INTEGER),
     approvedBy: cleanText(plan?.meta?.approvedBy, 120),
+    consentMethod: ['patient_link', 'in_clinic'].includes(plan?.meta?.consentMethod) ? plan.meta.consentMethod : '',
+    consentEvidenceId: cleanText(plan?.meta?.consentEvidenceId, 80),
+    consentPlanRevision: cleanNumber(plan?.meta?.consentPlanRevision, 0, 100_000),
+    consentVersion: cleanNumber(plan?.meta?.consentVersion, 0, 100),
+    lastPrintedAt: cleanNumber(plan?.meta?.lastPrintedAt, 0, Number.MAX_SAFE_INTEGER),
     rejectedAt: cleanNumber(plan?.meta?.rejectedAt, 0, Number.MAX_SAFE_INTEGER),
     rejectedBy: cleanText(plan?.meta?.rejectedBy, 120),
     rejectionReason: cleanText(plan?.meta?.rejectionReason, 500),
@@ -196,6 +201,16 @@ export default async request => {
       ? await store.get(versionedPlanKey(clinicId, date, patientId, plan.meta.planNo), { type: 'json', consistency: 'strong' })
       : null;
     const existingForPlan = existingVersioned || (existing?.plan?.meta?.planNo === plan.meta.planNo ? existing : null);
+    const previousStatus = String(existingForPlan?.plan?.meta?.status || '');
+    if (plan.meta.status === 'patient_accepted' && previousStatus !== 'patient_accepted') {
+      return reply({ error: 'Patient consent must be completed through the plan signature flow' }, 409);
+    }
+    if (['approved', 'approved_signed'].includes(plan.meta.status) && plan.meta.status !== previousStatus) {
+      const hasSignatureEvidence = Boolean(plan.signatures?.patientSignature)
+        && Boolean(plan.meta.consentEvidenceId)
+        && ['patient_link', 'in_clinic'].includes(plan.meta.consentMethod);
+      if (!hasSignatureEvidence) return reply({ error: 'Verified patient signature evidence is required' }, 409);
+    }
     if (auth.user?.role !== 'admin' && !['draft', 'submitted', 'rejected'].includes(plan.meta.status)) {
       return reply({ error: 'Administration approval is required for this plan status' }, 403);
     }

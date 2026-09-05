@@ -83,6 +83,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/treatment-plan-consent"
+  to = "/.netlify/functions/treatment-plan-consent"
+  status = 200
+
+[[redirects]]
   from = "/api/treatment-catalog"
   to = "/.netlify/functions/treatment-catalog"
   status = 200

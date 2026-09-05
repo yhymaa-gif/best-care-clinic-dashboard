@@ -65,6 +65,9 @@ const candidateFromStored = (stored, key, requestedClinic) => {
     patientAcceptedBy: cleanText(meta.patientAcceptedBy, 120),
     approvedAt: Number(meta.approvedAt || 0),
     approvedBy: cleanText(meta.approvedBy, 120),
+    consentMethod: ['patient_link', 'in_clinic'].includes(meta.consentMethod) ? meta.consentMethod : '',
+    consentEvidenceId: cleanText(meta.consentEvidenceId, 80),
+    lastPrintedAt: Number(meta.lastPrintedAt || 0),
     updatedAt,
     updatedBy: cleanText(stored.updatedBy, 120),
     createdAt: Number(stored.createdAt || updatedAt || 0)
