@@ -96,8 +96,10 @@ const PATIENT_PROFILE_API='/api/patient-profile';
 const PATIENTS_API='/api/patients';
 const PATIENT_LOOKUP_API='/api/patient-lookup';
 const ALERT_DISPLAY_MS=5*60*1000;
-const POLL_MS=5000;
-const SYNC_WORK_HIDDEN_MS=60000;
+// Web Push wakes open pages immediately after a remote write. Keep polling as
+// a resilient fallback instead of invoking the state function every 5 seconds.
+const POLL_MS=15000;
+const SYNC_WORK_HIDDEN_MS=5*60*1000;
 const SYNC_OFF_HOURS_MS=5*60*1000;
 const SYNC_OFF_HOURS_HIDDEN_MS=15*60*1000;
 // Auxiliary feeds (plans, alerts, labs) do not need to run on every patient
@@ -127,7 +129,7 @@ function syncCadenceCopy(cadence=syncCadence()){
 }
 function presenceCadence(){
   const cadence=syncCadence();
-  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
+  if(cadence.workHours)return document.hidden?15*60*1000:3*60*1000;
   return document.hidden?30*60*1000:10*60*1000;
 }
 function adminHubCadence(){
@@ -599,7 +601,8 @@ async function logoutApp(){
   }
 }
 function isProtectedWorkWindow(value=Date.now()){const hour=Number(new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',hour:'2-digit',hourCycle:'h23'}).format(new Date(value)));return hour>=14&&hour<23}
-function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(isProtectedWorkWindow()){authLastActivity=Date.now()}else if(Date.now()-authLastActivity>=5*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}if(Date.now()-authKeepAliveAt>10*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
+function startAuthIdleProtection(){if(window.__authIdleStarted)return;window.__authIdleStarted=true;const touch=()=>{authLastActivity=Date.now()};['click','keydown','touchstart','pointermove'].forEach(type=>window.addEventListener(type,touch,{passive:true}));setInterval(async()=>{if(!authLastActivity)return;if(isProtectedWorkWindow()){authLastActivity=Date.now()}else if(Date.now()-authLastActivity>=5*60*60*1000){try{await authRequest('?action=logout',{method:'POST'})}finally{lockApp();return}}// Normal API traffic already refreshes lastSeenAt; this is only a quiet-screen fallback.
+if(Date.now()-authKeepAliveAt>30*60*1000){authKeepAliveAt=Date.now();try{const {response}=await authRequest('?action=session');if(response.status===401)lockApp()}catch{}}},60000)}
 const statusText=status=>(lang==='en'?EN[status]:STATUS[status])||status;
 let sync={
   revision:0,
@@ -644,7 +647,7 @@ function purgeSensitiveLocalData(){
     if(prefixes.some(prefix=>key?.startsWith(prefix)))localStorage.removeItem(key);
   }
 }
-const stateUrl=(date,nonce=false)=>`${API}?date=${encodeURIComponent(date)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}${nonce?`&_=${Date.now()}`:''}`;
+const stateUrl=(date,nonce=false,knownRevision=null)=>`${API}?date=${encodeURIComponent(date)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}${Number.isFinite(knownRevision)?`&knownRevision=${encodeURIComponent(knownRevision)}`:''}${nonce?`&_=${Date.now()}`:''}`;
 const today=()=>{const d=new Date();const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;};
 function riyadhDateKey(value=Date.now()){
   const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value));
@@ -1460,11 +1463,18 @@ async function pullState(force=false){
   const dateAtStart=selectedDate;
   if(!sync.ready)setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ الاتصال تلقائيًا…');
   try{
-    const res=await request(stateUrl(dateAtStart,true));
+    const res=await request(stateUrl(dateAtStart,true,force?null:sync.revision));
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     const data=await res.json();
     if(selectedDate!==dateAtStart)return false;
     if(sync.dirty||sync.localVersion!==versionAtStart){scheduleAutomaticSync(150);return false}
+    if(data.changed===false){
+      sync.ready=true;
+      sync.error='';
+      sync.lastSync=Date.now();
+      setIdleSyncBadge(`revision ${sync.revision}`);
+      return true;
+    }
     if(data.exists){
       const rev=Number(data.revision||0),updated=Number(data.updatedAt||0);
       if(force||rev>sync.revision||updated>sync.updatedAt){
