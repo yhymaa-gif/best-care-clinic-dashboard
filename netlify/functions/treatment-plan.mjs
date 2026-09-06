@@ -60,6 +60,8 @@ const cleanPlan = plan => ({
     relation: plan?.meta?.relation === 'addendum' ? 'addendum' : 'standalone',
     doctorApprovedAt: cleanNumber(plan?.meta?.doctorApprovedAt, 0, Number.MAX_SAFE_INTEGER),
     doctorApprovedBy: cleanText(plan?.meta?.doctorApprovedBy, 120),
+    administrationPreparedAt: cleanNumber(plan?.meta?.administrationPreparedAt, 0, Number.MAX_SAFE_INTEGER),
+    administrationPreparedBy: cleanText(plan?.meta?.administrationPreparedBy, 120),
     submittedAt: cleanNumber(plan?.meta?.submittedAt, 0, Number.MAX_SAFE_INTEGER),
     patientAcceptedAt: cleanNumber(plan?.meta?.patientAcceptedAt, 0, Number.MAX_SAFE_INTEGER),
     patientAcceptedBy: cleanText(plan?.meta?.patientAcceptedBy, 120),
@@ -202,6 +204,9 @@ export default async request => {
     if (!body?.plan || typeof body.plan !== 'object') return reply({ error: 'Invalid plan' }, 400);
     const existing = await store.get(key, { type: 'json', consistency: 'strong' });
     const plan = cleanPlan(body.plan);
+    if (auth.user?.role !== 'admin' && Number(plan.meta.administrationPreparedAt || 0) > 0) {
+      return reply({ error: 'Administration preparation metadata requires administration access' }, 403);
+    }
     if (body.createIfMissing === true) {
       const identityKeys = patientIdentityKeys(plan.patient);
       const identityRecords = existing

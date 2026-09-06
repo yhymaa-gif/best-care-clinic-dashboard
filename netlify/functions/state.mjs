@@ -71,7 +71,7 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
   else if(String(patient.treatmentPlanStatus||'')!==String(old.treatmentPlanStatus||'')){
    const planStatus=patient.treatmentPlanStatus;
    const statusCopy={
-    submitted:{title:'خطة معتمدة من الطبيب بانتظار المشاركة',body:'شارك الخطة من الإدارة عبر واتساب؛ تتضمن الرسالة رابط المراجعة والتوقيع الخاص بالمريض.'},
+     submitted:{title:'خطة جاهزة للمشاركة والتوقيع',body:'شارك الخطة من الإدارة عبر واتساب ثم أرسل رابط المراجعة والتوقيع الخاص بالمريض.'},
     patient_accepted:{title:'موافقة قديمة تحتاج استكمال التوقيع',body:'افتح الخطة القديمة ووثّق توقيع المريض لاستكمال الاعتماد النهائي.'},
     approved:{title:'تم اعتماد الخطة العلاجية',body:'اعتمدت الإدارة الإجراءات والأسعار النهائية.'},
     approved_signed:{title:'خطة معتمدة وموقعة',body:'وقّع المريض عبر الرابط واكتمل الاعتماد النهائي تلقائيًا، والخطة جاهزة للطباعة.'},

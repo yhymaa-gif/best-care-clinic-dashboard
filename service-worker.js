@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260907-separate-consent-share';
+const CACHE_NAME='bestcare-dashboard-v1-20260907-admin-direct-plan';
 const APP_SHELL=[
   './',
   './index.html',

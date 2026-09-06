@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 
-test('doctor-approved plan sharing creates and includes a patient signature link', async () => {
+test('a plan prepared for signature creates and includes a patient signature link', async () => {
   const [html, client, endpoint, config] = await Promise.all([
     read('treatment-plan.html'),
     read('treatment-plan.js'),
@@ -32,8 +32,37 @@ test('doctor-approved plan sharing creates and includes a patient signature link
   assert.match(client, /يلتزم المريض بسداد تكلفة كل إجراء يوافق عليه ويتم تنفيذه فعليًا/);
   assert.match(client, /هذه الموافقة مستقلة وليست شرطًا للعلاج/);
   assert.match(endpoint, /plan\?\.meta\?\.status !== 'submitted'/);
-  assert.match(endpoint, /!Number\(plan\?\.meta\?\.doctorApprovedAt \|\| 0\)/);
+  assert.match(endpoint, /const preparedForSignature = Number\(plan\?\.meta\?\.doctorApprovedAt \|\| 0\) > 0 \|\| Number\(plan\?\.meta\?\.administrationPreparedAt \|\| 0\) > 0/);
   assert.match(config, /from = "\/api\/treatment-plan-consent"/);
+});
+
+test('administration can save and prepare a plan for patient signature without doctor approval', async () => {
+  const [html, client, planApi, consentApi, consentPage, dashboard, center] = await Promise.all([
+    read('treatment-plan.html'),
+    read('treatment-plan.js'),
+    read('netlify/functions/treatment-plan.mjs'),
+    read('netlify/functions/treatment-plan-consent.mjs'),
+    read('plan-consent.html'),
+    read('dashboard.js'),
+    read('treatment-plans.js')
+  ]);
+  assert.match(html, /data-workflow-step="submitted"><i>2<\/i><b>المشاركة والمراجعة<\/b>/);
+  assert.match(client, /async function prepareAdministrationPlanForSignature\(\)/);
+  assert.match(client, /workflowRole\(\)!=='admin'\|\|!\['draft','rejected'\]\.includes\(state\.meta\.status\)/);
+  assert.match(client, /state\.meta\.doctorApprovedAt=0/);
+  assert.match(client, /state\.meta\.administrationPreparedAt=now/);
+  assert.match(client, /if\(workflowRole\(\)==='admin'&&\['draft','rejected'\]\.includes\(state\.meta\.status\)\)/);
+  assert.match(client, /لا يلزم اعتماد منفصل من الطبيب/);
+  assert.match(planApi, /administrationPreparedAt: cleanNumber/);
+  assert.match(planApi, /administrationPreparedBy: cleanText/);
+  assert.match(planApi, /Administration preparation metadata requires administration access/);
+  assert.match(await read('netlify/functions/treatment-plan-registry.mjs'), /body\?\.preparedByRole === 'administration'/);
+  assert.match(consentApi, /preparedForSignature/);
+  assert.match(consentApi, /حفظ الخطة وتجهيزها للمراجعة/);
+  assert.match(dashboard, /administrationPreparedAt:now/);
+  assert.match(center, /administrationPreparedAt:now/);
+  assert.match(consentPage, /النسخة التي أعدتها العيادة وفق المعلومات والتوجيهات العلاجية المسجلة/);
+  assert.doesNotMatch(consentPage, /هذه الموافقة توثّق الخطة التي اعتمدها الطبيب/);
 });
 
 test('patient signature link is version-bound, time-independent, single-active, and server-timestamped', async () => {
@@ -67,7 +96,7 @@ test('a stored WhatsApp signature is restored visibly and protected from stale p
     read('netlify/functions/treatment-plan-consent.mjs')
   ]);
   assert.match(html, /id="storedSignatureNotice"/);
-  assert.match(html, /treatment-plan\.js\?v=20260907-separate-consent-share/);
+  assert.match(html, /treatment-plan\.js\?v=20260907-admin-direct-plan/);
   assert.match(client, /function renderStoredPatientSignature\(\)/);
   assert.match(client, /renderStoredPatientSignature\(\);/);
   assert.match(client, /image\.src=signature/);
