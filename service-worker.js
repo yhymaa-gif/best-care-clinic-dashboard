@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260907-payment-plan-addendum';
+const CACHE_NAME='bestcare-dashboard-v1-20260907-notification-hours';
 const APP_SHELL=[
   './',
   './index.html',
@@ -37,6 +37,7 @@ const APP_SHELL=[
   './prescription-overrides.css',
   './prescription.js',
   './manifest.webmanifest',
+  './release.json',
   './best-care-logo.png',
   './assets/best-care-logo-header.png',
   './assets/treatment-plan-department-stamp.svg',

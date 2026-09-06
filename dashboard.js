@@ -137,6 +137,8 @@ function adminHubCadence(){
   return document.hidden?30*60*1000:10*60*1000;
 }
 const DASHBOARD_BUILD='7.64-patient-save-fix-v2';
+const RELEASE_SUMMARY_FALLBACK={ar:'تصحيح الخطط العلاجية ومشاركتها، وتنظيم التنبيهات.',en:'Treatment-plan and sharing fixes, plus notification scheduling.'};
+let pendingReleaseSummary={...RELEASE_SUMMARY_FALLBACK};
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -756,6 +758,8 @@ function setIdleSyncBadge(detail=''){
 const IS_DEPLOY_PREVIEW=/^deploy-preview-\d+--/i.test(location.hostname);
 let pushSubscriptionActive=null;
 function systemNotificationsEnabled(){return !IS_DEPLOY_PREVIEW&&'Notification' in window&&Notification.permission==='granted'&&localStorage.getItem('bestcare_system_notifications')==='enabled'}
+function outsideHoursNotificationsEnabled(){return localStorage.getItem('bestcare_notifications_outside_hours')==='enabled'}
+function automatedAlertsAllowed(){return syncCadence().workHours||outsideHoursNotificationsEnabled()}
 async function currentPushSubscription(){
   if(!('serviceWorker' in navigator)||!('PushManager' in window))return null;
   try{
@@ -792,7 +796,7 @@ async function ensurePushSubscription(){
     const {publicKey}=await response.json();
     subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
   }
-  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID,showPatientDetails:VIEW_MODE==='admin'})});
+  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID,showPatientDetails:VIEW_MODE==='admin',allowOutsideWorkHours:outsideHoursNotificationsEnabled()})});
   if(!saved.ok)throw new Error('Subscription save failed');
   localStorage.setItem('bestcare_push_registered','enabled');return true;
 }
@@ -808,7 +812,24 @@ function updateNotificationsButton(){
   button.classList.toggle('notification-enabled',enabled);
   button.classList.toggle('notification-denied','Notification' in window&&Notification.permission==='denied');
   button.textContent=enabled?(lang==='en'?'🔕 Disable system notifications':'🔕 إيقاف إشعارات النظام'):('Notification' in window&&Notification.permission==='denied'?(lang==='en'?'🔕 Notifications blocked':'🔕 الإشعارات محظورة'):(lang==='en'?'🔔 Enable system notifications':'🔔 تفعيل إشعارات النظام'));
-  button.title=enabled?(lang==='en'?'Stop Best Care alerts on this device.':'إيقاف تنبيهات أفضل عناية على هذا الجهاز.'):(lang==='en'?'Enable Best Care alerts on this device.':'تفعيل تنبيهات أفضل عناية على هذا الجهاز.');
+  button.title=enabled?(lang==='en'?'Alerts are delivered Sat–Thu, 2:00 PM–11:00 PM Riyadh time. Select to disable them.':'تصل التنبيهات السبت–الخميس من ٢:٠٠م إلى ١١:٠٠م بتوقيت الرياض. اضغط لإيقافها.'):(lang==='en'?'Enable Best Care alerts on this device. Delivery is Sat–Thu, 2:00 PM–11:00 PM Riyadh time.':'تفعيل تنبيهات أفضل عناية على هذا الجهاز؛ الإرسال السبت–الخميس من ٢:٠٠م إلى ١١:٠٠م.');
+}
+function updateOutsideHoursNotificationsButton(){
+  const button=$('outsideHoursNotificationsBtn');if(!button)return;
+  const enabled=outsideHoursNotificationsEnabled();
+  button.classList.toggle('notification-enabled',enabled);
+  button.setAttribute('aria-pressed',String(enabled));
+  button.textContent=enabled?(lang==='en'?'🌙 After-hours alerts: allowed':'🌙 تنبيهات خارج وقت العمل: مسموحة'):(lang==='en'?'🌙 After-hours alerts: off':'🌙 تنبيهات خارج وقت العمل: متوقفة');
+  button.title=enabled?(lang==='en'?'This device can receive alerts outside Sat–Thu, 2:00 PM–11:00 PM.':'يمكن لهذا الجهاز استقبال التنبيهات خارج فترة السبت–الخميس، ٢:٠٠م–١١:٠٠م.'):(lang==='en'?'Alerts are paused outside Sat–Thu, 2:00 PM–11:00 PM.':'تتوقف التنبيهات خارج فترة السبت–الخميس، ٢:٠٠م–١١:٠٠م.');
+}
+async function toggleOutsideHoursNotifications(){
+  const enabled=!outsideHoursNotificationsEnabled();
+  localStorage.setItem('bestcare_notifications_outside_hours',enabled?'enabled':'disabled');
+  updateOutsideHoursNotificationsButton();
+  if(systemNotificationsEnabled()){
+    try{await ensurePushSubscription()}catch(error){console.warn('After-hours notification preference update failed',error);toast(lang==='en'?'Preference saved locally':'حُفظ الخيار على الجهاز',lang==='en'?'The server will be updated automatically when the connection returns.':'سيتم تحديث الاشتراك تلقائيًا عند عودة الاتصال.')}
+  }
+  toast(enabled?(lang==='en'?'After-hours alerts allowed':'تم فتح التنبيهات خارج وقت العمل'):(lang==='en'?'After-hours alerts paused':'تم إيقاف التنبيهات خارج وقت العمل'),enabled?(lang==='en'?'This applies only to this device.':'يطبق هذا الخيار على هذا الجهاز فقط.'):(lang==='en'?'Normal delivery remains Sat–Thu, 2:00 PM–11:00 PM.':'يبقى الإرسال المعتاد السبت–الخميس، ٢:٠٠م–١١:٠٠م.'));
 }
 async function requestSystemNotifications(){
   if(IS_DEPLOY_PREVIEW){
@@ -823,7 +844,11 @@ async function requestSystemNotifications(){
   if(permission==='granted'){
     localStorage.setItem('bestcare_system_notifications','enabled');
     updateNotificationsButton();
-    try{await ensurePushSubscription();showSystemNotification({source:'manual-test',type:'patient',title:lang==='en'?'Best Care push notifications enabled':'تم تفعيل تنبيهات أفضل عناية الخارجية',body:lang==='en'?'Updates will arrive even when the app is closed.':'ستصل تحديثات المراجعين والفواتير حتى عند إغلاق التطبيق.'})}
+    try{
+      await ensurePushSubscription();
+      if(automatedAlertsAllowed())showSystemNotification({source:'manual-test',type:'patient',title:lang==='en'?'Best Care push notifications enabled':'تم تفعيل تنبيهات أفضل عناية الخارجية',body:lang==='en'?'Updates will arrive during the selected alert hours, even when the app is closed.':'ستصل التحديثات خلال أوقات التنبيه المختارة حتى عند إغلاق التطبيق.'});
+      else toast(lang==='en'?'Notifications enabled':'تم تفعيل التنبيهات',lang==='en'?'Delivery starts during working hours: Sat–Thu, 2:00 PM–11:00 PM Riyadh time.':'سيبدأ الإرسال خلال وقت العمل: السبت–الخميس، من ٢:٠٠م إلى ١١:٠٠م بتوقيت الرياض.');
+    }
     catch(error){console.warn('Push subscription failed',error);toast('تعذر ربط التنبيه الخارجي','تحقق من الاتصال ثم اضغط زر التفعيل مرة أخرى.')}
   }else{
     localStorage.removeItem('bestcare_system_notifications');
@@ -862,6 +887,7 @@ async function toggleSystemNotifications(){
 }
 async function showSystemNotification(event){
   if(!event||!systemNotificationsEnabled())return;
+  if(!automatedAlertsAllowed())return;
   if(localStorage.getItem('bestcare_push_registered')==='enabled'&&event.source!=='manual-test')return;
   if(event.type==='payment'&&VIEW_MODE!=='admin')return;
   const options={body:event.body||'',icon:'./assets/icons/icon-192.png',badge:'./assets/icons/icon-192.png',color:event.color||'#176344',tag:event.tag||`bestcare-${event.type||'update'}`,renotify:false,vibrate:[160,70,180],data:{url:viewUrl(event.type==='payment'?'admin':VIEW_MODE)}};
@@ -1006,14 +1032,13 @@ async function refreshManualAlert(force=false){
     renderAlertUI();
     renderDoctorWorkspace();
     if(hadFetched&&manualAlert.active&&manualAlert.updatedAt>previousUpdatedAt){
-      playAlertSound(manualAlert.kind);
-      showSystemNotification({
+      if(automatedAlertsAllowed()){playAlertSound(manualAlert.kind);showSystemNotification({
         source:'central-alert',
         type:'patient',
         title:manualAlert.scope==='all'?(lang==='en'?'General administration alert':'تنبيه عام من الإدارة'):(lang==='en'?'Targeted administration alert':'تنبيه موجه من الإدارة'),
         body:manualAlert.message,
         tag:`manual-alert-${manualAlert.updatedAt}`
-      });
+      })}
     }
     return true;
   }catch(error){
@@ -1472,7 +1497,7 @@ async function pullState(force=false){
       if(force||rev>sync.revision||updated>sync.updatedAt){
         const notification=!force&&sync.ready?detectRemoteNotification(patients.map(p=>({...p})),{...updateAlert},data):null;
         applyRemote(data);
-        if(notification){playAlertSound(notification.tag||notification.type);showSystemNotification(notification)}
+        if(notification&&automatedAlertsAllowed()){playAlertSound(notification.tag||notification.type);showSystemNotification(notification)}
       }
     }else if(patients.length||notes||updateAlert.active){
       sync.dirty=true;
@@ -4581,7 +4606,15 @@ async function registerPwa(){
   try{
     const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
     if(systemNotificationsEnabled())ensurePushSubscription().catch(error=>console.warn('Push subscription refresh failed',error));
-    const showUpdate=worker=>{waitingServiceWorker=worker;$('pwaUpdateBar').classList.add('show')};
+    const showUpdate=async worker=>{
+      waitingServiceWorker=worker;
+      try{
+        const response=await fetch(`./release.json?update=${Date.now()}`,{cache:'no-store'}),release=await response.json();
+        if(response.ok&&release?.summary)pendingReleaseSummary={ar:String(release.summary.ar||RELEASE_SUMMARY_FALLBACK.ar).slice(0,140),en:String(release.summary.en||RELEASE_SUMMARY_FALLBACK.en).slice(0,140)};
+      }catch{/* يبقى الملخص الاحتياطي ظاهرًا */}
+      renderPwaUpdateCopy();
+      $('pwaUpdateBar').classList.add('show');
+    };
     if(registration.waiting)showUpdate(registration.waiting);
     registration.addEventListener('updatefound',()=>{
       const worker=registration.installing;if(!worker)return;
@@ -4595,6 +4628,10 @@ async function registerPwa(){
       location.reload();
     });
   }catch(error){console.warn('PWA registration failed',error)}
+}
+function renderPwaUpdateCopy(){
+  setText('#pwaUpdateTitle',tr('updateAvailable'));
+  setText('#pwaUpdateSummary',lang==='en'?pendingReleaseSummary.en:pendingReleaseSummary.ar);
 }
 function setText(selector,value){const el=document.querySelector(selector);if(el)el.textContent=value}
 function setTexts(selector,values){document.querySelectorAll(selector).forEach((el,index)=>{if(values[index]!==undefined)el.textContent=values[index]})}
@@ -4747,13 +4784,14 @@ function applyLang(){
   setText('#settingsBtn',tr('settings'));
   applyIosInstallLanguage();
   updateNotificationsButton();
+  updateOutsideHoursNotificationsButton();
   updateSoundButton();
   setText('#importBtn',lang==='en'?'📥 Import CSV / Excel':'📥 استيراد CSV / Excel');
   setText('#exportBtn',tr('exportCsv'));
   setText('#syncTestBtn',tr('testSync'));
   setText('#clearBtn',tr('clearToday'));
   setText('#alertBtn strong',tr('alertTitle'));
-  setText('#pwaUpdateBar span',tr('updateAvailable'));
+  renderPwaUpdateCopy();
   setText('#pwaUpdateBtn',tr('updateNow'));
   setTexts('.stats .stat small',[tr('totalPatients'),tr('completed'),tr('inTreatment'),tr('remaining'),tr('cancelled'),tr('completionRate')]);
   setTexts('.timer-box small',[tr('originalTime'),tr('actualDuration')]);
@@ -4913,7 +4951,7 @@ async function refreshAppointmentRequests({notify=true}={}){
     renderAppointmentRequests();
     $('appointmentRequestError').hidden=true;
     if(isNew&&notify){
-      prepareAudio();playAlertSound('urgent');
+      if(automatedAlertsAllowed()){prepareAudio();playAlertSound('urgent')}
       $('appointmentRequestPeek').hidden=false;
       clearTimeout(appointmentRequests.peekTimer);
       appointmentRequests.peekTimer=setTimeout(()=>$('appointmentRequestPeek').hidden=true,5*60*1000);
@@ -5018,6 +5056,7 @@ $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
 $('notificationsBtn').addEventListener('click',toggleSystemNotifications);
+$('outsideHoursNotificationsBtn').addEventListener('click',toggleOutsideHoursNotifications);
 $('soundAlertsBtn').addEventListener('click',toggleSoundAlerts);
 document.addEventListener('pointerdown',()=>{if(soundAlertsEnabled())prepareAudio()},{once:true,passive:true});
 document.addEventListener('keydown',()=>{if(soundAlertsEnabled())prepareAudio()},{once:true});

@@ -17,7 +17,7 @@ export default async request=>{
   if(request.method==='POST'){
     const requestedClinic=auth.user.role==='admin'?String(body.clinicId||'clinic-1'):String(auth.user.clinicId||'');
     if(!canAccessClinic(auth.user,requestedClinic))return reply({error:'Clinic access denied'},403);
-    try{await savePushSubscription(body.subscription,{user:auth.user,clientId:body.clientId,clinicId:requestedClinic,showPatientDetails:body.showPatientDetails});return reply({ok:true})}
+    try{await savePushSubscription(body.subscription,{user:auth.user,clientId:body.clientId,clinicId:requestedClinic,showPatientDetails:body.showPatientDetails,allowOutsideWorkHours:body.allowOutsideWorkHours});return reply({ok:true})}
     catch{return reply({error:'Invalid subscription'},400)}
   }
   if(request.method==='DELETE'){

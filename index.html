@@ -82,6 +82,7 @@
         <button id="importBtn" type="button">📥 استيراد CSV / Excel</button><input id="csvInput" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
         <button id="exportBtn" type="button">📤 تصدير CSV</button>
         <button id="notificationsBtn" type="button">🔔 تفعيل إشعارات النظام</button>
+        <button id="outsideHoursNotificationsBtn" type="button" aria-pressed="false">🌙 تنبيهات خارج وقت العمل: متوقفة</button>
         <button id="soundAlertsBtn" type="button">🔊 التنبيهات الصوتية مفعلة</button>
         <button id="treatmentCatalogBtn" type="button">🧾 الإجراءات والخدمات والأسعار</button>
         <button id="labCasesBtn" class="lab-page-link" type="button">◆ حالات معمل الأسنان</button>
@@ -172,7 +173,7 @@
   </div>
 </section>
 <div id="alertRow" class="alert-row"><span>🔔</span><span id="alertText">يوجد تعديل جديد على قائمة المواعيد</span><button id="alertRowDismissBtn" class="alert-row-dismiss" type="button" hidden>إلغاء التنبيه</button></div>
-<div id="pwaUpdateBar" class="pwa-update"><span>يتوفر تحديث جديد للتطبيق.</span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
+<div id="pwaUpdateBar" class="pwa-update"><span class="pwa-update-copy"><strong id="pwaUpdateTitle">يتوفر تحديث جديد للتطبيق.</strong><small id="pwaUpdateSummary">تصحيح الخطط العلاجية ومشاركتها، وتنظيم التنبيهات.</small></span><button id="pwaUpdateBtn" type="button">تحديث الآن</button></div>
 <aside id="doctorFloatingAlerts" class="doctor-floating-alerts clinic-only" hidden aria-live="polite">
   <button id="doctorFloatingAlertBtn" class="doctor-floating-alert-button" type="button" aria-haspopup="dialog" aria-controls="doctorFloatingAlertPanel" aria-expanded="false" title="تنبيهات واعتمادات الطبيب">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.35-1.67h-4.7A2.5 2.5 0 0 0 12 22Zm7-6.5-1.5-1.7V9a5.51 5.51 0 0 0-4.25-5.36V3a1.25 1.25 0 0 0-2.5 0v.64A5.51 5.51 0 0 0 6.5 9v4.8L5 15.5V18h14v-2.5Z"/></svg>
@@ -501,5 +502,5 @@
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
 <script src="./patient-summary.js?v=20260902-appointment-entry"></script>
-<script src="./dashboard.js?v=20260907-payment-plan-addendum"></script>
+<script src="./dashboard.js?v=20260907-notification-hours"></script>
 </body></html>
