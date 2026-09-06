@@ -3220,6 +3220,21 @@ async function indexPaymentLinkedTreatmentPlan(plan,patient){
   });
   const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'تعذر فهرسة الخطة العلاجية');
 }
+async function verifyPaymentLinkedTreatmentPlan(params,planNo){
+  const verifyParams=new URLSearchParams(params);verifyParams.set('planNo',String(planNo||''));
+  const response=await request(`${PLAN_API}?${verifyParams.toString()}`,{},20000),data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.exists||String(data.plan?.meta?.planNo||'')!==String(planNo||''))throw new Error(data.error||'تعذر التحقق من حفظ الخطة المرتبطة بأمر الدفع');
+  return data.plan;
+}
+async function indexPaymentLinkedTreatmentPlanWithRetry(plan,patient){
+  let lastError;
+  for(let attempt=0;attempt<3;attempt+=1){
+    try{await indexPaymentLinkedTreatmentPlan(plan,patient);return true}catch(error){lastError=error}
+    if(attempt<2)await new Promise(resolve=>setTimeout(resolve,350*(attempt+1)));
+  }
+  console.warn('Payment-linked treatment plan registry update pending',lastError);
+  return false;
+}
 async function ensureTreatmentPlanFromPayment(patient,items,requestedAt,{vatConfirmed=false}={}){
   if(!patient||!Array.isArray(items)||!items.length)return null;
   const identity=patientWithDirectoryIdentity(patient),params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID});
@@ -3235,8 +3250,9 @@ async function ensureTreatmentPlanFromPayment(patient,items,requestedAt,{vatConf
   if(saved.existing&&saved.plan){
     return{created:false,status:String(saved.plan.meta?.status||'draft'),planNo:String(saved.plan.meta?.planNo||''),carriedForward:Boolean(saved.carriedForward)};
   }
-  await indexPaymentLinkedTreatmentPlan(plan,patient);
-  return{created:true,status:plan.meta.status,planNo:plan.meta.planNo,carriedForward:false};
+  await verifyPaymentLinkedTreatmentPlan(params,plan.meta.planNo);
+  const indexed=await indexPaymentLinkedTreatmentPlanWithRetry(plan,patient);
+  return{created:true,status:plan.meta.status,planNo:plan.meta.planNo,carriedForward:false,registryPending:!indexed};
 }
 function syncPaymentPlanChoice(){
   const input=$('planDraftCheck'),title=$('planDraftChoiceTitle'),help=$('planDraftChoiceHelp'),choice=input?.closest('.completion-choice'),vatField=$('paymentPlanVatField'),vatInput=$('paymentPlanVatConfirmedCheck');if(!input||!title||!help)return;
@@ -5408,13 +5424,18 @@ function yahyaAssistantAnswer(question){
 function initYahyaAssistant(){
   const button=$('yahyaAssistantBtn'),panel=$('yahyaAssistantPanel'),close=$('yahyaAssistantClose'),form=$('yahyaAssistantForm'),input=$('yahyaAssistantInput');if(!button||!panel||!close||!form||!input)return;
   yahyaAssistantLabels();yahyaAssistantAddMessage(lang==='en'?'Hello, I am Hassina. Ask me about any dashboard icon or procedure, and I will guide you step by step.':'مرحباً، أنا حسينة. اسأليني عن أي أيقونة أو إجراء في الداشبورد وسأرشدك خطوة بخطوة.');
-  const setOpen=open=>{panel.hidden=!open;panel.setAttribute('aria-hidden',String(!open));button.setAttribute('aria-expanded',String(open));if(open){yahyaAssistantLabels();setTimeout(()=>input.focus(),30)}};
+  let idleTimer=0,lastActivityAt=0;
+  const scheduleIdle=()=>{clearTimeout(idleTimer);if(!panel.hidden)return;idleTimer=setTimeout(()=>button.classList.add('is-idle'),5000)};
+  const wakeAssistant=(force=false)=>{const now=Date.now();button.classList.remove('is-idle');if(force||now-lastActivityAt>500){lastActivityAt=now;scheduleIdle()}};
+  const setOpen=open=>{panel.hidden=!open;panel.setAttribute('aria-hidden',String(!open));button.setAttribute('aria-expanded',String(open));button.classList.remove('is-idle');clearTimeout(idleTimer);if(open){yahyaAssistantLabels();setTimeout(()=>input.focus(),30)}else scheduleIdle()};
   const closeAssistant=event=>{event?.preventDefault();event?.stopPropagation();setOpen(false);button.focus()};
-  button.addEventListener('click',()=>setOpen(panel.hidden));close.addEventListener('click',closeAssistant);close.addEventListener('pointerup',closeAssistant);
+  button.addEventListener('click',()=>{wakeAssistant(true);setOpen(panel.hidden)});button.addEventListener('pointerenter',()=>wakeAssistant(true));close.addEventListener('click',closeAssistant);close.addEventListener('pointerup',closeAssistant);
   document.addEventListener('click',event=>{if(event.target.closest('#yahyaAssistantClose'))closeAssistant(event)});
   form.addEventListener('submit',event=>{event.preventDefault();const question=input.value.trim();if(!question)return;yahyaAssistantAddMessage(question,'user');input.value='';yahyaAssistantAnswer(question)});
   document.querySelectorAll('[data-yahya-question]').forEach(quick=>quick.addEventListener('click',()=>{const question=quick.dataset.yahyaQuestion||'';yahyaAssistantAddMessage(question,'user');yahyaAssistantAnswer(question)}));
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)setOpen(false)});
+  document.addEventListener('pointermove',()=>wakeAssistant(),{passive:true});document.addEventListener('touchstart',()=>wakeAssistant(true),{passive:true});document.addEventListener('scroll',()=>wakeAssistant(),{passive:true});
+  document.addEventListener('keydown',event=>{wakeAssistant();if(event.key==='Escape'&&!panel.hidden)setOpen(false)});
+  scheduleIdle();
 }
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;if(!isStandalone())$('installBtn').hidden=false});
 window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true;toast('تم التثبيت','أصبح Best Care Flow متاحًا كتطبيق على الجهاز')});

@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { patientIdentityKeys } from './lib/patient-identity.mjs';
 import { sendPushNotifications } from './lib/push.mjs';
@@ -23,6 +23,16 @@ const versionedPlanKey = (clinicId, date, patientId, planNo) => `clinics/${clini
 const scopeKey = ({ clinicId, date, patientId, planNo }) => hash(`${clinicId}|${date}|${patientId}|${planNo}`);
 const tokenKey = tokenHash => `tokens/${tokenHash}`;
 const activeKey = scope => `active/${scopeKey(scope)}`;
+const wait = duration => new Promise(resolve => setTimeout(resolve, duration));
+
+async function retryBlobOperation(operation, attempts = 3) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try { return await operation(); } catch (error) { lastError = error; }
+    if (attempt < attempts - 1) await wait(120 * (attempt + 1));
+  }
+  throw lastError;
+}
 
 const consentDigest = plan => hash(JSON.stringify({
   planNo: plan?.meta?.planNo || '',
@@ -86,6 +96,11 @@ async function loadLinkedPlan(link) {
   const versionedKey = versionedPlanKey(link.clinicId, link.date, link.patientId, link.planNo);
   let record = await planStore.get(versionedKey, { type: 'json', consistency: 'strong' });
   let planKey = versionedKey;
+  if (!record && link.planKey && cleanText(link.planKey, 240) !== versionedKey) {
+    const storedKey = cleanText(link.planKey, 240);
+    const linked = await planStore.get(storedKey, { type: 'json', consistency: 'strong' });
+    if (linked?.plan?.meta?.planNo === link.planNo) { record = linked; planKey = storedKey; }
+  }
   if (!record) {
     const legacyKey = legacyPlanKey(link.clinicId, link.date, link.patientId);
     const legacy = await planStore.get(legacyKey, { type: 'json', consistency: 'strong' });
@@ -214,14 +229,16 @@ async function createConsentLink(request, body) {
   const issuedAt = Date.parse(plan?.meta?.issuedAt || '') || Date.now();
   const planExpiresAt = issuedAt + Math.max(1, Math.min(90, Number(plan?.meta?.validityDays || 15))) * 24 * 60 * 60 * 1000;
   if (planExpiresAt <= Date.now()) return reply({ error: 'انتهت صلاحية الخطة. حدّث تاريخها قبل إرسالها للمريض.' }, 409);
-  const token = randomBytes(32).toString('base64url');
+  const planDigest = consentDigest(plan);
+  const tokenSecret = String(process.env.AUTH_SESSION_SECRET || '');
+  const token = createHmac('sha256', tokenSecret).update(`${scopeKey(scope)}|${planDigest}`).digest('base64url');
   const tokenHash = hash(token);
   const now = Date.now();
   const link = {
-    id: randomUUID(),
+    id: `consent-${hash(`${tokenHash}|${planDigest}`).slice(0, 36)}`,
     ...scope,
     planKey,
-    planDigest: consentDigest(plan),
+    planDigest,
     planRevision: Math.max(1, Number(plan?.meta?.revision || 1)),
     createdAt: now,
     createdBy: cleanText(auth.user?.displayName || auth.user?.username || 'الإدارة', 120),
@@ -229,10 +246,15 @@ async function createConsentLink(request, body) {
     expiresAt: 0,
     usedAt: 0
   };
-  await Promise.all([
-    consentStore.setJSON(tokenKey(tokenHash), link),
-    consentStore.setJSON(activeKey(scope), { tokenHash, consentId: link.id, createdAt: now })
+  await retryBlobOperation(() => consentStore.setJSON(tokenKey(tokenHash), link));
+  await retryBlobOperation(() => consentStore.setJSON(activeKey(scope), { tokenHash, consentId: link.id, createdAt: now }));
+  const [storedLink, storedActive] = await Promise.all([
+    retryBlobOperation(() => consentStore.get(tokenKey(tokenHash), { type: 'json', consistency: 'strong' })),
+    retryBlobOperation(() => consentStore.get(activeKey(scope), { type: 'json', consistency: 'strong' }))
   ]);
+  if (storedLink?.id !== link.id || storedActive?.tokenHash !== tokenHash) {
+    throw new Error('Consent link write verification failed');
+  }
   const consentUrl = new URL('/plan-consent.html', request.url);
   consentUrl.searchParams.set('token', token);
   return reply({ ok: true, consentId: link.id, url: consentUrl.toString(), expiresAt: null, validityPolicy: LINK_VALIDITY_POLICY });
@@ -368,16 +390,20 @@ async function signConsent(request, body) {
 }
 
 export default async request => {
-  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
-  const url = new URL(request.url);
-  if (request.method === 'GET') return readConsentLink(cleanText(url.searchParams.get('token'), 120));
-  if (request.method !== 'POST') return reply({ error: 'Method not allowed' }, 405);
-  if (!sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
-  let body;
-  try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
-  if (body?.action === 'create') return createConsentLink(request, body);
-  if (body?.action === 'sign') return signConsent(request, body);
-  return reply({ error: 'Invalid consent action' }, 400);
+  try {
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
+    const url = new URL(request.url);
+    if (request.method === 'GET') return readConsentLink(cleanText(url.searchParams.get('token'), 120));
+    if (request.method !== 'POST') return reply({ error: 'Method not allowed' }, 405);
+    if (!sameOriginRequest(request)) return reply({ error: 'Invalid request origin' }, 403);
+    let body;
+    try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
+    if (body?.action === 'create') return createConsentLink(request, body);
+    if (body?.action === 'sign') return signConsent(request, body);
+    return reply({ error: 'Invalid consent action' }, 400);
+  } catch {
+    return reply({ error: 'تعذر الوصول إلى خدمة توقيع الخطط مؤقتًا. لم يتم إنشاء أو إرسال أي رابط؛ أعد المحاولة.' }, 503);
+  }
 };
 
 export const __test = { consentDigest, publicSummary, cleanSignature, validToken, moneyTotals, CONSENT_VERSION, LINK_VALIDITY_POLICY };

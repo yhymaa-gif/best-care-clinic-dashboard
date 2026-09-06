@@ -17,6 +17,9 @@ test('a payment order creates a linked plan only when no plan already exists', a
   assert.match(ensureSource, /buildPaymentLinkedTreatmentPlan/);
   assert.match(ensureSource, /createIfMissing:true/);
   assert.match(ensureSource, /if\(saved\.existing&&saved\.plan\)/);
+  assert.match(ensureSource, /verifyPaymentLinkedTreatmentPlan\(params,plan\.meta\.planNo\)/);
+  assert.match(ensureSource, /indexPaymentLinkedTreatmentPlanWithRetry\(plan,patient\)/);
+  assert.match(ensureSource, /registryPending:!indexed/);
   assert.match(await read('netlify/functions/treatment-plan.mjs'), /if \(body\.createIfMissing === true\)/);
   assert.match(dashboard, /if\(paymentRequired\)[\s\S]*?ensureTreatmentPlanFromPayment\(p,selection\.items,paymentRequestedAt,\{vatConfirmed:paymentPlanVatConfirmed\}\)/);
 });

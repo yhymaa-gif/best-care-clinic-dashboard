@@ -69,7 +69,7 @@
     });
     let state;
     let cachedSharePdf=null,cachedShareImage=null,cachedShareSignature='',html2CanvasLoader=null;
-    let preparedShareFile=null,preparedShareFormat='pdf',preparedPreviewUrl='',preparedShareIsFinal=false,preparedConsentUrl='',preparedConsentId='',consentPollTimer=null;
+    let preparedShareFile=null,preparedShareFormat='pdf',preparedPreviewUrl='',preparedShareIsFinal=false,preparedConsentUrl='',preparedConsentId='',consentLinkPromise=null,consentPollTimer=null;
     const collapsedPhases=new Set();
 
     function toast(title,message=''){
@@ -146,18 +146,55 @@
       if(!preparedConsentUrl||state.meta.status!=='submitted')return;
       consentPollTimer=setInterval(pollConsentStatus,12000);
     }
+    const consentRetryWait=duration=>new Promise(resolve=>setTimeout(resolve,duration));
+    async function readConsentApiResponse(response){
+      const raw=await response.text().catch(()=>'');
+      try{return{data:raw?JSON.parse(raw):{},raw}}catch{return{data:{},raw}}
+    }
+    function consentLinkRequestError(response,data){
+      const message=String(data?.error||'').trim();
+      if(message)return new Error(message);
+      if(response.status===401)return new Error('انتهت جلسة الدخول. ارجع للداشبورد وسجّل الدخول ثم أعد فتح الخطة.');
+      if(response.status===403)return new Error('إنشاء رابط توقيع المريض متاح من واجهة الإدارة فقط.');
+      if(response.status===404)return new Error('لم تُعثر خدمة التوقيع على النسخة المحفوظة من هذه الخطة. احفظ الخطة ثم أعد المحاولة.');
+      if(response.status===409)return new Error('تغيّرت حالة الخطة. حدّث الصفحة ثم أنشئ رابط التوقيع من النسخة الأحدث.');
+      if(response.status>=500)return new Error('خدمة رابط التوقيع غير متاحة مؤقتًا. لم يتم إرسال رابط؛ أعد المحاولة بعد لحظات.');
+      return new Error('تعذر إنشاء رابط توقيع المريض. حدّث الصفحة ثم أعد المحاولة.');
+    }
     async function ensureConsentLink(){
       if(state.meta.status!=='submitted')return'';
+      if(workflowRole()!=='admin')throw new Error('اعتمد الطبيب الخطة؛ يجب فتحها من واجهة الإدارة لمشاركتها وإنشاء رابط توقيع المريض.');
       if(preparedConsentUrl)return preparedConsentUrl;
-      const response=await fetch(CONSENT_API,{
-        method:'POST',credentials:'include',headers:{'content-type':'application/json'},
-        body:JSON.stringify({action:'create',clinicId,date:appointmentDate,patientId,planNo:state.meta.planNo})
-      });
-      const data=await response.json().catch(()=>({}));
-      if(!response.ok||!data.url)throw new Error(data.error||'تعذر إنشاء رابط توقيع المريض');
-      preparedConsentUrl=String(data.url);preparedConsentId=String(data.consentId||'');
-      startConsentPolling();
-      return preparedConsentUrl;
+      if(consentLinkPromise)return consentLinkPromise;
+      consentLinkPromise=(async()=>{
+        let lastError=new Error('تعذر إنشاء رابط توقيع المريض.');
+        for(let attempt=0;attempt<3;attempt+=1){
+          const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+          try{
+            const response=await fetch(CONSENT_API,{
+              method:'POST',credentials:'include',cache:'no-store',signal:controller.signal,
+              headers:{'content-type':'application/json',accept:'application/json'},
+              body:JSON.stringify({action:'create',clinicId,date:appointmentDate,patientId,planNo:state.meta.planNo})
+            });
+            const {data}=await readConsentApiResponse(response);
+            if(response.ok&&data.url){
+              preparedConsentUrl=String(data.url);preparedConsentId=String(data.consentId||'');
+              startConsentPolling();
+              return preparedConsentUrl;
+            }
+            lastError=consentLinkRequestError(response,data);
+            if(response.status<500&&response.status!==408&&response.status!==429){lastError.retryable=false;throw lastError}
+          }catch(error){
+            if(error?.retryable===false)throw error;
+            if(error?.name==='AbortError')lastError=new Error('استغرقت خدمة رابط التوقيع وقتًا طويلًا. تحقق من الاتصال ثم أعد المحاولة.');
+            else if(error instanceof TypeError)lastError=new Error('تعذر الاتصال بخدمة رابط التوقيع. تحقق من الإنترنت ثم أعد المحاولة.');
+            else if(error instanceof Error)lastError=error;
+          }finally{clearTimeout(timer)}
+          if(attempt<2)await consentRetryWait(600*(attempt+1));
+        }
+        throw lastError;
+      })();
+      try{return await consentLinkPromise}finally{consentLinkPromise=null}
     }
     function toCents(value){if(value===''||value===null||value===undefined)return null;const n=Number(value);return Number.isFinite(n)?Math.round(n*100):null}
     function formatMoney(cents){return cents===null||cents===undefined?'—':`${moneyFormatter.format(cents/100)} ر.س`}
@@ -512,7 +549,7 @@
       $('rejectPlanBtn').hidden=workflowRole()!=='admin'||!['submitted','patient_accepted'].includes(status);
       const shareGroup=document.querySelector('.share-draft-buttons');
       shareGroup.hidden=workflowRole()!=='admin'||!['submitted','patient_accepted','approved','approved_signed'].includes(status)||!state.phases.some(phase=>phase.items.some(item=>item.service));
-      $('floatingWhatsappBtn').hidden=false;
+      $('floatingWhatsappBtn').hidden=workflowRole()==='clinic'&&status==='submitted';
       resetShareButtonLabels();
       const locked=status==='cancelled'||workflowRole()==='clinic'&&['submitted','patient_accepted','approved','approved_signed'].includes(status);
       document.body.classList.toggle('workflow-locked',locked);
@@ -919,6 +956,7 @@
       if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل المشاركة.');return}
       const label=format==='image'?'الصورة':'ملف PDF';
       if(state.meta.status==='submitted'){
+        if(workflowRole()!=='admin'){toast('بانتظار مشاركة الإدارة','اعتمد الطبيب الخطة بنجاح. افتحها من واجهة الإدارة لإنشاء رابط توقيع المريض ومشاركتها.');return}
         const missing=approvalMissing();
         if(missing.length){toast('تعذر إرسال الخطة للتوقيع',`أكمل: ${missing.join('، ')}`);renderProgress();return}
         if(!(await savePlan(true)))return;
