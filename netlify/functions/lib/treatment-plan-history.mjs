@@ -60,6 +60,9 @@ const candidateFromStored = (stored, key, requestedClinic) => {
     planNo: cleanText(meta.planNo, 40),
     parentPlanNo: cleanText(meta.parentPlanNo, 40),
     relation: meta.relation === 'addendum' ? 'addendum' : 'standalone',
+    preparedByRole: Number(meta.administrationPreparedAt || 0) > 0 && !Number(meta.doctorApprovedAt || 0) ? 'administration' : Number(meta.doctorApprovedAt || 0) > 0 ? 'doctor' : '',
+    administrationPreparedAt: Number(meta.administrationPreparedAt || 0),
+    administrationPreparedBy: cleanText(meta.administrationPreparedBy, 120),
     sourcePatientId,
     sourceDate,
     patientAcceptedAt: Number(meta.patientAcceptedAt || 0),
@@ -113,7 +116,7 @@ const mergeRecord = (existing, candidate) => {
   const primary = candidateAt >= existingAt ? candidate : existing;
   const secondary = primary === candidate ? existing : candidate;
   const merged = { ...secondary, ...primary };
-  ['fullName', 'fileNo', 'mobile', 'nationalId', 'planNo', 'sourcePatientId', 'sourceDate', 'parentPlanNo', 'relation', 'updatedBy'].forEach(field => {
+  ['fullName', 'fileNo', 'mobile', 'nationalId', 'planNo', 'sourcePatientId', 'sourceDate', 'parentPlanNo', 'relation', 'preparedByRole', 'administrationPreparedBy', 'updatedBy'].forEach(field => {
     if (!String(merged[field] || '').trim() && String(secondary[field] || '').trim()) merged[field] = secondary[field];
   });
   merged.createdAt = Number(existing.createdAt || candidate.createdAt || candidateAt || Date.now());

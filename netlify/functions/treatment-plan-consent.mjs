@@ -223,8 +223,9 @@ async function createConsentLink(request, body) {
   const { record, planKey } = await loadLinkedPlan(scope);
   const plan = record?.plan;
   if (!plan || plan?.meta?.planNo !== scope.planNo) return reply({ error: 'تعذر العثور على نسخة الخطة المحددة.' }, 404);
-  if (plan?.meta?.status !== 'submitted' || !Number(plan?.meta?.doctorApprovedAt || 0)) {
-    return reply({ error: 'يجب أن يعتمد الطبيب الخطة قبل إنشاء رابط التوقيع.' }, 409);
+  const preparedForSignature = Number(plan?.meta?.doctorApprovedAt || 0) > 0 || Number(plan?.meta?.administrationPreparedAt || 0) > 0;
+  if (plan?.meta?.status !== 'submitted' || !preparedForSignature) {
+    return reply({ error: 'يجب حفظ الخطة وتجهيزها للمراجعة قبل إنشاء رابط التوقيع.' }, 409);
   }
   const issuedAt = Date.parse(plan?.meta?.issuedAt || '') || Date.now();
   const planExpiresAt = issuedAt + Math.max(1, Math.min(90, Number(plan?.meta?.validityDays || 15))) * 24 * 60 * 60 * 1000;

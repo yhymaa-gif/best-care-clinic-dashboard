@@ -1149,8 +1149,8 @@ function adminPatientReasons(patient,clinicId=ACTIVE_CLINIC_ID){
   const planStatus=effectiveTreatmentPlanStatus(patient);
   const planCompliance=treatmentPlanComplianceState(patient,clinicId);
   const planCopy=lang==='en'
-    ?{draft:'Unapproved treatment-plan draft',submitted:'Doctor approved — share for patient signature',patient_accepted:'Legacy consent — signature completion required',approved:'Approved plan — signature pending',rejected:'Plan returned for revision'}
-    :{draft:'مسودة خطة غير معتمدة',submitted:'اعتمدها الطبيب — أرسلها لتوقيع المريض',patient_accepted:'موافقة قديمة — يلزم استكمال التوقيع',approved:'خطة معتمدة — التوقيع معلق',rejected:'خطة معادة للتعديل'};
+    ?{draft:'Treatment plan being prepared — open and share it',submitted:'Ready to share for patient signature',patient_accepted:'Legacy consent — signature completion required',approved:'Approved plan — signature pending',rejected:'Plan needs correction'}
+    :{draft:'خطة قيد الإعداد — افتحها وشاركها',submitted:'جاهزة للمشاركة وتوقيع المريض',patient_accepted:'موافقة قديمة — يلزم استكمال التوقيع',approved:'خطة معتمدة — التوقيع معلق',rejected:'خطة تحتاج تصحيحًا'};
   if(planCompliance)add(planCompliance.type,planCompliance.label,0);
   else if(planCopy[planStatus])add('plan',planCopy[planStatus],planStatus==='rejected'?1:0);
   const status=String(patient?.status||'waiting');
@@ -1990,8 +1990,8 @@ function treatmentPlanComplianceBadgeMarkup(patient,clinicId=ACTIVE_CLINIC_ID){
 }
 function planStatusLabels(){
   return lang==='en'
-    ?{draft:'Unapproved draft',submitted:'Doctor approved · awaiting patient signature',patient_accepted:'Legacy consent · signature pending',approved:'Plan approved',approved_signed:'Approved & signed',rejected:'Needs revision',cancelled:'Plan cancelled'}
-    :{draft:'مسودة غير معتمدة',submitted:'اعتمدها الطبيب · بانتظار توقيع المريض',patient_accepted:'موافقة قديمة · التوقيع معلق',approved:'خطة معتمدة',approved_signed:'خطة معتمدة وموقعة',rejected:'تحتاج تعديل',cancelled:'خطة ملغاة'};
+    ?{draft:'Being prepared',submitted:'Ready for patient signature',patient_accepted:'Legacy consent · signature pending',approved:'Plan approved',approved_signed:'Approved & signed',rejected:'Needs correction',cancelled:'Plan cancelled'}
+    :{draft:'قيد الإعداد',submitted:'جاهزة لتوقيع المريض',patient_accepted:'موافقة قديمة · التوقيع معلق',approved:'خطة معتمدة',approved_signed:'خطة معتمدة وموقعة',rejected:'تحتاج تصحيحًا',cancelled:'خطة ملغاة'};
 }
 function planStatusText(status){return planStatusLabels()[status]||String(status||'')}
 function photoConsentAlertState(record){
@@ -2895,9 +2895,12 @@ function applyPlanStatusMetadata(plan,nextStatus,rejectionReason='',cancellation
   plan.meta.lastPrintedAt=0;
   if(nextStatus!=='cancelled')Object.assign(plan.meta,{cancelledAt:0,cancelledBy:'',cancellationReason:''});
   if(nextStatus==='draft'){
-    Object.assign(plan.meta,{doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
+    Object.assign(plan.meta,{doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(nextStatus==='submitted'){
-    Object.assign(plan.meta,{doctorApprovedAt:now,doctorApprovedBy:actor,submittedAt:now,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
+    Object.assign(plan.meta,VIEW_MODE==='clinic'
+      ?{doctorApprovedAt:now,doctorApprovedBy:actor,administrationPreparedAt:0,administrationPreparedBy:''}
+      :{doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:now,administrationPreparedBy:actor},
+      {submittedAt:now,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(nextStatus==='patient_accepted'){
     Object.assign(plan.meta,{patientAcceptedAt:now,patientAcceptedBy:actor,approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(['approved','approved_signed'].includes(nextStatus)){
@@ -2919,7 +2922,7 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
 
   let rejectionReason='',cancellationReason='';
   const confirmations={
-    submitted:'هل تؤكد أن الطبيب راجع المسودة واعتمد إرسالها إلى الإدارة؟',
+    submitted:'هل تريد حفظ الخطة وتجهيزها لمراجعة وتوقيع المريض؟',
     patient_accepted:'هل تؤكد أن المريض أو الوصي وافق على الخطة ووقّع عليها؟',
     approved_signed:'هل تؤكد الاعتماد النهائي للخطة الموقعة؟',
     approved:'هل تؤكد اعتماد الخطة؟',
@@ -2959,6 +2962,9 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
       body:JSON.stringify({
         patient:updatedPlan.patient,status:nextStatus,rejectionReason,cancellationReason,
         planNo:updatedPlan.meta?.planNo||'',parentPlanNo:updatedPlan.meta?.parentPlanNo||'',relation:updatedPlan.meta?.relation||'standalone',sourcePatientId,sourceDate,
+        preparedByRole:updatedPlan.meta?.administrationPreparedAt?'administration':updatedPlan.meta?.doctorApprovedAt?'doctor':'',
+        administrationPreparedAt:updatedPlan.meta?.administrationPreparedAt||0,
+        administrationPreparedBy:updatedPlan.meta?.administrationPreparedBy||'',
         patientAcceptedAt:updatedPlan.meta?.patientAcceptedAt||0,
         patientAcceptedBy:updatedPlan.meta?.patientAcceptedBy||'',
         approvedAt:updatedPlan.meta?.approvedAt||0,
@@ -3230,7 +3236,7 @@ function buildPaymentLinkedTreatmentPlan(patient,items,requestedAt,{vatConfirmed
   const identity=patientWithDirectoryIdentity(patient),doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
   const planNo=paymentPlanNumber(identity,requestedAt),priced=(Array.isArray(items)?items:[]).every(item=>item.free||(item.beforePrice!==''&&item.beforePrice!==undefined&&item.afterPrice!==''&&item.afterPrice!==undefined)),status=paymentLinkedPlanStatus({priced,vatConfirmed}),submitted=status==='submitted';
   return{
-    meta:{planNo,issuedAt:new Date(Number(requestedAt)||Date.now()).toISOString(),validityDays:15,copyType:'patient',revision:1,status,relation:'standalone',parentPlanNo:'',doctorApprovedAt:submitted?Number(requestedAt):0,doctorApprovedBy:submitted?(doctor||'الطبيب'):'',submittedAt:submitted?Number(requestedAt):0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:'',sourceType:'payment_order',sourcePaymentRequestedAt:Number(requestedAt)},
+    meta:{planNo,issuedAt:new Date(Number(requestedAt)||Date.now()).toISOString(),validityDays:15,copyType:'patient',revision:1,status,relation:'standalone',parentPlanNo:'',doctorApprovedAt:submitted?Number(requestedAt):0,doctorApprovedBy:submitted?(doctor||'الطبيب'):'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:submitted?Number(requestedAt):0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:'',sourceType:'payment_order',sourcePaymentRequestedAt:Number(requestedAt)},
     clinic:{nameAr:String(currentClinic?.name||'عيادات أفضل عناية الاستشارية للأسنان'),nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
     patient:{fullName:String(identity.name||patient.name||''),fileNo:String(identity.file||patient.file||''),nationalId:String(identity.nationalId||patient.nationalId||''),nationality:'saudi',age:'',mobile:String(identity.phone||patient.phone||'')},
     doctor:{name:doctor,scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:doctor},
@@ -3243,7 +3249,7 @@ function buildPaymentLinkedTreatmentPlan(patient,items,requestedAt,{vatConfirmed
 }
 async function indexPaymentLinkedTreatmentPlan(plan,patient){
   const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{
-    method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({patient:plan.patient,status:plan.meta.status,planNo:plan.meta.planNo,parentPlanNo:'',relation:'standalone',sourceType:'payment_order',sourcePaymentRequestedAt:Number(plan.meta.sourcePaymentRequestedAt||0),sourcePatientId:String(patient.id),sourceDate:selectedDate,patientAcceptedAt:0,approvedAt:0,photoConsent:true,photoConsentRecorded:false,consentTermsVersion:0,lastPrintedAt:0})
+    method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({patient:plan.patient,status:plan.meta.status,planNo:plan.meta.planNo,parentPlanNo:'',relation:'standalone',sourceType:'payment_order',sourcePaymentRequestedAt:Number(plan.meta.sourcePaymentRequestedAt||0),preparedByRole:plan.meta.doctorApprovedAt?'doctor':'',administrationPreparedAt:0,administrationPreparedBy:'',sourcePatientId:String(patient.id),sourceDate:selectedDate,patientAcceptedAt:0,approvedAt:0,photoConsent:true,photoConsentRecorded:false,consentTermsVersion:0,lastPrintedAt:0})
   });
   const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'تعذر فهرسة الخطة العلاجية');
 }
@@ -3432,7 +3438,7 @@ async function confirmPatientCompletion(){
     }
     if(manualPlanDraft){
       await pushState();
-      toast(hadExistingPlan?'تم فتح خطة إضافية':'تم إنشاء مسودة الخطة',hadExistingPlan?'ستُحفظ كخطة إلحاقية جديدة دون تعديل الخطة السابقة.':'أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
+      toast(hadExistingPlan?'تم فتح خطة إضافية':'تم إنشاء مسودة الخطة',hadExistingPlan?'ستُحفظ كخطة إلحاقية جديدة دون تعديل الخطة السابقة.':'أكمل بيانات الخطة؛ ويمكن للإدارة حفظها ومشاركتها للتوقيع مباشرة دون اعتماد طبيب منفصل.');
       openTreatmentPlan(p.id,{newPlan:true});
       return;
     }
@@ -3441,7 +3447,7 @@ async function confirmPatientCompletion(){
       return;
     }
     if(paymentPlanResult?.created){
-      toast(paymentPlanResult.status==='submitted'?(lang==='en'?'Payment order and plan sent':'تم إرسال أمر الدفع والخطة'):(lang==='en'?'Payment order and plan draft saved':'حُفظ أمر الدفع ومسودة الخطة'),paymentPlanResult.status==='submitted'?(lang==='en'?'The plan is ready in Treatment Plans for sharing and patient signature.':'الخطة جاهزة في مركز الخطط للمشاركة وتوقيع المريض.'):(lang==='en'?'Doctor approval is required before sharing the signature link.':'يلزم اعتماد الطبيب قبل مشاركة رابط التوقيع.'));
+      toast(paymentPlanResult.status==='submitted'?(lang==='en'?'Payment order and plan sent':'تم إرسال أمر الدفع والخطة'):(lang==='en'?'Payment order and plan draft saved':'حُفظ أمر الدفع ومسودة الخطة'),paymentPlanResult.status==='submitted'?(lang==='en'?'The plan is ready in Treatment Plans for sharing and patient signature.':'الخطة جاهزة في مركز الخطط للمشاركة وتوقيع المريض.'):(lang==='en'?'Administration can open the plan and share it for signature directly.':'يمكن للإدارة فتح الخطة وحفظها ومشاركتها للتوقيع مباشرة.'));
       return;
     }
     const upcoming=flowLeadPatient();
@@ -5367,7 +5373,7 @@ $('roleClinicContinueBtn').addEventListener('click',()=>{
 const yahyaAssistantKnowledge=[
   {keys:['اضافه مريض','اضيف مريض','مريض جديد','اسم المريض','new patient'],ar:'لإضافة مريض: افتح «إضافة مريض»، أدخل الاسم الكامل ورقم الجوال ورقم الملف، ثم راجع وقت البداية والنهاية واضغط «حفظ وإضافة المريض». الحقول الإلزامية تمنع الحفظ الناقص.',en:'To add a patient, open “Add patient”, enter the full name, mobile number, file number, start and end time, then choose “Save and add patient”. Required fields prevent incomplete saves.',action:'settingsBtn',actionAr:'فتح الإعدادات',actionEn:'Open settings'},
   {keys:['مزامنه','مزامنة','تزامن','تحديث جهاز','sync','synchronization'],ar:'المزامنة تعمل من نفس مصدر البيانات بين الأجهزة. راجع شارة المزامنة في الرأس؛ خارج ساعات العمل تكون مخفّضة، ولا تحتاج إلى تحديث الصفحة كل دقيقة. عند تعذر الاتصال، اترك الصفحة مفتوحة وسيعاد المحاولة تلقائياً.',en:'All devices use the same data source. Check the sync badge in the header; outside working hours sync is reduced. Do not refresh every minute—the app retries automatically after a connection issue.',action:'syncBadge',actionAr:'عرض حالة المزامنة',actionEn:'View sync status'},
-  {keys:['خطة علاج','خطط علاجية','اعتماد خطة','مسوده','الخطة'],ar:'الخطة العلاجية تمر عادةً بهذه المراحل: مسودة الطبيب ← اعتماد الطبيب ← مراجعة الإدارة ← موافقة المريض وتوقيعه ← خطة معتمدة وموقعة. افتح مركز الخطط لمراجعة الحالة، ولا تُحذف الخطة السابقة عند إنشاء خطة لاحقة.',en:'A treatment plan normally moves through: doctor draft → doctor approval → administration review → patient consent/signature → approved and signed. Open the Plans Center to review the status; a later plan does not delete the previous one.',action:'treatmentPlanCenterBtn',actionAr:'فتح مركز الخطط',actionEn:'Open Plans Center'},
+  {keys:['خطة علاج','خطط علاجية','اعتماد خطة','مسوده','الخطة'],ar:'المسار المختصر للخطة: إعداد الإدارة وحفظها ← مشاركة نسخة المراجعة ورابط التوقيع ← موافقة المريض وتوقيعه ← خطة معتمدة وموقعة وجاهزة للطباعة. لا يلزم اعتماد طبيب منفصل داخل الداشبورد، ولا تُحذف الخطة السابقة عند إنشاء خطة لاحقة.',en:'The simplified plan flow is: administration prepares and saves → shares the review copy and signature link → patient consents and signs → approved, signed, and printable. No separate doctor-approval action is required in the dashboard, and later plans never delete earlier ones.',action:'treatmentPlanCenterBtn',actionAr:'فتح مركز الخطط',actionEn:'Open Plans Center'},
   {keys:['امر دفع','اوامر دفع','فاتورة','الدفع','payment','invoice'],ar:'أمر الدفع يرسل من صف المريض بعد اكتمال الإجراء. حدّد الإجراءات والعدد، ثم راجع الإجمالي والخصم والضريبة قبل الاعتماد. إذا اكتمل العلاج بلا أمر دفع يظهر تنبيه للإدارة لاستكمال المبلغ المتبقي.',en:'Create a payment order from the patient row after treatment. Select procedures and quantities, then review total, discount, and tax before approval. If treatment is completed without an order, administration receives a remaining-payment alert.',action:'paymentPanel',actionAr:'فتح إجراءات الدفع',actionEn:'Open payment actions'},
   {keys:['معمل','حاله معمل','مختبر','lab'],ar:'لإضافة حالة معمل اضغط «حالة جديدة» في مركز المعمل، واربطها برقم الملف أو الجوال أو الهوية عند الحاجة. اختر اسم المعمل وعدد الوحدات، ثم حرّك الحالة عبر: جاهزة للطباعة، أُرسلت للتنسيق، أُرسلت للمعمل، استلمها المعمل، تم تسليمها للمريض. العداد يحسب المدة منذ الإرسال.',en:'In the Lab Center choose “New case” and link it by file number, mobile, or ID when needed. Select the lab and units, then move it through ready to print, sent to coordination, sent to lab, received by lab, and delivered to patient. The timer starts at dispatch.',action:'floatingLabBtn',actionAr:'فتح حالات المعمل',actionEn:'Open Lab Cases'},
   {keys:['وصفه','وصفة','دواء','prescription','medicine'],ar:'الوصفة تُنشأ من إجراءات المريض بعد اكتمال العلاج. اختر الفئة (مضاد، مسكن، مضمضة)، ثم الدواء والجرعة والتكرار والمدة، واعتمدها قبل مشاركتها. يمكن فتح الوصفة لاحقاً من مركز الوصفات وطباعتها أو مشاركتها عبر واتساب.',en:'Create a prescription from the patient actions after treatment. Choose a category (antibiotic, analgesic, mouthwash), then medicine, dose, frequency, and duration. Approve before sharing; prescriptions remain available in the Prescriptions Center for printing or WhatsApp.',action:'treatmentPlanCenterBtn',actionAr:'فتح مركز العمليات',actionEn:'Open Operations Center'},

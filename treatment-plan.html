@@ -256,7 +256,7 @@
         <button id="saveBtn" class="primary" type="button">حفظ الخطة</button>
         <button id="doctorApproveShortcutBtn" class="doctor-approve-shortcut" type="button" hidden>
           <span class="doctor-approve-shortcut-icon" aria-hidden="true">✓</span>
-          <span id="doctorApproveShortcutLabel">اعتماد الطبيب للمسودة</span>
+          <span id="doctorApproveShortcutLabel">إرسال المسودة للإدارة</span>
         </button>
         <span class="share-draft-buttons action-proxy-control" role="group" aria-label="مشاركة الخطة عبر واتساب" aria-hidden="true">
           <button id="whatsappPlanBtn" type="button" aria-label="تجهيز الخطة PDF ومشاركتها عبر واتساب">
@@ -273,8 +273,8 @@
       </div>
     </nav>
     <div id="workflowTrack" class="workflow-track no-print" role="group" aria-label="حالة اعتماد الخطة">
-      <span class="workflow-step" data-workflow-step="draft"><i>1</i><b>إعداد المسودة</b></span>
-      <span class="workflow-step" data-workflow-step="submitted"><i>2</i><b>اعتماد الطبيب</b></span>
+      <span class="workflow-step" data-workflow-step="draft"><i>1</i><b>إعداد الخطة</b></span>
+      <span class="workflow-step" data-workflow-step="submitted"><i>2</i><b>المشاركة والمراجعة</b></span>
       <span class="workflow-step" data-workflow-step="patient_accepted"><i>3</i><b>توقيع المريض</b></span>
       <span class="workflow-step" data-workflow-step="approved_signed"><i>4</i><b>الاعتماد النهائي</b></span>
     </div>
@@ -456,7 +456,7 @@
               <li>أي إجراء خارج الخطة يحتاج شرحًا وموافقة وخطة تكلفة جديدة.</li>
               <li>قرأت الملخص المالي وأفهم أن هذه الوثيقة عرض تقديري وليست فاتورة ضريبية.</li>
               <li>أوافق على سداد تكاليف الإجراءات التي أوافق عليها ويتم تنفيذها فعليًا وفق الأسعار الموضحة.</li>
-              <li>أوافق على بدء العلاج وفق المراحل الموضحة بعد توقيعي واعتماد الطبيب.</li>
+              <li>أوافق على بدء العلاج وفق المراحل الموضحة بعد توقيعي وتوثيق الموافقة.</li>
             </ol>
             <label class="photo-consent"><input id="photoConsent" type="checkbox" checked> أوافق اختياريًا على التصوير واستخدام الصور الطبية لغرض توثيق ومراجعة وضبط جودة النتيجة العلاجية، ولأغراض علمية وتعليمية بعد إخفاء الهوية. هذه الموافقة مستقلة وليست شرطًا للعلاج، ويمكن إلغاء اختيارها قبل الاعتماد.</label>
           </section>
@@ -538,6 +538,6 @@
     </div>
   </div>
 
-<script src="./treatment-plan.js?v=20260907-separate-consent-share"></script>
+<script src="./treatment-plan.js?v=20260907-admin-direct-plan"></script>
 </body>
 </html>

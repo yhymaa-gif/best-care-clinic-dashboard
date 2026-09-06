@@ -58,7 +58,7 @@
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
       clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:source.nationalId||'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -86,10 +86,11 @@
     function resetShareButtonLabels(){
       const finalPlan=isFinalPlanStatus();
       const awaitingSignature=state?.meta?.status==='submitted';
-      const label=finalPlan?'مشاركة الخطة النهائية PDF عبر واتساب':awaitingSignature?'مشاركة الخطة ثم رابط التوقيع':'مشاركة مسودة PDF عبر واتساب';
+      const adminDirect=workflowRole()==='admin'&&['draft','rejected'].includes(state?.meta?.status);
+      const label=finalPlan?'مشاركة الخطة النهائية PDF عبر واتساب':awaitingSignature?'مشاركة الخطة ثم رابط التوقيع':adminDirect?'حفظ ومشاركة الخطة للتوقيع':'مشاركة مسودة PDF عبر واتساب';
       $('whatsappPlanBtn').innerHTML=`<span class="whatsapp-draft-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 11.6a8 8 0 0 1-11.8 7L4 20l1.4-4.1A8 8 0 1 1 20 11.6Z"/><path d="M9 8.5c.4 2.6 2 4.2 4.6 4.8l1.2-1.1 2 .7c.1 1.2-.5 2-1.8 2.1-4.4-.2-7.6-3.4-8-7.8.2-1.2 1-1.7 2.1-1.5l.8 1.8Z"/></svg></span><span>${label}</span>`;
       $('whatsappPlanBtn').setAttribute('aria-label',label);
-      $('floatingWhatsappLabel').textContent=finalPlan?'واتساب الخطة النهائية':awaitingSignature?'الخطة ثم التوقيع':'واتساب المسودة';
+      $('floatingWhatsappLabel').textContent=finalPlan?'واتساب الخطة النهائية':awaitingSignature?'الخطة ثم التوقيع':adminDirect?'حفظ ثم توقيع':'واتساب المسودة';
       $('floatingWhatsappBtn').setAttribute('aria-label',label);
       $('floatingWhatsappBtn').removeAttribute('title');
       const group=document.querySelector('.share-draft-buttons');
@@ -112,7 +113,7 @@
       const planDescription=finalPlan
         ?'مرفق لكم الخطة العلاجية المعتمدة والموقعة.'
         :state.meta.status==='submitted'
-          ?includeConsentLink?'مرفق لكم الخطة العلاجية التي اعتمدها الطبيب. يرجى مراجعتها ثم فتح رابط التوقيع أدناه لتوثيق موافقتكم.':'مرفق لكم ملف الخطة العلاجية التي اعتمدها الطبيب. سيصلكم رابط المراجعة والتوقيع في رسالة واتساب مستقلة.'
+          ?includeConsentLink?'مرفق لكم الخطة العلاجية المعدّة وفق توجيهات الفريق المعالج. يرجى مراجعتها ثم فتح رابط التوقيع أدناه لتوثيق موافقتكم.':'مرفق لكم ملف الخطة العلاجية المعدّة وفق توجيهات الفريق المعالج. سيصلكم رابط المراجعة والتوقيع في رسالة واتساب مستقلة.'
           :'مرفق لكم الخطة العلاجية المقترحة (مسودة للاطلاع).';
       const consentLine=includeConsentLink&&!finalPlan&&preparedConsentUrl?`\n\nرابط مراجعة الخطة والتوقيع:\n${preparedConsentUrl}`:'';
       return `${greeting}\n\n${planDescription}${consentLine}\n\nمع تمنياتنا لكم بدوام الصحة والعافية،\nعيادات أفضل عناية الاستشارية للأسنان`;
@@ -175,7 +176,7 @@
     }
     async function ensureConsentLink(){
       if(state.meta.status!=='submitted')return'';
-      if(workflowRole()!=='admin')throw new Error('اعتمد الطبيب الخطة؛ يجب فتحها من واجهة الإدارة لمشاركتها وإنشاء رابط توقيع المريض.');
+      if(workflowRole()!=='admin')throw new Error('يجب فتح الخطة من واجهة الإدارة لمشاركتها وإنشاء رابط توقيع المريض.');
       if(preparedConsentUrl)return preparedConsentUrl;
       if(consentLinkPromise)return consentLinkPromise;
       consentLinkPromise=(async()=>{
@@ -562,7 +563,7 @@
     function workflowRole(){return viewMode==='clinic'?'clinic':'admin'}
     function renderWorkflow(){
       const status=['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'].includes(state.meta.status)?state.meta.status:'draft';
-      const labels={draft:'مسودة غير معتمدة لدى الطبيب',submitted:'اعتمدها الطبيب — بانتظار مشاركة الإدارة وتوقيع المريض',patient_accepted:'موافقة قديمة — يلزم استكمال التوقيع',approved:'معتمدة نهائيًا',approved_signed:'خطة معتمدة وموقعة',rejected:'أعادتها الإدارة — تحتاج تعديل الطبيب',cancelled:'الخطة ملغاة — محفوظة في السجل'};
+      const labels={draft:workflowRole()==='admin'?'قيد إعداد الإدارة — جاهزة للحفظ والمشاركة':'مسودة قيد الإعداد',submitted:'جاهزة للمشاركة وتوقيع المريض',patient_accepted:'موافقة قديمة — يلزم استكمال التوقيع',approved:'معتمدة نهائيًا',approved_signed:'خطة معتمدة وموقعة',rejected:workflowRole()==='admin'?'تحتاج تصحيحًا — يمكن للإدارة تعديلها ومشاركتها':'أعيدت للتصحيح',cancelled:'الخطة ملغاة — محفوظة في السجل'};
       $('workflowStatus').textContent=labels[status];$('workflowStatus').className=`workflow-pill ${status}`;
       const progressStatus=status==='approved'?'approved_signed':status;
       const order=['draft','submitted','patient_accepted','approved_signed'],position=order.indexOf(progressStatus);
@@ -575,14 +576,14 @@
       const doctorHandoffVisible=workflowRole()==='clinic'&&needsDoctorApproval;
       $('doctorHandoffCard').hidden=!doctorHandoffVisible;
       $('sendAdminBtn').disabled=!doctorHandoffVisible||!$('doctorApprovalCheck').checked;
-      $('doctorApproveShortcutBtn').hidden=!needsDoctorApproval;
-      $('doctorApproveShortcutBtn').classList.toggle('admin-guide',workflowRole()==='admin');
-      $('doctorApproveShortcutLabel').textContent=workflowRole()==='clinic'?'اعتماد الطبيب للمسودة':'فتح صفحة العيادة لاعتماد الطبيب';
+      $('doctorApproveShortcutBtn').hidden=workflowRole()!=='clinic'||!needsDoctorApproval;
+      $('doctorApproveShortcutBtn').classList.remove('admin-guide');
+      $('doctorApproveShortcutLabel').textContent='إرسال المسودة للإدارة';
       $('patientAcceptedBtn').hidden=workflowRole()!=='admin'||status!=='submitted';
       $('approvePlanBtn').hidden=workflowRole()!=='admin'||status!=='patient_accepted';
       $('rejectPlanBtn').hidden=workflowRole()!=='admin'||!['submitted','patient_accepted'].includes(status);
       const shareGroup=document.querySelector('.share-draft-buttons');
-      shareGroup.hidden=workflowRole()!=='admin'||!['submitted','patient_accepted','approved','approved_signed'].includes(status)||!state.phases.some(phase=>phase.items.some(item=>item.service));
+      shareGroup.hidden=workflowRole()!=='admin'||!['draft','submitted','patient_accepted','approved','approved_signed','rejected'].includes(status)||!state.phases.some(phase=>phase.items.some(item=>item.service));
       $('floatingWhatsappBtn').hidden=workflowRole()==='clinic'&&status==='submitted';
       resetShareButtonLabels();
       const locked=status==='cancelled'||workflowRole()==='clinic'&&['submitted','patient_accepted','approved','approved_signed'].includes(status);
@@ -593,7 +594,7 @@
       $('saveBtn').title=isReturnedRevision?'تُحفظ تعديلات الطبيب وتُعاد الخطة معتمدة إلى الإدارة مباشرة':'حفظ الخطة';
       $('saveBtn').classList.toggle('revision-submit',isReturnedRevision);
       $('saveBtn').disabled=locked;$('addPhaseBtn').disabled=locked;
-      $('printBtn').title=['approved','approved_signed'].includes(status)?'طباعة النسخة النهائية المعتمدة':'الطباعة متاحة بعد اعتماد الإدارة وموافقة المريض';
+      $('printBtn').title=['approved','approved_signed'].includes(status)?'طباعة النسخة النهائية المعتمدة':'الطباعة النهائية متاحة بعد توقيع المريض؛ ويمكن مشاركة نسخة المراجعة الآن';
       $('floatingPdfBtn').setAttribute('aria-label',$('printBtn').title||'طباعة الخطة أو حفظها PDF');
       $('floatingPdfBtn').removeAttribute('title');
       renderPhotoConsentWarning();
@@ -704,8 +705,11 @@
           method:'PUT',credentials:'include',headers:{'content-type':'application/json'},
           body:JSON.stringify({
             patient:state.patient,status,rejectionReason,
-            planNo:state.meta.planNo,parentPlanNo:state.meta.parentPlanNo||'',relation:state.meta.relation||'standalone',sourcePatientId:patientId,sourceDate:appointmentDate,
-            patientAcceptedAt:state.meta.patientAcceptedAt||0,
+             planNo:state.meta.planNo,parentPlanNo:state.meta.parentPlanNo||'',relation:state.meta.relation||'standalone',sourcePatientId:patientId,sourceDate:appointmentDate,
+             preparedByRole:Number(state.meta.administrationPreparedAt||0)>0&&!Number(state.meta.doctorApprovedAt||0)?'administration':Number(state.meta.doctorApprovedAt||0)>0?'doctor':'',
+             administrationPreparedAt:state.meta.administrationPreparedAt||0,
+             administrationPreparedBy:state.meta.administrationPreparedBy||'',
+             patientAcceptedAt:state.meta.patientAcceptedAt||0,
             patientAcceptedBy:state.meta.patientAcceptedBy||'',
             approvedAt:state.meta.approvedAt||0,
             approvedBy:state.meta.approvedBy||'',
@@ -737,6 +741,8 @@
       state.meta.status='submitted';
       state.meta.doctorApprovedAt=approvalTime;
       state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';
+      state.meta.administrationPreparedAt=0;
+      state.meta.administrationPreparedBy='';
       state.meta.submittedAt=approvalTime;
       state.meta.patientAcceptedAt=0;
       state.meta.patientAcceptedBy='';
@@ -771,9 +777,40 @@
       collectHeaderFields();const missing=missingFields();
       if(missing.length){toast('تعذر الإرسال',`أكمل: ${missing.join('، ')}`);renderProgress();return}
       const approvalTime=Date.now();
-      state.meta.status='submitted';state.meta.doctorApprovedAt=approvalTime;state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';state.meta.submittedAt=approvalTime;state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
+      state.meta.status='submitted';state.meta.doctorApprovedAt=approvalTime;state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';state.meta.administrationPreparedAt=0;state.meta.administrationPreparedBy='';state.meta.submittedAt=approvalTime;state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
       const saved=await savePlan(true);if(!saved){state.meta.status='draft';render();return}
       await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);render();toast('تم اعتماد المسودة وإرسالها','اعتمد الطبيب المسودة، وأصبحت الآن لدى الإدارة لاستكمال الإجراءات.');
+    }
+    async function prepareAdministrationPlanForSignature(){
+      if(workflowRole()!=='admin'||!['draft','rejected'].includes(state.meta.status))return state.meta.status==='submitted';
+      collectHeaderFields();
+      const missing=approvalMissing();
+      if(missing.length){toast('تعذر تجهيز الخطة للتوقيع',`أكمل: ${missing.join('، ')}`);renderProgress();return false}
+      const previousMeta={...state.meta},now=Date.now(),wasRejected=state.meta.status==='rejected';
+      state.meta.status='submitted';
+      state.meta.doctorApprovedAt=0;
+      state.meta.doctorApprovedBy='';
+      state.meta.administrationPreparedAt=now;
+      state.meta.administrationPreparedBy=currentUser?.displayName||currentUser?.username||'الإدارة';
+      state.meta.submittedAt=now;
+      state.meta.patientAcceptedAt=0;
+      state.meta.patientAcceptedBy='';
+      state.meta.approvedAt=0;
+      state.meta.approvedBy='';
+      state.meta.consentMethod='';
+      state.meta.consentEvidenceId='';
+      state.meta.consentPlanRevision=0;
+      state.meta.consentVersion=0;
+      state.meta.rejectedAt=0;
+      state.meta.rejectedBy='';
+      state.meta.rejectionReason='';
+      if(wasRejected)state.meta.revision=Math.max(1,Number(state.meta.revision||1)+1);
+      const saved=await savePlan(true);
+      if(!saved){state.meta=previousMeta;render();return false}
+      await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);
+      render();
+      toast('تم حفظ الخطة وتجهيزها للتوقيع','لا يلزم اعتماد منفصل من الطبيب؛ يتم الآن تجهيز نسخة المراجعة ورابط توقيع المريض.');
+      return true;
     }
     async function confirmPatientAcceptance(){
       if(workflowRole()!=='admin'||state.meta.status!=='submitted')return;
@@ -822,7 +859,9 @@
     function shareSheetParts(){
       collectHeaderFields();
       const finalPlan=isFinalPlanStatus();
-      const doctorApproved=state.meta.status==='submitted';
+      const awaitingPatientSignature=state.meta.status==='submitted';
+      const preparedByDoctor=awaitingPatientSignature&&Number(state.meta.doctorApprovedAt||0)>0;
+      const preparedByAdministration=awaitingPatientSignature&&Number(state.meta.administrationPreparedAt||0)>0&&!preparedByDoctor;
       const phases=state.phases.map((phase,index)=>({
         title:phase.title||`المرحلة ${index+1}`,
         items:phase.items.filter(item=>item.service).map(item=>({
@@ -839,13 +878,13 @@
       const generatedAt=dateTimeFormatter.format(new Date());
       const body=`<div class="share-plan ${finalPlan?'sp-final-plan':'sp-draft-plan'}" dir="rtl">
         <div class="sp-watermark" aria-hidden="true"></div>
-        <div class="sp-copy-label">${finalPlan?'نسخة نهائية للاطلاع':doctorApproved?'معتمدة من الطبيب — بانتظار توقيع المريض':'مسودة غير نهائية للاطلاع'}</div>
-        <div class="sp-document-body"><header><div><h1>عيادات أفضل عناية الاستشارية للأسنان</h1><p>${finalPlan?'الخطة العلاجية النهائية المعتمدة':doctorApproved?'خطة علاجية معتمدة من الطبيب':'خطة علاجية وعرض تكلفة تقديري'}</p></div><div class="sp-meta">رقم الخطة: ${escapeHtml(state.meta.planNo)}<br/>تاريخ الإصدار: ${dateFormatter.format(dates.issued)}${finalPlan?`<br/>تاريخ الطباعة: ${escapeHtml(generatedAt)}`:''}</div><img class="sp-logo-img" src="./best-care-logo.png" width="613" height="900" alt="شعار أفضل عناية"></header>
+        <div class="sp-copy-label">${finalPlan?'نسخة نهائية للاطلاع':awaitingPatientSignature?preparedByDoctor?'معتمدة من الطبيب — بانتظار توقيع المريض':preparedByAdministration?'أعدتها الإدارة — بانتظار توقيع المريض':'جاهزة للمراجعة — بانتظار توقيع المريض':'مسودة غير نهائية للاطلاع'}</div>
+        <div class="sp-document-body"><header><div><h1>عيادات أفضل عناية الاستشارية للأسنان</h1><p>${finalPlan?'الخطة العلاجية النهائية المعتمدة':awaitingPatientSignature?'خطة علاجية جاهزة لمراجعة وتوقيع المريض':'خطة علاجية وعرض تكلفة تقديري'}</p></div><div class="sp-meta">رقم الخطة: ${escapeHtml(state.meta.planNo)}<br/>تاريخ الإصدار: ${dateFormatter.format(dates.issued)}${finalPlan?`<br/>تاريخ الطباعة: ${escapeHtml(generatedAt)}`:''}</div><img class="sp-logo-img" src="./best-care-logo.png" width="613" height="900" alt="شعار أفضل عناية"></header>
         <div class="sp-patient"><span style="overflow-wrap:anywhere"><b>المريض</b>${escapeHtml(state.patient.fullName||'—')}</span><span><b>رقم الملف</b>${escapeHtml(state.patient.fileNo||'—')}</span><span><b>الجوال</b>${escapeHtml(state.patient.mobile||'—')}</span></div>
         <section class="sp-clinical"><h2>التشخيص والفحوصات</h2><p>${escapeHtml(DEFAULT_DIAGNOSIS)}</p><p><b>الإجراءات التشخيصية:</b> تم استكمال الإجراءات التشخيصية اللازمة للحالة ومراجعة النتائج، وقد تم أخذ كل ما يلزم منها وشرح التشخيص والخطة العلاجية المقترحة للمريض بصورة واضحة.</p>${state.clinical.radiographs?`<p><b>الفحوصات والصور:</b> ${escapeHtml(state.clinical.radiographs)}</p>`:''}</section>
         <main>${phaseHtml}</main>
         <section class="sp-finance"><span><b>قبل الخصم</b>${formatMoney(total.before)}</span><span><b>قيمة الخصم</b>${formatMoney(total.saving)}</span><span><b>بعد الخصم</b>${formatMoney(total.after)}</span><span class="net"><b>الصافي المستحق</b>${formatMoney(total.net)}</span></section>
-        <section class="sp-terms"><b>${finalPlan?'نسخة نهائية معتمدة:':doctorApproved?'اعتماد الطبيب:':'تنبيه مهم:'}</b> ${finalPlan?'هذه الخطة العلاجية معتمدة نهائيًا وفق الإجراءات والأسعار الموضحة.':doctorApproved?'راجع الطبيب هذه الخطة واعتمد إرسالها للمريض، وتصبح نهائية بعد إتمام موافقة وتوقيع المريض من الرابط الخاص.':'هذه مسودة للاطلاع وليست فاتورة أو اعتمادًا نهائيًا.'}</section>
+        <section class="sp-terms"><b>${finalPlan?'نسخة نهائية معتمدة:':awaitingPatientSignature?'نسخة مراجعة وتوقيع:':'تنبيه مهم:'}</b> ${finalPlan?'هذه الخطة العلاجية معتمدة نهائيًا وفق الإجراءات والأسعار الموضحة.':awaitingPatientSignature?'أُعدّت هذه الخطة وفق المعلومات والتوجيهات العلاجية المسجلة، وتصبح نهائية بعد مراجعة المريض وموافقته وتوقيعه من الرابط الخاص. تجهيز الإدارة للوثيقة لا يُعد قرارًا سريريًا مستقلًا.':'هذه مسودة للاطلاع وليست فاتورة أو اعتمادًا نهائيًا.'}</section>
         <section class="sp-full-consent">
           <div><h2>الشروط المالية والتنفيذية</h2><ol>
             <li>العرض ساري ${Number(state.meta.validityDays||15)} يومًا من تاريخ الإصدار، وتخضع الأسعار للتحديث بعد انتهاء الصلاحية.</li>
@@ -867,7 +906,7 @@
           </ol></div>
           <div class="sp-photo-consent"><h2>موافقة التصوير الاختيارية</h2><p>التصوير واستخدام الصور الطبية يكون لغرض التوثيق ومراجعة وضبط جودة النتيجة العلاجية، ولأغراض علمية وتعليمية بعد إخفاء الهوية. <b>${photoDecision}</b></p></div>
         </section>
-        <section class="sp-consent"><b>${finalPlan?'إقرار موثق:':'الإقرار قبل التوقيع:'}</b> الاطلاع على الخطة والأسعار والبنود أعلاه والموافقة على تنفيذها وسداد الإجراءات المنفذة يتم توثيقه بتوقيع المريض أو الوصي على النسخة المحددة.${doctorApproved&&preparedConsentUrl?`<div class="sp-consent-link"><b>رابط المراجعة والتوقيع:</b> ${escapeHtml(preparedConsentUrl)}</div>`:''}</section></div>
+        <section class="sp-consent"><b>${finalPlan?'إقرار موثق:':'الإقرار قبل التوقيع:'}</b> الاطلاع على الخطة والأسعار والبنود أعلاه والموافقة على تنفيذها وسداد الإجراءات المنفذة يتم توثيقه بتوقيع المريض أو الوصي على النسخة المحددة.${awaitingPatientSignature&&preparedConsentUrl?`<div class="sp-consent-link"><b>رابط المراجعة والتوقيع:</b> ${escapeHtml(preparedConsentUrl)}</div>`:''}</section></div>
         <footer><span>بيانات صحية شخصية — تعامل بسرية</span><span>عيادات أفضل عناية الاستشارية للأسنان · أبها</span></footer>
       </div>`;
       const css=`*{box-sizing:border-box}.share-plan{position:relative;isolation:isolate;display:flex;flex-direction:column;width:1120px;min-height:1640px;padding:42px 48px 38px;background:#fff;color:#203a31;font-family:"Best Care Arabic","IBM Plex Sans Arabic",Tahoma,Arial,sans-serif;font-kerning:normal;font-feature-settings:"kern" 1,"liga" 1,"calt" 1;overflow:hidden}.share-plan>*:not(.sp-watermark){position:relative;z-index:1}.sp-document-body{display:grid;flex:1;grid-template-rows:repeat(8,auto);align-content:space-between;row-gap:14px}.sp-watermark{position:absolute;inset:120px 76px 74px;z-index:0;background:url("./best-care-logo.png") center 50%/72% auto no-repeat;opacity:.032;filter:grayscale(1) contrast(1.08);pointer-events:none}.sp-copy-label{align-self:flex-start;min-width:230px;margin:0 0 16px;padding:10px 24px;border:2px solid #c96d75;border-radius:999px;background:#fff4f5;color:#9f2f39;text-align:center;font-size:18px;font-weight:800;line-height:1.45}.sp-final-plan .sp-copy-label{border-color:#6f9fc1;background:#edf6fc;color:#245d88}.share-plan header{display:grid;grid-template-columns:1fr 190px 92px;gap:16px;align-items:center;border-bottom:6px solid #287b5a;padding-bottom:12px}.sp-logo-img{display:block;width:88px;height:88px;object-fit:contain}.share-plan h1{margin:0;color:#1f6547;font-size:31px;font-weight:700}.share-plan header p{margin:5px 0 0;color:#6a7e75;font-size:17px}.sp-final-plan header p{color:#245d88;font-weight:700}.sp-meta{text-align:left;direction:rtl;font-size:14px;line-height:1.8;color:#596f66}.sp-patient{display:grid;grid-template-columns:2fr 1fr 1.2fr;gap:10px}.sp-patient span,.sp-finance span{padding:13px 14px;border:1px solid #cfe0d8;border-radius:12px;background:rgba(247,251,249,.92);font-size:16px}.sp-patient b,.sp-finance b{display:block;margin-bottom:5px;color:#527064;font-size:12px}.sp-clinical,.sp-terms,.sp-consent{padding:13px 15px;border:1px solid #d4e3dc;border-radius:12px;background:rgba(251,253,252,.92)}.sp-clinical h2{margin:0 0 7px;color:#21684a;font-size:18px;font-weight:700}.sp-clinical p,.sp-terms,.sp-consent{margin:4px 0;font-size:13px;line-height:1.65}.sp-full-consent{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;border:1px solid #d8c178;border-radius:12px;background:rgba(255,250,235,.96)}.sp-full-consent>div{padding:10px 12px;border:1px solid #eadba8;border-radius:9px;background:rgba(255,255,255,.8)}.sp-full-consent h2{margin:0 0 6px;color:#6f5313;font-size:15px}.sp-full-consent ol{margin:0;padding-inline-start:22px;font-size:11.5px;line-height:1.55}.sp-full-consent li+li{margin-top:2px}.sp-full-consent .sp-photo-consent{grid-column:1/-1;background:#f0f7ff;border-color:#b8d3ea}.sp-photo-consent h2{color:#235f88}.sp-photo-consent p{margin:0;font-size:12px;line-height:1.6}.sp-consent-link{margin-top:8px;padding:8px 10px;border-radius:8px;background:#eaf6f0;color:#185e42;direction:ltr;text-align:left;overflow-wrap:anywhere;font-size:11px}.sp-consent-link b{display:block;direction:rtl;text-align:right}.sp-phase{border:1px solid #bfd7cc;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.9)}.sp-phase+.sp-phase{margin-top:12px}.sp-phase h3{display:flex;align-items:center;gap:9px;margin:0;padding:10px 12px;background:rgba(234,245,240,.94);color:#235f48;font-size:16px;font-weight:700}.sp-phase h3 b{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#2b8060;color:#fff}.sp-phase table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}.sp-phase th,.sp-phase td{padding:8px 9px;border-bottom:1px solid #e1ebe6;text-align:right}.sp-phase th{background:rgba(247,250,248,.94);color:#47665a}.sp-phase th:first-child{width:48%}.sp-finance{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.sp-finance .net{background:rgba(223,242,232,.94);border-color:#78b697;color:#164f38}.sp-terms{border-color:#edcf83;background:rgba(255,249,231,.94);color:#634b13}.sp-final-plan .sp-terms{border-color:#8eb7d6;background:rgba(238,246,252,.94);color:#204d6d}.sp-consent{background:rgba(244,248,246,.94)}.share-plan footer{display:flex;justify-content:space-between;margin-top:16px;padding-top:11px;border-top:2px solid #d4e3dc;color:#697d75;font-size:11px}`;
@@ -997,7 +1036,7 @@
     async function sharePreparedPlan(){
       if(!preparedShareFile)return;
       collectHeaderFields();
-      const title=preparedShareIsFinal?'نسخة نهائية':state.meta.status==='submitted'?'خطة معتمدة من الطبيب':'مسودة';
+      const title=preparedShareIsFinal?'نسخة نهائية':state.meta.status==='submitted'?'خطة جاهزة لتوقيع المريض':'مسودة';
       const awaitingSignature=state.meta.status==='submitted'&&Boolean(preparedConsentUrl);
       const text=whatsappPlanMessage(preparedShareIsFinal,!awaitingSignature);
       const patientPhone=normalizeWhatsAppPhone(state.patient.mobile);
@@ -1046,12 +1085,15 @@
     }
     async function sendWhatsAppPlan(format='pdf'){
       collectHeaderFields();
-      const finalPlan=isFinalPlanStatus();
       const items=state.phases.flatMap(phase=>phase.items).filter(item=>item.service);
       if(!items.length){toast('لا توجد إجراءات','أضف إجراءً واحدًا على الأقل قبل المشاركة.');return}
       const label=format==='image'?'الصورة':'ملف PDF';
+      if(workflowRole()==='admin'&&['draft','rejected'].includes(state.meta.status)){
+        if(!(await prepareAdministrationPlanForSignature()))return;
+      }
+      const finalPlan=isFinalPlanStatus();
       if(state.meta.status==='submitted'){
-        if(workflowRole()!=='admin'){toast('بانتظار مشاركة الإدارة','اعتمد الطبيب الخطة بنجاح. افتحها من واجهة الإدارة لإنشاء رابط توقيع المريض ومشاركتها.');return}
+        if(workflowRole()!=='admin'){toast('بانتظار مشاركة الإدارة','الخطة جاهزة لدى الإدارة لإنشاء رابط توقيع المريض ومشاركتها.');return}
         const missing=approvalMissing();
         if(missing.length){toast('تعذر إرسال الخطة للتوقيع',`أكمل: ${missing.join('، ')}`);renderProgress();return}
         if(!(await savePlan(true)))return;
@@ -1157,8 +1199,8 @@
     async function printPlan(){
       if(!['approved','approved_signed'].includes(state.meta.status)){
         const guidance={
-          draft:workflowRole()==='clinic'?'اضغط «حفظ وإرسال للإدارة» أولًا.':'الخطة ما زالت مسودة لدى العيادة ولم تُرسل للإدارة.',
-          submitted:workflowRole()==='admin'?'اضغط «مشاركة الخطة + رابط التوقيع» لإرسال النسخة المعتمدة من الطبيب.':'الخطة لدى الإدارة بانتظار مشاركتها وتوقيع المريض.',
+          draft:workflowRole()==='clinic'?'احفظ المسودة، أو افتحها من الإدارة لإكمالها ومشاركتها.':'اضغط زر واتساب لحفظ الخطة وتجهيز رابط توقيع المريض مباشرة.',
+          submitted:workflowRole()==='admin'?'اضغط «مشاركة الخطة ثم رابط التوقيع» لإرسال نسخة المراجعة للمريض.':'الخطة لدى الإدارة بانتظار مشاركتها وتوقيع المريض.',
           patient_accepted:workflowRole()==='admin'?'استكمل توقيع المريض للخطة القديمة ثم اعتمدها.':'تم تسجيل موافقة قديمة وتحتاج استكمال التوقيع.',
           rejected:'الخطة تحتاج تعديلًا ثم إعادة إرسالها للإدارة.',
           cancelled:'هذه الخطة ملغاة ومحفوظة في السجل. يمكن للإدارة إعادتها إلى مسودة من مركز الخطط.'
@@ -1278,7 +1320,7 @@
         applyPaymentSourceToNewPlan();
       }else if(remoteResult?.carriedForward&&!local){
         const previousPlanNo=state.meta.planNo||'';
-        state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
+        state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
         state.consent={photoConsent:true,photoConsentRecorded:false,photoConsentDefaultVersion:2,photoConsentAcceptedAt:0,termsVersion:0};
         state.signatures={patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''};
         if(source.file)state.patient.fileNo=source.file;

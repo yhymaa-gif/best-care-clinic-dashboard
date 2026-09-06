@@ -77,6 +77,7 @@ export default async request => {
     const status = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'].includes(body?.status) ? body.status : '';
     if (!status) return reply({ error: 'Invalid status' }, 400);
     if (['patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'].includes(status) && user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
+    if (user.role !== 'admin' && (body?.preparedByRole === 'administration' || Number(body?.administrationPreparedAt || 0) > 0)) return reply({ error: 'Administration preparation metadata requires administration access' }, 403);
     const keys = patientIdentityKeys(body?.patient);
     if (!keys.length) return reply({ error: 'Patient identity required' }, 400);
 
@@ -130,6 +131,9 @@ export default async request => {
       relation: body?.relation === 'addendum' || previous.relation === 'addendum' ? 'addendum' : 'standalone',
       sourceType: body?.sourceType === 'payment_order' ? 'payment_order' : previous.sourceType || '',
       sourcePaymentRequestedAt: Math.max(0, Number(body?.sourcePaymentRequestedAt ?? previous.sourcePaymentRequestedAt ?? 0)),
+      preparedByRole: ['administration', 'doctor'].includes(body?.preparedByRole) ? body.preparedByRole : previous.preparedByRole || '',
+      administrationPreparedAt: Math.max(0, Number(body?.administrationPreparedAt ?? previous.administrationPreparedAt ?? 0)),
+      administrationPreparedBy: cleanText(body?.administrationPreparedBy, 120) || previous.administrationPreparedBy || '',
       sourcePatientId: sourcePatientId || previous.sourcePatientId || '',
       sourceDate: sourceDate || previous.sourceDate || '',
       patientAcceptedAt: Number(body?.patientAcceptedAt ?? previous.patientAcceptedAt ?? 0),
