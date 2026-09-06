@@ -8,10 +8,18 @@ const configured = () => Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAP
 const safeRole = role => role === 'admin' ? 'admin' : 'clinic';
 const safeClinic = id => /^clinic-([1-9]|1[0-5])$/.test(String(id || '')) ? String(id) : 'clinic-1';
 const safeColor = value => /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value) : '#176344';
+const RIYADH_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+export function isNotificationDeliveryWindow(value = Date.now()) {
+  const timestamp = Number(value);
+  if (!Number.isFinite(timestamp)) return false;
+  const riyadh = new Date(timestamp + RIYADH_OFFSET_MS);
+  return riyadh.getUTCDay() !== 5 && riyadh.getUTCHours() >= 14 && riyadh.getUTCHours() < 23;
+}
 
 export const publicVapidKey = () => process.env.VAPID_PUBLIC_KEY || '';
 
-export async function savePushSubscription(subscription, { user = null, clientId = '', clinicId = 'clinic-1', showPatientDetails = false } = {}) {
+export async function savePushSubscription(subscription, { user = null, clientId = '', clinicId = 'clinic-1', showPatientDetails = false, allowOutsideWorkHours = false } = {}) {
   if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) throw new Error('Invalid push subscription');
   if (!user?.username) throw new Error('Authenticated user required');
   await store().setJSON(keyFor(subscription.endpoint), {
@@ -21,6 +29,7 @@ export async function savePushSubscription(subscription, { user = null, clientId
     clientId: String(clientId || '').slice(0, 100),
     clinicId: safeClinic(clinicId),
     showPatientDetails: Boolean(showPatientDetails),
+    allowOutsideWorkHours: Boolean(allowOutsideWorkHours),
     updatedAt: Date.now(),
   });
 }
@@ -43,10 +52,12 @@ export async function sendPushNotifications(event, { excludeClientId = '' } = {}
   const pushStore = store();
   const listed = await pushStore.list({ prefix: 'subscriptions/' });
   const entries = Array.isArray(listed?.blobs) ? listed.blobs : [];
-  let sent = 0;
+  const withinDeliveryWindow = isNotificationDeliveryWindow();
+  let sent = 0, suppressed = 0;
   await Promise.allSettled(entries.map(async entry => {
     const record = await pushStore.get(entry.key, { type: 'json', consistency: 'strong' });
     if (!record?.subscription?.endpoint) return;
+    if (!withinDeliveryWindow && record.allowOutsideWorkHours !== true) { suppressed += 1; return; }
     if (excludeClientId && record.clientId === excludeClientId) return;
     // Administration receives alerts from every active clinic. Clinic users only
     // receive alerts belonging to their own clinic.
@@ -87,5 +98,5 @@ export async function sendPushNotifications(event, { excludeClientId = '' } = {}
       else console.warn('Push delivery failed', error?.statusCode || error?.message);
     }
   }));
-  return { sent };
+  return { sent, suppressed, outsideWorkingHours: !withinDeliveryWindow };
 }

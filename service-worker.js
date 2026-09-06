@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260907-payment-plan-addendum';
+const CACHE_NAME='bestcare-dashboard-v1-20260907-notification-hours';
 const APP_SHELL=[
   './',
   './index.html',
