@@ -19,6 +19,18 @@ test('doctor-approved plan sharing creates and includes a patient signature link
   assert.match(client, /إنشاء رابط توقيع المريض متاح من واجهة الإدارة فقط/);
   assert.match(client, /workflowRole\(\)!=='admin'/);
   assert.match(client, /رابط مراجعة الخطة والتوقيع/);
+  assert.match(html, /id="shareConsentWhatsappBtn"/);
+  assert.match(html, /إرسال رابط التوقيع منفصلًا عبر واتساب/);
+  assert.match(client, /function consentLinkOnlyMessage\(\)/);
+  assert.match(client, /function shareConsentLinkOnWhatsApp\(\)/);
+  assert.match(client, /whatsappPlanMessage\(preparedShareIsFinal,!awaitingSignature\)/);
+  assert.match(client, /opened-consent-link:/);
+  assert.match(client, /shareConsentWhatsappBtn'\)\.addEventListener\('click',shareConsentLinkOnWhatsApp\)/);
+  assert.match(client, /الشروط المالية والتنفيذية/);
+  assert.match(client, /بنود الموافقة المستنيرة/);
+  assert.match(client, /موافقة التصوير الاختيارية/);
+  assert.match(client, /يلتزم المريض بسداد تكلفة كل إجراء يوافق عليه ويتم تنفيذه فعليًا/);
+  assert.match(client, /هذه الموافقة مستقلة وليست شرطًا للعلاج/);
   assert.match(endpoint, /plan\?\.meta\?\.status !== 'submitted'/);
   assert.match(endpoint, /!Number\(plan\?\.meta\?\.doctorApprovedAt \|\| 0\)/);
   assert.match(config, /from = "\/api\/treatment-plan-consent"/);
@@ -55,7 +67,7 @@ test('a stored WhatsApp signature is restored visibly and protected from stale p
     read('netlify/functions/treatment-plan-consent.mjs')
   ]);
   assert.match(html, /id="storedSignatureNotice"/);
-  assert.match(html, /treatment-plan\.js\?v=20260907-payment-plan-addendum/);
+  assert.match(html, /treatment-plan\.js\?v=20260907-separate-consent-share/);
   assert.match(client, /function renderStoredPatientSignature\(\)/);
   assert.match(client, /renderStoredPatientSignature\(\);/);
   assert.match(client, /image\.src=signature/);

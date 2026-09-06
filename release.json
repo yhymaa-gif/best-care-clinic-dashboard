@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.07-notification-hours",
+  "version": "2026.09.07-separate-consent-share",
   "publishedAt": "2026-09-07",
   "summary": {
-    "ar": "تصحيح الخطط العلاجية ومشاركتها، وتنظيم التنبيهات حسب وقت العمل مع خيار فتحها لكل جهاز.",
-    "en": "Treatment-plan and sharing fixes, plus working-hours alerts with a per-device override."
+    "ar": "فصل ملف الخطة عن رابط التوقيع في واتساب، وإضافة الشروط والموافقة المستنيرة والتصوير إلى نسخة التوقيع.",
+    "en": "Separated plan files from WhatsApp signature links and added full terms, informed consent, and photography consent to signature copies."
   }
 }
