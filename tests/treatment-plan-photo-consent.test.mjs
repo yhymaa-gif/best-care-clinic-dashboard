@@ -24,8 +24,8 @@ test('editable legacy plans receive the new default once while signed plans keep
 
 test('photo-consent deployment refreshes the treatment-plan script and PWA shell', async () => {
   const [html, worker] = await Promise.all([read('treatment-plan.html'), read('service-worker.js')]);
-  assert.match(html, /treatment-plan\.js\?v=20260907-consent-link-reliability/);
-  assert.match(worker, /bestcare-dashboard-v1-20260907-payment-consent-reliability/);
+  assert.match(html, /treatment-plan\.js\?v=20260907-payment-plan-addendum/);
+  assert.match(worker, /bestcare-dashboard-v1-20260907-payment-plan-addendum/);
 });
 
 test('unsigned photography consent is explicit in the plan and administration views', async () => {

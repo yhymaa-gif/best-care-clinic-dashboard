@@ -68,3 +68,22 @@ test('payment procedures seed plan quantities and catalog prices without inventi
   assert.match(planClient, /teeth:\[\]/);
   assert.match(planClient, /state\.financial\.vatConfirmed=false/);
 });
+
+test('manual payment plan option creates a separate addendum and preserves the previous plan', async () => {
+  const [dashboard, planClient, planApi] = await Promise.all([
+    read('dashboard.js'),
+    read('treatment-plan.js'),
+    read('netlify/functions/treatment-plan.mjs')
+  ]);
+
+  assert.match(dashboard, /function openTreatmentPlan\(id,\{share=false,newPlan=false\}=\{\}\)/);
+  assert.match(dashboard, /params\.set\('newPlan','1'\)/);
+  assert.match(dashboard, /openTreatmentPlan\(p\.id,\{newPlan:true\}\)/);
+  assert.match(dashboard, /إضافة خطة علاجية إضافية/);
+  assert.match(dashboard, /if\(paymentPlanResult\.created\)current\.treatmentPlanPrintedAt=0/);
+  assert.match(planClient, /const requestedNewPlan=params\.get\('newPlan'\)==='1'/);
+  assert.match(planClient, /function startRequestedNewPlan\(previousPlan\)/);
+  assert.match(planClient, /state\.meta\.relation=previousPlanNo\?'addendum':'standalone'/);
+  assert.match(planClient, /state\.meta\.parentPlanNo=previousPlanNo/);
+  assert.match(planApi, /versionedPlanKey\(clinicId, date, patientId, existing\.plan\.meta\.planNo\)/);
+});

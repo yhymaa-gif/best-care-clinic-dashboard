@@ -2849,11 +2849,13 @@ function treatmentPlanButtonText(patient){
   if(lang==='en')return status?'Open plan':'Create treatment plan';
   return status?'فتح الخطة':'إنشاء خطة علاجية';
 }
-function openTreatmentPlan(id,{share=false}={}){
+function openTreatmentPlan(id,{share=false,newPlan=false}={}){
   const patient=patientById(id);if(!patient)return;
   const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),nationalId:String(patient.nationalId||''),procedure:String(patient.procedure||''),paymentItems:Array.isArray(patient.paymentItems)?patient.paymentItems:[],paymentDiscount:String(patient.paymentDiscount||''),paymentRequestedAt:Number(patient.paymentRequestedAt||0),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
   cacheTreatmentSource(patient.id,source);
-  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE});if(share&&effectiveTreatmentPlanStatus(patient)==='submitted')params.set('action','share');
+  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE});
+  if(share&&effectiveTreatmentPlanStatus(patient)==='submitted')params.set('action','share');
+  if(newPlan){params.set('newPlan','1');params.set('draftId',String(Date.now()))}
   location.href=`./treatment-plan.html?${params.toString()}`;
 }
 function openPrescription(id){
@@ -3256,7 +3258,7 @@ async function ensureTreatmentPlanFromPayment(patient,items,requestedAt,{vatConf
 }
 function syncPaymentPlanChoice(){
   const input=$('planDraftCheck'),title=$('planDraftChoiceTitle'),help=$('planDraftChoiceHelp'),choice=input?.closest('.completion-choice'),vatField=$('paymentPlanVatField'),vatInput=$('paymentPlanVatConfirmedCheck');if(!input||!title||!help)return;
-  const patient=patientById(pendingCompletionId),autoLinked=Boolean($('paymentRequiredCheck')?.checked&&patient&&!effectiveTreatmentPlanStatus(patient));
+  const patient=patientById(pendingCompletionId),hasExistingPlan=Boolean(patient&&effectiveTreatmentPlanStatus(patient)),autoLinked=Boolean($('paymentRequiredCheck')?.checked&&patient&&!hasExistingPlan);
   if(autoLinked){
     input.dataset.autoLinked='1';input.checked=true;input.disabled=true;choice?.classList.add('is-auto-linked');
     title.textContent=lang==='en'?'Treatment plan linked automatically':'خطة علاجية مرتبطة تلقائيًا';
@@ -3264,8 +3266,8 @@ function syncPaymentPlanChoice(){
     if(vatField)vatField.hidden=VIEW_MODE!=='clinic';
   }else{
     const wasAutomatic=input.dataset.autoLinked==='1';delete input.dataset.autoLinked;input.disabled=false;choice?.classList.remove('is-auto-linked');if(wasAutomatic)input.checked=false;
-    title.textContent=lang==='en'?'Create a treatment plan draft':'إنشاء مسودة خطة علاجية';
-    help.textContent=lang==='en'?'Open the plan form after saving so the doctor can complete and approve it.':'يفتح نموذج الخطة بعد الحفظ ليكمله الطبيب ثم يعتمده ويرسله للإدارة';
+    title.textContent=hasExistingPlan?(lang==='en'?'Add an additional treatment plan':'إضافة خطة علاجية إضافية'):(lang==='en'?'Create a treatment plan draft':'إنشاء مسودة خطة علاجية');
+    help.textContent=hasExistingPlan?(lang==='en'?'Creates a new addendum without changing or overwriting the existing plan.':'ينشئ خطة إلحاقية برقم جديد دون تعديل الخطة السابقة أو الكتابة عليها.'):(lang==='en'?'Open the plan form after saving so the doctor can complete and approve it.':'يفتح نموذج الخطة بعد الحفظ ليكمله الطبيب ثم يعتمده ويرسله للإدارة');
     if(vatField)vatField.hidden=true;if(vatInput)vatInput.checked=false;
   }
 }
@@ -3327,7 +3329,8 @@ async function confirmPatientCompletion(){
   const p=patientById(pendingCompletionId);if(!p)return;
   const paymentRequired=$('paymentRequiredCheck').checked;
   const createPlanDraft=$('planDraftCheck').checked;
-  const autoPaymentPlan=paymentRequired&&!effectiveTreatmentPlanStatus(p);
+  const hadExistingPlan=Boolean(effectiveTreatmentPlanStatus(p));
+  const autoPaymentPlan=paymentRequired&&!hadExistingPlan;
   const manualPlanDraft=createPlanDraft&&!autoPaymentPlan;
   const createPrescription=$('prescriptionCheck').checked;
   const selection=collectPaymentItems();
@@ -3354,7 +3357,7 @@ async function confirmPatientCompletion(){
     p.paymentRequestedAt=paymentRequestedAt;
     p.paymentAcknowledgedAt=0;
     p.paymentCompletedAt=0;
-    if(manualPlanDraft){
+    if(manualPlanDraft&&!hadExistingPlan){
       p.treatmentPlanStatus='draft';
       p.treatmentPlanUpdatedAt=Date.now();
     }
@@ -3376,7 +3379,7 @@ async function confirmPatientCompletion(){
       try{
         paymentPlanResult=await ensureTreatmentPlanFromPayment(p,selection.items,paymentRequestedAt,{vatConfirmed:paymentPlanVatConfirmed});
         if(paymentPlanResult?.status){
-          mutate(()=>{const current=patientById(p.id);if(current){current.treatmentPlanStatus=paymentPlanResult.status;current.treatmentPlanUpdatedAt=Date.now();current.treatmentPlanPrintedAt=0}});
+          mutate(()=>{const current=patientById(p.id);if(current){current.treatmentPlanStatus=paymentPlanResult.status;current.treatmentPlanUpdatedAt=Date.now();if(paymentPlanResult.created)current.treatmentPlanPrintedAt=0}});
           if(sync.dirty)await pushState();
           treatmentPlanRegistry.lastFetchedAt=0;
           await refreshTreatmentPlanRegistry(true);
@@ -3404,8 +3407,8 @@ async function confirmPatientCompletion(){
     }
     if(manualPlanDraft){
       await pushState();
-      toast('تم إنشاء مسودة الخطة','أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
-      openTreatmentPlan(p.id);
+      toast(hadExistingPlan?'تم فتح خطة إضافية':'تم إنشاء مسودة الخطة',hadExistingPlan?'ستُحفظ كخطة إلحاقية جديدة دون تعديل الخطة السابقة.':'أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
+      openTreatmentPlan(p.id,{newPlan:true});
       return;
     }
     if(paymentPlanError){

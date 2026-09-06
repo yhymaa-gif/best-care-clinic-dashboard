@@ -6,10 +6,12 @@
     const appointmentDate=params.get('date')||'';
     const clinicId=/^clinic-(?:[1-9]|1[0-5])$/.test(params.get('clinic')||'')?params.get('clinic'):'clinic-1';
     const requestedPlanNo=(params.get('planNo')||'').trim().slice(0,40);
+    const requestedNewPlan=params.get('newPlan')==='1';
+    const requestedDraftId=(params.get('draftId')||'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50);
     const requestedAction=params.get('action')==='share'?'share':'';
     const viewMode=params.get('view')==='clinic'?'clinic':'admin';
     const SOURCE_KEY=`bestcare_treatment_source_${patientId}`;
-    const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}_${requestedPlanNo||'latest'}`;
+    const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}_${requestedPlanNo||(requestedNewPlan?`new-${requestedDraftId||'draft'}`:'latest')}`;
     const LOCAL_DRAFT_TTL_MS=12*60*60*1000;
     const PLAN_API='/api/treatment-plan';
     const CONSENT_API='/api/treatment-plan-consent';
@@ -255,6 +257,28 @@
       // Price completeness does not prove the patient's tax treatment. Keep this
       // unchecked until an authorised user explicitly confirms it.
       state.financial.vatConfirmed=false;
+    }
+    function startRequestedNewPlan(previousPlan){
+      const previous=previousPlan&&typeof previousPlan==='object'?normalizeState(previousPlan):null;
+      const previousPlanNo=String(previous?.meta?.planNo||'');
+      state=normalizeState(null);
+      if(previous){
+        state.clinic={...state.clinic,...previous.clinic};
+        state.patient={...state.patient,...previous.patient};
+        state.doctor={...state.doctor,...previous.doctor};
+      }
+      state.patient.fullName=preferCompleteName(state.patient.fullName,source.name);
+      if(source.file)state.patient.fileNo=source.file;
+      if(source.phone)state.patient.mobile=source.phone;
+      if(source.nationalId)state.patient.nationalId=source.nationalId;
+      state.meta.relation=previousPlanNo?'addendum':'standalone';
+      state.meta.parentPlanNo=previousPlanNo;
+      state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
+      if(Array.isArray(source.paymentItems)&&source.paymentItems.length){
+        state.meta.sourceType='payment_order';
+        state.meta.sourcePaymentRequestedAt=Number(source.paymentRequestedAt||0);
+      }
+      applyPaymentSourceToNewPlan();
     }
     async function verifyAuth(){
       const setLocked=locked=>{
@@ -1172,9 +1196,11 @@
       const local=loadLocalPlan();
       const [remoteResult]=await Promise.all([loadRemote(),loadProcedureCatalog(false)]);
       const remote=remoteResult?.plan||null;
-      state=normalizeState(remote||local||null);
+      state=normalizeState(requestedNewPlan?(local||remote||null):(remote||local||null));
       state.patient.fullName=preferCompleteName(state.patient.fullName,source.name);
-      if(!remote&&!local){
+      if(requestedNewPlan&&!local){
+        startRequestedNewPlan(remote);
+      }else if(!remote&&!local){
         state.patient.fileNo=source.file||'';
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
@@ -1190,8 +1216,8 @@
       const compact=localStorage.getItem('bestcare_treatment_compact')!=='0';document.body.classList.toggle('compact-entry',compact);$('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
       hydrateFields();setupSignature();bindEvents();render();
       focusRequestedAction();
-      $('saveStatus').textContent=remoteResult?.carriedForward?'أُنشئ ملحق جديد مبني على خطة سابقة':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
-      $('saveStatus').classList.toggle('saved',Boolean(remote&&!remoteResult?.carriedForward));
+      $('saveStatus').textContent=requestedNewPlan?(local?'مسودة خطة إضافية محفوظة على الجهاز':(remote?'خطة إلحاقية جديدة — الخطة السابقة محفوظة':'مسودة جديدة')):remoteResult?.carriedForward?'أُنشئ ملحق جديد مبني على خطة سابقة':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
+      $('saveStatus').classList.toggle('saved',Boolean(remote&&!remoteResult?.carriedForward&&!requestedNewPlan));
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected','cancelled'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
       setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},15000);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));
