@@ -128,6 +128,8 @@ export default async request => {
       planNo: planNo || previous.planNo || '',
       parentPlanNo: cleanText(body?.parentPlanNo, 40) || previous.parentPlanNo || '',
       relation: body?.relation === 'addendum' || previous.relation === 'addendum' ? 'addendum' : 'standalone',
+      sourceType: body?.sourceType === 'payment_order' ? 'payment_order' : previous.sourceType || '',
+      sourcePaymentRequestedAt: Math.max(0, Number(body?.sourcePaymentRequestedAt ?? previous.sourcePaymentRequestedAt ?? 0)),
       sourcePatientId: sourcePatientId || previous.sourcePatientId || '',
       sourceDate: sourceDate || previous.sourceDate || '',
       patientAcceptedAt: Number(body?.patientAcceptedAt ?? previous.patientAcceptedAt ?? 0),

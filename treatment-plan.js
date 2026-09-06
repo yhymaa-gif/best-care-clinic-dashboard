@@ -6,6 +6,7 @@
     const appointmentDate=params.get('date')||'';
     const clinicId=/^clinic-(?:[1-9]|1[0-5])$/.test(params.get('clinic')||'')?params.get('clinic'):'clinic-1';
     const requestedPlanNo=(params.get('planNo')||'').trim().slice(0,40);
+    const requestedAction=params.get('action')==='share'?'share':'';
     const viewMode=params.get('view')==='clinic'?'clinic':'admin';
     const SOURCE_KEY=`bestcare_treatment_source_${patientId}`;
     const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}_${requestedPlanNo||'latest'}`;
@@ -18,7 +19,7 @@
     const dateTimeFormatter=new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const hijriFormatter=new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'});
     let activeItem={phase:0,item:0};
-    let signatureFixed=false;
+    let signatureFixed=false,signatureRenderSequence=0,renderedSignatureValue='';
     let saveTimer=0;
     let source={};
     let currentUser={role:viewMode};
@@ -206,6 +207,18 @@
       normalized.consent.photoConsentRecorded=next.consent?.photoConsentRecorded===true||(Number(next.consent?.termsVersion||0)>=2&&Number(normalized.meta.patientAcceptedAt||0)>0);
       return normalized;
     }
+    function applyPaymentSourceToNewPlan(){
+      const items=Array.isArray(source?.paymentItems)?source.paymentItems.filter(item=>String(item?.name||'').trim()):[];if(!items.length)return;
+      state.phases=[{index:0,title:'المرحلة العلاجية',estimatedVisits:'',estimatedDuration:'',items:items.map(item=>{
+        const catalog=procedureCatalog.find(option=>option.id===item.code)||procedureCatalog.find(option=>option.name===item.name),free=Boolean(item.free);
+        const before=free?0:(item.beforePrice??catalog?.beforePrice??''),after=free?0:(item.afterPrice??catalog?.afterPrice??'');
+        return{...blankItem(),code:String(item.code||'other'),service:String(item.name||''),customService:item.code==='other'?String(item.name||''):'',qty:Math.max(1,Math.min(99,Number(item.quantity||1))),unitPriceBefore:before,unitPriceAfter:after,beforePriceSource:before!==''?'catalog':'',afterPriceSource:after!==''?'catalog':'',priceSource:after!==''?'catalog':'',type:free?'included':'billable',includedLabel:free?'مجاني ضمن أمر الدفع':''};
+      })}];
+      state.clinical.notes='أُنشئت من الإجراءات المحددة في أمر الدفع.';
+      // Price completeness does not prove the patient's tax treatment. Keep this
+      // unchecked until an authorised user explicitly confirms it.
+      state.financial.vatConfirmed=false;
+    }
     async function verifyAuth(){
       const setLocked=locked=>{
         const app=document.querySelector('main.app');
@@ -339,6 +352,36 @@
       $('photoConsent').checked=Boolean(state.consent.photoConsent);
       state.signatures.signerName=(state.signatures.signerName||'').trim()||state.patient.fullName||'';
       $('signerName').value=state.signatures.signerName;
+      renderStoredPatientSignature();
+    }
+    function renderStoredPatientSignature(){
+      const canvas=$('patientSignature'),wrap=$('signatureCanvasWrap'),toggle=$('digitalSignToggle'),line=$('paperSignatureLine'),notice=$('storedSignatureNotice');
+      if(!canvas||!wrap||!toggle||!line)return;
+      const signature=String(state?.signatures?.patientSignature||'');
+      const hasStoredSignature=signature.startsWith('data:image/png;base64,');
+      const verifiedPatientLink=hasStoredSignature&&state?.meta?.status==='approved_signed'&&state?.meta?.consentMethod==='patient_link'&&Boolean(state?.meta?.consentEvidenceId);
+      if(hasStoredSignature){toggle.checked=true;wrap.classList.add('active','has-stored-signature');line.style.display='none'}
+      else{wrap.classList.remove('has-stored-signature');if(!toggle.checked)wrap.classList.remove('active');line.style.display=toggle.checked?'none':'block'}
+      toggle.disabled=verifiedPatientLink;
+      $('clearSignatureBtn').disabled=verifiedPatientLink;
+      $('fixSignatureBtn').disabled=verifiedPatientLink;
+      $('signerName').readOnly=verifiedPatientLink;
+      if(notice){notice.hidden=!hasStoredSignature;notice.textContent=verifiedPatientLink?'✓ توقيع المريض محفوظ وموثق من رابط التوقيع':'✓ يوجد توقيع محفوظ داخل الخطة'}
+      canvas.setAttribute('aria-label',verifiedPatientLink?'توقيع المريض المحفوظ والموثق':'لوحة توقيع المريض');
+      if(!hasStoredSignature){
+        if(renderedSignatureValue){canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);renderedSignatureValue=''}
+        signatureFixed=false;
+        return;
+      }
+      if(renderedSignatureValue===signature)return;
+      const sequence=++signatureRenderSequence,image=new Image();
+      image.onload=()=>{
+        if(sequence!==signatureRenderSequence||String(state?.signatures?.patientSignature||'')!==signature)return;
+        const context=canvas.getContext('2d');context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
+        renderedSignatureValue=signature;signatureFixed=true;
+      };
+      image.onerror=()=>{if(sequence===signatureRenderSequence){renderedSignatureValue='';signatureFixed=false;toast('تعذر عرض التوقيع المحفوظ','أعد تحميل الخطة؛ لن يتم مسح التوقيع من السجل.')}};
+      image.src=signature;
     }
     function planDates(){
       const issued=new Date(state.meta.issuedAt||Date.now());
@@ -514,6 +557,11 @@
     function render(){
       renderDocMeta();renderPhases();renderFinancials();renderProgress();renderWorkflow();
     }
+    function focusRequestedAction(){
+      if(requestedAction!=='share'||workflowRole()!=='admin'||state.meta.status!=='submitted')return;
+      const button=$('floatingWhatsappBtn');button?.classList.add('requested-share-action');
+      setTimeout(()=>{button?.focus();toast('الخطة جاهزة للمشاركة والتوقيع','اضغط زر واتساب الأخضر لتجهيز نسخة الخطة ورابط توقيع المريض.');},80);
+    }
     function markDirty(){
       if(state.meta.status==='cancelled')return;
       collectHeaderFields();
@@ -546,7 +594,7 @@
         try{
           const url=`${PLAN_API}?patientId=${encodeURIComponent(patientId)}&date=${encodeURIComponent(appointmentDate)}&clinic=${encodeURIComponent(clinicId)}`;
           const response=await fetch(url,{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({plan:state})});
-          if(!response.ok)throw new Error('تعذر الحفظ المركزي');
+          if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر الحفظ المركزي')}
         }catch(error){$('saveStatus').classList.remove('saved');$('saveStatus').textContent='محفوظ على هذا الجهاز فقط';if(!silent)toast('تعذر الحفظ المركزي',error.message);return false}
       }
       hasUnsyncedChanges=false;
@@ -1008,8 +1056,8 @@
       canvas.addEventListener('pointerdown',event=>{drawing=true;last=point(event);canvas.setPointerCapture(event.pointerId)});
       canvas.addEventListener('pointermove',event=>{if(!drawing)return;const next=point(event);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.quadraticCurveTo(last.x,last.y,(last.x+next.x)/2,(last.y+next.y)/2);ctx.stroke();last=next});
       const stop=()=>drawing=false;canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
-      $('clearSignatureBtn').addEventListener('click',()=>{ctx.clearRect(0,0,canvas.width,canvas.height);signatureFixed=false;state.signatures.patientSignature='';markDirty()});
-      $('fixSignatureBtn').addEventListener('click',()=>{state.signatures.patientSignature=canvas.toDataURL('image/png');signatureFixed=true;markDirty();toast('تم تثبيت التوقيع')});
+      $('clearSignatureBtn').addEventListener('click',()=>{ctx.clearRect(0,0,canvas.width,canvas.height);renderedSignatureValue='';signatureFixed=false;state.signatures.patientSignature='';renderStoredPatientSignature();markDirty()});
+      $('fixSignatureBtn').addEventListener('click',()=>{state.signatures.patientSignature=canvas.toDataURL('image/png');renderedSignatureValue=state.signatures.patientSignature;signatureFixed=true;renderStoredPatientSignature();markDirty();toast('تم تثبيت التوقيع')});
     }
     function bindEvents(){
       $('returnToLoginBtn').addEventListener('click',()=>location.href='./?view=admin');
@@ -1092,6 +1140,7 @@
         state.patient.fileNo=source.file||'';
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
+        applyPaymentSourceToNewPlan();
       }else if(remoteResult?.carriedForward&&!local){
         const previousPlanNo=state.meta.planNo||'';
         state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
@@ -1102,6 +1151,7 @@
       }
       const compact=localStorage.getItem('bestcare_treatment_compact')!=='0';document.body.classList.toggle('compact-entry',compact);$('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
       hydrateFields();setupSignature();bindEvents();render();
+      focusRequestedAction();
       $('saveStatus').textContent=remoteResult?.carriedForward?'أُنشئ ملحق جديد مبني على خطة سابقة':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote&&!remoteResult?.carriedForward));
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected','cancelled'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');

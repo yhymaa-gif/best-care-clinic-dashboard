@@ -421,21 +421,24 @@
   <h3 id="paymentModalTitle">اكتمال علاج المريض</h3>
   <p id="paymentPatientText">اختر الإجراءات المطلوبة بعد اكتمال العلاج.</p>
   <div class="completion-choice-grid" role="group" aria-label="إجراءات ما بعد اكتمال العلاج">
-    <label class="completion-choice">
+    <label class="completion-choice payment-choice">
       <input id="paymentRequiredCheck" type="checkbox">
+      <span class="completion-choice-icon" aria-hidden="true">💳</span>
       <span><strong id="paymentChoiceTitle">يوجد أمر دفع</strong><small id="paymentChoiceHelp">اختر الإجراءات والعدد، وحدد المجاني أو الخصم إن وجد</small></span>
     </label>
     <label class="completion-choice plan-choice">
       <input id="planDraftCheck" type="checkbox">
+      <span class="completion-choice-icon" aria-hidden="true">▤</span>
       <span><strong id="planDraftChoiceTitle">إنشاء مسودة خطة علاجية</strong><small id="planDraftChoiceHelp">يفتح نموذج الخطة بعد الحفظ ليكمله الطبيب ثم يعتمده ويرسله للإدارة</small></span>
     </label>
     <label class="completion-choice prescription-choice">
       <input id="prescriptionCheck" type="checkbox">
+      <span class="completion-choice-icon" aria-hidden="true">💊</span>
       <span><strong id="prescriptionChoiceTitle">إعداد وصفة علاجية</strong><small id="prescriptionChoiceHelp">اختر نوع العلاج، ثم يعتمد الطبيب الوصفة لتصل إلى مركز الوصفات بالإدارة</small></span>
     </label>
   </div>
   <p id="completionFlowNote" class="completion-flow-note"><b>المسار:</b> الطبيب يُكمل المسودة ويؤكد اعتمادها، ثم تستلمها الإدارة لإكمال الإجراءات والأسعار.</p>
-  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div class="payment-catalog-source"><div><strong id="paymentCatalogSourceTitle">قائمة الإجراءات والخدمات المركزية</strong><small id="paymentCatalogSourceHelp">تُدار من الإعدادات، ويظهر أي تعديل هنا تلقائيًا.</small><small id="paymentCatalogDoctor" class="payment-catalog-doctor"></small></div><button id="paymentCatalogRefreshBtn" type="button">↻ تحديث القائمة</button></div><div id="paymentOrderingNote" class="payment-ordering-note">★ المفضلة أولًا، ثم الإجراءات الأكثر استخدامًا لهذا الطبيب.</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div></div>
+  <div id="paymentActionField" class="payment-action-field" hidden><div id="paymentItemsLabel">إجراءات أمر الدفع</div><div class="payment-catalog-source"><div><strong id="paymentCatalogSourceTitle">قائمة الإجراءات والخدمات المركزية</strong><small id="paymentCatalogSourceHelp">تُدار من الإعدادات، ويظهر أي تعديل هنا تلقائيًا.</small><small id="paymentCatalogDoctor" class="payment-catalog-doctor"></small></div><button id="paymentCatalogRefreshBtn" type="button">↻ تحديث القائمة</button></div><div id="paymentOrderingNote" class="payment-ordering-note">★ المفضلة أولًا، ثم الإجراءات الأكثر استخدامًا لهذا الطبيب.</div><div id="paymentProcedureList" class="payment-procedure-list"></div><div class="payment-procedure-row payment-other-row"><label class="payment-procedure-name"><input id="paymentOtherCheck" type="checkbox"><span id="paymentOtherLabel">إجراء آخر</span></label><input id="paymentOtherInput" class="payment-other-input" type="text" maxlength="100" aria-label="اسم الإجراء الآخر" placeholder="اكتب الإجراء الآخر"><div class="payment-quantity"><small>العدد</small><span class="payment-stepper"><button type="button" data-payment-other-step="decrease" aria-label="إنقاص العدد">−</button><input id="paymentOtherQuantity" type="text" inputmode="numeric" readonly value="1" aria-label="عدد الإجراء الآخر"><button type="button" data-payment-other-step="increase" aria-label="زيادة العدد">+</button></span></div><label class="payment-free"><input id="paymentOtherFree" type="checkbox"><span>مجاني</span></label></div><div class="payment-discount-field"><label id="paymentDiscountLabel" for="paymentDiscountInput">الخصم (كتابة)</label><input id="paymentDiscountInput" type="text" maxlength="120" placeholder="مثال: خصم 10% أو خصم 100 ريال"></div><label id="paymentPlanVatField" class="payment-plan-vat-confirm" hidden><input id="paymentPlanVatConfirmedCheck" type="checkbox"><span><strong>تأكيد المعالجة الضريبية للخطة</strong><small>راجعت أهلية المريض والمعالجة الضريبية؛ يلزم هذا التأكيد لتكون الخطة جاهزة للمشاركة والتوقيع.</small></span></label></div>
   <section id="completionLabField" class="completion-lab-field" hidden aria-labelledby="completionLabTitle"><div class="completion-lab-head"><span class="completion-lab-icon" aria-hidden="true">🦷</span><div><strong id="completionLabTitle">حالة المعمل المرتبطة بالمريض</strong><small id="completionLabHelp">حدّث مرحلة التسليم عند إكمال الزيارة لتظهر مباشرة لدى الإدارة والمعمل.</small></div></div><div id="completionLabList" class="completion-lab-list"></div></section>
   <div class="modal-actions"><button type="button" data-close="paymentModal">إلغاء</button><button id="confirmCompletionBtn" type="button" class="primary">اعتماد إكمال العلاج والمتابعة</button></div>
 </div></div>
@@ -498,5 +501,5 @@
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
 <script src="./patient-summary.js?v=20260902-appointment-entry"></script>
-<script src="./dashboard.js?v=20260906-clear-status-notifications"></script>
+<script src="./dashboard.js?v=20260906-payment-plan-link"></script>
 </body></html>

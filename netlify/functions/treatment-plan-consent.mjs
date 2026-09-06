@@ -121,6 +121,18 @@ async function updatePlanCopies(link, record, updatedPlan, now) {
   return updatedRecord;
 }
 
+async function verifyStoredSignature(link, signature) {
+  const stored = await planStore.get(versionedPlanKey(link.clinicId, link.date, link.patientId, link.planNo), { type: 'json', consistency: 'strong' });
+  const storedSignature = String(stored?.plan?.signatures?.patientSignature || '');
+  if (stored?.plan?.meta?.status !== 'approved_signed'
+    || stored?.plan?.meta?.consentEvidenceId !== link.id
+    || !storedSignature
+    || hash(storedSignature) !== hash(signature)) {
+    throw new Error('تعذر التحقق من حفظ التوقيع داخل الخطة. أعد المحاولة.');
+  }
+  return stored;
+}
+
 async function updateRegistry(link, plan, now, signerName) {
   const current = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || {};
   const records = current.records && typeof current.records === 'object' ? { ...current.records } : {};
@@ -233,9 +245,11 @@ async function readConsentLink(token) {
   const { record } = await loadLinkedPlan(link);
   const plan = record?.plan;
   if (!plan) return reply({ error: 'لم تعد الخطة متاحة. تواصل مع العيادة.' }, 404);
-  if (Number(link.usedAt || 0) || (plan?.meta?.status === 'approved_signed' && plan?.meta?.consentEvidenceId === link.id)) {
+  const planSignedForLink = plan?.meta?.status === 'approved_signed' && plan?.meta?.consentEvidenceId === link.id && Boolean(plan?.signatures?.patientSignature);
+  if (planSignedForLink) {
     return reply({ ok: true, status: 'signed', signedAt: Number(link.usedAt || plan?.meta?.patientAcceptedAt || 0), summary: publicSummary(plan) });
   }
+  if (Number(link.usedAt || 0)) return reply({ error: 'تعذر التحقق من نسخة الخطة الموقعة. تواصل مع العيادة.' }, 409);
   if (plan?.meta?.status !== 'submitted' || consentDigest(plan) !== link.planDigest) {
     return reply({ error: 'تم تعديل الخطة بعد إرسال الرابط. اطلب النسخة الأحدث من العيادة.' }, 409);
   }
@@ -249,9 +263,16 @@ async function signConsent(request, body) {
   const { record } = await loadLinkedPlan(link);
   const plan = record?.plan;
   if (!plan) return reply({ error: 'لم تعد الخطة متاحة. تواصل مع العيادة.' }, 404);
-  if (Number(link.usedAt || 0) || (plan?.meta?.status === 'approved_signed' && plan?.meta?.consentEvidenceId === link.id)) {
-    return reply({ ok: true, duplicate: true, status: 'signed', signedAt: Number(link.usedAt || plan?.meta?.patientAcceptedAt || 0), photoConsent: plan?.consent?.photoConsent === true });
+  const planSignedForLink = plan?.meta?.status === 'approved_signed' && plan?.meta?.consentEvidenceId === link.id && Boolean(plan?.signatures?.patientSignature);
+  if (planSignedForLink) {
+    const signedAt = Number(link.usedAt || plan?.meta?.patientAcceptedAt || Date.now());
+    await Promise.all([
+      updateRegistry(link, plan, signedAt, cleanText(plan?.signatures?.signerName || plan?.meta?.patientAcceptedBy, 120)),
+      consentStore.setJSON(tokenKey(tokenHash), { ...link, usedAt: signedAt, signerName: cleanText(plan?.signatures?.signerName, 120), signerRole: link.signerRole || 'patient', guardianRelation: cleanText(plan?.signatures?.guardianRelation, 80) })
+    ]);
+    return reply({ ok: true, duplicate: true, stored: true, status: 'signed', signedAt, photoConsent: plan?.consent?.photoConsent === true });
   }
+  if (Number(link.usedAt || 0)) return reply({ error: 'تعذر التحقق من نسخة الخطة الموقعة. أعد المحاولة أو تواصل مع العيادة.' }, 409);
   if (plan?.meta?.status !== 'submitted' || consentDigest(plan) !== link.planDigest) {
     return reply({ error: 'تم تعديل الخطة بعد إرسال الرابط. اطلب النسخة الأحدث من العيادة.' }, 409);
   }
@@ -329,6 +350,7 @@ async function signConsent(request, body) {
   };
   await consentStore.setJSON(`evidence/${link.id}`, evidence);
   await updatePlanCopies(link, record, updatedPlan, now);
+  await verifyStoredSignature(link, signature);
   await updateRegistry(link, updatedPlan, now, signerName);
   await consentStore.setJSON(tokenKey(tokenHash), { ...link, usedAt: now, signerName, signerRole, guardianRelation });
   await sendPushNotifications({
@@ -342,7 +364,7 @@ async function signConsent(request, body) {
     url: `/treatment-plan.html?${new URLSearchParams({ patientId: link.patientId, date: link.date, planNo: link.planNo, clinic: link.clinicId, view: 'admin' })}`,
     updatedAt: now
   }).catch(() => null);
-  return reply({ ok: true, status: 'signed', signedAt: now, planNo: link.planNo, photoConsent });
+  return reply({ ok: true, stored: true, status: 'signed', signedAt: now, planNo: link.planNo, photoConsent });
 }
 
 export default async request => {

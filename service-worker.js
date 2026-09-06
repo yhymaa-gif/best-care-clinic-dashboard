@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260906-clear-status-notifications';
+const CACHE_NAME='bestcare-dashboard-v1-20260906-signature-persistence';
 const APP_SHELL=[
   './',
   './index.html',
