@@ -790,7 +790,7 @@ async function ensurePushSubscription(){
     const {publicKey}=await response.json();
     subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
   }
-  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID})});
+  const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID,showPatientDetails:VIEW_MODE==='admin'})});
   if(!saved.ok)throw new Error('Subscription save failed');
   localStorage.setItem('bestcare_push_registered','enabled');return true;
 }
@@ -862,7 +862,7 @@ async function showSystemNotification(event){
   if(!event||!systemNotificationsEnabled())return;
   if(localStorage.getItem('bestcare_push_registered')==='enabled'&&event.source!=='manual-test')return;
   if(event.type==='payment'&&VIEW_MODE!=='admin')return;
-  const options={body:event.body||'',icon:'./assets/icons/icon-192.png',badge:'./assets/icons/icon-192.png',tag:event.tag||`bestcare-${event.type||'update'}`,renotify:false,vibrate:[160,70,180],data:{url:viewUrl(event.type==='payment'?'admin':VIEW_MODE)}};
+  const options={body:event.body||'',icon:'./assets/icons/icon-192.png',badge:'./assets/icons/icon-192.png',color:event.color||'#176344',tag:event.tag||`bestcare-${event.type||'update'}`,renotify:false,vibrate:[160,70,180],data:{url:viewUrl(event.type==='payment'?'admin':VIEW_MODE)}};
   try{
     if('serviceWorker' in navigator){const registration=await navigator.serviceWorker.ready;await registration.showNotification(event.title,options)}
     else new Notification(event.title,options);
@@ -878,7 +878,14 @@ function detectRemoteNotification(previousPatients,previousAlert,data){
     if(Number(patient.paymentAcknowledgedAt||0)>Number(old.paymentAcknowledgedAt||0))return {type:'payment',title:lang==='en'?'Payment order received':'تم استلام أمر الدفع',body:lang==='en'?`Administration received the payment order for ${firstName(patient.name)}.`:`استلمت الإدارة أمر الدفع للمريض ${firstName(patient.name)}.`,tag:`payment-${patient.id}`};
     if(Number(patient.paymentCompletedAt||0)>Number(old.paymentCompletedAt||0))return {type:'payment',title:lang==='en'?'Payment completed':'تم تنفيذ الدفع',body:lang==='en'?`Payment was completed for ${firstName(patient.name)}.`:`تم تنفيذ الدفع للمريض ${firstName(patient.name)}.`,tag:`payment-${patient.id}`};
     if(String(patient.treatmentPlanStatus||'')!==String(old.treatmentPlanStatus||''))return {type:'patient',title:lang==='en'?'Treatment plan updated':'تحديث حالة الخطة العلاجية',body:`${firstName(patient.name)} — ${planStatusText(patient.treatmentPlanStatus)}`,tag:`plan-${patient.id}`};
-    if(String(patient.status||'')!==String(old.status||''))return {type:'patient',title:lang==='en'?'Patient status updated':'تحديث حالة مراجع',body:`${firstName(patient.name)} — ${statusText(patient.status)}`,tag:`patient-${patient.id}`};
+    if(String(patient.status||'')!==String(old.status||'')){
+      const statusCopy=lang==='en'
+        ?{waiting:['Appointment waiting','Waiting to enter','#2563eb'],arrived:['Patient arrived','Arrived at the clinic','#2563eb'],early_arrival:['Early arrival','Arrived early','#2563eb'],active:['Treatment started','Treatment started','#16a34a'],done:['Patient procedure complete','Procedure completed','#15803d'],late:['Patient is late','Late for the appointment','#ea580c'],asks_delay:['Delay requested','Requested an appointment delay','#ea580c'],cancel:['Patient appointment cancelled','Appointment cancelled','#dc2626'],left:['Patient left','Left the clinic','#dc2626']}
+        :{waiting:['موعد بانتظار الدخول','بانتظار الدخول','#2563eb'],arrived:['وصول مريض','وصل إلى العيادة','#2563eb'],early_arrival:['وصول مبكر','وصل مبكرًا','#2563eb'],active:['بدء علاج المريض','بدأ العلاج','#16a34a'],done:['اكتمال إجراء المريض','اكتمل الإجراء','#15803d'],late:['تأخر مريض عن الموعد','متأخر عن الموعد','#ea580c'],asks_delay:['طلب تأخير الموعد','طلب تأخير الموعد','#ea580c'],cancel:['إلغاء موعد مريض','أُلغي الموعد','#dc2626'],left:['مغادرة المريض','غادر العيادة','#dc2626']};
+      const copy=statusCopy[patient.status]||[lang==='en'?'Patient status updated':'تحديث حالة مريض',statusText(patient.status),'#176344'];
+      const at=patient.start||(lang==='en'?'time not set':'الوقت غير محدد');
+      return {type:'patient',title:copy[0],body:lang==='en'?`${patient.name} — ${at} — ${copy[1]}.`:`المريض ${patient.name} — الساعة ${at} — ${copy[1]}.`,actionLabel:copy[1],appointmentTime:patient.start||'',color:copy[2],tag:`patient-${patient.id}`};
+    }
   }
   const nextAlert=data?.updateAlert;
   if(nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))return {type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:lang==='en'?'Best Care update':'تنبيه جديد من أفضل عناية',body:String(nextAlert.message||tr('defaultAlert')),tag:`alert-${nextAlert.kind||'update'}`};

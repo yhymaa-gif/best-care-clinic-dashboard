@@ -9,6 +9,17 @@ const validDate=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||"");
 const validClinic=v=>/^clinic-([1-9]|1[0-5])$/.test(v||'');
 const cleanAlert=v=>({active:Boolean(v?.active),message:String(v?.message||"").slice(0,200),updatedAt:Number(v?.updatedAt||0),kind:String(v?.kind||"").slice(0,30)});
 const allowedStatuses=new Set(['waiting','arrived','early_arrival','active','done','late','cancel','left','asks_delay']);
+const patientStatusPush={
+ waiting:{title:'موعد بانتظار الدخول',actionLabel:'بانتظار الدخول',color:'#2563eb'},
+ arrived:{title:'وصول مريض',actionLabel:'وصل إلى العيادة',color:'#2563eb'},
+ early_arrival:{title:'وصول مبكر',actionLabel:'وصل مبكرًا',color:'#2563eb'},
+ active:{title:'بدء علاج المريض',actionLabel:'بدأ العلاج',color:'#16a34a'},
+ done:{title:'اكتمال إجراء المريض',actionLabel:'اكتمل الإجراء',color:'#15803d'},
+ late:{title:'تأخر مريض عن الموعد',actionLabel:'متأخر عن الموعد',color:'#ea580c'},
+ asks_delay:{title:'طلب تأخير الموعد',actionLabel:'طلب تأخير الموعد',color:'#ea580c'},
+ cancel:{title:'إلغاء موعد مريض',actionLabel:'أُلغي الموعد',color:'#dc2626'},
+ left:{title:'مغادرة المريض',actionLabel:'غادر العيادة',color:'#dc2626'}
+};
 const cleanPaymentItems=items=>(Array.isArray(items)?items:[]).slice(0,10).map(item=>({code:String(item?.code||'other').slice(0,40),name:String(item?.name||'').slice(0,100),quantity:Math.max(1,Math.min(99,Number(item?.quantity||1))),free:Boolean(item?.free)})).filter(item=>item.name);
 const cleanPatient=p=>({
  id:String(p?.id||'').slice(0,80),
@@ -70,7 +81,10 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
    events.push(decorate({type:'patient',title:statusCopy.title,body:statusCopy.body,tag:`treatment-plan-${patient.id}`},patient));
   }
   else if(Number(patient.treatmentPlanPrintedAt||0)>Number(old.treatmentPlanPrintedAt||0))events.push(decorate({type:'patient',title:'تمت طباعة الخطة العلاجية',body:'اكتمل اعتماد الخطة وتسجيل طباعتها لدى الإدارة.',tag:`treatment-plan-printed-${patient.id}`},patient));
-  else if(String(patient.status||'')!==String(old.status||''))events.push(decorate({type:'patient',title:'تحديث حالة مريض',body:'تم تحديث حالة أحد مرضى اليوم.',tag:`patient-${patient.id}`},patient));
+   else if(String(patient.status||'')!==String(old.status||'')){
+    const status=patientStatusPush[patient.status]||{title:'تحديث حالة مريض',actionLabel:'تم تحديث حالة المريض',color:'#176344'};
+    events.push(decorate({type:'patient',title:status.title,body:`موعد الساعة ${patient.start||'غير محددة'} — ${status.actionLabel}.`,actionLabel:status.actionLabel,appointmentTime:String(patient.start||''),color:status.color,tag:`patient-${patient.id}`},patient));
+   }
  }
  if(!events.length&&nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))events.push(decorate({type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:'تنبيه جديد من أفضل عناية',body:'يوجد تحديث جديد داخل لوحة المتابعة.',tag:`alert-${nextAlert.kind||'update'}`},after.find(patient=>String(nextAlert.message||'').includes(String(patient.name||'')))||{}));
  return events.slice(0,4);
@@ -103,3 +117,5 @@ export default async request=>{
     const events=pushEvents(existing?.patients||[],state.patients,existing?.updateAlert||{},state.updateAlert,clinic);const backgroundResults=await Promise.allSettled([upsertPatientDirectory(state.patients,{clinicId,date,updatedAt:state.updatedAt,actor:state.updatedBy,authoritativeImport:auth.user?.role==='admin'&&Boolean(body.directoryImport)}),...identityCorrections,...events.map(event=>sendPushNotifications({...event,date:state.date,revision:state.revision,updatedAt:state.updatedAt},{excludeClientId:state.clientId}))]);const directoryUpdated=backgroundResults[0]?.status==='fulfilled'&&Boolean(backgroundResults[0]?.value?.changed)||identityCorrections.some(result=>result?.status==='fulfilled');return reply({ok:true,revision:state.revision,updatedAt:state.updatedAt,pushEvents:events.length,directoryUpdated})}
  return reply({error:'Method not allowed'},405);
 };
+
+export const __test={pushEvents,patientStatusPush};

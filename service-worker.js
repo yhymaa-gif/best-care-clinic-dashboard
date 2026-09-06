@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260905-resilient-consent-link';
+const CACHE_NAME='bestcare-dashboard-v1-20260906-clear-status-notifications';
 const APP_SHELL=[
   './',
   './index.html',
@@ -147,6 +147,7 @@ self.addEventListener('push',event=>{
     body:payload.body||'يوجد تحديث جديد داخل لوحة المتابعة.',
     icon:'./assets/icons/icon-192.png',
     badge:'./assets/icons/icon-192.png',
+    color:payload.color||'#176344',
     tag:payload.tag||`bestcare-${payload.type||'update'}`,
     renotify:false,
     vibrate:[160,70,180],

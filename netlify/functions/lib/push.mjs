@@ -7,6 +7,7 @@ const keyFor = endpoint => `subscriptions/${crypto.createHash('sha256').update(e
 const configured = () => Boolean(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
 const safeRole = role => role === 'admin' ? 'admin' : 'clinic';
 const safeClinic = id => /^clinic-([1-9]|1[0-5])$/.test(String(id || '')) ? String(id) : 'clinic-1';
+const safeColor = value => /^#[0-9a-f]{6}$/i.test(String(value || '')) ? String(value) : '#176344';
 
 export const publicVapidKey = () => process.env.VAPID_PUBLIC_KEY || '';
 
@@ -56,16 +57,23 @@ export async function sendPushNotifications(event, { excludeClientId = '' } = {}
     const detail = record.showPatientDetails && event.patientName
       ? ` ${event.patientName}${event.patientFile ? ` — ملف ${event.patientFile}` : ''}.`
       : '';
+    const appointmentTime = /^\d{1,2}:\d{2}$/.test(String(event.appointmentTime || '')) ? String(event.appointmentTime) : '';
+    const actionBody = event.actionLabel
+      ? (record.showPatientDetails && event.patientName
+        ? `المريض ${event.patientName}${appointmentTime ? ` — الساعة ${appointmentTime}` : ''} — ${event.actionLabel}.`
+        : `${appointmentTime ? `موعد الساعة ${appointmentTime} — ` : ''}${event.actionLabel}.`)
+      : '';
     const targetClinic = event.clinicId || record.clinicId;
     const payload = {
       title: `${event.title}${clinicLabel}`,
-      body: `${event.body}${detail}`,
+      body: actionBody || `${event.body}${detail}`,
       type: event.type || 'patient',
       tag: event.tag || `bestcare-${event.type || 'update'}`,
       clinicId: event.clinicId || '',
       date: event.date || '',
       revision: Number(event.revision || 0),
       updatedAt: Number(event.updatedAt || Date.now()),
+      color: safeColor(event.color),
       url: event.url || (event.type === 'lab'
         ? `/lab.html?clinic=${encodeURIComponent(targetClinic)}`
         : `/?view=${event.type === 'payment' ? 'admin' : record.role}&clinic=${targetClinic}`),
