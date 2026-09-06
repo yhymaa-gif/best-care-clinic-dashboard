@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260907-notification-hours';
+const CACHE_NAME='bestcare-dashboard-v1-20260907-separate-consent-share';
 const APP_SHELL=[
   './',
   './index.html',
