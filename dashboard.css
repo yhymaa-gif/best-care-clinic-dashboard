@@ -284,12 +284,14 @@ body.view-admin .view-identity button{color:#176344}
 
 /* Yahya assistant — isolated namespace so the classic dashboard remains untouched. */
 .yahya-assistant-root{position:relative;z-index:1500}
-.yahya-assistant-fab{position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(22px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:9px;min-height:66px;padding:8px 15px 8px 9px;border:1px solid rgba(255,255,255,.8);border-radius:22px;background:linear-gradient(145deg,#165c4a,#0e3f35);color:#fff;box-shadow:0 16px 32px rgba(12,70,57,.3),0 0 0 5px rgba(34,169,126,.12);cursor:pointer;direction:rtl;isolation:isolate;overflow:visible;transition:transform .2s ease,box-shadow .2s ease}
-.yahya-assistant-fab:hover,.yahya-assistant-fab:focus-visible{transform:translateY(-4px) scale(1.02);box-shadow:0 20px 38px rgba(12,70,57,.38),0 0 0 7px rgba(34,169,126,.16);outline:3px solid rgba(35,161,125,.28);outline-offset:2px}
-.yahya-assistant-avatar,.yahya-assistant-head-icon{position:relative;display:grid;place-items:center;flex:0 0 47px;width:47px;height:47px;border-radius:16px;background:linear-gradient(145deg,#d3a84f,#fff0ad 42%,#ad7a2e);color:#244d3f;font-size:28px;font-weight:900;font-family:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 5px 13px rgba(0,0,0,.22);z-index:1}
-.yahya-assistant-orbit{position:absolute;left:8px;top:8px;width:49px;height:49px;border:2px solid rgba(255,244,176,.75);border-radius:18px;animation:yahyaAssistantSpin 5s linear infinite;pointer-events:none}
+.yahya-assistant-fab{position:fixed;left:max(12px,env(safe-area-inset-left));bottom:max(18px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:0;width:auto;min-width:48px;min-height:48px;padding:5px;border:1px solid rgba(255,255,255,.56);border-radius:17px;background:rgba(18,91,72,.34);color:#fff;box-shadow:0 9px 22px rgba(12,70,57,.18);backdrop-filter:blur(10px);cursor:pointer;direction:rtl;isolation:isolate;overflow:hidden;opacity:.72;transition:transform .24s ease,box-shadow .24s ease,background .24s ease,opacity .3s ease,max-width .28s ease}
+.yahya-assistant-fab:hover,.yahya-assistant-fab:focus-visible,.yahya-assistant-fab[aria-expanded="true"]{gap:8px;padding-inline-end:12px;background:rgba(14,82,65,.92);opacity:1;transform:translateY(-3px) scale(1.02);box-shadow:0 16px 32px rgba(12,70,57,.32),0 0 0 4px rgba(34,169,126,.12);outline:2px solid rgba(35,161,125,.34);outline-offset:2px}
+.yahya-assistant-fab:active{transform:translateY(0) scale(.92);background:rgba(200,158,70,.88)}
+.yahya-assistant-fab.is-idle{opacity:.03;transform:scale(.82);box-shadow:none;filter:saturate(.55)}
+.yahya-assistant-avatar,.yahya-assistant-head-icon{position:relative;display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:13px;background:linear-gradient(145deg,#d3a84f,#fff0ad 42%,#ad7a2e);color:#244d3f;font-size:23px;font-weight:900;font-family:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 4px 10px rgba(0,0,0,.18);z-index:1}
+.yahya-assistant-orbit{position:absolute;left:4px;top:4px;width:40px;height:40px;border:1px solid rgba(255,244,176,.64);border-radius:14px;animation:yahyaAssistantSpin 5s linear infinite;pointer-events:none}
 .yahya-assistant-orbit:after{content:"✦";position:absolute;right:-5px;top:-10px;color:#ffe899;font-size:14px;text-shadow:0 0 10px #fff2a8}
-.yahya-assistant-fab-copy{display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;white-space:nowrap}.yahya-assistant-fab-copy strong{font-size:15px}.yahya-assistant-fab-copy small{margin-top:4px;color:#dff7ed;font-size:10px}
+.yahya-assistant-fab-copy{display:flex;flex-direction:column;align-items:flex-start;max-width:0;overflow:hidden;opacity:0;line-height:1.15;white-space:nowrap;transition:max-width .25s ease,opacity .18s ease}.yahya-assistant-fab:hover .yahya-assistant-fab-copy,.yahya-assistant-fab:focus-visible .yahya-assistant-fab-copy,.yahya-assistant-fab[aria-expanded="true"] .yahya-assistant-fab-copy{max-width:118px;opacity:1}.yahya-assistant-fab-copy strong{font-size:13px}.yahya-assistant-fab-copy small{margin-top:3px;color:#dff7ed;font-size:9px}
 .yahya-assistant-panel{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(max(22px,env(safe-area-inset-bottom)) + 78px);display:flex;flex-direction:column;width:min(390px,calc(100vw - 32px));max-height:min(670px,calc(100vh - 116px));overflow:hidden;border:1px solid rgba(48,123,101,.24);border-radius:24px;background:rgba(255,255,255,.98);box-shadow:0 24px 64px rgba(16,63,53,.28),0 0 0 1px rgba(255,255,255,.8);direction:rtl;animation:yahyaAssistantIn .22s ease-out}
 .yahya-assistant-panel[hidden]{display:none!important}
 .yahya-assistant-head{display:flex;align-items:center;gap:10px;padding:13px 14px;background:linear-gradient(135deg,#0d5544,#1b8565);color:#fff}.yahya-assistant-head-icon{flex-basis:39px;width:39px;height:39px;border-radius:13px;font-size:23px}.yahya-assistant-head h2{margin:0;font-size:16px}.yahya-assistant-head p{margin:3px 0 0;color:#d9f3e8;font-size:11px}.yahya-assistant-close{position:relative;z-index:4;display:grid;place-items:center;margin-inline-start:auto;width:42px;height:42px;padding:0;border:0;border-radius:12px;background:rgba(255,255,255,.18);color:#fff;font-size:26px;line-height:1;cursor:pointer;pointer-events:auto;touch-action:manipulation}.yahya-assistant-close:hover,.yahya-assistant-close:focus-visible{background:rgba(255,255,255,.32);outline:2px solid #fff}
@@ -304,7 +306,7 @@ html[data-theme="dark"] .yahya-message.bot,body.theme-dark .yahya-message.bot,bo
 html[data-theme="dark"] .yahya-assistant-quick,body.theme-dark .yahya-assistant-quick,html[data-theme="dark"] .yahya-assistant-form,body.theme-dark .yahya-assistant-form,body.dark-mode .yahya-assistant-quick,body.dark-mode .yahya-assistant-form{border-color:#285c4d;background:#132f28}
 html[data-theme="dark"] .yahya-assistant-quick button,body.theme-dark .yahya-assistant-quick button,body.dark-mode .yahya-assistant-quick button{border-color:#34715e;background:#183e32;color:#dff7ed}
 html[data-theme="dark"] .yahya-assistant-form input,body.theme-dark .yahya-assistant-form input,body.dark-mode .yahya-assistant-form input{border-color:#34715e;background:#18382f;color:#f0fff8}
-@media(max-width:680px){.yahya-assistant-fab{min-height:58px;padding:7px 11px 7px 8px;border-radius:19px}.yahya-assistant-avatar{width:40px;height:40px;flex-basis:40px;font-size:24px;border-radius:13px}.yahya-assistant-orbit{left:7px;top:7px;width:42px;height:42px}.yahya-assistant-fab-copy strong{font-size:13px}.yahya-assistant-fab-copy small{font-size:9px}.yahya-assistant-panel{bottom:calc(max(16px,env(safe-area-inset-bottom)) + 68px);max-height:calc(100vh - 96px);border-radius:20px}}
+@media(max-width:680px){.yahya-assistant-fab{left:max(9px,env(safe-area-inset-left));bottom:max(13px,env(safe-area-inset-bottom));min-width:44px;min-height:44px;padding:4px;border-radius:15px}.yahya-assistant-avatar{width:36px;height:36px;flex-basis:36px;font-size:21px;border-radius:12px}.yahya-assistant-orbit{left:3px;top:3px;width:38px;height:38px}.yahya-assistant-panel{bottom:calc(max(13px,env(safe-area-inset-bottom)) + 55px);max-height:calc(100vh - 82px);border-radius:20px}}
 @media(prefers-reduced-motion:reduce){.yahya-assistant-orbit,.yahya-assistant-panel{animation:none}.yahya-assistant-fab{transition:none}}
 /* Final visual and accessibility refinements */
 html{scrollbar-gutter:stable}
@@ -925,6 +927,24 @@ body.view-clinic .app-footer{margin-top:8px;padding:7px;font-size:10px}
   body.view-clinic .timeline-chip{min-width:68px;padding:4px 6px}
   body.view-clinic .timeline-chip strong{font-size:10px}
   body.view-clinic .timeline-chip small{font-size:8px}
-  body.view-clinic .upcoming-stack{max-height:none}
+body.view-clinic .upcoming-stack{max-height:none}
   body.view-clinic #adminWorkspace>details>.table-wrap{max-height:250px}
 }
+
+/* Payment-to-plan workflow: the three completion actions share one compact icon language. */
+.completion-choice{grid-template-columns:28px 42px minmax(0,1fr)}
+.completion-choice-icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid #bfd9cc;border-radius:12px;background:#e6f5ed;color:#176443;font-size:20px;font-weight:950;box-shadow:inset 0 1px 0 #fff}
+.completion-choice.plan-choice .completion-choice-icon{border-color:#bfd4e3;background:#eaf4fb;color:#315f85}
+.completion-choice.prescription-choice .completion-choice-icon{border-color:#ddc9eb;background:#f5edfb;color:#744698}
+.completion-choice.is-auto-linked{border-color:#3b7ba5;background:linear-gradient(145deg,#eaf5fc,#fff);box-shadow:0 0 0 3px rgba(49,95,133,.13)}
+.completion-choice.is-auto-linked input{opacity:.75}
+.payment-plan-vat-confirm{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:start;gap:9px;padding:10px 12px;border:1px solid #d6c27d;border-radius:12px;background:#fff9e8;color:#705613;cursor:pointer}
+.payment-plan-vat-confirm[hidden]{display:none}.payment-plan-vat-confirm>input{width:18px;height:18px;margin-top:2px;accent-color:#16744b}.payment-plan-vat-confirm span,.payment-plan-vat-confirm strong,.payment-plan-vat-confirm small{display:block}.payment-plan-vat-confirm strong{font-size:12px}.payment-plan-vat-confirm small{margin-top:3px;color:#806d3e;font-size:10px;line-height:1.5}
+html[data-theme="dark"] .payment-plan-vat-confirm{border-color:#806c32;background:#352e1d;color:#ffe7a0}html[data-theme="dark"] .payment-plan-vat-confirm small{color:#d7c58d}
+.payment-workflow-actions{display:grid;justify-items:stretch;gap:7px;min-width:min(100%,240px)}
+.payment-workflow-actions>button,.payment-actions-inline button,.workflow-icon-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.payment-workflow-actions>button>span,.payment-actions-inline button>span,.workflow-icon-actions button>span{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,.2);font-size:14px;font-weight:950}
+.payment-linked-plan-action{border-color:#9fc1d8!important;background:linear-gradient(145deg,#edf6fb,#dfeef7)!important;color:#295f87!important;font-weight:950}
+.payment-linked-plan-action.ready,.plan-share-action{border-color:#2d9b64!important;background:linear-gradient(145deg,#23a866,#137d49)!important;color:#fff!important;box-shadow:0 7px 17px rgba(24,130,77,.2)!important}
+.workflow-icon-actions{flex-wrap:wrap}
+@media(max-width:680px){.completion-choice{grid-template-columns:28px 42px minmax(0,1fr)}.payment-workflow-actions{width:100%}}

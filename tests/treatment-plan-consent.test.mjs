@@ -14,6 +14,10 @@ test('doctor-approved plan sharing creates and includes a patient signature link
   assert.match(html, /مشاركة الخطة \+ رابط التوقيع|id="shareConsentLinkBox"/);
   assert.match(client, /async function ensureConsentLink\(\)/);
   assert.match(client, /action:'create',clinicId,date:appointmentDate,patientId,planNo:state\.meta\.planNo/);
+  assert.match(client, /for\(let attempt=0;attempt<3;attempt\+=1\)/);
+  assert.match(client, /if\(consentLinkPromise\)return consentLinkPromise/);
+  assert.match(client, /إنشاء رابط توقيع المريض متاح من واجهة الإدارة فقط/);
+  assert.match(client, /workflowRole\(\)!=='admin'/);
   assert.match(client, /رابط مراجعة الخطة والتوقيع/);
   assert.match(endpoint, /plan\?\.meta\?\.status !== 'submitted'/);
   assert.match(endpoint, /!Number\(plan\?\.meta\?\.doctorApprovedAt \|\| 0\)/);
@@ -22,7 +26,8 @@ test('doctor-approved plan sharing creates and includes a patient signature link
 
 test('patient signature link is version-bound, time-independent, single-active, and server-timestamped', async () => {
   const endpoint = await read('netlify/functions/treatment-plan-consent.mjs');
-  assert.match(endpoint, /planDigest: consentDigest\(plan\)/);
+  assert.match(endpoint, /const planDigest = consentDigest\(plan\)/);
+  assert.match(endpoint, /planDigest,/);
   assert.match(endpoint, /active\?\.tokenHash !== tokenHash/);
   assert.match(endpoint, /until_signed_replaced_or_plan_changed/);
   assert.match(endpoint, /expiresAt: 0/);
@@ -32,6 +37,32 @@ test('patient signature link is version-bound, time-independent, single-active, 
   assert.match(endpoint, /status: 'approved_signed'/);
   assert.match(endpoint, /consentMethod: 'patient_link'/);
   assert.match(endpoint, /signatureDigest: hash\(signature\)/);
+  assert.match(endpoint, /async function verifyStoredSignature\(link, signature\)/);
+  assert.match(endpoint, /await verifyStoredSignature\(link, signature\)/);
+  assert.match(endpoint, /async function retryBlobOperation\(operation, attempts = 3\)/);
+  assert.match(endpoint, /Consent link write verification failed/);
+  assert.match(endpoint, /createHmac\('sha256', tokenSecret\)/);
+  assert.doesNotMatch(endpoint, /randomBytes|randomUUID/);
+  assert.match(endpoint, /لم يتم إنشاء أو إرسال أي رابط/);
+  assert.match(endpoint, /stored: true/);
+});
+
+test('a stored WhatsApp signature is restored visibly and protected from stale plan saves', async () => {
+  const [html, client, planEndpoint, consentEndpoint] = await Promise.all([
+    read('treatment-plan.html'),
+    read('treatment-plan.js'),
+    read('netlify/functions/treatment-plan.mjs'),
+    read('netlify/functions/treatment-plan-consent.mjs')
+  ]);
+  assert.match(html, /id="storedSignatureNotice"/);
+  assert.match(html, /treatment-plan\.js\?v=20260907-payment-plan-addendum/);
+  assert.match(client, /function renderStoredPatientSignature\(\)/);
+  assert.match(client, /renderStoredPatientSignature\(\);/);
+  assert.match(client, /image\.src=signature/);
+  assert.match(client, /توقيع المريض محفوظ وموثق من رابط التوقيع/);
+  assert.match(planEndpoint, /previousStatus === 'approved_signed'/);
+  assert.match(planEndpoint, /الخطة الموقعة محمية ولا يمكن مسح توقيع المريض/);
+  assert.match(consentEndpoint, /planSignedForLink/);
 });
 
 test('public signature page retries transient loading failures and offers manual reload', async () => {

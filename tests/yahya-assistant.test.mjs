@@ -25,6 +25,12 @@ test('Yahya assistant is a namespaced, animated read-only dashboard helper',()=>
   assert.match(css,/\.yahya-assistant-panel\[hidden\]\{display:none!important\}/);
   assert.match(css,/yahyaAssistantSpin/);
   assert.match(js,/close\.addEventListener\('click',closeAssistant\)/);
+  assert.match(css,/\.yahya-assistant-fab\.is-idle/);
+  assert.match(css,/\.yahya-assistant-fab:active/);
+  assert.match(css,/\.yahya-assistant-fab\[aria-expanded="true"\]/);
+  assert.match(js,/scheduleIdle/);
+  assert.match(js,/button\.classList\.add\('is-idle'\)/);
+  assert.match(js,/document\.addEventListener\('pointermove'/);
   assert.doesNotMatch(js,/fetch\([^)]*assistant/i,'The local helper must not introduce an external assistant endpoint');
 });
 
