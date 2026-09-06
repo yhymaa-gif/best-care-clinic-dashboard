@@ -320,9 +320,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260905-resilient-consent-link/);
+  assert.match(html, /dashboard\.js\?v=20260906-clear-status-notifications/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260905-resilient-consent-link/);
+  assert.match(serviceWorker, /20260906-clear-status-notifications/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {
