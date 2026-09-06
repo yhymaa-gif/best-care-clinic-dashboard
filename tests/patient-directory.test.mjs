@@ -322,7 +322,7 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
   assert.match(html, /dashboard\.js\?v=20260906-payment-plan-link/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260906-payment-plan-link/);
+  assert.match(serviceWorker, /20260906-signature-persistence/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

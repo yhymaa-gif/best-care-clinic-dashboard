@@ -227,6 +227,17 @@ export default async request => {
       : null;
     const existingForPlan = existingVersioned || (existing?.plan?.meta?.planNo === plan.meta.planNo ? existing : null);
     const previousStatus = String(existingForPlan?.plan?.meta?.status || '');
+    const existingSignature = String(existingForPlan?.plan?.signatures?.patientSignature || '');
+    const existingConsentEvidence = cleanText(existingForPlan?.plan?.meta?.consentEvidenceId, 80);
+    const preservesSignedConsent = plan.meta.status === 'approved_signed'
+      && Boolean(existingSignature)
+      && plan.signatures.patientSignature === existingSignature
+      && Boolean(existingConsentEvidence)
+      && plan.meta.consentEvidenceId === existingConsentEvidence
+      && Number(plan.meta.patientAcceptedAt || 0) === Number(existingForPlan?.plan?.meta?.patientAcceptedAt || 0);
+    if (previousStatus === 'approved_signed' && existingSignature && !preservesSignedConsent) {
+      return reply({ error: 'الخطة الموقعة محمية ولا يمكن مسح توقيع المريض أو استبدال موافقته. أنشئ خطة أو ملحقًا جديدًا للتعديل.' }, 409);
+    }
     if (plan.meta.status === 'patient_accepted' && previousStatus !== 'patient_accepted') {
       return reply({ error: 'Patient consent must be completed through the plan signature flow' }, 409);
     }

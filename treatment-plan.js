@@ -19,7 +19,7 @@
     const dateTimeFormatter=new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
     const hijriFormatter=new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'});
     let activeItem={phase:0,item:0};
-    let signatureFixed=false;
+    let signatureFixed=false,signatureRenderSequence=0,renderedSignatureValue='';
     let saveTimer=0;
     let source={};
     let currentUser={role:viewMode};
@@ -352,6 +352,36 @@
       $('photoConsent').checked=Boolean(state.consent.photoConsent);
       state.signatures.signerName=(state.signatures.signerName||'').trim()||state.patient.fullName||'';
       $('signerName').value=state.signatures.signerName;
+      renderStoredPatientSignature();
+    }
+    function renderStoredPatientSignature(){
+      const canvas=$('patientSignature'),wrap=$('signatureCanvasWrap'),toggle=$('digitalSignToggle'),line=$('paperSignatureLine'),notice=$('storedSignatureNotice');
+      if(!canvas||!wrap||!toggle||!line)return;
+      const signature=String(state?.signatures?.patientSignature||'');
+      const hasStoredSignature=signature.startsWith('data:image/png;base64,');
+      const verifiedPatientLink=hasStoredSignature&&state?.meta?.status==='approved_signed'&&state?.meta?.consentMethod==='patient_link'&&Boolean(state?.meta?.consentEvidenceId);
+      if(hasStoredSignature){toggle.checked=true;wrap.classList.add('active','has-stored-signature');line.style.display='none'}
+      else{wrap.classList.remove('has-stored-signature');if(!toggle.checked)wrap.classList.remove('active');line.style.display=toggle.checked?'none':'block'}
+      toggle.disabled=verifiedPatientLink;
+      $('clearSignatureBtn').disabled=verifiedPatientLink;
+      $('fixSignatureBtn').disabled=verifiedPatientLink;
+      $('signerName').readOnly=verifiedPatientLink;
+      if(notice){notice.hidden=!hasStoredSignature;notice.textContent=verifiedPatientLink?'✓ توقيع المريض محفوظ وموثق من رابط التوقيع':'✓ يوجد توقيع محفوظ داخل الخطة'}
+      canvas.setAttribute('aria-label',verifiedPatientLink?'توقيع المريض المحفوظ والموثق':'لوحة توقيع المريض');
+      if(!hasStoredSignature){
+        if(renderedSignatureValue){canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);renderedSignatureValue=''}
+        signatureFixed=false;
+        return;
+      }
+      if(renderedSignatureValue===signature)return;
+      const sequence=++signatureRenderSequence,image=new Image();
+      image.onload=()=>{
+        if(sequence!==signatureRenderSequence||String(state?.signatures?.patientSignature||'')!==signature)return;
+        const context=canvas.getContext('2d');context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
+        renderedSignatureValue=signature;signatureFixed=true;
+      };
+      image.onerror=()=>{if(sequence===signatureRenderSequence){renderedSignatureValue='';signatureFixed=false;toast('تعذر عرض التوقيع المحفوظ','أعد تحميل الخطة؛ لن يتم مسح التوقيع من السجل.')}};
+      image.src=signature;
     }
     function planDates(){
       const issued=new Date(state.meta.issuedAt||Date.now());
@@ -564,7 +594,7 @@
         try{
           const url=`${PLAN_API}?patientId=${encodeURIComponent(patientId)}&date=${encodeURIComponent(appointmentDate)}&clinic=${encodeURIComponent(clinicId)}`;
           const response=await fetch(url,{method:'PUT',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({plan:state})});
-          if(!response.ok)throw new Error('تعذر الحفظ المركزي');
+          if(!response.ok){const data=await response.json().catch(()=>({}));throw new Error(data.error||'تعذر الحفظ المركزي')}
         }catch(error){$('saveStatus').classList.remove('saved');$('saveStatus').textContent='محفوظ على هذا الجهاز فقط';if(!silent)toast('تعذر الحفظ المركزي',error.message);return false}
       }
       hasUnsyncedChanges=false;
@@ -1026,8 +1056,8 @@
       canvas.addEventListener('pointerdown',event=>{drawing=true;last=point(event);canvas.setPointerCapture(event.pointerId)});
       canvas.addEventListener('pointermove',event=>{if(!drawing)return;const next=point(event);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.quadraticCurveTo(last.x,last.y,(last.x+next.x)/2,(last.y+next.y)/2);ctx.stroke();last=next});
       const stop=()=>drawing=false;canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);
-      $('clearSignatureBtn').addEventListener('click',()=>{ctx.clearRect(0,0,canvas.width,canvas.height);signatureFixed=false;state.signatures.patientSignature='';markDirty()});
-      $('fixSignatureBtn').addEventListener('click',()=>{state.signatures.patientSignature=canvas.toDataURL('image/png');signatureFixed=true;markDirty();toast('تم تثبيت التوقيع')});
+      $('clearSignatureBtn').addEventListener('click',()=>{ctx.clearRect(0,0,canvas.width,canvas.height);renderedSignatureValue='';signatureFixed=false;state.signatures.patientSignature='';renderStoredPatientSignature();markDirty()});
+      $('fixSignatureBtn').addEventListener('click',()=>{state.signatures.patientSignature=canvas.toDataURL('image/png');renderedSignatureValue=state.signatures.patientSignature;signatureFixed=true;renderStoredPatientSignature();markDirty();toast('تم تثبيت التوقيع')});
     }
     function bindEvents(){
       $('returnToLoginBtn').addEventListener('click',()=>location.href='./?view=admin');

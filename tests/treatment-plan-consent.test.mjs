@@ -32,6 +32,27 @@ test('patient signature link is version-bound, time-independent, single-active, 
   assert.match(endpoint, /status: 'approved_signed'/);
   assert.match(endpoint, /consentMethod: 'patient_link'/);
   assert.match(endpoint, /signatureDigest: hash\(signature\)/);
+  assert.match(endpoint, /async function verifyStoredSignature\(link, signature\)/);
+  assert.match(endpoint, /await verifyStoredSignature\(link, signature\)/);
+  assert.match(endpoint, /stored: true/);
+});
+
+test('a stored WhatsApp signature is restored visibly and protected from stale plan saves', async () => {
+  const [html, client, planEndpoint, consentEndpoint] = await Promise.all([
+    read('treatment-plan.html'),
+    read('treatment-plan.js'),
+    read('netlify/functions/treatment-plan.mjs'),
+    read('netlify/functions/treatment-plan-consent.mjs')
+  ]);
+  assert.match(html, /id="storedSignatureNotice"/);
+  assert.match(html, /treatment-plan\.js\?v=20260906-signature-persistence/);
+  assert.match(client, /function renderStoredPatientSignature\(\)/);
+  assert.match(client, /renderStoredPatientSignature\(\);/);
+  assert.match(client, /image\.src=signature/);
+  assert.match(client, /توقيع المريض محفوظ وموثق من رابط التوقيع/);
+  assert.match(planEndpoint, /previousStatus === 'approved_signed'/);
+  assert.match(planEndpoint, /الخطة الموقعة محمية ولا يمكن مسح توقيع المريض/);
+  assert.match(consentEndpoint, /planSignedForLink/);
 });
 
 test('public signature page retries transient loading failures and offers manual reload', async () => {
