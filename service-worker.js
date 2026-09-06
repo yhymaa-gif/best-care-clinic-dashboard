@@ -37,6 +37,7 @@ const APP_SHELL=[
   './prescription-overrides.css',
   './prescription.js',
   './manifest.webmanifest',
+  './release.json',
   './best-care-logo.png',
   './assets/best-care-logo-header.png',
   './assets/treatment-plan-department-stamp.svg',

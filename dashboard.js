@@ -137,6 +137,8 @@ function adminHubCadence(){
   return document.hidden?30*60*1000:10*60*1000;
 }
 const DASHBOARD_BUILD='7.64-patient-save-fix-v2';
+const RELEASE_SUMMARY_FALLBACK={ar:'تصحيح الخطط العلاجية ومشاركتها، وتنظيم التنبيهات.',en:'Treatment-plan and sharing fixes, plus notification scheduling.'};
+let pendingReleaseSummary={...RELEASE_SUMMARY_FALLBACK};
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
 const DEVICE_ID=(()=>{
@@ -4604,7 +4606,15 @@ async function registerPwa(){
   try{
     const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
     if(systemNotificationsEnabled())ensurePushSubscription().catch(error=>console.warn('Push subscription refresh failed',error));
-    const showUpdate=worker=>{waitingServiceWorker=worker;$('pwaUpdateBar').classList.add('show')};
+    const showUpdate=async worker=>{
+      waitingServiceWorker=worker;
+      try{
+        const response=await fetch(`./release.json?update=${Date.now()}`,{cache:'no-store'}),release=await response.json();
+        if(response.ok&&release?.summary)pendingReleaseSummary={ar:String(release.summary.ar||RELEASE_SUMMARY_FALLBACK.ar).slice(0,140),en:String(release.summary.en||RELEASE_SUMMARY_FALLBACK.en).slice(0,140)};
+      }catch{/* يبقى الملخص الاحتياطي ظاهرًا */}
+      renderPwaUpdateCopy();
+      $('pwaUpdateBar').classList.add('show');
+    };
     if(registration.waiting)showUpdate(registration.waiting);
     registration.addEventListener('updatefound',()=>{
       const worker=registration.installing;if(!worker)return;
@@ -4618,6 +4628,10 @@ async function registerPwa(){
       location.reload();
     });
   }catch(error){console.warn('PWA registration failed',error)}
+}
+function renderPwaUpdateCopy(){
+  setText('#pwaUpdateTitle',tr('updateAvailable'));
+  setText('#pwaUpdateSummary',lang==='en'?pendingReleaseSummary.en:pendingReleaseSummary.ar);
 }
 function setText(selector,value){const el=document.querySelector(selector);if(el)el.textContent=value}
 function setTexts(selector,values){document.querySelectorAll(selector).forEach((el,index)=>{if(values[index]!==undefined)el.textContent=values[index]})}
@@ -4777,7 +4791,7 @@ function applyLang(){
   setText('#syncTestBtn',tr('testSync'));
   setText('#clearBtn',tr('clearToday'));
   setText('#alertBtn strong',tr('alertTitle'));
-  setText('#pwaUpdateBar span',tr('updateAvailable'));
+  renderPwaUpdateCopy();
   setText('#pwaUpdateBtn',tr('updateNow'));
   setTexts('.stats .stat small',[tr('totalPatients'),tr('completed'),tr('inTreatment'),tr('remaining'),tr('cancelled'),tr('completionRate')]);
   setTexts('.timer-box small',[tr('originalTime'),tr('actualDuration')]);

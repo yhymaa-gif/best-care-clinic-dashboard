@@ -1,0 +1,8 @@
+{
+  "version": "2026.09.07-notification-hours",
+  "publishedAt": "2026-09-07",
+  "summary": {
+    "ar": "تصحيح الخطط العلاجية ومشاركتها، وتنظيم التنبيهات حسب وقت العمل مع خيار فتحها لكل جهاز.",
+    "en": "Treatment-plan and sharing fixes, plus working-hours alerts with a per-device override."
+  }
+}
