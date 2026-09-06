@@ -75,7 +75,9 @@ const cleanPlan = plan => ({
     rejectionReason: cleanText(plan?.meta?.rejectionReason, 500),
     cancelledAt: cleanNumber(plan?.meta?.cancelledAt, 0, Number.MAX_SAFE_INTEGER),
     cancelledBy: cleanText(plan?.meta?.cancelledBy, 120),
-    cancellationReason: cleanText(plan?.meta?.cancellationReason, 500)
+    cancellationReason: cleanText(plan?.meta?.cancellationReason, 500),
+    sourceType: plan?.meta?.sourceType === 'payment_order' ? 'payment_order' : '',
+    sourcePaymentRequestedAt: cleanNumber(plan?.meta?.sourcePaymentRequestedAt, 0, Number.MAX_SAFE_INTEGER)
   },
   clinic: {
     nameAr: cleanText(plan?.clinic?.nameAr, 100),
@@ -200,6 +202,26 @@ export default async request => {
     if (!body?.plan || typeof body.plan !== 'object') return reply({ error: 'Invalid plan' }, 400);
     const existing = await store.get(key, { type: 'json', consistency: 'strong' });
     const plan = cleanPlan(body.plan);
+    if (body.createIfMissing === true) {
+      const identityKeys = patientIdentityKeys(plan.patient);
+      const identityRecords = existing
+        ? []
+        : await Promise.all(identityKeys.map(identity => store.get(permanentPlanKey(clinicId, identity), { type: 'json', consistency: 'strong' })));
+      const existingPlan = existing || identityRecords
+        .filter(Boolean)
+        .sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0))[0] || null;
+      if (existingPlan?.plan) {
+        return reply({
+          ok: true,
+          created: false,
+          existing: true,
+          plan: existingPlan.plan,
+          revision: Number(existingPlan.revision || 0),
+          updatedAt: Number(existingPlan.updatedAt || 0),
+          carriedForward: !existing
+        });
+      }
+    }
     const existingVersioned = plan.meta.planNo
       ? await store.get(versionedPlanKey(clinicId, date, patientId, plan.meta.planNo), { type: 'json', consistency: 'strong' })
       : null;

@@ -6,6 +6,7 @@
     const appointmentDate=params.get('date')||'';
     const clinicId=/^clinic-(?:[1-9]|1[0-5])$/.test(params.get('clinic')||'')?params.get('clinic'):'clinic-1';
     const requestedPlanNo=(params.get('planNo')||'').trim().slice(0,40);
+    const requestedAction=params.get('action')==='share'?'share':'';
     const viewMode=params.get('view')==='clinic'?'clinic':'admin';
     const SOURCE_KEY=`bestcare_treatment_source_${patientId}`;
     const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}_${requestedPlanNo||'latest'}`;
@@ -205,6 +206,18 @@
       }
       normalized.consent.photoConsentRecorded=next.consent?.photoConsentRecorded===true||(Number(next.consent?.termsVersion||0)>=2&&Number(normalized.meta.patientAcceptedAt||0)>0);
       return normalized;
+    }
+    function applyPaymentSourceToNewPlan(){
+      const items=Array.isArray(source?.paymentItems)?source.paymentItems.filter(item=>String(item?.name||'').trim()):[];if(!items.length)return;
+      state.phases=[{index:0,title:'المرحلة العلاجية',estimatedVisits:'',estimatedDuration:'',items:items.map(item=>{
+        const catalog=procedureCatalog.find(option=>option.id===item.code)||procedureCatalog.find(option=>option.name===item.name),free=Boolean(item.free);
+        const before=free?0:(item.beforePrice??catalog?.beforePrice??''),after=free?0:(item.afterPrice??catalog?.afterPrice??'');
+        return{...blankItem(),code:String(item.code||'other'),service:String(item.name||''),customService:item.code==='other'?String(item.name||''):'',qty:Math.max(1,Math.min(99,Number(item.quantity||1))),unitPriceBefore:before,unitPriceAfter:after,beforePriceSource:before!==''?'catalog':'',afterPriceSource:after!==''?'catalog':'',priceSource:after!==''?'catalog':'',type:free?'included':'billable',includedLabel:free?'مجاني ضمن أمر الدفع':''};
+      })}];
+      state.clinical.notes='أُنشئت من الإجراءات المحددة في أمر الدفع.';
+      // Price completeness does not prove the patient's tax treatment. Keep this
+      // unchecked until an authorised user explicitly confirms it.
+      state.financial.vatConfirmed=false;
     }
     async function verifyAuth(){
       const setLocked=locked=>{
@@ -513,6 +526,11 @@
     }
     function render(){
       renderDocMeta();renderPhases();renderFinancials();renderProgress();renderWorkflow();
+    }
+    function focusRequestedAction(){
+      if(requestedAction!=='share'||workflowRole()!=='admin'||state.meta.status!=='submitted')return;
+      const button=$('floatingWhatsappBtn');button?.classList.add('requested-share-action');
+      setTimeout(()=>{button?.focus();toast('الخطة جاهزة للمشاركة والتوقيع','اضغط زر واتساب الأخضر لتجهيز نسخة الخطة ورابط توقيع المريض.');},80);
     }
     function markDirty(){
       if(state.meta.status==='cancelled')return;
@@ -1092,6 +1110,7 @@
         state.patient.fileNo=source.file||'';
         state.patient.mobile=source.phone||'';
         state.meta.issuedAt=source.date&&source.start?new Date(`${source.date}T${source.start}:00+03:00`).toISOString():new Date().toISOString();
+        applyPaymentSourceToNewPlan();
       }else if(remoteResult?.carriedForward&&!local){
         const previousPlanNo=state.meta.planNo||'';
         state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
@@ -1102,6 +1121,7 @@
       }
       const compact=localStorage.getItem('bestcare_treatment_compact')!=='0';document.body.classList.toggle('compact-entry',compact);$('compactEntryBtn').textContent=compact?'إظهار الوثيقة كاملة':'إدخال سريع';
       hydrateFields();setupSignature();bindEvents();render();
+      focusRequestedAction();
       $('saveStatus').textContent=remoteResult?.carriedForward?'أُنشئ ملحق جديد مبني على خطة سابقة':remote?'محفوظ ومؤرشف':local?'مسودة محفوظة على الجهاز':'مسودة جديدة';
       $('saveStatus').classList.toggle('saved',Boolean(remote&&!remoteResult?.carriedForward));
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected','cancelled'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');

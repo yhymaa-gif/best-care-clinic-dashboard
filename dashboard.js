@@ -86,6 +86,7 @@ function setupModernSidebarScroll(){
   },{passive:false});
 }
 const API='/api/state';
+const PLAN_API='/api/treatment-plan';
 const PLAN_REGISTRY_API='/api/treatment-plan-registry';
 const PRESCRIPTIONS_API='/api/prescriptions';
 const PUSH_API='/api/push';
@@ -487,6 +488,7 @@ const DEFAULT_TREATMENT_CATALOG=[
   ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
   ['cleaning-gbt','تنظيف أسنان GBT'],['whitening-trays','قوالب تبييض'],['other','إجراء آخر']
 ].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
+const PAYMENT_LINKED_PLAN_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.';
 const treatmentCatalogLocalKey=()=>`bestcare_treatment_catalog_${ACTIVE_CLINIC_ID}`;
 function paymentDoctorKey(){
   const doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim().toLocaleLowerCase('ar').replace(/\s+/g,' ');
@@ -2121,7 +2123,7 @@ function renderOperationsCenter(){
         :item.type==='labs'
           ?`<select data-operation-lab-status="${escapeHtml(item.recordId)}" data-operation-lab-clinic="${escapeHtml(item.clinicId)}" aria-label="${lang==='en'?'Update laboratory case status':'تعديل حالة المعمل'}">${Object.entries(labLabels).map(([value,label])=>`<option value="${value}" ${item.status===value?'selected':''}>${label}</option>`).join('')}</select>`
           :`<span class="prescription-admin-ready">${lang==='en'?'Ready to share':'جاهزة للمشاركة'}</span>`;
-    return`<article class="operation-alert-item ${item.tone}" data-operation-type="${item.type}"><span class="operation-alert-icon" aria-hidden="true">${icons[item.type]}</span><div class="operation-alert-copy"><small>${escapeHtml(item.source)}</small><strong>${escapeHtml(item.title)}</strong><b>${escapeHtml(item.patient)}${item.identity?` · ${escapeHtml(item.identity)}`:''}</b><p>${escapeHtml(item.detail||'')}</p></div><div class="operation-alert-actions">${control}${item.type==='plans'?`<button type="button" data-operation-plan="${escapeHtml(item.canonical)}">${lang==='en'?'Open plan':'فتح الخطة'}</button>`:`<a href="${escapeHtml(item.href)}">${item.type==='prescriptions'?(lang==='en'?'Open and share prescription':'فتح الوصفة ومشاركتها'):(lang==='en'?'Open center':'فتح المركز')}</a>`}</div></article>`;
+    return`<article class="operation-alert-item ${item.tone}" data-operation-type="${item.type}"><span class="operation-alert-icon" aria-hidden="true">${icons[item.type]}</span><div class="operation-alert-copy"><small>${escapeHtml(item.source)}</small><strong>${escapeHtml(item.title)}</strong><b>${escapeHtml(item.patient)}${item.identity?` · ${escapeHtml(item.identity)}`:''}</b><p>${escapeHtml(item.detail||'')}</p></div><div class="operation-alert-actions">${control}${item.type==='plans'?`<button type="button" data-operation-plan="${escapeHtml(item.canonical)}">${item.status==='submitted'?(lang==='en'?'Share plan + signature':'مشاركة الخطة والتوقيع'):(lang==='en'?'Open plan':'فتح الخطة')}</button>`:`<a href="${escapeHtml(item.href)}">${item.type==='prescriptions'?(lang==='en'?'Open and share prescription':'فتح الوصفة ومشاركتها'):(lang==='en'?'Open center':'فتح المركز')}</a>`}</div></article>`;
   }).join('');
 }
 function updateTreatmentPlanCenterTrigger(){
@@ -2155,7 +2157,8 @@ function renderTreatmentPlanCenter(){
     const clinic=clinicDirectory.find(item=>item.id===record.clinicId)||defaultClinic(clinicNumber(record.clinicId));
     const zeroFile=isZeroFileNumber(record.fileNo)||/^file:0+$/i.test(canonical),canOpen=record.sourcePatientId&&/^\d{4}-\d{2}-\d{2}$/.test(record.sourceDate||'');
     const options=PLAN_STATUS_VALUES.map(status=>`<option value="${status}" ${status===record.status?'selected':''}>${escapeHtml(labels[status])}</option>`).join('');
-    return`<article class="treatment-plan-center-item status-${escapeHtml(PLAN_STATUS_VALUES.includes(record.status)?record.status:'draft')} ${planCenterIsUnapproved(record.status)?'needs-approval':'is-approved'} ${zeroFile?'has-zero-file':''}" data-plan-center-key="${escapeHtml(canonical)}"><div class="plan-center-patient"><strong>${escapeHtml(record.fullName||(lang==='en'?'Unnamed patient':'مريض بدون اسم'))}</strong><small>${record.planNo?`${lang==='en'?'Plan number':'رقم الخطة'} ${escapeHtml(record.planNo)} · `:''}${lang==='en'?'File':'ملف'} ${escapeHtml(record.fileNo|| (lang==='en'?'Not registered':'غير مسجل'))}${record.mobile?` · ${escapeHtml(record.mobile)}`:''}</small>${zeroFile?`<span class="plan-zero-file-alert">⚠ ${lang==='en'?'File number 0 is shared — correct the patient identity':'رقم الملف 0 مشترك — يجب تصحيحه من الخطة أو بيانات المريض'}</span>`:''}${photoConsentAlertMarkup(record)}</div><div class="plan-center-clinic"><b>${escapeHtml(clinicDisplayName(clinic))}</b><small>${record.updatedAt?new Date(record.updatedAt).toLocaleString(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'}):'—'}</small></div><label class="plan-center-status"><span>${lang==='en'?'Approval status':'حالة الاعتماد'}</span><select data-plan-center-status="${escapeHtml(canonical)}">${options}</select></label><div class="plan-center-actions"><button type="button" class="primary" data-plan-center-open="${escapeHtml(canonical)}" ${canOpen?'':'disabled'}>${lang==='en'?'Open and edit':'فتح وتعديل'}</button><button type="button" class="danger" data-plan-center-delete="${escapeHtml(canonical)}">${lang==='en'?'Delete plan':'حذف الخطة'}</button></div></article>`;
+    const shareReady=record.status==='submitted';
+    return`<article class="treatment-plan-center-item status-${escapeHtml(PLAN_STATUS_VALUES.includes(record.status)?record.status:'draft')} ${planCenterIsUnapproved(record.status)?'needs-approval':'is-approved'} ${zeroFile?'has-zero-file':''}" data-plan-center-key="${escapeHtml(canonical)}"><div class="plan-center-patient"><strong>${escapeHtml(record.fullName||(lang==='en'?'Unnamed patient':'مريض بدون اسم'))}</strong><small>${record.planNo?`${lang==='en'?'Plan number':'رقم الخطة'} ${escapeHtml(record.planNo)} · `:''}${lang==='en'?'File':'ملف'} ${escapeHtml(record.fileNo|| (lang==='en'?'Not registered':'غير مسجل'))}${record.mobile?` · ${escapeHtml(record.mobile)}`:''}</small>${zeroFile?`<span class="plan-zero-file-alert">⚠ ${lang==='en'?'File number 0 is shared — correct the patient identity':'رقم الملف 0 مشترك — يجب تصحيحه من الخطة أو بيانات المريض'}</span>`:''}${photoConsentAlertMarkup(record)}</div><div class="plan-center-clinic"><b>${escapeHtml(clinicDisplayName(clinic))}</b><small>${record.updatedAt?new Date(record.updatedAt).toLocaleString(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{dateStyle:'medium',timeStyle:'short'}):'—'}</small></div><label class="plan-center-status"><span>${lang==='en'?'Approval status':'حالة الاعتماد'}</span><select data-plan-center-status="${escapeHtml(canonical)}">${options}</select></label><div class="plan-center-actions workflow-icon-actions">${shareReady?`<button type="button" class="plan-share-action" data-plan-center-share="${escapeHtml(canonical)}" ${canOpen?'':'disabled'}><span aria-hidden="true">↗</span>${lang==='en'?'Share plan + signature':'مشاركة الخطة والتوقيع'}</button>`:''}<button type="button" class="primary" data-plan-center-open="${escapeHtml(canonical)}" ${canOpen?'':'disabled'}><span aria-hidden="true">▤</span>${lang==='en'?'Open and edit':'فتح وتعديل'}</button><button type="button" class="danger" data-plan-center-delete="${escapeHtml(canonical)}"><span aria-hidden="true">×</span>${lang==='en'?'Delete':'حذف'}</button></div></article>`;
   }).join('');
 }
 async function refreshTreatmentPlanCenter(){
@@ -2238,10 +2241,11 @@ function openTreatmentPlanCenter(){
   operationsCenter.filter='all';openModal('treatmentPlanCenterModal');renderTreatmentPlanCenter();renderOperationsCenter();
   Promise.allSettled([refreshTreatmentPlanCenter(),refreshAppointmentRequests({notify:false}),refreshOperationsLabCases(),refreshOperationsPrescriptions()]);
 }
-function openPlanCenterRecord(canonical){
+function openPlanCenterRecord(canonical,{share=false}={}){
   const record=treatmentPlanCenter.records?.[canonical];if(!record?.sourcePatientId||!record?.sourceDate)return;
   cacheTreatmentSource(record.sourcePatientId,{id:record.sourcePatientId,name:record.fullName||'',file:record.fileNo||'',phone:record.mobile||'',nationalId:record.nationalId||'',date:record.sourceDate,start:'',view:'admin',returnUrl:location.href});
-  location.href=`./treatment-plan.html?${new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin'}).toString()}`;
+  const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin'});if(share&&record.status==='submitted')params.set('action','share');
+  location.href=`./treatment-plan.html?${params.toString()}`;
 }
 async function changePlanCenterStatus(canonical,nextStatus,select){
   const record=treatmentPlanCenter.records?.[canonical],previous=record?.status;if(!record||!PLAN_STATUS_VALUES.includes(nextStatus)){if(select)select.value=previous||'draft';return}
@@ -2845,11 +2849,12 @@ function treatmentPlanButtonText(patient){
   if(lang==='en')return status?'Open plan':'Create treatment plan';
   return status?'فتح الخطة':'إنشاء خطة علاجية';
 }
-function openTreatmentPlan(id){
+function openTreatmentPlan(id,{share=false}={}){
   const patient=patientById(id);if(!patient)return;
-  const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),nationalId:String(patient.nationalId||''),procedure:String(patient.procedure||''),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
+  const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),nationalId:String(patient.nationalId||''),procedure:String(patient.procedure||''),paymentItems:Array.isArray(patient.paymentItems)?patient.paymentItems:[],paymentDiscount:String(patient.paymentDiscount||''),paymentRequestedAt:Number(patient.paymentRequestedAt||0),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
   cacheTreatmentSource(patient.id,source);
-  location.href=`./treatment-plan.html?patientId=${encodeURIComponent(patient.id)}&date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}&view=${encodeURIComponent(VIEW_MODE)}`;
+  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE});if(share&&effectiveTreatmentPlanStatus(patient)==='submitted')params.set('action','share');
+  location.href=`./treatment-plan.html?${params.toString()}`;
 }
 function openPrescription(id){
   const patient=patientById(id);if(!patient)return;
@@ -3149,12 +3154,13 @@ function collectPaymentItems(){
     if(!document.querySelector(`[data-payment-select="${item.id}"]`)?.checked)return[];
     const quantity=Math.max(1,Math.min(99,Number(document.querySelector(`[data-payment-quantity="${item.id}"]`)?.value||1)));
     const free=Boolean(document.querySelector(`[data-payment-free="${item.id}"]`)?.checked);
-    return [{code:item.id,name:item.name,quantity,free}];
+    return [{code:item.id,name:item.name,quantity,free,beforePrice:free?0:item.beforePrice,afterPrice:free?0:item.afterPrice}];
   });
   if($('paymentOtherCheck').checked){
     const name=$('paymentOtherInput').value.trim();
     if(!name)return {error:lang==='en'?'Write the other procedure name.':'اكتب اسم الإجراء الآخر.'};
-    items.push({code:'other',name,quantity:Math.max(1,Math.min(99,Number($('paymentOtherQuantity').value||1))),free:$('paymentOtherFree').checked});
+    const free=$('paymentOtherFree').checked;
+    items.push({code:'other',name,quantity:Math.max(1,Math.min(99,Number($('paymentOtherQuantity').value||1))),free,beforePrice:free?0:'',afterPrice:free?0:''});
   }
   return {items,discount:$('paymentDiscountInput').value.trim()};
 }
@@ -3178,6 +3184,74 @@ function paymentItemsSummary(items,discount=''){
   const parts=(Array.isArray(items)?items:[]).map(item=>`${item.name} ×${item.quantity}${item.free?' (مجاني)':''}`);
   if(discount)parts.push(`الخصم: ${discount}`);
   return parts.join('، ');
+}
+function paymentPlanNumber(patient,requestedAt){
+  const identity=String(patient?.file||patient?.id||'patient').replace(/[^a-zA-Z0-9]/g,'').slice(-8)||'patient';
+  const date=new Date(Number(requestedAt)||Date.now()).toISOString().slice(0,10).replaceAll('-','');
+  const stamp=(Number(requestedAt)||Date.now()).toString(36).toUpperCase().slice(-7);
+  return `TP-PAY-${date}-${identity}-${stamp}`.slice(0,40);
+}
+function paymentLinkedPlanStatus({priced=false,vatConfirmed=false}={}){return VIEW_MODE==='clinic'&&priced&&vatConfirmed?'submitted':'draft'}
+function paymentLinkedPlanItem(item){
+  const free=Boolean(item?.free),before=free?0:(item?.beforePrice??''),after=free?0:(item?.afterPrice??'');
+  return{
+    code:String(item?.code||'other').slice(0,50),service:String(item?.name||'').slice(0,160),variant:'',customService:item?.code==='other'?String(item?.name||'').slice(0,160):'',teeth:[],qty:Math.max(1,Math.min(99,Number(item?.quantity||1))),
+    unitPriceBefore:before,unitPriceAfter:after,beforePriceSource:before!==''?'catalog':'',afterPriceSource:after!==''?'catalog':'',priceSource:after!==''?'catalog':'',type:free?'included':'billable',includedLabel:free?(lang==='en'?'Included at no charge':'مجاني ضمن أمر الدفع'):''
+  };
+}
+function buildPaymentLinkedTreatmentPlan(patient,items,requestedAt,{vatConfirmed=false}={}){
+  const identity=patientWithDirectoryIdentity(patient),doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
+  const planNo=paymentPlanNumber(identity,requestedAt),priced=(Array.isArray(items)?items:[]).every(item=>item.free||(item.beforePrice!==''&&item.beforePrice!==undefined&&item.afterPrice!==''&&item.afterPrice!==undefined)),status=paymentLinkedPlanStatus({priced,vatConfirmed}),submitted=status==='submitted';
+  return{
+    meta:{planNo,issuedAt:new Date(Number(requestedAt)||Date.now()).toISOString(),validityDays:15,copyType:'patient',revision:1,status,relation:'standalone',parentPlanNo:'',doctorApprovedAt:submitted?Number(requestedAt):0,doctorApprovedBy:submitted?(doctor||'الطبيب'):'',submittedAt:submitted?Number(requestedAt):0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:'',sourceType:'payment_order',sourcePaymentRequestedAt:Number(requestedAt)},
+    clinic:{nameAr:String(currentClinic?.name||'عيادات أفضل عناية الاستشارية للأسنان'),nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
+    patient:{fullName:String(identity.name||patient.name||''),fileNo:String(identity.file||patient.file||''),nationalId:String(identity.nationalId||patient.nationalId||''),nationality:'saudi',age:'',mobile:String(identity.phone||patient.phone||'')},
+    doctor:{name:doctor,scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:doctor},
+    clinical:{diagnosis:PAYMENT_LINKED_PLAN_DIAGNOSIS,radiographs:'',notes:lang==='en'?'Generated from the doctor-selected payment order procedures.':'أُنشئت من الإجراءات التي حددها الطبيب في أمر الدفع.'},
+    phases:[{index:0,title:lang==='en'?'Treatment phase':'المرحلة العلاجية',estimatedVisits:'',estimatedDuration:'',items:(Array.isArray(items)?items:[]).map(paymentLinkedPlanItem)}],
+    alternatives:'',noTreatment:'',risks:'',financial:{vatMode:'borne_by_state',vatConfirmed:Boolean(vatConfirmed),paymentPlan:[]},
+    consent:{photoConsent:true,photoConsentRecorded:false,photoConsentDefaultVersion:2,photoConsentAcceptedAt:0,termsVersion:0},
+    signatures:{patientSignature:'',signerName:'',guardianRelation:'',doctorName:doctor,doctorSignedAt:submitted?new Date(Number(requestedAt)).toISOString():'',witnessName:'',witnessSignedAt:''}
+  };
+}
+async function indexPaymentLinkedTreatmentPlan(plan,patient){
+  const response=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{
+    method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({patient:plan.patient,status:plan.meta.status,planNo:plan.meta.planNo,parentPlanNo:'',relation:'standalone',sourceType:'payment_order',sourcePaymentRequestedAt:Number(plan.meta.sourcePaymentRequestedAt||0),sourcePatientId:String(patient.id),sourceDate:selectedDate,patientAcceptedAt:0,approvedAt:0,photoConsent:true,photoConsentRecorded:false,consentTermsVersion:0,lastPrintedAt:0})
+  });
+  const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'تعذر فهرسة الخطة العلاجية');
+}
+async function ensureTreatmentPlanFromPayment(patient,items,requestedAt,{vatConfirmed=false}={}){
+  if(!patient||!Array.isArray(items)||!items.length)return null;
+  const identity=patientWithDirectoryIdentity(patient),params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID});
+  if(identity.file)params.set('fileNo',identity.file);if(identity.phone)params.set('mobile',identity.phone);if(identity.nationalId)params.set('nationalId',identity.nationalId);
+  const existingResponse=await request(`${PLAN_API}?${params.toString()}`,{},20000),existing=await existingResponse.json().catch(()=>({}));
+  if(!existingResponse.ok)throw new Error(existing.error||'تعذر التحقق من الخطط الحالية');
+  if(existing.exists&&existing.plan){
+    return{created:false,status:String(existing.plan.meta?.status||'draft'),planNo:String(existing.plan.meta?.planNo||''),carriedForward:Boolean(existing.carriedForward)};
+  }
+  const plan=buildPaymentLinkedTreatmentPlan(identity,items,requestedAt,{vatConfirmed});
+  const savedResponse=await request(`${PLAN_API}?${params.toString()}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan,createIfMissing:true})},30000),saved=await savedResponse.json().catch(()=>({}));
+  if(!savedResponse.ok)throw new Error(saved.error||'تعذر إنشاء الخطة من أمر الدفع');
+  if(saved.existing&&saved.plan){
+    return{created:false,status:String(saved.plan.meta?.status||'draft'),planNo:String(saved.plan.meta?.planNo||''),carriedForward:Boolean(saved.carriedForward)};
+  }
+  await indexPaymentLinkedTreatmentPlan(plan,patient);
+  return{created:true,status:plan.meta.status,planNo:plan.meta.planNo,carriedForward:false};
+}
+function syncPaymentPlanChoice(){
+  const input=$('planDraftCheck'),title=$('planDraftChoiceTitle'),help=$('planDraftChoiceHelp'),choice=input?.closest('.completion-choice'),vatField=$('paymentPlanVatField'),vatInput=$('paymentPlanVatConfirmedCheck');if(!input||!title||!help)return;
+  const patient=patientById(pendingCompletionId),autoLinked=Boolean($('paymentRequiredCheck')?.checked&&patient&&!effectiveTreatmentPlanStatus(patient));
+  if(autoLinked){
+    input.dataset.autoLinked='1';input.checked=true;input.disabled=true;choice?.classList.add('is-auto-linked');
+    title.textContent=lang==='en'?'Treatment plan linked automatically':'خطة علاجية مرتبطة تلقائيًا';
+    help.textContent=lang==='en'?'The selected procedures will become a treatment plan. With complete prices and tax confirmation, it is ready for administration sharing and patient signature.':'ستتحول إجراءات أمر الدفع إلى خطة علاجية؛ ومع اكتمال الأسعار وتأكيد المعالجة الضريبية تصبح جاهزة لمشاركة الإدارة وتوقيع المريض.';
+    if(vatField)vatField.hidden=VIEW_MODE!=='clinic';
+  }else{
+    const wasAutomatic=input.dataset.autoLinked==='1';delete input.dataset.autoLinked;input.disabled=false;choice?.classList.remove('is-auto-linked');if(wasAutomatic)input.checked=false;
+    title.textContent=lang==='en'?'Create a treatment plan draft':'إنشاء مسودة خطة علاجية';
+    help.textContent=lang==='en'?'Open the plan form after saving so the doctor can complete and approve it.':'يفتح نموذج الخطة بعد الحفظ ليكمله الطبيب ثم يعتمده ويرسله للإدارة';
+    if(vatField)vatField.hidden=true;if(vatInput)vatInput.checked=false;
+  }
 }
 function renderCompletionLabOptions(patient){
   const field=$('completionLabField'),list=$('completionLabList');
@@ -3204,6 +3278,8 @@ function finishPatient(id){
   $('paymentPatientText').textContent=lang==='en'?`Complete ${firstName(p.name)} and choose the required next actions.`:`اكتمل علاج ${firstName(p.name)} — اختر ما يلزم بعد الإكمال.`;
   $('paymentRequiredCheck').checked=false;
   $('planDraftCheck').checked=false;
+  if($('paymentPlanVatConfirmedCheck'))$('paymentPlanVatConfirmedCheck').checked=false;
+  syncPaymentPlanChoice();
   $('prescriptionCheck').checked=false;
   $('paymentActionField').hidden=true;
   resetPaymentProcedureEditor();
@@ -3221,6 +3297,8 @@ function openMissingPaymentOrder(id){
   $('paymentPatientText').textContent=lang==='en'?`Complete the remaining payment for ${firstName(p.name)}.`:`استكمل دفع المبلغ المتبقي على المريض ${firstName(p.name)}.`;
   $('paymentRequiredCheck').checked=true;
   $('planDraftCheck').checked=false;
+  if($('paymentPlanVatConfirmedCheck'))$('paymentPlanVatConfirmedCheck').checked=false;
+  syncPaymentPlanChoice();
   $('prescriptionCheck').checked=false;
   resetPaymentProcedureEditor();
   $('paymentActionField').hidden=false;
@@ -3233,12 +3311,16 @@ async function confirmPatientCompletion(){
   const p=patientById(pendingCompletionId);if(!p)return;
   const paymentRequired=$('paymentRequiredCheck').checked;
   const createPlanDraft=$('planDraftCheck').checked;
+  const autoPaymentPlan=paymentRequired&&!effectiveTreatmentPlanStatus(p);
+  const manualPlanDraft=createPlanDraft&&!autoPaymentPlan;
   const createPrescription=$('prescriptionCheck').checked;
   const selection=collectPaymentItems();
   if(selection.error){toast(lang==='en'?'Payment action required':'بيانات الإجراء ناقصة',selection.error);$('paymentOtherInput').focus();return}
   if(paymentRequired&&!selection.items.length){toast(lang==='en'?'Payment action required':'اختر إجراء الدفع',lang==='en'?'Select at least one procedure.':'اختر إجراءً واحدًا على الأقل لإرساله إلى الإدارة.');return}
   const labUpdates=collectCompletionLabUpdates();
   const paymentAction=paymentRequired?paymentItemsSummary(selection.items,selection.discount):'';
+  const paymentRequestedAt=paymentRequired?Date.now():0;
+  const paymentPlanVatConfirmed=Boolean($('paymentPlanVatConfirmedCheck')?.checked);
   const confirmButton=$('confirmCompletionBtn');
   const originalConfirmText=confirmButton.textContent;
   confirmButton.disabled=true;
@@ -3253,10 +3335,10 @@ async function confirmPatientCompletion(){
     p.paymentAction=paymentRequired?paymentAction:'';
     p.paymentItems=paymentRequired?selection.items:[];
     p.paymentDiscount=paymentRequired?selection.discount:'';
-    p.paymentRequestedAt=paymentRequired?Date.now():0;
+    p.paymentRequestedAt=paymentRequestedAt;
     p.paymentAcknowledgedAt=0;
     p.paymentCompletedAt=0;
-    if(createPlanDraft){
+    if(manualPlanDraft){
       p.treatmentPlanStatus='draft';
       p.treatmentPlanUpdatedAt=Date.now();
     }
@@ -3273,6 +3355,22 @@ async function confirmPatientCompletion(){
     // wait for the normal background cadence, otherwise the administration
     // screen may not see the missing-payment action until a later refresh.
     if(sync.dirty)await pushState();
+    let paymentPlanResult=null,paymentPlanError=null;
+    if(paymentRequired){
+      try{
+        paymentPlanResult=await ensureTreatmentPlanFromPayment(p,selection.items,paymentRequestedAt,{vatConfirmed:paymentPlanVatConfirmed});
+        if(paymentPlanResult?.status){
+          mutate(()=>{const current=patientById(p.id);if(current){current.treatmentPlanStatus=paymentPlanResult.status;current.treatmentPlanUpdatedAt=Date.now();current.treatmentPlanPrintedAt=0}});
+          if(sync.dirty)await pushState();
+          treatmentPlanRegistry.lastFetchedAt=0;
+          await refreshTreatmentPlanRegistry(true);
+          if(VIEW_MODE==='admin'&&treatmentPlanCenter.loadedAt)await refreshTreatmentPlanCenter();
+        }
+      }catch(error){
+        paymentPlanError=error;
+        console.warn('Payment-linked treatment plan could not be created',error);
+      }
+    }
     let labUpdateFailures=0;
     if(labUpdates.length){
       const results=await Promise.allSettled(labUpdates.map(update=>updateDashboardLabStatus(update.id,update.clinicId,update.status,null,{silent:true})));
@@ -3284,14 +3382,22 @@ async function confirmPatientCompletion(){
     pendingCompletionId=null;
     if(createPrescription){
       await pushState();
-      toast(createPlanDraft?'تم تجهيز المسودة والوصفة':'تم تجهيز الوصفة','اختر نوع العلاج وأكمل الحقول، ثم اعتمدها ليصل التنبيه إلى الإدارة.');
+      toast(paymentPlanResult?.created?'تم تجهيز الخطة والوصفة':manualPlanDraft?'تم تجهيز المسودة والوصفة':'تم تجهيز الوصفة',paymentPlanResult?.created?'أصبحت الخطة في مركز الخطط، واختر الآن نوع علاج الوصفة.':'اختر نوع العلاج وأكمل الحقول، ثم اعتمدها ليصل التنبيه إلى الإدارة.');
       openPrescription(p.id);
       return;
     }
-    if(createPlanDraft){
+    if(manualPlanDraft){
       await pushState();
       toast('تم إنشاء مسودة الخطة','أكمل بيانات الخطة، فعّل تأكيد اعتماد الطبيب، ثم أرسلها للإدارة.');
       openTreatmentPlan(p.id);
+      return;
+    }
+    if(paymentPlanError){
+      toast(lang==='en'?'Payment order saved — plan needs retry':'حُفظ أمر الدفع — تعذر تجهيز الخطة',lang==='en'?'Open the treatment plan from the patient row to complete it; the payment order was not lost.':'افتح الخطة من صف المريض لإكمالها؛ لم يُفقد أمر الدفع.');
+      return;
+    }
+    if(paymentPlanResult?.created){
+      toast(paymentPlanResult.status==='submitted'?(lang==='en'?'Payment order and plan sent':'تم إرسال أمر الدفع والخطة'):(lang==='en'?'Payment order and plan draft saved':'حُفظ أمر الدفع ومسودة الخطة'),paymentPlanResult.status==='submitted'?(lang==='en'?'The plan is ready in Treatment Plans for sharing and patient signature.':'الخطة جاهزة في مركز الخطط للمشاركة وتوقيع المريض.'):(lang==='en'?'Doctor approval is required before sharing the signature link.':'يلزم اعتماد الطبيب قبل مشاركة رابط التوقيع.'));
       return;
     }
     const upcoming=flowLeadPatient();
@@ -3729,7 +3835,9 @@ function renderPaymentPanel(){
   $('paymentCount').textContent=String(pending.length);
   $('paymentQueue').innerHTML=invoices.length?invoices.map(p=>{
     const stage=paymentStage(p);
-    const controls=stage==='completed'?`<span class="payment-done">✓ ${lang==='en'?'Payment completed':'تم تنفيذ الدفع'}</span>`:stage==='received'?`<div class="payment-actions-inline"><span class="payment-received">✓ ${lang==='en'?'Request received':'تم استلام الطلب'}</span><button type="button" data-payment-complete-id="${escapeHtml(p.id)}">${lang==='en'?'Confirm payment completion':'تأكيد تنفيذ الدفع'}</button></div>`:`<button type="button" data-payment-ack-id="${escapeHtml(p.id)}">${lang==='en'?'Acknowledge payment request':'تأكيد استلام طلب الدفع'}</button>`;
+    const paymentControl=stage==='completed'?`<span class="payment-done">✓ ${lang==='en'?'Payment completed':'تم تنفيذ الدفع'}</span>`:stage==='received'?`<div class="payment-actions-inline"><span class="payment-received">✓ ${lang==='en'?'Request received':'تم استلام الطلب'}</span><button type="button" data-payment-complete-id="${escapeHtml(p.id)}"><span aria-hidden="true">💳</span>${lang==='en'?'Confirm payment completion':'تأكيد تنفيذ الدفع'}</button></div>`:`<button type="button" data-payment-ack-id="${escapeHtml(p.id)}"><span aria-hidden="true">💳</span>${lang==='en'?'Acknowledge payment request':'تأكيد استلام طلب الدفع'}</button>`;
+    const planStatus=effectiveTreatmentPlanStatus(p),planControl=planStatus?`<button type="button" class="payment-linked-plan-action ${planStatus==='submitted'?'ready':''}" data-payment-plan-id="${escapeHtml(p.id)}" data-payment-plan-share="${planStatus==='submitted'?'1':'0'}"><span aria-hidden="true">${planStatus==='submitted'?'↗':'▤'}</span>${planStatus==='submitted'?(lang==='en'?'Share plan + signature':'مشاركة الخطة والتوقيع'):(lang==='en'?'Open treatment plan':'فتح الخطة العلاجية')}</button>`:'';
+    const controls=`<div class="payment-workflow-actions">${paymentControl}${planControl}</div>`;
     const items=Array.isArray(p.paymentItems)?p.paymentItems:[];
     const details=items.length?`<div class="payment-items-summary">${items.map(item=>`<span class="payment-item-chip${item.free?' free':''}">${escapeHtml(item.name)} ×${Number(item.quantity||1)}${item.free?` · ${lang==='en'?'Free':'مجاني'}`:''}</span>`).join('')}</div>`:`<p>${escapeHtml(p.paymentAction||'إجراء دفع')}</p>`;
     const discount=p.paymentDiscount?`<p class="payment-discount-note">🏷 ${lang==='en'?'Discount':'الخصم'}: ${escapeHtml(p.paymentDiscount)}</p>`:'';
@@ -4970,8 +5078,10 @@ $('treatmentPlanCenterStatus')?.addEventListener('change',renderTreatmentPlanCen
 $('treatmentPlanCenterRefresh')?.addEventListener('click',()=>Promise.allSettled([refreshTreatmentPlanCenter(),refreshAppointmentRequests({notify:false}),refreshOperationsLabCases(),refreshOperationsPrescriptions()]));
 $('treatmentPlanCenterList')?.addEventListener('click',event=>{
   const open=event.target.closest('[data-plan-center-open]')?.dataset.planCenterOpen;
+  const share=event.target.closest('[data-plan-center-share]')?.dataset.planCenterShare;
   const remove=event.target.closest('[data-plan-center-delete]')?.dataset.planCenterDelete;
   if(open)openPlanCenterRecord(open);
+  if(share)openPlanCenterRecord(share,{share:true});
   if(remove)deletePlanCenterRecord(remove);
 });
 $('treatmentPlanCenterList')?.addEventListener('change',event=>{
@@ -4984,7 +5094,7 @@ $('treatmentPlanCenterModal')?.addEventListener('click',event=>{
   const filter=event.target.closest('[data-operation-filter]')?.dataset.operationFilter;
   const canonical=event.target.closest('[data-operation-plan]')?.dataset.operationPlan;
   if(filter){operationsCenter.filter=filter;renderOperationsCenter()}
-  if(canonical)openPlanCenterRecord(canonical);
+  if(canonical)openPlanCenterRecord(canonical,{share:treatmentPlanCenter.records?.[canonical]?.status==='submitted'});
 });
 $('operationsAlertList')?.addEventListener('change',async event=>{
   const appointmentId=event.target.dataset.operationAppointmentStatus;
@@ -5120,7 +5230,7 @@ document.addEventListener('keydown',event=>{
 });
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal&&modal.id!=='roleModal')closeModal(modal.id)}));
-$('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions()});
+$('paymentRequiredCheck').addEventListener('change',()=>{$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions();syncPaymentPlanChoice()});
 $('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true});
 $('paymentProcedureList').addEventListener('click',event=>{
   const favorite=event.target.closest('[data-payment-favorite]');
@@ -5157,6 +5267,8 @@ if(VIEW_MODE==='admin'&&typeof ResizeObserver!=='undefined'){
 $('paymentQueue').addEventListener('click',event=>{
   const ackId=event.target.closest('[data-payment-ack-id]')?.dataset.paymentAckId;
   const completeId=event.target.closest('[data-payment-complete-id]')?.dataset.paymentCompleteId;
+  const planButton=event.target.closest('[data-payment-plan-id]');
+  if(planButton){openTreatmentPlan(planButton.dataset.paymentPlanId,{share:planButton.dataset.paymentPlanShare==='1'});return}
   if(ackId){
     mutate(()=>{const p=patientById(ackId);if(p)p.paymentAcknowledgedAt=Date.now()});
     toast(lang==='en'?'Payment request received':'تم استلام طلب الدفع',lang==='en'?'It is now ready for execution.':'أصبح الطلب جاهزًا للتنفيذ.');

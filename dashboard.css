@@ -925,6 +925,24 @@ body.view-clinic .app-footer{margin-top:8px;padding:7px;font-size:10px}
   body.view-clinic .timeline-chip{min-width:68px;padding:4px 6px}
   body.view-clinic .timeline-chip strong{font-size:10px}
   body.view-clinic .timeline-chip small{font-size:8px}
-  body.view-clinic .upcoming-stack{max-height:none}
+body.view-clinic .upcoming-stack{max-height:none}
   body.view-clinic #adminWorkspace>details>.table-wrap{max-height:250px}
 }
+
+/* Payment-to-plan workflow: the three completion actions share one compact icon language. */
+.completion-choice{grid-template-columns:28px 42px minmax(0,1fr)}
+.completion-choice-icon{display:grid;place-items:center;width:38px;height:38px;border:1px solid #bfd9cc;border-radius:12px;background:#e6f5ed;color:#176443;font-size:20px;font-weight:950;box-shadow:inset 0 1px 0 #fff}
+.completion-choice.plan-choice .completion-choice-icon{border-color:#bfd4e3;background:#eaf4fb;color:#315f85}
+.completion-choice.prescription-choice .completion-choice-icon{border-color:#ddc9eb;background:#f5edfb;color:#744698}
+.completion-choice.is-auto-linked{border-color:#3b7ba5;background:linear-gradient(145deg,#eaf5fc,#fff);box-shadow:0 0 0 3px rgba(49,95,133,.13)}
+.completion-choice.is-auto-linked input{opacity:.75}
+.payment-plan-vat-confirm{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:start;gap:9px;padding:10px 12px;border:1px solid #d6c27d;border-radius:12px;background:#fff9e8;color:#705613;cursor:pointer}
+.payment-plan-vat-confirm[hidden]{display:none}.payment-plan-vat-confirm>input{width:18px;height:18px;margin-top:2px;accent-color:#16744b}.payment-plan-vat-confirm span,.payment-plan-vat-confirm strong,.payment-plan-vat-confirm small{display:block}.payment-plan-vat-confirm strong{font-size:12px}.payment-plan-vat-confirm small{margin-top:3px;color:#806d3e;font-size:10px;line-height:1.5}
+html[data-theme="dark"] .payment-plan-vat-confirm{border-color:#806c32;background:#352e1d;color:#ffe7a0}html[data-theme="dark"] .payment-plan-vat-confirm small{color:#d7c58d}
+.payment-workflow-actions{display:grid;justify-items:stretch;gap:7px;min-width:min(100%,240px)}
+.payment-workflow-actions>button,.payment-actions-inline button,.workflow-icon-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.payment-workflow-actions>button>span,.payment-actions-inline button>span,.workflow-icon-actions button>span{display:grid;place-items:center;width:24px;height:24px;border-radius:8px;background:rgba(255,255,255,.2);font-size:14px;font-weight:950}
+.payment-linked-plan-action{border-color:#9fc1d8!important;background:linear-gradient(145deg,#edf6fb,#dfeef7)!important;color:#295f87!important;font-weight:950}
+.payment-linked-plan-action.ready,.plan-share-action{border-color:#2d9b64!important;background:linear-gradient(145deg,#23a866,#137d49)!important;color:#fff!important;box-shadow:0 7px 17px rgba(24,130,77,.2)!important}
+.workflow-icon-actions{flex-wrap:wrap}
+@media(max-width:680px){.completion-choice{grid-template-columns:28px 42px minmax(0,1fr)}.payment-workflow-actions{width:100%}}
