@@ -3505,22 +3505,11 @@ function treemapMarkup(queue,index=0){
   return `<div class="queue-split split-${direction}"><div class="treemap-half">${card}</div><div class="treemap-rest">${treemapMarkup(queue,index+1)}</div></div>`;
 }
 function renderUpcoming(lead){
-  const queue=upcomingPatients(lead?.id??null);
-  const leadOverrun=Boolean(lead&&lead.actualStartedAt&&Date.now()>timeDate(lead.end).getTime());
-  const queueCountLabel=lang==='en'?`${queue.length} patients`:`${queue.length} مرضى`;
-  const layoutHint=lang==='en'?'Market-style size map by appointment order':'خريطة أحجام مثل سوق الأسهم حسب ترتيب الموعد';
-  const upcomingHead=document.querySelector('.upcoming-head h2');
-  if(upcomingHead)upcomingHead.textContent=leadOverrun?(lang==='en'?'Next patient — ready to call':'المريض التالي — جاهز للاستدعاء'):(lang==='en'?'Upcoming patients':'المرضى القادمون');
-  const upcomingPanel=document.querySelector('.upcoming-panel');
-  upcomingPanel?.classList.toggle('is-overrun',leadOverrun);
-  document.querySelector('.upcoming-head small').innerHTML=`<span class="upcoming-layout-key">${escapeHtml(queueCountLabel)} · ${escapeHtml(leadOverrun?(lang==='en'?'Current treatment is over time':'العلاج الحالي تجاوز وقته — التالي ظاهر بوضوح'):layoutHint)}</span>`;
-  const featured=queue.slice(0,8);
-  const overflow=queue.slice(8);
-  $('upcomingStack').classList.add('treemap-mode');
-  $('upcomingStack').innerHTML=queue.length
-    ? `<div class="treemap-root">${treemapMarkup(featured)}</div>${overflow.length?`<div class="queue-overflow-strip" aria-label="${escapeHtml(lang==='en'?'Additional upcoming patients':'بقية المرضى القادمين')}">${overflow.map((p,index)=>`<div class="queue-overflow-chip"><strong>#${index+9} ${escapeHtml(firstName(p.name))}</strong><span>${escapeHtml(p.start)}</span></div>`).join('')}</div>`:''}`
-    : `<div class="treemap-root treemap-empty"><div class="queue-empty">${escapeHtml(tr('noUpcoming'))}</div></div>`;
-  updateUpcomingCardVisuals();
+  // The first pending patient already has the detailed next-patient card.
+  const queue=lead?upcomingPatients(lead.id).slice(1):[];
+  $('followingPatients').hidden=!queue.length;
+  $('followingPatientsTitle').textContent=lang==='en'?`After the next patient (${queue.length})`:`بعد المريض التالي (${queue.length})`;
+  $('upcomingStack').innerHTML=queue.map((p,index)=>`<li class="clinic-following-row"><span class="clinic-following-order">${index+2}</span><strong>${escapeHtml(firstName(p.name))}</strong><time dir="ltr">${escapeHtml(p.start||'—')}</time><span class="clinic-following-status">${escapeHtml(statusText(derivedStatus(p)))}</span></li>`).join('');
 }
 function updateUpcomingCardVisuals(){
   const cards=[...document.querySelectorAll('[data-patient-card-id]')];

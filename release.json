@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.07-clinic-topmost-display",
+  "version": "2026.09.07-clinic-unified-queue",
   "publishedAt": "2026-09-07",
   "summary": {
-    "ar": "إضافة عرض مباشر لشاشة الطبيب فوق التطبيقات، مع تحديث تلقائي ورابط رسمي لتنزيل PowerToys للشاشة الكاملة.",
-    "en": "Added a live always-on-top doctor display with automatic updates and an official PowerToys download link for the full screen."
+    "ar": "ترتيب بقية الدور تحت المريض التالي وإزالة اللوحة المنفصلة، مع عرض فوق التطبيقات ورابط تنزيل PowerToys.",
+    "en": "Grouped the remaining queue under the next patient; added an always-on-top display and PowerToys download link."
   }
 }

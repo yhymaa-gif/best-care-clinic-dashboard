@@ -785,6 +785,21 @@ html[data-theme="dark"] .patient-directory-review-panel{border-color:#71404a;bac
 @media(max-width:620px){.patient-directory-review-panel{align-items:stretch;flex-direction:column}.patient-directory-review-panel button{width:100%}}
 
 /* Clinic flow clarity: the next patient is a compact, actionable hand-off card. */
+body.view-clinic #flowStage,body.clinic-topmost-window .focus-grid{grid-template-columns:minmax(0,1fr)}
+body.view-clinic #timeline,body.clinic-topmost-window .timeline-strip{display:none}
+.clinic-following{grid-column:1 / -1;min-width:0;border-top:1px solid #aacddb;padding-top:10px;margin-top:4px}
+.clinic-following[hidden]{display:none}
+.clinic-following h3{margin:0 0 8px;font-size:14px;color:#1e536d}
+.clinic-following-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:6px;margin:0;padding:0;list-style:none}
+.clinic-following-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:4px 8px;padding:8px 10px;border:1px solid #c4dce8;border-radius:10px;background:#f7fcff;min-width:0}
+.next-patient-callout .clinic-following-row strong{font-size:14px;color:#1e536d;white-space:normal;overflow-wrap:anywhere;margin:0}
+.clinic-following-row time{font-size:14px;font-weight:800;color:#1e536d}
+.next-patient-callout .clinic-following-order{grid-row:1 / span 2;display:grid;place-items:center;width:28px;height:28px;background:#d8edf9;border-radius:50%;font-size:14px;color:#1e536d;margin:0}
+.next-patient-callout .clinic-following-status{grid-column:2 / -1;font-size:13px;color:#4b7082;margin:0}
+html[data-theme="dark"] .clinic-following-row{background:#1b2d35;border-color:#3f6272}
+html[data-theme="dark"] .clinic-following h3,html[data-theme="dark"] .clinic-following-row strong,html[data-theme="dark"] .clinic-following-row time{color:#c5edf5}
+html[data-theme="dark"] .clinic-following-order{background:#2b5368;color:#e8f7ff}
+html[data-theme="dark"] .clinic-following-status{color:#b0cbd8}
 .next-patient-callout{grid-template-columns:40px minmax(0,1fr) minmax(150px,auto);align-items:start}
 .next-patient-copy{min-width:0;padding-top:1px}
 .next-patient-copy strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
