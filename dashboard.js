@@ -4608,6 +4608,24 @@ function updateClinicTopmostButton(){
     ?(lang==='en'?'Bring the floating doctor display to the front':'إظهار نافذة الطبيب العائمة')
     :(lang==='en'?'Open a live doctor display above other applications':'فتح عرض الطبيب المباشر فوق التطبيقات الأخرى');
 }
+// Reconcile the read-only mirror in place so timer ticks retain card nodes,
+// focus and scroll positions instead of restarting entry animations.
+function reconcileClinicDisplay(target,source){
+  const incoming=Array.from(source.childNodes);
+  incoming.forEach((next,index)=>{
+    const current=target.childNodes[index];
+    if(!current){target.appendChild(next.cloneNode(true));return}
+    if(current.nodeType!==next.nodeType||current.nodeName!==next.nodeName){
+      target.replaceChild(next.cloneNode(true),current);return;
+    }
+    if(next.nodeType===3){if(current.nodeValue!==next.nodeValue)current.nodeValue=next.nodeValue;return}
+    if(next.nodeType!==1)return;
+    for(const attr of Array.from(current.attributes))if(!next.hasAttribute(attr.name))current.removeAttribute(attr.name);
+    for(const attr of Array.from(next.attributes))if(current.getAttribute(attr.name)!==attr.value)current.setAttribute(attr.name,attr.value);
+    reconcileClinicDisplay(current,next);
+  });
+  while(target.childNodes.length>incoming.length)target.removeChild(target.lastChild);
+}
 function syncClinicTopmostDisplay(){
   if(!clinicTopmostIsOpen())return;
   const doc=clinicTopmostWindow.document,flowHost=doc.getElementById('clinicTopmostFlow'),alertHost=doc.getElementById('clinicTopmostAlert');
@@ -4623,17 +4641,19 @@ function syncClinicTopmostDisplay(){
   const clock=doc.getElementById('clinicTopmostClock');if(clock)clock.textContent=$('clock')?.textContent||'--:--:--';
   const syncState=doc.getElementById('clinicTopmostSync');if(syncState)syncState.textContent=$('syncBadge')?.textContent||(lang==='en'?'Live sync':'مزامنة مباشرة');
   const closeButton=doc.querySelector('[data-close-topmost]');if(closeButton)closeButton.setAttribute('aria-label',lang==='en'?'Close floating display':'إغلاق العرض العائم');
-  alertHost.replaceChildren();
+  const alertContent=doc.createElement('div');
   if(els.alertRow?.classList.contains('show')){
     const alertClone=els.alertRow.cloneNode(true);alertClone.removeAttribute('id');alertClone.querySelector('button')?.remove();
-    alertClone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));alertHost.appendChild(alertClone);
+    alertClone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));alertContent.appendChild(alertClone);
   }
-  const flow=$('flowStage');flowHost.replaceChildren();
+  reconcileClinicDisplay(alertHost,alertContent);
+  const flow=$('flowStage'),flowContent=doc.createElement('div');
   if(flow){
-    Array.from(flow.children).forEach(child=>flowHost.appendChild(child.cloneNode(true)));
-    flowHost.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
-    flowHost.querySelectorAll('button,input,select,textarea').forEach(node=>{node.disabled=true;node.tabIndex=-1});
+    Array.from(flow.children).forEach(child=>flowContent.appendChild(child.cloneNode(true)));
+    flowContent.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+    flowContent.querySelectorAll('button,input,select,textarea').forEach(node=>{node.disabled=true;node.tabIndex=-1});
   }
+  reconcileClinicDisplay(flowHost,flowContent);
 }
 async function openClinicTopmostDisplay(){
   if(VIEW_MODE!=='clinic')return;
