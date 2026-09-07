@@ -20,6 +20,7 @@ export const directoryPatient = value => ({
   fileNo: normalizePatientFile(value?.fileNo ?? value?.file),
   mobile: normalizePatientPhone(value?.mobile ?? value?.phone),
   nationalId: normalizePatientNationalId(value?.nationalId),
+  phoneRelationship: ['father','mother','spouse','sibling','child','guardian','other'].includes(value?.phoneRelationship) ? value.phoneRelationship : '',
   adminNotes: cleanText(value?.adminNotes ?? value?.adminNote ?? value?.notes ?? value?.note, 1600),
   notesReviewed: Boolean(value?.notesReviewed)
 });
@@ -31,7 +32,7 @@ const aliasesFor = value => patientIdentityKeys({
 });
 
 const strongAliasesFor = value => aliasesFor(value).filter(alias => alias.startsWith('file:') || alias.startsWith('national:'));
-const phoneAliasFor = value => aliasesFor(value).find(alias => alias.startsWith('phone:')) || '';
+const phoneAliasFor = value => { const phone=normalizePatientPhone(value?.mobile ?? value?.phone); return phone ? `phone:${phone}` : ''; };
 const activeNotePattern = /(⚠|يحتاج\s*مراجعة|تعارض|نفس\s*الجوال|مفقود|ناقص|بدون\s*(?:رقم|جوال|ملف)|تصحيح\s*مطلوب)/i;
 const mergeNotes = (current, incoming) => {
   const lines = [...new Set([current, incoming].flatMap(value => cleanText(value, 1600).split(/\s*\|\s*|\r?\n/)).map(value => value.trim()).filter(Boolean))];
@@ -53,8 +54,8 @@ const reviewFlagsFor = (value = {}, options = {}) => {
   const patient = directoryPatient(value);
   const flags = [];
   if (patient.fullName.split(/\s+/).filter(Boolean).length < 2) flags.push('full_name_required');
-  if (!patient.fileNo || /^0+$/.test(patient.fileNo)) flags.push('missing_file');
-  if (!/^05\d{8}$/.test(patient.mobile)) flags.push('missing_phone');
+  if (!patient.fileNo && !patient.nationalId) flags.push('missing_file');
+  if (!/^05\d{8}$/.test(patient.mobile) && (patient.mobile || !patient.nationalId)) flags.push('missing_phone');
   if (options.sharedPhone) flags.push('shared_phone');
   if (!patient.notesReviewed && patient.adminNotes && activeNotePattern.test(patient.adminNotes)) flags.push('note_review');
   return [...new Set(flags)];
@@ -63,18 +64,17 @@ const reviewFlagsFor = (value = {}, options = {}) => {
 const resolveCanonical = (records, aliases, patient) => {
   const strongAliases = strongAliasesFor(patient);
   const phoneAlias = phoneAliasFor(patient);
+  const sharedPhone = patient.mobile ? Object.entries(records).find(([,record]) => normalizePatientPhone(record.mobile) === patient.mobile)?.[0] || '' : '';
   const strongLinked = [...new Set(strongAliases.map(alias => aliases[alias]).filter(Boolean))];
   if (strongLinked.length > 1) return { conflict: true, canonical: '', sharedPhoneCanonical: '' };
   if (strongLinked.length === 1) {
     const canonical = strongLinked[0];
-    const phoneCanonical = phoneAlias ? aliases[phoneAlias] : '';
+    const phoneCanonical = sharedPhone || (phoneAlias ? aliases[phoneAlias] : '');
+    if (identityConflict(records[canonical], patient)) return { conflict: true, canonical: '', sharedPhoneCanonical: '' };
     return { conflict: false, canonical, sharedPhoneCanonical: phoneCanonical && phoneCanonical !== canonical ? phoneCanonical : '' };
   }
-  const phoneCanonical = phoneAlias ? aliases[phoneAlias] : '';
-  if (phoneCanonical && namesCompatible(records[phoneCanonical]?.fullName, patient.fullName) && (!strongAliases.length || !identityConflict(records[phoneCanonical], patient))) {
-    return { conflict: false, canonical: phoneCanonical, sharedPhoneCanonical: '' };
-  }
-  const seed = strongAliases[0] || (phoneAlias ? `${phoneAlias}|name:${normalizedName(patient.fullName)}` : '');
+  const phoneCanonical = sharedPhone || (phoneAlias ? aliases[phoneAlias] : '');
+  const seed = strongAliases[0] || '';
   return { conflict: false, canonical: seed ? hash(seed) : '', sharedPhoneCanonical: phoneCanonical || '' };
 };
 
@@ -116,16 +116,16 @@ export function resolveDirectoryPatient(registry = {}, value = {}) {
 
   // File number and national ID are authoritative. A conflict between them
   // must be corrected by administration instead of guessing a patient.
-  if (strongCanonicals.length === 1) return records[strongCanonicals[0]];
+  if (strongCanonicals.length === 1) {
+    const record=records[strongCanonicals[0]];
+    // Preserve explicit historical file aliases, but reject a conflicting ID.
+    if (patient.nationalId && record.nationalId && patient.nationalId !== record.nationalId) return null;
+    if (patient.fileNo && record.fileNo && patient.fileNo !== normalizePatientFile(record.fileNo) && aliases[`file:${patient.fileNo}`] !== strongCanonicals[0]) return null;
+    return record;
+  }
   if (strongCanonicals.length > 1) return null;
 
-  const phoneAlias = phoneAliasFor(patient);
-  if (!phoneAlias) return null;
-  const phoneMatches = Object.values(records).filter(record =>
-    record?.mobile === patient.mobile || (Array.isArray(record?.aliases) && record.aliases.includes(phoneAlias))
-  );
-  // A mobile number is only a safe fallback when it belongs to one record.
-  return phoneMatches.length === 1 ? phoneMatches[0] : null;
+  return null;
 }
 
 export const enrichPatientFromDirectory = (registry = {}, value = {}) => {
@@ -140,7 +140,8 @@ export const enrichPatientFromDirectory = (registry = {}, value = {}) => {
     fileNo: match.fileNo || value?.fileNo || value?.file || '',
     phone: match.mobile || value?.phone || value?.mobile || '',
     mobile: match.mobile || value?.mobile || value?.phone || '',
-    nationalId: match.nationalId || value?.nationalId || ''
+    nationalId: match.nationalId || value?.nationalId || '',
+    phoneRelationship: match.phoneRelationship ?? value?.phoneRelationship ?? ''
   };
 };
 
@@ -225,6 +226,14 @@ export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
 
   groups.forEach((entries, fileNo) => {
     filesReviewed += 1;
+    const nationalIds=new Set(entries.map(entry=>normalizePatientNationalId(entry.record?.nationalId)).filter(Boolean));
+    if(nationalIds.size>1){
+      entries.forEach(({canonical,record})=>{
+        if(!record.dataQualityFlags?.includes('identity_conflict'))trustedMetadataChanged=true;
+        records[canonical]={...record,reviewRequired:true,dataQualityFlags:[...new Set([...(record.dataQualityFlags||[]),'identity_conflict'])]};
+      });
+      return;
+    }
     const fileAlias = aliasesFor({ fileNo }).find(alias => alias.startsWith('file:')) || '';
     const linkedCanonical = fileAlias ? aliases[fileAlias] : '';
     const target = entries.find(entry => entry.canonical === linkedCanonical) || [...entries].sort((left, right) => Number(right.record?.correctedAt || right.record?.importedAt || right.record?.updatedAt || 0) - Number(left.record?.correctedAt || left.record?.importedAt || left.record?.updatedAt || 0))[0];
@@ -337,6 +346,7 @@ export async function upsertPatientDirectory(patients, meta = {}) {
       fileNo: preferValue(existing.fileNo, patient.fileNo, { locked: lockedFields.includes('fileNo') }),
       mobile: preferValue(existing.mobile, patient.mobile, { locked: lockedFields.includes('mobile') }),
       nationalId: preferValue(existing.nationalId, patient.nationalId, { locked: lockedFields.includes('nationalId') }),
+      phoneRelationship: patient.phoneRelationship || existing.phoneRelationship || '',
       aliases: [...new Set([...(existing.aliases || []), ...incomingAliases])],
       clinicIds: [...new Set([...(existing.clinicIds || []), ...(clinicId ? [clinicId] : [])])],
       latestClinicId: latest.clinicId || existing.latestClinicId || clinicId,
@@ -387,7 +397,7 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
   const registry = await getPatientDirectory();
   const aliases = { ...(registry.aliases || {}) };
   const records = { ...(registry.records || {}) };
-  const normalizedAliases = [...new Set((lookupAliases || []).filter(Boolean))];
+  const normalizedAliases = [...new Set((lookupAliases || []).filter(alias => /^(file|national):/.test(alias)))];
   const patient = directoryPatient(value);
   const nextAliases = aliasesFor(patient);
   const canonical = normalizedAliases.map(alias => aliases[alias]).find(Boolean) || nextAliases.map(alias => aliases[alias]).find(Boolean) || hash((nextAliases[0] || normalizedAliases[0] || `manual:${Date.now()}`));
@@ -405,6 +415,7 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
     fileNo: preferValue(existing.fileNo, patient.fileNo, { force: true }),
     mobile: preferValue(existing.mobile, patient.mobile, { force: true }),
     nationalId: patient.nationalId || '',
+    phoneRelationship: Object.prototype.hasOwnProperty.call(value||{},'phoneRelationship') ? patient.phoneRelationship : existing.phoneRelationship || '',
     adminNotes: patient.adminNotes || existing.adminNotes || '',
     notesReviewedAt: patient.notesReviewed ? now : Number(existing.notesReviewedAt || 0),
     aliases: [...new Set([...(existing.aliases || []), ...normalizedAliases, ...nextAliases])],
@@ -466,6 +477,7 @@ export async function importPatientDirectory(values, meta = {}) {
       fileNo: existing.fileNo || patient.fileNo,
       mobile: nextMobile,
       nationalId: nextNationalId,
+      phoneRelationship: patient.phoneRelationship || existing.phoneRelationship || '',
       adminNotes: mergeNotes(existing.adminNotes, patient.adminNotes),
       aliases: [...new Set([...(existing.aliases || []), ...identityAliases])],
       clinicIds: [...new Set([...(existing.clinicIds || []), ...(clinicId ? [clinicId] : [])])],

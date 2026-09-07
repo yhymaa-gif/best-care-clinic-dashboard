@@ -290,9 +290,10 @@
   </div>
   <div class="quick-add-grid">
     <div><label for="fName">الاسم الكامل *</label><input id="fName" type="text" autocomplete="name" placeholder="الاسم الأول واسم العائلة" minlength="3" maxlength="120" required></div>
-    <div><label for="fFile">رقم الملف *</label><input id="fFile" type="text" inputmode="numeric" autocomplete="off" placeholder="رقم الملف" maxlength="40" required></div>
-    <div><label for="fPhone">رقم الجوال الصحيح *</label><input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="05xxxxxxxx" pattern="(?:\+?966|0)?5[0-9]{8}" required></div>
-    <div><label for="fNationalId">رقم الهوية</label><input id="fNationalId" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="10 أرقام (اختياري)"></div>
+    <div><label for="fFile">رقم الملف (أو الهوية)</label><input id="fFile" type="text" inputmode="numeric" autocomplete="off" placeholder="اختياري عند تسجيل الهوية" maxlength="40"></div>
+    <div><label for="fPhone">الجوال (اختياري مع الهوية)</label><input id="fPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="16" placeholder="05xxxxxxxx" pattern="(?:\+?966|0)?5[0-9]{8}"></div>
+    <div><label for="fNationalId">رقم الهوية — بديل الملف والجوال</label><input id="fNationalId" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="10 أرقام"></div>
+    <div><label for="fPhoneRelationship">صلة القرابة لصاحب الجوال</label><select id="fPhoneRelationship"><option value="">جوال المريض / غير محدد</option value="father">الأب</option><option value="mother">الأم</option><option value="spouse">الزوج / الزوجة</option><option value="sibling">الأخ / الأخت</option><option value="child">الابن / الابنة</option><option value="guardian">ولي الأمر</option><option value="other">قرابة أخرى</option></select><small>الجوال المشترك لا يدمج ملفات المرضى.</small></div>
     <div id="appointmentDateField" class="appointment-date-field" hidden><label id="appointmentDateLabel" for="fDate">تاريخ الموعد</label><input id="fDate" type="date"></div>
     <div><label for="fStart">وقت البداية</label><input id="fStart" type="time"></div>
     <div><label for="fEnd">وقت النهاية</label><input id="fEnd" type="time"></div>
@@ -404,8 +405,8 @@
         </section>
         <form id="patientProfileForm" class="patient-profile-form">
           <label>اسم المريض<input id="patientProfileNameInput" type="text" maxlength="100" autocomplete="off" required></label>
-          <label>رقم الملف<input id="patientProfileFileInput" type="text" maxlength="40" autocomplete="off" required></label>
-          <label>رقم الجوال<input id="patientProfilePhoneInput" type="tel" maxlength="20" inputmode="tel" autocomplete="off" required></label>
+          <label>رقم الملف (أو الهوية)<input id="patientProfileFileInput" type="text" maxlength="40" autocomplete="off"></label>
+          <label>الجوال (اختياري مع الهوية)<input id="patientProfilePhoneInput" type="tel" maxlength="20" inputmode="tel" autocomplete="off"></label>
           <label>رقم الهوية<input id="patientProfileNationalInput" type="text" maxlength="10" inputmode="numeric" autocomplete="off"></label>
           <label class="patient-profile-notes">ملاحظات الإدارة<textarea id="patientProfileNotesInput" maxlength="1600" rows="3" placeholder="ملاحظات تصحيح البيانات أو التعارضات"></textarea></label>
           <label class="patient-profile-review-check"><input id="patientProfileNotesReviewed" type="checkbox"> تمت مراجعة الملاحظات ومعالجة المطلوب</label>
@@ -511,6 +512,6 @@
 </div></div>
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
-<script src="./patient-summary.js?v=20260902-appointment-entry"></script>
-<script src="./dashboard.js?v=20260907-clinic-stable-display"></script>
+<script src="./patient-summary.js?v=20260907-patient-strong-identity"></script>
+<script src="./dashboard.js?v=20260907-patient-strong-identity"></script>
 </body></html>

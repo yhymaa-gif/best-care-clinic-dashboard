@@ -1703,11 +1703,12 @@ function paymentBadgeMarkup(p){
 function normalizedPatientPhone(patient){return String(patient?.phone||patient?.mobile||'').replace(/\D/g,'')}
 function labCaseMatchesPatient(item,patient){
   if(!item||!patient)return false;
-  if(item.patient?.id&&patient.id&&String(item.patient.id)===String(patient.id))return true;
-  const caseFile=String(item.patient?.file||'').trim().toLowerCase(),patientFile=String(patient.file||'').trim().toLowerCase();
-  if(caseFile&&patientFile&&caseFile===patientFile)return true;
-  const casePhone=normalizedPatientPhone(item.patient),patientPhone=normalizedPatientPhone(patient);
-  return Boolean(casePhone&&patientPhone&&casePhone===patientPhone);
+  const caseFile=normalizedPlanFile(item.patient?.file),patientFile=normalizedPlanFile(patient.file);
+  const caseNational=planRegistryNationalId(item.patient?.nationalId),national=planRegistryNationalId(patient.nationalId);
+  if(caseNational&&national&&caseNational!==national)return false;
+  if(caseFile&&patientFile)return caseFile===patientFile;
+  if(caseNational&&national)return caseNational===national;
+  return Boolean(item.patient?.id&&patient.id&&String(item.patient.id)===String(patient.id));
 }
 function patientLabCases(patient,{activeOnly=true}={}){
   const terminal=new Set(['delivered_patient','cancelled']);
@@ -1811,7 +1812,7 @@ function mergePatientVersions(remote={},local={}){
   const remoteStamp=patientVersionStamp(remote),localStamp=patientVersionStamp(local);
   const merged=localStamp>=remoteStamp?{...remote,...local}:{...local,...remote};
   const groups=[
-    [['name','file','phone','nationalId','start','end','procedure','adminUpdatedAt'],value=>Number(value?.adminUpdatedAt||value?.recordUpdatedAt||0)],
+    [['name','file','phone','nationalId','phoneRelationship','start','end','procedure','adminUpdatedAt'],value=>Number(value?.adminUpdatedAt||value?.recordUpdatedAt||0)],
     [['status','statusUpdatedAt','arrivedAt','actualStartedAt','actualEndedAt','completedAt','lastCalledAt','callCount'],value=>Math.max(Number(value?.statusUpdatedAt||0),Number(value?.arrivedAt||0),Number(value?.actualStartedAt||0),Number(value?.actualEndedAt||0),Number(value?.completedAt||0),Number(value?.lastCalledAt||0))],
     [['paymentRequired','paymentAction','paymentItems','paymentDiscount','paymentRequestedAt','paymentAcknowledgedAt','paymentCompletedAt'],value=>Math.max(Number(value?.paymentRequestedAt||0),Number(value?.paymentAcknowledgedAt||0),Number(value?.paymentCompletedAt||0))],
     [['treatmentPlanStatus','treatmentPlanUpdatedAt'],value=>Number(value?.treatmentPlanUpdatedAt||0)],
@@ -1944,7 +1945,7 @@ function planRegistryIdentityKeys(patient={}){
   const file=normalizedPlanFile(patient.file??patient.fileNo);
   const phone=planRegistryPhone(patient.phone??patient.mobile);
   const nationalId=planRegistryNationalId(patient.nationalId);
-  return [...new Set([file?`file:${file}`:'',phone?`phone:${phone}`:'',nationalId?`national:${nationalId}`:''].filter(Boolean))];
+  return [...new Set([file?`file:${file}`:'',nationalId?`national:${nationalId}`:''].filter(Boolean))];
 }
 function treatmentPlanRecord(patient){
   for(const key of planRegistryIdentityKeys(patient)){
@@ -2067,7 +2068,7 @@ function patientIdentityRecordKey(record={}){
   const file=normalizedPlanFile(record.fileNo??record.file);
   const phone=planRegistryPhone(record.mobile??record.phone);
   const nationalId=planRegistryNationalId(record.nationalId);
-  return file?`file:${file}`:phone?`phone:${phone}`:nationalId?`national:${nationalId}`:`name:${String(record.fullName??record.name??'').trim().toLowerCase()}`;
+  return file?`file:${file}`:nationalId?`national:${nationalId}`:`record:${record.canonical||record.patientId||record.id||record.sourcePatientId||''}:${record.clinicId||''}:${record.date||record.sourceDate||''}:${String(record.fullName??record.name??'').trim().toLowerCase()}`;
 }
 function planCenterEntries(){
   const records=treatmentPlanCenter.loadedAt?treatmentPlanCenter.records:treatmentPlanRegistry.records;
@@ -2375,7 +2376,7 @@ function renderPatientIdentitySearch(){
   results.innerHTML=(patientIdentityRemote.loading?`<div class="patient-identity-loading">${lang==='en'?'Searching saved records…':'جارٍ استكمال البحث في السجلات…'}</div>`:'')+tableHead+matches.map(record=>{
     const clinic=clinicDirectory.find(item=>item.id===record.clinicId)||defaultClinic(clinicNumber(record.clinicId));
     const status=record.status?planStatusText(record.status):(lang==='en'?'No treatment plan yet':'لا توجد خطة علاجية بعد');
-    const completeName=cleanDirectoryName(record.fullName).split(/\s+/).filter(Boolean).length>=2,completeFile=/^\d+$/.test(normalizeDirectoryFile(record.fileNo)),completeMobile=/^05\d{8}$/.test(normalizeDirectoryPhone(record.mobile)),scheduleReady=completeName&&completeFile&&completeMobile,recordComplete=scheduleReady&&!record.reviewRequired;
+    const completeName=cleanDirectoryName(record.fullName).split(/\s+/).filter(Boolean).length>=2,hasNational=Boolean(normalizeDirectoryNationalId(record.nationalId)),completeFile=Boolean(normalizeDirectoryFile(record.fileNo)||hasNational),completeMobile=/^05\d{8}$/.test(normalizeDirectoryPhone(record.mobile))||(!record.mobile&&hasNational),scheduleReady=completeName&&completeFile&&completeMobile,recordComplete=scheduleReady&&!record.reviewRequired;
     const flagLabels={full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة'};
     const reviewLabels=(record.dataQualityFlags||[]).map(flag=>flagLabels[flag]||flag);
     return `<article class="patient-identity-result patient-directory-table-row ${recordComplete?'complete':'incomplete'}">
@@ -2413,10 +2414,9 @@ function rebuildPatientIdentityAliasIndex(){
   };
   Object.values(patientIdentityDirectory.records||{}).forEach(record=>{
     const aliases=[
-      ...(Array.isArray(record.aliases)?record.aliases:[]),
+      ...(Array.isArray(record.aliases)?record.aliases.filter(alias=>/^(file|national):/.test(alias)):[]),
       fileAlias(record.fileNo),
-      record.nationalId?`national:${normalizeDirectoryNationalId(record.nationalId)}`:'',
-      record.mobile?`phone:${normalizeDirectoryPhone(record.mobile)}`:''
+      record.nationalId?`national:${normalizeDirectoryNationalId(record.nationalId)}`:''
     ];
     [...new Set(aliases.filter(Boolean))].forEach(alias=>add(alias,record));
   });
@@ -2426,11 +2426,14 @@ function directoryPatientFor(patient){
   if(!patient)return null;
   const aliases=[
     fileAlias(patient.file??patient.fileNo),
-    normalizeDirectoryNationalId(patient.nationalId)?`national:${normalizeDirectoryNationalId(patient.nationalId)}`:'',
-    normalizeDirectoryPhone(patient.phone??patient.mobile)?`phone:${normalizeDirectoryPhone(patient.phone??patient.mobile)}`:''
+    normalizeDirectoryNationalId(patient.nationalId)?`national:${normalizeDirectoryNationalId(patient.nationalId)}`:''
   ].filter(Boolean);
-  for(const alias of aliases){const match=patientIdentityAliasIndex.get(alias);if(match)return match}
-  return null;
+  const matches=[...new Set(aliases.map(alias=>patientIdentityAliasIndex.get(alias)).filter(Boolean))];
+  if(matches.length!==1)return null;
+  const match=matches[0],file=fileAlias(patient.file??patient.fileNo),national=normalizeDirectoryNationalId(patient.nationalId);
+  if(national&&match.nationalId&&national!==normalizeDirectoryNationalId(match.nationalId))return null;
+  if(file&&fileAlias(match.fileNo)&&file!==fileAlias(match.fileNo)&&patientIdentityAliasIndex.get(file)!==match)return null;
+  return match;
 }
 function patientWithDirectoryIdentity(patient){
   const record=directoryPatientFor(patient);
@@ -2441,7 +2444,8 @@ function patientWithDirectoryIdentity(patient){
     name:resolvedName||patient.name||'',
     file:record.fileNo||patient.file||'',
     phone:record.mobile||patient.phone||'',
-    nationalId:record.nationalId||patient.nationalId||''
+    nationalId:record.nationalId||patient.nationalId||'',
+    phoneRelationship:record.phoneRelationship??patient.phoneRelationship??''
   };
 }
 async function refreshPatientIdentityDirectory(){
@@ -2483,7 +2487,6 @@ async function openPatientIdentitySearch(){
 function patientProfileLookupFromButton(button){
   const file=String(button.dataset.identityFile||'').trim(),phone=String(button.dataset.identityPhone||'').trim(),national=String(button.dataset.identityNational||'').trim();
   if(file&&!/^0+$/.test(file.replace(/\D/g,'')))return{type:'file',value:file};
-  if(phone)return{type:'phone',value:phone};
   if(national)return{type:'national',value:national};
   return null;
 }
@@ -2501,8 +2504,8 @@ function patientScheduleCompleteness(value={}){
   return{
     patient,
     completeName:patient.fullName.split(/\s+/).filter(Boolean).length>=2,
-    completeFile:/^\d+$/.test(patient.fileNo),
-    completeMobile:/^05\d{8}$/.test(patient.mobile)
+    completeFile:Boolean(patient.fileNo||patient.nationalId),
+    completeMobile:/^05\d{8}$/.test(patient.mobile)||(!patient.mobile&&Boolean(patient.nationalId))
   };
 }
 function patientScheduleRecordFromButton(button){
@@ -2665,7 +2668,7 @@ function openPatientProfilePlan(canonical){
 async function savePatientProfile(event){
   event.preventDefault();if(!patientProfileState.lookup||patientProfileState.loading||authUser?.role!=='admin')return;
   const patient={name:$('patientProfileNameInput').value.trim(),file:$('patientProfileFileInput').value.trim(),phone:$('patientProfilePhoneInput').value.trim(),nationalId:$('patientProfileNationalInput').value.trim(),adminNotes:$('patientProfileNotesInput').value.trim(),notesReviewed:$('patientProfileNotesReviewed').checked};
-  if(!patient.name||!patient.file||!patient.phone){toast('بيانات المريض ناقصة','الاسم ورقم الملف والجوال حقول مطلوبة.');return}
+  if(!patient.name||(!normalizedPlanFile(patient.file)&&!patient.nationalId)||(!patient.phone&&!patient.nationalId)){toast('بيانات المريض ناقصة','أدخل الاسم والملف مع الجوال، أو الاسم والهوية.');return}
   if(patient.nationalId&&!/^\d{10}$/.test(patient.nationalId)){toast('رقم الهوية غير صحيح','يجب أن يتكون رقم الهوية من 10 أرقام.');return}
   const button=$('patientProfileSave');button.disabled=true;button.textContent='جارٍ تحديث السجلات…';
   try{
@@ -2674,7 +2677,7 @@ async function savePatientProfile(event){
     patientSummaryCache.clear();patientSummaryOpen=null;
     const updated=data.updated||{};toast('تم تحديث ملف المريض',`المواعيد ${updated.appointments||0} · الخطط ${updated.plans||0} · المعمل ${updated.labs||0}`);
     patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};patientIdentityAliasIndex=new Map();adminPatientHub.updatedAt=0;treatmentPlanRegistry.lastFetchedAt=0;
-    const nextLookup=patient.file?{type:'file',value:patient.file}:patient.phone?{type:'phone',value:patient.phone}:{type:'national',value:patient.nationalId};
+    const nextLookup=patient.file?{type:'file',value:patient.file}:{type:'national',value:patient.nationalId};
     await Promise.all([loadPatientProfile(nextLookup),refreshPatientIdentityDirectory()]);refreshAdminPatientHub(true);refreshTreatmentPlanRegistry(true);
   }catch(error){toast('تعذر تحديث ملف المريض',String(error.message||error));button.disabled=false;button.textContent='حفظ وتحديث السجلات المرتبطة'}
 }
@@ -3904,7 +3907,8 @@ function updatePatientFormReadiness(){
   const button=$('savePatientBtn');if(!button)return;
   if(editingId){button.classList.remove('patient-form-ready');button.textContent=tr('saveChanges');return}
   const name=cleanDirectoryName($('fName').value),file=normalizeDirectoryFile($('fFile').value),phone=normalizeDirectoryPhone($('fPhone').value);
-  const ready=name.split(/\s+/).filter(Boolean).length>=2&&/^\d+$/.test(file)&&/^05\d{8}$/.test(phone);
+  const national=normalizeDirectoryNationalId($('fNationalId').value);
+  const ready=name.split(/\s+/).filter(Boolean).length>=2&&Boolean(file||national)&&Boolean(/^05\d{8}$/.test(phone)||(!phone&&national));
   button.classList.toggle('patient-form-ready',ready);
   button.textContent=ready?(lang==='en'?'📅 Add to appointment list':'📅 إضافة إلى قائمة المواعيد'):tr('saveAdd');
 }
@@ -3921,6 +3925,7 @@ function resetPatientForm(focusName=false){
   $('fFile').value='';
   $('fPhone').value='';
   $('fNationalId').value='';
+  $('fPhoneRelationship').value='';
   $('fStart').value=suggested.start;
   $('fEnd').value=suggested.end;
   $('fProcedure').value='';
@@ -3948,6 +3953,7 @@ function openPatient(id=null){
   $('fFile').value=p.file||'';
   $('fPhone').value=p.phone||'';
   $('fNationalId').value=p.nationalId||'';
+  $('fPhoneRelationship').value=p.phoneRelationship||'';
   $('fStart').value=p.start||'08:00';
   $('fEnd').value=p.end||'08:30';
   $('fProcedure').value=p.procedure||'';
@@ -4103,7 +4109,6 @@ function patientDirectoryCorrectionLookup(patient={}){
   const file=toLatinDigits(patient.file||'').replace(/\s|-/g,''),phone=normalizeSearchPhone(patient.phone||''),national=toLatinDigits(patient.nationalId||'').replace(/\D/g,'');
   if(file&&!/^0+$/.test(file))return{type:'file',value:file};
   if(national.length===10)return{type:'national',value:national};
-  if(phone)return{type:'phone',value:phone};
   return null;
 }
 function queuePatientDirectoryCorrection(existing,item){
@@ -4127,11 +4132,13 @@ async function savePatient(){
   const normalizedName=rawName.replace(/\s+/g,' ');
   const fileNumber=toLatinDigits($('fFile').value).replace(/\D/g,'').slice(0,40);
   const phoneDigits=normalizeSearchPhone($('fPhone').value);
+  const nationalDigits=toLatinDigits($('fNationalId').value).replace(/\D/g,'');
+  if(nationalDigits&&!/^\d{10}$/.test(nationalDigits)){toast('رقم الهوية غير صحيح','أدخل 10 أرقام كاملة.');$('fNationalId').focus();return}
   const requireComplete=VIEW_MODE==='admin'&&!editingId;
   const start=$('fStart').value,end=$('fEnd').value;
   if(!normalizedName||(requireComplete&&normalizedName.split(' ').filter(Boolean).length<2)){toast('الاسم الكامل مطلوب','اكتب اسم المريض كاملًا من كلمتين على الأقل.');$('fName').focus();return}
-  if(requireComplete&&(!fileNumber||isZeroFileNumber(fileNumber))){toast('رقم الملف مطلوب','أدخل رقم ملف صحيحًا وغير صفري قبل الحفظ.');$('fFile').focus();return}
-  if(requireComplete&&!/^05\d{8}$/.test(phoneDigits)){toast('رقم الجوال غير صحيح','استخدم رقم جوال سعودي صحيحًا مثل 05xxxxxxxx.');$('fPhone').focus();return}
+  if(requireComplete&&(!fileNumber||isZeroFileNumber(fileNumber))&&!nationalDigits){toast('الملف أو الهوية مطلوب','أدخل رقم ملف أو هوية لتمييز المريض، ولا يُستخدم الجوال للدمج.');$('fNationalId').focus();return}
+  if((phoneDigits||requireComplete&&!nationalDigits)&&!/^05\d{8}$/.test(phoneDigits)){toast('رقم الجوال غير صحيح','أدخل جوالًا صحيحًا، أو اتركه فارغًا عند تسجيل الهوية.');$('fPhone').focus();return}
   if(!start||!end||mins(end)<=mins(start)){toast('وقت غير صحيح','يجب أن يكون وقت النهاية بعد وقت البداية');$('fStart').focus();return}
   const existing=editingId?patientById(editingId):null;
   const item={
@@ -4140,7 +4147,8 @@ async function savePatient(){
     name:normalizedName.slice(0,120),
     file:fileNumber,
     phone:phoneDigits,
-    nationalId:$('fNationalId').value.replace(/\D/g,'').slice(0,10),
+    nationalId:nationalDigits,
+    phoneRelationship:phoneDigits?$('fPhoneRelationship').value:'',
     start,
     end,
     procedure:$('fProcedure').value.trim(),
@@ -4157,7 +4165,17 @@ async function savePatient(){
   }
   if(!wasEditing&&targetDate!==selectedDate)await setDate(targetDate);
   if(!wasEditing){
-    const duplicate=patients.find(patient=>normalizeDirectoryFile(patient.file)===normalizeDirectoryFile(item.file)||(item.nationalId&&normalizeDirectoryNationalId(patient.nationalId)===normalizeDirectoryNationalId(item.nationalId)));
+    const identityConflict=patients.some(patient=>{
+      const file=normalizeDirectoryFile(patient.file),nextFile=normalizeDirectoryFile(item.file),national=normalizeDirectoryNationalId(patient.nationalId);
+      return Boolean((file&&nextFile===file&&national&&item.nationalId&&national!==item.nationalId)||(national&&item.nationalId===national&&file&&nextFile&&file!==nextFile));
+    });
+    if(identityConflict){toast('تعارض الملف والهوية','راجع رقم الملف والهوية قبل الإضافة؛ لم يتم دمج أي مريض.');return}
+    const duplicate=patients.find(patient=>{
+      const file=normalizeDirectoryFile(patient.file),nextFile=normalizeDirectoryFile(item.file),national=normalizeDirectoryNationalId(patient.nationalId);
+      if(file&&nextFile&&file!==nextFile)return false;
+      if(national&&item.nationalId&&national!==item.nationalId)return false;
+      return Boolean((nextFile&&file===nextFile)||(item.nationalId&&national===item.nationalId));
+    });
     if(duplicate){openPatient(duplicate.id);toast(lang==='en'?'Patient already on this date':'المريض موجود في هذا التاريخ',lang==='en'?'The existing appointment was opened to avoid a duplicate.':'تم فتح الموعد الموجود لتجنب تكرار المريض.');return}
   }
   mutate(()=>{
@@ -4248,7 +4266,7 @@ function normalizeDirectoryPhone(value){
   return digits;
 }
 function normalizeDirectoryNationalId(value){const digits=toLatinDigits(value).replace(/\D/g,'').slice(0,10);return digits.length===10?digits:''}
-function patientDirectoryAliases(row){return[fileAlias(row.fileNo),row.mobile?`phone:${row.mobile}`:'',row.nationalId?`national:${row.nationalId}`:''].filter(Boolean)}
+function patientDirectoryAliases(row){return[fileAlias(row.fileNo),row.nationalId?`national:${row.nationalId}`:''].filter(Boolean)}
 function fileAlias(value){const file=normalizeDirectoryFile(value);return file?`file:${file}`:''}
 function patientDirectoryIssue(row){
   if(!cleanDirectoryName(row.fullName))return'name_required';
@@ -4260,8 +4278,8 @@ function patientDirectoryIssue(row){
 function patientDirectoryReviewFlags(row){
   const flags=[];
   if(cleanDirectoryName(row.fullName).split(/\s+/).filter(Boolean).length<2)flags.push('full_name_required');
-  if(!normalizeDirectoryFile(row.fileNo))flags.push('missing_file');
-  if(!/^05\d{8}$/.test(normalizeDirectoryPhone(row.mobile)))flags.push('missing_phone');
+  if(!normalizeDirectoryFile(row.fileNo)&&!normalizeDirectoryNationalId(row.nationalId))flags.push('missing_file');
+  if(!/^05\d{8}$/.test(normalizeDirectoryPhone(row.mobile))&&(row.mobile||!normalizeDirectoryNationalId(row.nationalId)))flags.push('missing_phone');
   if(row.adminNotes&&/(⚠|يحتاج\s*مراجعة|تعارض|نفس\s*الجوال|مفقود|ناقص|بدون\s*(?:رقم|جوال|ملف)|تصحيح\s*مطلوب)/i.test(row.adminNotes))flags.push('note_review');
   return[...new Set(flags)];
 }
@@ -4279,7 +4297,7 @@ function mergePatientDirectoryImportRows(rows){
     const strong=strongAliases(row),linked=[...new Set(strong.map(alias=>strongIndex.get(alias)).filter(index=>index!==undefined))],phone=row.mobile?`phone:${row.mobile}`:'',phoneMatch=phone?phoneIndex.get(phone):undefined;
     if(linked.length>1){invalid.push({...row,issue:'identity_conflict'});return}
     let targetIndex=linked[0];
-    if(targetIndex===undefined&&phoneMatch!==undefined&&(strong.length?!incompatible(merged[phoneMatch],row):namesCompatible(merged[phoneMatch].fullName,row.fullName)))targetIndex=phoneMatch;
+    if(targetIndex!==undefined&&incompatible(merged[targetIndex],row)){invalid.push({...row,issue:'identity_conflict'});return}
     if(targetIndex!==undefined){
       const target=merged[targetIndex];
       if(directoryNameScore(row.fullName)>directoryNameScore(target.fullName))target.fullName=row.fullName;
@@ -4291,7 +4309,7 @@ function mergePatientDirectoryImportRows(rows){
       return;
     }
     const index=merged.length,next={...row,sourceRows:[row.sourceRow]};
-    if(phoneMatch!==undefined&&(incompatible(merged[phoneMatch],row)||(!strong.length&&!namesCompatible(merged[phoneMatch].fullName,row.fullName)))){next.reviewFlags=[...new Set([...(next.reviewFlags||[]),'shared_phone'])];merged[phoneMatch].reviewFlags=[...new Set([...(merged[phoneMatch].reviewFlags||[]),'shared_phone'])]}
+    if(phoneMatch!==undefined){next.reviewFlags=[...new Set([...(next.reviewFlags||[]),'shared_phone'])];merged[phoneMatch].reviewFlags=[...new Set([...(merged[phoneMatch].reviewFlags||[]),'shared_phone'])]}
     merged.push(next);indexRow(next,index);
   });
   return{validRows:merged,invalidRows:invalid};
@@ -4885,11 +4903,14 @@ function applyLang(){
   setText('.upcoming-head h2',tr('upcomingPatients'));
   setText('.upcoming-head small',tr('upcomingHint'));
   setText('.quick-add-head p',tr('formIntro'));
-  setTexts('.quick-add-grid label',[tr('firstName'),tr('fileNumber'),lang==='en'?'Phone number':'رقم الجوال',lang==='en'?'National ID':'رقم الهوية',tr('appointmentDate'),tr('startTime'),tr('endTime'),tr('procedure'),tr('status')]);
+  setTexts('.quick-add-grid label',[tr('firstName'),lang==='en'?'File number (or national ID)':'رقم الملف (أو الهوية)',lang==='en'?'Mobile (optional with national ID)':'الجوال (اختياري مع الهوية)',lang==='en'?'National ID — replaces file and mobile':'الهوية — بديل الملف والجوال',lang==='en'?'Relationship to phone owner':'صلة القرابة لصاحب الجوال',tr('appointmentDate'),tr('startTime'),tr('endTime'),tr('procedure'),tr('status')]);
+  const relationships=lang==='en'?['Patient / unspecified','Father','Mother','Spouse','Sibling','Child','Guardian','Other relative']:['جوال المريض / غير محدد','الأب','الأم','الزوج / الزوجة','الأخ / الأخت','الابن / الابنة','ولي الأمر','قرابة أخرى'];
+  Array.from($('fPhoneRelationship').options).forEach((option,index)=>{option.textContent=relationships[index]});
+  setText('#fPhoneRelationship + small',lang==='en'?'A shared mobile never merges patient records.':'الجوال المشترك لا يدمج ملفات المرضى.');
   $('fName').placeholder=tr('namePlaceholder');
   $('fFile').placeholder=tr('filePlaceholder');
   $('fPhone').placeholder=lang==='en'?'05xxxxxxxx':'05xxxxxxxx';
-  $('fNationalId').placeholder=lang==='en'?'10 digits (optional)':'10 أرقام (اختياري)';
+  $('fNationalId').placeholder=lang==='en'?'10 digits':'10 أرقام';
   setText('#patientFormDirectorySearchTitle',lang==='en'?'Choose registered patient':'اختيار مريض مسجل');
   setText('#patientFormDirectorySearchHelp',lang==='en'?'Search by name or file':'بحث بالاسم أو الملف');
   setText('#newLabCaseShortcutLabel',lang==='en'?'New lab case':'حالة معمل جديدة');
@@ -5094,7 +5115,7 @@ $('savePatientBtn').addEventListener('click',savePatient);
 $('resetPatientBtn').addEventListener('click',()=>resetPatientForm(true));
 $('cancelEditBtn').addEventListener('click',()=>resetPatientForm(false));
 $('patientFormCard').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.tagName!=='SELECT'){event.preventDefault();savePatient()}});
-[$('fName'),$('fFile'),$('fPhone')].forEach(input=>input?.addEventListener('input',updatePatientFormReadiness));
+[$('fName'),$('fFile'),$('fPhone'),$('fNationalId')].forEach(input=>input?.addEventListener('input',updatePatientFormReadiness));
 $('patientIdentitySearchInput').addEventListener('input',()=>{patientIdentityDisplayLimit=120;renderPatientIdentitySearch();schedulePatientIdentityRemoteSearch()});
 $('patientDirectoryReviewFilter')?.addEventListener('click',()=>{patientDirectoryReviewOnly=!patientDirectoryReviewOnly;patientIdentityDisplayLimit=120;renderPatientIdentitySearch()});
 $('patientIdentitySearchResults').addEventListener('click',event=>{

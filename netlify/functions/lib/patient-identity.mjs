@@ -24,11 +24,10 @@ export const normalizePatientNationalId = value => {
 
 export const patientIdentityKeys = patient => {
   const file = normalizePatientFile(patient?.fileNo ?? patient?.file);
-  const phone = normalizePatientPhone(patient?.mobile ?? patient?.phone);
   const nationalId = normalizePatientNationalId(patient?.nationalId);
+  // A household may share a phone. Contact details must never join records.
   return [...new Set([
     file ? `file:${file}` : '',
-    phone ? `phone:${phone}` : '',
     nationalId ? `national:${nationalId}` : ''
   ].filter(Boolean))];
 };

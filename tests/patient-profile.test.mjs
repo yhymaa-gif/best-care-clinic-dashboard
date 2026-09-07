@@ -13,7 +13,7 @@ test('patient profile normalizes exact identity lookups', () => {
 test('patient profile links appointments by any stable patient identity', () => {
   const aliases = new Set(['file:A120', 'phone:0501234567']);
   assert.equal(profile.hasAlias({ file: 'A-120', phone: '' }, aliases), true);
-  assert.equal(profile.hasAlias({ file: '', phone: '+966501234567' }, aliases), true);
+  assert.equal(profile.hasAlias({ file: '', phone: '+966501234567' }, aliases), false);
   assert.equal(profile.hasAlias({ file: 'A121', phone: '0500000000' }, aliases), false);
 });
 

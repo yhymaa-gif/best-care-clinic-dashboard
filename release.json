@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.07-clinic-stable-display",
+  "version": "2026.09.07-patient-strong-identity",
   "publishedAt": "2026-09-07",
   "summary": {
-    "ar": "إصلاح ارتجاف شاشة الطبيب والعرض العائم: تثبيت البطاقات أثناء تحديث العدادات وإيقاف حركات النبض دون تغيير المزامنة.",
-    "en": "Fixed doctor-display flicker: preserve cards during timer updates and remove pulsing motion without changing synchronization."
+    "ar": "الربط بالملف ثم الهوية دون دمج بالجوال؛ تسجيل بالهوية دون ملف أو جوال، وإضافة صلة القرابة لصاحب الجوال.",
+    "en": "Match by file then national ID, never merge by mobile. Register with ID alone and record the phone owner's relationship."
   }
 }

@@ -20,8 +20,8 @@ export const normalizePatient=value=>({
 export const validatePatient=value=>{
   const patient=normalizePatient(value),errors=[];
   if(patient.name.split(/\s+/).filter(Boolean).length<2)errors.push('name');
-  if(!patient.file)errors.push('file');
-  if(!/^05\d{8}$/.test(patient.phone))errors.push('phone');
+  if(!patient.file&&!patient.nationalId)errors.push('file');
+  if((patient.phone||!patient.nationalId)&&!/^05\d{8}$/.test(patient.phone))errors.push('phone');
   return{patient,errors,complete:errors.length===0};
 };
 export const minutes=value=>{const match=/^(\d{2}):(\d{2})$/.exec(String(value||''));if(!match)return NaN;const total=Number(match[1])*60+Number(match[2]);return Number(match[1])<24&&Number(match[2])<60?total:NaN};
@@ -33,6 +33,8 @@ export const overlaps=(left,right)=>{
 };
 export const samePatient=(left,right)=>{
   const a=normalizePatient(left),b=normalizePatient(right);
+  if(a.file&&b.file&&a.file!==b.file)return false;
+  if(a.nationalId&&b.nationalId&&a.nationalId!==b.nationalId)return false;
   return Boolean((a.file&&b.file&&a.file===b.file)||(a.nationalId&&b.nationalId&&a.nationalId===b.nationalId));
 };
 export const appointmentConflicts=(patients,candidate,{excludeId=''}={})=>(Array.isArray(patients)?patients:[]).filter(item=>String(item.id)!==String(excludeId)&&!['cancel','left'].includes(item.status)&&overlaps(item,candidate));

@@ -71,7 +71,7 @@ const publicMatch = ({ patient, clinicId, date, source }) => ({
   source,
 });
 
-const matchKey = match => `${match.clinicId}:${normalizeFile(match.patient.file) || normalizePhone(match.patient.phone) || normalizeNationalId(match.patient.nationalId) || `${normalizeName(match.patient.name)}:${match.patient.id||match.sourceDate||''}`}`;
+const matchKey = match => `${match.clinicId}:${normalizeFile(match.patient.file).replace(/^0+$/, '') || normalizeNationalId(match.patient.nationalId) || `${normalizeName(match.patient.name)}:${match.patient.id||match.sourceDate||''}`}`;
 const directoryRecordInScope = (record, scopedClinic, searchAll) => {
   if (searchAll) return true;
   const clinicIds = Array.isArray(record?.clinicIds) ? record.clinicIds : [];
@@ -111,6 +111,8 @@ export default async request => {
       .sort((left,right)=>Number(right?.updatedAt||right?.lastSeenAt||0)-Number(left?.updatedAt||left?.lastSeenAt||0))
       .slice(0,30)
       .forEach(patient=>matches.push(publicMatch({patient,clinicId:patient.latestClinicId||patient.clinicIds?.[0]||scopedClinic||'clinic-1',date:patient.lastAppointmentDate,source:'directory'})));
+  }else if(type==='phone'){
+    Object.values(directory.records||{}).filter(patient=>directoryRecordInScope(patient,scopedClinic,searchAll)&&normalizePhone(patient.mobile)===normalized).forEach(patient=>matches.push(publicMatch({patient,clinicId:patient.latestClinicId||patient.clinicIds?.[0]||scopedClinic||'clinic-1',date:patient.lastAppointmentDate,source:'directory'})));
   }else{
     const directoryCanonical = directory.aliases?.[lookupAlias(type, normalized)];
     const directoryPatient = directoryCanonical ? directory.records?.[directoryCanonical] : null;
@@ -119,6 +121,8 @@ export default async request => {
   const registry = await registryStore.get('registry/global', { type: 'json', consistency: 'strong' }) || {};
   if(type==='query'){
     Object.values(registry.records||{}).filter(patient=>clinicPattern.test(patient?.clinicId)&&(searchAll||patient.clinicId===scopedClinic)&&patientMatchesQuery(patient,rawValue)).slice(0,20).forEach(patient=>matches.push(publicMatch({patient,clinicId:patient.clinicId,date:patient.sourceDate,source:'treatment-plan'})));
+  }else if(type==='phone'){
+    Object.values(registry.records||{}).filter(patient=>clinicPattern.test(patient?.clinicId)&&(searchAll||patient.clinicId===scopedClinic)&&normalizePhone(patient.mobile)===normalized).forEach(patient=>matches.push(publicMatch({patient,clinicId:patient.clinicId,date:patient.sourceDate,source:'treatment-plan'})));
   }else{
     const canonical = registry.aliases?.[lookupAlias(type, normalized)];
     const registryPatient = canonical ? registry.records?.[canonical] : null;
