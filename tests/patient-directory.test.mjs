@@ -320,9 +320,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260907-admin-direct-plan/);
+  assert.match(html, /dashboard\.js\?v=20260907-clinic-topmost-display/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260907-admin-direct-plan/);
+  assert.match(serviceWorker, /20260907-clinic-topmost-display/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.07-admin-direct-plan",
+  "version": "2026.09.07-clinic-topmost-display",
   "publishedAt": "2026-09-07",
   "summary": {
-    "ar": "اختصار مسار الخطة: الإدارة تحفظها وتشاركها للتوقيع مباشرة دون اعتماد طبيب منفصل، مع بقاء الطباعة والتوقيع والتوثيق.",
-    "en": "Admin can save and share plans directly for signature without a separate doctor-approval step; printing and consent remain intact."
+    "ar": "إضافة عرض مباشر لشاشة الطبيب فوق التطبيقات، مع تحديث تلقائي ورابط رسمي لتنزيل PowerToys للشاشة الكاملة.",
+    "en": "Added a live always-on-top doctor display with automatic updates and an official PowerToys download link for the full screen."
   }
 }
