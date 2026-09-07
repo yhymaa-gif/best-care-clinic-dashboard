@@ -3505,22 +3505,11 @@ function treemapMarkup(queue,index=0){
   return `<div class="queue-split split-${direction}"><div class="treemap-half">${card}</div><div class="treemap-rest">${treemapMarkup(queue,index+1)}</div></div>`;
 }
 function renderUpcoming(lead){
-  const queue=upcomingPatients(lead?.id??null);
-  const leadOverrun=Boolean(lead&&lead.actualStartedAt&&Date.now()>timeDate(lead.end).getTime());
-  const queueCountLabel=lang==='en'?`${queue.length} patients`:`${queue.length} مرضى`;
-  const layoutHint=lang==='en'?'Market-style size map by appointment order':'خريطة أحجام مثل سوق الأسهم حسب ترتيب الموعد';
-  const upcomingHead=document.querySelector('.upcoming-head h2');
-  if(upcomingHead)upcomingHead.textContent=leadOverrun?(lang==='en'?'Next patient — ready to call':'المريض التالي — جاهز للاستدعاء'):(lang==='en'?'Upcoming patients':'المرضى القادمون');
-  const upcomingPanel=document.querySelector('.upcoming-panel');
-  upcomingPanel?.classList.toggle('is-overrun',leadOverrun);
-  document.querySelector('.upcoming-head small').innerHTML=`<span class="upcoming-layout-key">${escapeHtml(queueCountLabel)} · ${escapeHtml(leadOverrun?(lang==='en'?'Current treatment is over time':'العلاج الحالي تجاوز وقته — التالي ظاهر بوضوح'):layoutHint)}</span>`;
-  const featured=queue.slice(0,8);
-  const overflow=queue.slice(8);
-  $('upcomingStack').classList.add('treemap-mode');
-  $('upcomingStack').innerHTML=queue.length
-    ? `<div class="treemap-root">${treemapMarkup(featured)}</div>${overflow.length?`<div class="queue-overflow-strip" aria-label="${escapeHtml(lang==='en'?'Additional upcoming patients':'بقية المرضى القادمين')}">${overflow.map((p,index)=>`<div class="queue-overflow-chip"><strong>#${index+9} ${escapeHtml(firstName(p.name))}</strong><span>${escapeHtml(p.start)}</span></div>`).join('')}</div>`:''}`
-    : `<div class="treemap-root treemap-empty"><div class="queue-empty">${escapeHtml(tr('noUpcoming'))}</div></div>`;
-  updateUpcomingCardVisuals();
+  // The first pending patient already has the detailed next-patient card.
+  const queue=lead?upcomingPatients(lead.id).slice(1):[];
+  $('followingPatients').hidden=!queue.length;
+  $('followingPatientsTitle').textContent=lang==='en'?`After the next patient (${queue.length})`:`بعد المريض التالي (${queue.length})`;
+  $('upcomingStack').innerHTML=queue.map((p,index)=>`<li class="clinic-following-row"><span class="clinic-following-order">${index+2}</span><strong>${escapeHtml(firstName(p.name))}</strong><time dir="ltr">${escapeHtml(p.start||'—')}</time><span class="clinic-following-status">${escapeHtml(statusText(derivedStatus(p)))}</span></li>`).join('');
 }
 function updateUpcomingCardVisuals(){
   const cards=[...document.querySelectorAll('[data-patient-card-id]')];
@@ -3706,6 +3695,7 @@ function renderLive(updateStructure=true){
     $('currentActions').innerHTML=currentActions;
     renderAlertUI();
   }
+  syncClinicTopmostDisplay();
 }
 
 function renderDoctorWorkspace(){
@@ -4579,6 +4569,7 @@ function exitScreen(){
   if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
 }
 let deferredInstallPrompt=null;
+let clinicTopmostWindow=null;
 let waitingServiceWorker=null,pwaReloadRequested=false;
 function isStandalone(){return matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true}
 function isIosDevice(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
@@ -4606,6 +4597,69 @@ async function installApp(){
     return;
   }
   toast('تثبيت التطبيق',/iPhone|iPad|iPod/i.test(navigator.userAgent)?'من زر المشاركة اختر «إضافة إلى الشاشة الرئيسية»':'من قائمة المتصفح اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية»');
+}
+function clinicTopmostIsOpen(){return Boolean(clinicTopmostWindow&&!clinicTopmostWindow.closed)}
+function updateClinicTopmostButton(){
+  const button=$('clinicAlwaysOnTopBtn');if(!button)return;
+  const active=clinicTopmostIsOpen();
+  button.setAttribute('aria-pressed',String(active));
+  setText('#clinicAlwaysOnTopLabel',active?(lang==='en'?'Always-on-top display is open':'العرض فوق التطبيقات يعمل'):(lang==='en'?'Open always-on-top display':'فتح العرض فوق التطبيقات'));
+  button.title=active
+    ?(lang==='en'?'Bring the floating doctor display to the front':'إظهار نافذة الطبيب العائمة')
+    :(lang==='en'?'Open a live doctor display above other applications':'فتح عرض الطبيب المباشر فوق التطبيقات الأخرى');
+}
+function syncClinicTopmostDisplay(){
+  if(!clinicTopmostIsOpen())return;
+  const doc=clinicTopmostWindow.document,flowHost=doc.getElementById('clinicTopmostFlow'),alertHost=doc.getElementById('clinicTopmostAlert');
+  if(!flowHost||!alertHost)return;
+  doc.documentElement.lang=lang;doc.documentElement.dir=lang==='en'?'ltr':'rtl';
+  const theme=document.documentElement.dataset.theme||'';
+  if(theme)doc.documentElement.dataset.theme=theme;else delete doc.documentElement.dataset.theme;
+  doc.body.className=`view-clinic clinic-topmost-window${lang==='en'?' lang-en':''}`;
+  const clinicLabel=[currentClinic?.doctorName,currentClinic?.name].filter(Boolean).join(' · ')||(lang==='en'?'Doctor display':'شاشة الطبيب');
+  const title=doc.getElementById('clinicTopmostWindowTitle');if(title)title.textContent=clinicLabel;
+  const kicker=doc.getElementById('clinicTopmostWindowKicker');if(kicker)kicker.textContent=lang==='en'?'LIVE DOCTOR DISPLAY':'عرض الطبيب المباشر';
+  doc.title=lang==='en'?'Best Care Live Doctor Display':'عرض الطبيب المباشر — أفضل عناية';
+  const clock=doc.getElementById('clinicTopmostClock');if(clock)clock.textContent=$('clock')?.textContent||'--:--:--';
+  const syncState=doc.getElementById('clinicTopmostSync');if(syncState)syncState.textContent=$('syncBadge')?.textContent||(lang==='en'?'Live sync':'مزامنة مباشرة');
+  const closeButton=doc.querySelector('[data-close-topmost]');if(closeButton)closeButton.setAttribute('aria-label',lang==='en'?'Close floating display':'إغلاق العرض العائم');
+  alertHost.replaceChildren();
+  if(els.alertRow?.classList.contains('show')){
+    const alertClone=els.alertRow.cloneNode(true);alertClone.removeAttribute('id');alertClone.querySelector('button')?.remove();
+    alertClone.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));alertHost.appendChild(alertClone);
+  }
+  const flow=$('flowStage');flowHost.replaceChildren();
+  if(flow){
+    Array.from(flow.children).forEach(child=>flowHost.appendChild(child.cloneNode(true)));
+    flowHost.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+    flowHost.querySelectorAll('button,input,select,textarea').forEach(node=>{node.disabled=true;node.tabIndex=-1});
+  }
+}
+async function openClinicTopmostDisplay(){
+  if(VIEW_MODE!=='clinic')return;
+  if(clinicTopmostIsOpen()){clinicTopmostWindow.focus?.();syncClinicTopmostDisplay();return}
+  if(typeof window.documentPictureInPicture?.requestWindow!=='function'){
+    toast(lang==='en'?'Use PowerToys':'استخدم PowerToys',lang==='en'?'This browser does not support the floating display. Download PowerToys below, open Screen mode, then press Win + Ctrl + T.':'هذا المتصفح لا يدعم العرض العائم. نزّل PowerToys من الزر أدناه، افتح وضع الشاشة، ثم اضغط Win + Ctrl + T.');
+    return;
+  }
+  try{
+    const topmost=await window.documentPictureInPicture.requestWindow({width:980,height:720});
+    clinicTopmostWindow=topmost;
+    const doc=topmost.document;
+    const charset=doc.createElement('meta');charset.setAttribute('charset','utf-8');doc.head.appendChild(charset);
+    const viewport=doc.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';doc.head.appendChild(viewport);
+    const stylesheet=doc.createElement('link');stylesheet.rel='stylesheet';stylesheet.href=new URL('./dashboard.css',location.href).href;doc.head.appendChild(stylesheet);
+    doc.title=lang==='en'?'Best Care Live Doctor Display':'عرض الطبيب المباشر — أفضل عناية';
+    const shell=doc.createElement('main');shell.className='clinic-topmost-window-shell';shell.innerHTML='<header class="clinic-topmost-window-head"><div><small id="clinicTopmostWindowKicker"></small><strong id="clinicTopmostWindowTitle"></strong></div><div class="clinic-topmost-window-state"><b id="clinicTopmostClock">--:--:--</b><span id="clinicTopmostSync"></span><button class="clinic-topmost-window-close" type="button" data-close-topmost aria-label="إغلاق">×</button></div></header><div id="clinicTopmostAlert"></div><section id="clinicTopmostFlow" class="focus-grid" aria-live="polite"></section>';
+    doc.body.appendChild(shell);
+    doc.addEventListener('click',event=>{if(event.target.closest('[data-close-topmost]'))topmost.close()});
+    topmost.addEventListener('pagehide',()=>{clinicTopmostWindow=null;updateClinicTopmostButton()},{once:true});
+    syncClinicTopmostDisplay();updateClinicTopmostButton();
+    toast(lang==='en'?'Always-on-top display opened':'تم فتح العرض فوق التطبيقات',lang==='en'?'It will continue showing live clinic updates while the dashboard remains open.':'سيستمر في عرض تحديثات العيادة مباشرة ما دامت صفحة الداشبورد مفتوحة.');
+  }catch(error){
+    clinicTopmostWindow=null;updateClinicTopmostButton();
+    if(error?.name!=='AbortError')toast(lang==='en'?'Could not open floating display':'تعذر فتح العرض العائم',lang==='en'?'Allow pop-ups or use the PowerToys download option.':'اسمح بالنوافذ العائمة أو استخدم خيار تنزيل PowerToys.');
+  }
 }
 async function registerPwa(){
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
@@ -4762,6 +4816,12 @@ function applyLang(){
   setText('#viewIdentityTitle',VIEW_MODE==='admin'?(lang==='en'?'Administration page':'صفحة الإدارة'):(lang==='en'?'Doctor page':'صفحة الطبيب'));
   setText('#viewIdentityHelp',VIEW_MODE==='admin'?(lang==='en'?'Appointments, patient lists, payments, and final plan approvals.':'المواعيد وقوائم المرضى والفواتير والاعتماد النهائي للخطط.'):(lang==='en'?'Plan approvals, payment requests, patient calls, and treatment flow.':'اعتمادات الخطط وطلبات الدفع واستدعاء المرضى ومتابعة العلاج.'));
   setText('#viewIdentityChange',lang==='en'?'Change task':'تغيير المهمة');
+  setText('#clinicTopmostTitle',lang==='en'?'Keep the doctor display above other applications':'إظهار شاشة الطبيب فوق التطبيقات');
+  setText('#clinicTopmostHelp',lang==='en'?'The floating display updates automatically with the clinic list.':'العرض العائم يتحدث تلقائيًا مع قائمة العيادة.');
+  setText('#powerToysInstallTitle',lang==='en'?'Download PowerToys':'تنزيل PowerToys');
+  setText('#powerToysInstallHelp',lang==='en'?'For the full screen: Screen mode, then Win + Ctrl + T':'للشاشة الكاملة: وضع الشاشة ثم Win + Ctrl + T');
+  $('powerToysInstallLink')?.setAttribute('title',lang==='en'?'Download Microsoft PowerToys from Microsoft':'تنزيل Microsoft PowerToys من Microsoft');
+  updateClinicTopmostButton();
   setText('#pageTitle',VIEW_MODE==='admin'?(lang==='en'?'Best Care Administration & Scheduling':'إدارة وتنسيق مواعيد عيادات أفضل عناية الاستشارية للأسنان'):(lang==='en'?'Best Care Doctor Workspace':'صفحة الطبيب — عيادات أفضل عناية الاستشارية للأسنان'));
   setText('#pageSubtitle',VIEW_MODE==='admin'?(lang==='en'?'Patient lists, scheduling, alerts, payments, and final plan approvals':'قوائم المرضى والمواعيد والتنبيهات وإجراءات الدفع واعتماد الخطط'):(lang==='en'?'Plan approvals, payment requests, and today’s clinical flow':'اعتمادات الخطط وطلبات الدفع ومتابعة مرضى اليوم'));
   setText('#doctorWorkspaceTitle',lang==='en'?'Doctor alerts':'تنبيهات الطبيب');
@@ -5103,6 +5163,7 @@ $('langBtn').addEventListener('click',toggleLang);
 $('screenBtn').addEventListener('click',enterScreen);
 $('exitScreenBtn').addEventListener('click',exitScreen);
 $('installBtn').addEventListener('click',installApp);
+$('clinicAlwaysOnTopBtn')?.addEventListener('click',openClinicTopmostDisplay);
 $('iosInstallGuideBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);openIosInstallGuide()});
 $('copyAppLinkBtn').addEventListener('click',copyAppLink);
 $('pwaUpdateBtn').addEventListener('click',()=>{

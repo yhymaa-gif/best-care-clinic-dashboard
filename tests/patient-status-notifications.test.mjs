@@ -44,5 +44,5 @@ test('administration subscriptions and notification surfaces support named color
   assert.match(push, /المريض \$\{event\.patientName\}/);
   assert.match(push, /color: safeColor\(event\.color\)/);
   assert.match(worker, /color:payload\.color\|\|'#176344'/);
-  assert.match(html, /dashboard\.js\?v=20260907-admin-direct-plan/);
+  assert.match(html, /dashboard\.js\?v=20260907-clinic-unified-queue/);
 });

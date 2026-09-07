@@ -108,6 +108,16 @@
   </div>
   <button id="viewIdentityChange" type="button">تغيير المهمة</button>
 </section>
+<section id="clinicTopmostTools" class="clinic-topmost-tools clinic-only hide-screen" aria-labelledby="clinicTopmostTitle">
+  <div class="clinic-topmost-copy">
+    <span class="clinic-topmost-icon" aria-hidden="true">📌</span>
+    <div><strong id="clinicTopmostTitle">إظهار شاشة الطبيب فوق التطبيقات</strong><small id="clinicTopmostHelp">العرض العائم يتحدث تلقائيًا مع قائمة العيادة.</small></div>
+  </div>
+  <div class="clinic-topmost-actions">
+    <button id="clinicAlwaysOnTopBtn" type="button" aria-pressed="false"><span aria-hidden="true">▣</span><span id="clinicAlwaysOnTopLabel">فتح العرض فوق التطبيقات</span></button>
+    <a id="powerToysInstallLink" href="https://aka.ms/getPowertoys" target="_blank" rel="noopener noreferrer" title="تنزيل Microsoft PowerToys من Microsoft"><span aria-hidden="true">↓</span><span><strong id="powerToysInstallTitle">تنزيل PowerToys</strong><small id="powerToysInstallHelp">للشاشة الكاملة: وضع الشاشة ثم Win + Ctrl + T</small></span></a>
+  </div>
+</section>
 <aside id="modernAdminSidebar" class="modern-admin-sidebar admin-only hide-screen" aria-label="التنقل في واجهة الإدارة الحديثة" hidden>
   <header class="modern-sidebar-head">
     <span class="modern-sidebar-logo" aria-hidden="true">BC</span>
@@ -256,16 +266,16 @@
         <b id="nextPatientTime">—</b>
         <button id="nextPatientCallBtn" type="button" data-next-call-id="" disabled>استدعاء التالي</button>
       </div>
+      <section id="followingPatients" class="clinic-following" hidden aria-labelledby="followingPatientsTitle">
+        <h3 id="followingPatientsTitle">بعد المريض التالي</h3>
+        <ol id="upcomingStack" class="clinic-following-list"></ol>
+      </section>
     </div>
     <div class="timer-grid">
       <div class="timer-box"><span class="timer-icon" aria-hidden="true">◷</span><small id="currentCountdownLabel">الوقت حتى نهاية الموعد</small><strong id="currentCountdown">--:--:--</strong><div id="currentCountdownHint" class="actual-hint">يبقى محفوظًا حسب جدول الموعد</div></div>
       <div class="timer-box actual"><span class="timer-icon" aria-hidden="true">▶</span><small>مدة العلاج الفعلية</small><strong id="actualTimer">--:--:--</strong><div id="actualTimerHint" class="actual-hint">يبدأ عند دخول المريض</div></div>
     </div>
     <div id="currentActions" class="patient-actions"></div>
-  </div>
-  <div class="card upcoming-panel">
-    <div class="upcoming-head"><h2>المرضى القادمون</h2><small>تتقدم البطاقات تلقائيًا</small></div>
-    <div id="upcomingStack" class="upcoming-stack"></div>
   </div>
 </section>
 
@@ -502,5 +512,5 @@
 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="تفعيل الوضع الداكن" title="تبديل المظهر"><span id="themeToggleIcon" aria-hidden="true">☾</span></button>
 <div id="toastWrap" class="toast-wrap"></div>
 <script src="./patient-summary.js?v=20260902-appointment-entry"></script>
-<script src="./dashboard.js?v=20260907-admin-direct-plan"></script>
+<script src="./dashboard.js?v=20260907-clinic-unified-queue"></script>
 </body></html>
