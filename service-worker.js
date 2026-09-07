@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260907-clinic-stable-display';
+const CACHE_NAME='bestcare-dashboard-v1-20260907-patient-strong-identity';
 const APP_SHELL=[
   './',
   './index.html',

@@ -45,7 +45,7 @@ test('history hydration candidate keeps the addendum relationship and patient id
   assert.equal(candidate.relation, 'addendum');
   assert.equal(candidate.parentPlanNo, 'TP-2026-000001');
   assert.equal(candidate.fullName, 'ملاك الحسن الحفظي');
-  assert.deepEqual([...history.aliasesFor(candidate)].sort(), ['file:1234', 'national:1234567890', 'phone:0555555555'].sort());
+  assert.deepEqual([...history.aliasesFor(candidate)].sort(), ['file:1234', 'national:1234567890'].sort());
 });
 
 test('client creates a fresh addendum when a prior plan is carried forward', () => {

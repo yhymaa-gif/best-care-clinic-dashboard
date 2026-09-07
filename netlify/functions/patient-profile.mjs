@@ -267,7 +267,7 @@ export default async request => {
   if (compactSummary && auth.user?.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
   if (compactSummary && !['file', 'national'].includes(type)) return reply({ error: 'File number or national identity required' }, 400);
   const normalized = normalizeLookup(type, request.method === 'GET' ? url.searchParams.get('value') : body?.lookup?.value);
-  if (!['file', 'phone', 'national'].includes(type) || !normalized) return reply({ error: 'Valid patient identity is required' }, 400);
+  if (!['file', 'national'].includes(type) || !normalized) return reply({ error: 'اختر المريض برقم الملف أو الهوية؛ الجوال للبحث فقط ولا يربط السجلات.' }, 400);
   const scope = clinicScope(auth.user, request.method === 'GET' ? (url.searchParams.get('clinic') || '') : (body?.clinic || ''));
   if (!scope.all && !canAccessClinic(auth.user, scope.clinicId)) return reply({ error: 'Clinic access denied' }, 403);
   const lookupAliases = new Set([lookupAlias(type, normalized)]);
@@ -303,7 +303,7 @@ export default async request => {
   let labs = await loadLabMatches(scope, lookupAliases);
   let communications = communicationMatches(communicationRegistry, lookupAliases, scope);
   let prescriptions = prescriptionMatches(prescriptionRegistry, lookupAliases, scope);
-  if (compactSummary) {
+  {
     const identity = directoryRecord || (type === 'file' ? { file: normalized } : { nationalId: normalized });
     dayMatches = dayMatches.map(day => ({ ...day, matches: day.matches.filter(item => matchesSummaryIdentity(item, identity)) })).filter(day => day.matches.length);
     plans = plans.filter(({ record }) => matchesSummaryIdentity(record, identity));
@@ -334,8 +334,8 @@ export default async request => {
     adminNotes: Object.prototype.hasOwnProperty.call(suppliedPatient, 'adminNotes') ? cleanText(suppliedPatient.adminNotes, 1600) : cleanText(patient.adminNotes, 1600),
     notesReviewed: Object.prototype.hasOwnProperty.call(suppliedPatient, 'notesReviewed') ? Boolean(suppliedPatient.notesReviewed) : Boolean(patient.notesReviewed)
   };
-  if (!next.name || (!next.file && !next.phone && !next.nationalId)) return reply({ error: 'Name and at least one stable patient identity are required' }, 400);
-  if (!allowIncomplete && (!next.file || !next.phone)) return reply({ error: 'Name, file number, and mobile are required' }, 400);
+  if (!next.name || (!normalizePatientFile(next.file) && !next.nationalId)) return reply({ error: 'Name and file number or national ID are required' }, 400);
+  if (!allowIncomplete && (!next.phone && !next.nationalId)) return reply({ error: 'Mobile or national ID is required' }, 400);
   if (next.nationalId && next.nationalId.length !== 10) return reply({ error: 'National ID must contain 10 digits' }, 400);
   const nextAliases = patientIdentityKeys(next);
   const conflicting = nextAliases.map(alias => registry.aliases?.[alias]).find(canonical => canonical && !plans.some(item => item.canonical === canonical));

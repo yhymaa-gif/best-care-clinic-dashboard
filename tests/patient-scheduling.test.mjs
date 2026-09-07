@@ -25,7 +25,7 @@ test('patient record and search results expose the existing-patient appointment 
 test('patient scheduling requires a complete identity before opening the appointment form', async () => {
   const dashboard = await read('dashboard.js');
   assert.match(dashboard, /completeName:patient\.fullName\.split/);
-  assert.match(dashboard, /completeFile:\/\^\\d\+\$\/.test\(patient\.fileNo\)/);
+  assert.match(dashboard, /completeFile:Boolean\(patient\.fileNo\|\|patient\.nationalId\)/);
   assert.match(dashboard, /completeMobile:\/\^05\\d\{8\}\$\//);
   assert.match(dashboard, /أكمل بيانات المريض أولًا/);
 });

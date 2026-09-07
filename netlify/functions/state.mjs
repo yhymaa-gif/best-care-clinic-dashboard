@@ -27,6 +27,7 @@ const cleanPatient=p=>({
  file:String(p?.file||'').slice(0,40),
  phone:String(p?.phone||'').replace(/[^\d+]/g,'').slice(0,20),
  nationalId:String(p?.nationalId||'').replace(/\D/g,'').slice(0,10),
+ phoneRelationship:['father','mother','spouse','sibling','child','guardian','other'].includes(p?.phoneRelationship)?p.phoneRelationship:'',
  start:String(p?.start||'').slice(0,8),
  end:String(p?.end||'').slice(0,8),
  procedure:String(p?.procedure||'').slice(0,180),
@@ -107,11 +108,11 @@ export default async request=>{
     const identityCorrections=auth.user?.role==='admin'
       ? state.patients.flatMap(patient=>{
         const previous=existingPatients.get(String(patient.id));
-        if(!previous||!['name','file','phone','nationalId'].some(field=>String(previous[field]||'').trim()!==String(patient[field]||'').trim()))return[];
+        if(!previous||!['name','file','phone','nationalId','phoneRelationship'].some(field=>String(previous[field]||'').trim()!==String(patient[field]||'').trim()))return[];
         const lookupAliases=patientIdentityKeys({file:previous.file||patient.file,phone:previous.phone||patient.phone,nationalId:previous.nationalId||patient.nationalId});
         if(!lookupAliases.length)return[];
         const correctionId=`state:${clinicId}:${date}:${patient.id}:${patient.adminUpdatedAt||state.updatedAt}`;
-        return [correctDirectoryPatient(lookupAliases,{name:patient.name,file:patient.file,phone:patient.phone,nationalId:patient.nationalId},{actor:state.updatedBy,correctionId})];
+        return [correctDirectoryPatient(lookupAliases,{name:patient.name,file:patient.file,phone:patient.phone,nationalId:patient.nationalId,phoneRelationship:patient.phoneRelationship},{actor:state.updatedBy,correctionId})];
       })
       : [];
     const events=pushEvents(existing?.patients||[],state.patients,existing?.updateAlert||{},state.updateAlert,clinic);const backgroundResults=await Promise.allSettled([upsertPatientDirectory(state.patients,{clinicId,date,updatedAt:state.updatedAt,actor:state.updatedBy,authoritativeImport:auth.user?.role==='admin'&&Boolean(body.directoryImport)}),...identityCorrections,...events.map(event=>sendPushNotifications({...event,date:state.date,revision:state.revision,updatedAt:state.updatedAt},{excludeClientId:state.clientId}))]);const directoryUpdated=backgroundResults[0]?.status==='fulfilled'&&Boolean(backgroundResults[0]?.value?.changed)||identityCorrections.some(result=>result?.status==='fulfilled');return reply({ok:true,revision:state.revision,updatedAt:state.updatedAt,pushEvents:events.length,directoryUpdated})}

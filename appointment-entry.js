@@ -6,7 +6,7 @@ import {
   normalizePatient,
   samePatient,
   validatePatient
-} from './appointment-entry-core.js';
+} from './appointment-entry-core.js?v=20260907-patient-strong-identity';
 
 const $=id=>document.getElementById(id);
 const API={auth:'/api/auth?action=session',clinics:'/api/clinics',lookup:'/api/patient-lookup',patients:'/api/patients',profile:'/api/patient-profile',state:'/api/state'};
@@ -159,7 +159,7 @@ async function saveCorrection(){
   if(!checked.complete){showError('correctionError',copy.incompleteError);return}
   const button=$('saveCorrection');button.disabled=true;
   try{
-    const clinicId=$('entryClinic').value,original=normalizePatient(selectedPatient),lookup=original.file?{type:'file',value:original.file}:original.nationalId?{type:'national',value:original.nationalId}:original.phone?{type:'phone',value:original.phone}:null;
+    const clinicId=$('entryClinic').value,original=normalizePatient(selectedPatient),lookup=original.file?{type:'file',value:original.file}:original.nationalId?{type:'national',value:original.nationalId}:null;
     const options=lookup
       ?{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({lookup,clinic:'all',correctionId:globalThis.crypto?.randomUUID?.()||`correction-${Date.now()}`,patient:checked.patient})}
       :{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({clinicId,patients:[{id:checked.patient.id,fullName:checked.patient.name,fileNo:checked.patient.file,mobile:checked.patient.phone,nationalId:checked.patient.nationalId}]})};

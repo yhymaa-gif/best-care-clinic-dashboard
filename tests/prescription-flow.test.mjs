@@ -4,11 +4,12 @@ import { readFile } from 'node:fs/promises';
 
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 
-test('admin patient creation requires full name, non-zero file, and Saudi mobile', async () => {
+test('admin patient creation accepts national ID instead of file and mobile', async () => {
   const [html, js] = await Promise.all([read('index.html'), read('dashboard.js')]);
   assert.match(html, /id="fName"[^>]+required/);
-  assert.match(html, /id="fFile"[^>]+required/);
-  assert.match(html, /id="fPhone"[^>]+required/);
+  assert.doesNotMatch(html, /id="fFile"[^>]+required/);
+  assert.doesNotMatch(html, /id="fPhone"[^>]+required/);
+  assert.match(html, /id="fPhoneRelationship"/);
   assert.match(js, /normalizedName\.split\(' '\).*length<2/);
   assert.match(js, /isZeroFileNumber\(fileNumber\)/);
   assert.match(js, /\^05\\d\{8\}\$/);

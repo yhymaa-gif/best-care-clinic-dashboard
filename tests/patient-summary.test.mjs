@@ -13,11 +13,11 @@ const visit = (overrides={}) => ({ id:'old',clinicId:'clinic-1',date:'2026-08-24
 test('summary identity uses national ID or nonzero file, never shared mobile or name',()=>{
   assert.deepEqual(summary.lookup({file:'٠',phone:'0500000000',name:'اسم'}),null);
   assert.deepEqual(summary.lookup({file:' A-120 '}),{type:'file',value:'A120'});
-  assert.deepEqual(summary.lookup({nationalId:'١٢٣٤٥٦٧٨٩٠',file:'A120'}),{type:'national',value:'1234567890'});
+  assert.deepEqual(summary.lookup({nationalId:'١٢٣٤٥٦٧٨٩٠',file:'A120'}),{type:'file',value:'A120'});
   assert.equal(matchesSummaryIdentity({file:'2',phone:'0500000000'},{file:'1',phone:'0500000000'}),false);
   assert.equal(matchesSummaryIdentity({file:'0'},{file:'0'}),false);
   assert.equal(matchesSummaryIdentity({file:'1',nationalId:'1111111111'},{file:'1',nationalId:'2222222222'}),false);
-  assert.equal(matchesSummaryIdentity({file:'old',nationalId:'1111111111'},{file:'new',nationalId:'1111111111'}),true);
+  assert.equal(matchesSummaryIdentity({file:'old',nationalId:'1111111111'},{file:'new',nationalId:'1111111111'}),false);
 });
 
 test('summary counts structured quantities on completed visits, not plans or pending/cancelled orders',()=>{

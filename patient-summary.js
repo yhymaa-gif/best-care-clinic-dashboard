@@ -7,9 +7,9 @@ const dateNumber=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')?Date.parse(`${valu
 const riyadhDay=(now=Date.now())=>new Date(now+3*3600000).toISOString().slice(0,10);
 function lookup(patient){
   const national=digits(patient?.nationalId).replace(/[\s-]/g,'');
-  if(/^\d{10}$/.test(national)&&!/^0+$/.test(national))return{type:'national',value:national};
   const file=digits(patient?.file).trim().toUpperCase().replace(/[\s-]+/g,'');
-  return file&&!/^0+$/.test(file)?{type:'file',value:file}:null;
+  if(file&&!/^0+$/.test(file))return{type:'file',value:file};
+  return /^\d{10}$/.test(national)&&!/^0+$/.test(national)?{type:'national',value:national}:null;
 }
 function summarize(profile,{now=Date.now(),patientId='',date='',clinicId=''}={}){
   const today=riyadhDay(now),seen=new Set();

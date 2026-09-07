@@ -8,11 +8,14 @@ test('placeholder zero file numbers are never permanent patient identities', () 
   assert.deepEqual(patientIdentityKeys({ file: '0' }), []);
 });
 
-test('phone and national ID still identify patients whose file is zero', () => {
+test('national ID identifies patients whose file is zero; mobile never joins identities', () => {
   assert.deepEqual(patientIdentityKeys({ file: '0', phone: '+966501234567', nationalId: '1234567890' }), [
-    'phone:0501234567',
     'national:1234567890'
   ]);
+});
+test('file then national ID, with no phone-only fallback even for the same name',()=>{
+  assert.deepEqual(patientIdentityKeys({file:'123',nationalId:'1234567890',phone:'0501234567'}),['file:123','national:1234567890']);
+  assert.deepEqual(patientIdentityKeys({name:'Ahmed Ali',phone:'0501234567'}),[]);
 });
 
 test('valid file numbers continue to normalize consistently', () => {

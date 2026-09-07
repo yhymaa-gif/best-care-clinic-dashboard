@@ -20,6 +20,7 @@ test('central patient directory preserves a complete normalized identity', () =>
     fileNo: '7041',
     mobile: '0551234567',
     nationalId: '1234567890',
+    phoneRelationship: '',
     adminNotes: '',
     notesReviewed: false
   });
@@ -171,7 +172,8 @@ test('legacy appointments resolve to the complete central patient identity', () 
     fileNo: '7041',
     phone: '0551234567',
     mobile: '0551234567',
-    nationalId: '1234567890'
+    nationalId: '1234567890',
+    phoneRelationship: ''
   });
 });
 
@@ -320,9 +322,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20260907-clinic-stable-display/);
+  assert.match(html, /dashboard\.js\?v=20260907-patient-strong-identity/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20260907-clinic-stable-display/);
+  assert.match(serviceWorker, /20260907-patient-strong-identity/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

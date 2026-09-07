@@ -32,7 +32,7 @@ test('appointment time helpers find overlaps and the next free time',()=>{
 
 test('duplicate identity uses file number or national ID and builds one complete appointment',()=>{
   assert.equal(samePatient({file:'7041',nationalId:'1111111111'},{file:'7041',nationalId:''}),true);
-  assert.equal(samePatient({file:'7041',nationalId:'1111111111'},{file:'9000',nationalId:'1111111111'}),true);
+  assert.equal(samePatient({file:'7041',nationalId:'1111111111'},{file:'9000',nationalId:'1111111111'}),false);
   const result=buildAppointment({patient:{name:'ملاك الحسن الحفظي',file:'7041',phone:'0501234567'},start:'16:00',duration:30,procedure:'مراجعة',id:'fixed-id',now:123});
   assert.equal(result.id,'fixed-id');assert.equal(result.end,'16:30');assert.equal(result.name,'ملاك الحسن الحفظي');
 });
@@ -44,7 +44,7 @@ test('new appointment page uses central lookup and revision-safe shared day stat
   assert.match(script,/method:'PATCH'/);assert.match(script,/clinic:'all'/);
   assert.match(script,/expectedRevision:latest\.revision/);assert.match(script,/response\.status===409/);assert.match(script,/for\(let attempt=0;attempt<3/);
   assert.match(script,/samePatient\(patient,checked\.patient\)/);assert.match(script,/appointmentConflicts/);assert.match(script,/bestcare-dashboard-sync-v1/);
-  assert.match(serviceWorker,/appointment-entry\.html/);assert.match(serviceWorker,/20260907-clinic-stable-display/);assert.match(manifest,/appointment-entry\.html\?source=pwa/);
+  assert.match(serviceWorker,/appointment-entry\.html/);assert.match(serviceWorker,/20260907-patient-strong-identity/);assert.match(manifest,/appointment-entry\.html\?source=pwa/);
 });
 
 test('existing patient-list action remains and hands off to the appointment page',async()=>{

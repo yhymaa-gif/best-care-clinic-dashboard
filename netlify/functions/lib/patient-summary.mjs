@@ -11,6 +11,7 @@ export function matchesSummaryIdentity(patient, identity) {
   const expectedFile = normalizePatientFile(identity?.fileNo ?? identity?.file);
   const expectedNational = normalizePatientNationalId(identity?.nationalId);
   if (national && expectedNational && national !== expectedNational) return false;
+  if (file && expectedFile) return file === expectedFile;
   if (national && national === expectedNational) return true;
   return Boolean(file && expectedFile && file === expectedFile);
 }
