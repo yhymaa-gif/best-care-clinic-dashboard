@@ -785,6 +785,9 @@ html[data-theme="dark"] .patient-directory-review-panel{border-color:#71404a;bac
 @media(max-width:620px){.patient-directory-review-panel{align-items:stretch;flex-direction:column}.patient-directory-review-panel button{width:100%}}
 
 /* Clinic flow clarity: the next patient is a compact, actionable hand-off card. */
+/* Keep monitoring surfaces stationary while their live numbers change. */
+body.view-clinic #flowStage .current-card,body.view-clinic #flowStage .current-card *,body.clinic-topmost-window .current-card,body.clinic-topmost-window .current-card *{animation:none!important;transition:none!important}
+body.view-clinic #flowStage .timer-box strong,body.view-clinic #waitingTimer,body.view-clinic #nextPatientTime,body.clinic-topmost-window .timer-box strong,body.clinic-topmost-window .next-patient-actions>b,body.clinic-topmost-window .current-status-notice>b{font-variant-numeric:tabular-nums;white-space:nowrap}
 body.view-clinic #flowStage,body.clinic-topmost-window .focus-grid{grid-template-columns:minmax(0,1fr)}
 body.view-clinic #timeline,body.clinic-topmost-window .timeline-strip{display:none}
 .clinic-following{grid-column:1 / -1;min-width:0;border-top:1px solid #aacddb;padding-top:10px;margin-top:4px}

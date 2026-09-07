@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.07-clinic-unified-queue",
+  "version": "2026.09.07-clinic-stable-display",
   "publishedAt": "2026-09-07",
   "summary": {
-    "ar": "ترتيب بقية الدور تحت المريض التالي وإزالة اللوحة المنفصلة، مع عرض فوق التطبيقات ورابط تنزيل PowerToys.",
-    "en": "Grouped the remaining queue under the next patient; added an always-on-top display and PowerToys download link."
+    "ar": "إصلاح ارتجاف شاشة الطبيب والعرض العائم: تثبيت البطاقات أثناء تحديث العدادات وإيقاف حركات النبض دون تغيير المزامنة.",
+    "en": "Fixed doctor-display flicker: preserve cards during timer updates and remove pulsing motion without changing synchronization."
   }
 }
