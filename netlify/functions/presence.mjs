@@ -6,7 +6,9 @@ const headers = apiHeaders('GET,POST,DELETE,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const presenceStore = () => getStore({ name: 'clinic-dashboard-presence', consistency: 'strong' });
 const clinicPattern = /^clinic-([1-9]|1[0-5])$/;
-const ONLINE_TTL_MS = 90 * 1000;
+// Presence is informational. A longer TTL permits a three-minute visible
+// heartbeat and avoids a full store scan every minute on every open device.
+const ONLINE_TTL_MS = 6 * 60 * 1000;
 const DELETE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 const safeDeviceId = value => {
