@@ -98,7 +98,7 @@ const PATIENTS_API='/api/patients';
 const PATIENT_LOOKUP_API='/api/patient-lookup';
 const ALERT_DISPLAY_MS=5*60*1000;
 const POLL_MS=5000;
-const SYNC_WORK_HIDDEN_MS=60000;
+const SYNC_WORK_HIDDEN_MS=15000;
 const SYNC_OFF_HOURS_MS=5*60*1000;
 const SYNC_OFF_HOURS_HIDDEN_MS=15*60*1000;
 // Auxiliary feeds (plans, alerts, labs) do not need to run on every patient
@@ -109,12 +109,13 @@ const AUX_WORK_HIDDEN_MS=120000;
 const AUX_OFF_HOURS_MS=5*60*1000;
 const AUX_OFF_HOURS_HIDDEN_MS=15*60*1000;
 const RIYADH_OFFSET_MS=3*60*60*1000;
+function syncDisplayVisible(){return !document.hidden||Boolean(window.documentPictureInPicture?.window&&!window.documentPictureInPicture.window.closed)}
 function syncCadence(now=Date.now()){
   const riyadh=new Date(now+RIYADH_OFFSET_MS);
   const day=riyadh.getUTCDay(),hour=riyadh.getUTCHours();
   const friday=day===5;
   const workHours=!friday&&hour>=14&&hour<23;
-  const hidden=document.hidden;
+  const hidden=!syncDisplayVisible();
   return {
     friday,
     workHours,
@@ -133,7 +134,7 @@ function presenceCadence(){
 }
 function adminHubCadence(){
   const cadence=syncCadence();
-  if(cadence.workHours)return document.hidden?5*60*1000:20*1000;
+  if(cadence.workHours)return syncDisplayVisible()?20000:60000;
   return document.hidden?30*60*1000:10*60*1000;
 }
 const DASHBOARD_BUILD='7.64-patient-save-fix-v2';
@@ -490,6 +491,15 @@ const DEFAULT_TREATMENT_CATALOG=[
   ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
   ['cleaning-gbt','تنظيف أسنان GBT'],['whitening-trays','قوالب تبييض'],['other','إجراء آخر']
 ].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
+const PROCEDURE_EN_BY_ID=Object.freeze({
+  'cosmetic-filling':'Cosmetic filling','post-rct-filling':'Post-root-canal filling','root-canal':'Root canal treatment','root-canal-retreatment':'Root canal retreatment','remove-post':'Post removal','place-post':'Post placement','remove-crown':'Crown removal','recement-crown':'Crown recementation','ceramic-crown':'Ceramic crown','ceramic-veneer':'Ceramic veneer','implant-crown':'Implant crown','implant-surgery':'Dental implant — surgical stage','extraction':'Tooth extraction','temporary':'Temporary restoration','smile-design':'Smile design','smile-analysis':'Smile analysis','cleaning-standard':'Standard dental cleaning','cleaning-gbt':'GBT dental cleaning','whitening-trays':'Whitening trays','other':'Other procedure'
+});
+const PROCEDURE_EN_BY_AR=Object.freeze(Object.fromEntries(DEFAULT_TREATMENT_CATALOG.map(item=>[item.name,PROCEDURE_EN_BY_ID[item.id]||item.name])));
+const LAB_WORK_EN=Object.freeze({'تركيب تاج':'Crown','فينير':'Veneer','تركيبة زراعة':'Implant restoration','قوالب تبييض':'Whitening trays','تركيبة مؤقتة':'Temporary restoration','إجراء معملي آخر':'Other laboratory procedure'});
+function procedureDisplayName(value,code=''){
+  const name=String(value||'').trim();
+  return lang==='en'?(PROCEDURE_EN_BY_ID[String(code||'')]||PROCEDURE_EN_BY_AR[name]||LAB_WORK_EN[name]||name):name;
+}
 const PAYMENT_LINKED_PLAN_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.';
 const treatmentCatalogLocalKey=()=>`bestcare_treatment_catalog_${ACTIVE_CLINIC_ID}`;
 function paymentDoctorKey(){
@@ -566,12 +576,12 @@ async function refreshTreatmentCatalog({force=false}={}){
 const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function renderTreatmentCatalog(){
   const list=$('treatmentCatalogList');
-  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="اسم الإجراء"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="قبل الخصم" aria-label="السعر قبل الخصم"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="بعد الخصم" aria-label="السعر بعد الخصم"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="حذف">×</button></div>`).join(''):'<div class="catalog-empty">لا توجد إجراءات. أضف أول إجراء من الزر أدناه.</div>';
+  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="${lang==='en'?'Procedure name':'اسم الإجراء'}"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="${lang==='en'?'Before discount':'قبل الخصم'}" aria-label="${lang==='en'?'Price before discount':'السعر قبل الخصم'}"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="${lang==='en'?'After discount':'بعد الخصم'}" aria-label="${lang==='en'?'Price after discount':'السعر بعد الخصم'}"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="${lang==='en'?'Delete':'حذف'}">×</button></div>`).join(''):`<div class="catalog-empty">${lang==='en'?'No procedures. Add the first procedure below.':'لا توجد إجراءات. أضف أول إجراء من الزر أدناه.'}</div>`;
 }
 async function openTreatmentCatalog(){
   setSettingsMenuOpen(false);
   treatmentCatalog=localTreatmentCatalog();
-  $('treatmentCatalogError').textContent='جارٍ مزامنة القائمة المركزية…';
+  $('treatmentCatalogError').textContent=lang==='en'?'Synchronizing the central list…':'جارٍ مزامنة القائمة المركزية…';
   renderTreatmentCatalog();
   openModal('treatmentCatalogModal');
   try{
@@ -579,7 +589,7 @@ async function openTreatmentCatalog(){
     $('treatmentCatalogError').textContent='';$('treatmentCatalogError').classList.remove('catalog-warning');
     renderTreatmentCatalog();
   }catch(error){
-    $('treatmentCatalogError').textContent='تم فتح قائمة الإجراءات المتاحة ويمكنك المتابعة؛ ستُعاد محاولة المزامنة المركزية عند الحفظ.';$('treatmentCatalogError').classList.add('catalog-warning');
+    $('treatmentCatalogError').textContent=lang==='en'?'The available procedure list is open. You may continue; central synchronization will retry when you save.':'تم فتح قائمة الإجراءات المتاحة ويمكنك المتابعة؛ ستُعاد محاولة المزامنة المركزية عند الحفظ.';$('treatmentCatalogError').classList.add('catalog-warning');
     console.warn('Treatment catalog fallback used',error);
   }
 }
@@ -587,9 +597,9 @@ function collectTreatmentCatalog(){
   document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);delete item.requiresLab;delete item.price});
 }
 async function saveTreatmentCatalog(){
-  collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').classList.remove('catalog-warning');$('treatmentCatalogError').textContent='جارٍ الحفظ…';
+  collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').classList.remove('catalog-warning');$('treatmentCatalogError').textContent=lang==='en'?'Saving…':'جارٍ الحفظ…';
   setTreatmentCatalog(items);
-  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر حفظ القائمة');setTreatmentCatalog(data.items||items);if($('paymentModal').classList.contains('open'))renderPaymentProcedureOptions(true);$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast('تم تحديث الإجراءات والخدمات','حُفظت القائمة مركزيًا وستظهر تلقائيًا في الخطط العلاجية وأوامر الدفع لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent='حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
+  try{const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({items})});const data=await response.json();if(!response.ok)throw new Error(data.error||(lang==='en'?'Could not save the list':'تعذر حفظ القائمة'));setTreatmentCatalog(data.items||items);if($('paymentModal').classList.contains('open'))renderPaymentProcedureOptions(true);$('treatmentCatalogError').textContent='';closeModal('treatmentCatalogModal');toast(lang==='en'?'Procedures and services updated':'تم تحديث الإجراءات والخدمات',lang==='en'?'The central list is saved and will appear automatically in treatment plans and payment orders for this clinic.':'حُفظت القائمة مركزيًا وستظهر تلقائيًا في الخطط العلاجية وأوامر الدفع لهذه العيادة.')}catch(error){$('treatmentCatalogError').textContent=lang==='en'?'Changes were saved on this device, but central saving failed. Check the connection and retry.':'حُفظت التعديلات على هذا الجهاز، لكن تعذر حفظها مركزيًا. تحقق من الاتصال ثم أعد المحاولة.';console.error('Treatment catalog central save failed',error)}
 }
 async function saveUser(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول برمز تحقق SMS بعد ضبط مزود الرسائل.')}catch(error){$('usersError').textContent=error.message}}
 async function logoutApp(){
@@ -617,6 +627,10 @@ let sync={
   pollTimer:null,
   autoTimer:null,
   autoStarted:false,
+  cycleRunning:false,
+  pwaRegistration:null,
+  pwaCheckAt:0,
+  pwaChecking:false,
   auxLastRun:0,
   auxBusy:false,
   lastSync:0,
@@ -999,7 +1013,7 @@ function markDirty(){
   clearTimeout(sync.pushTimer);
   sync.pushTimer=setTimeout(async()=>{
     await pushState();
-    scheduleAutomaticSync(syncCadence().delay);
+    scheduleAutomaticSync(sync.dirty&&!sync.error?250:syncCadence().delay);
   },100);
 }
 async function request(url,options={},timeout=12000){const c=new AbortController();const timer=setTimeout(()=>c.abort(),timeout);try{return await fetch(url,{...options,signal:c.signal,cache:'no-store',headers:{accept:'application/json',...(options.headers||{})}})}finally{clearTimeout(timer)}}
@@ -1522,11 +1536,19 @@ async function pullState(force=false){
 }
 function scheduleAutomaticSync(delay=POLL_MS){
   clearTimeout(sync.autoTimer);
-  sync.autoTimer=setTimeout(runAutomaticSync,delay);
+  sync.autoTimer=setTimeout(runAutomaticSync,syncDelayUntilWorkStart(delay));
+}
+function syncDelayUntilWorkStart(delay,now=Date.now()){
+  if(syncCadence(now).workHours)return delay;
+  const local=new Date(now+RIYADH_OFFSET_MS);
+  let start=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate(),14)-RIYADH_OFFSET_MS;
+  while(start<=now||new Date(start+RIYADH_OFFSET_MS).getUTCDay()===5)start+=86400000;
+  return Math.min(delay,Math.max(100,start-now));
 }
 
 async function runAutomaticSync(){
   clearTimeout(sync.autoTimer);
+  if(sync.cycleRunning)return;
 
   if(!navigator.onLine){
     sync.ready=false;
@@ -1536,18 +1558,22 @@ async function runAutomaticSync(){
     return;
   }
 
+  sync.cycleRunning=true;
   try{
     if(sync.dirty){
       await pushState();
     }else{
       await pullState(false);
     }
-    await refreshAuxiliaryData();
+    // Auxiliary endpoints must not delay the next patient revision check.
+    refreshAuxiliaryData().catch(error=>console.warn('Auxiliary refresh failed',error?.name||'Error'));
+    checkApplicationUpdate();
   }catch(error){
     console.error('Automatic sync cycle failed',error);
   }finally{
+    sync.cycleRunning=false;
     const cadence=syncCadence();
-    const nextDelay=sync.error?(cadence.workHours?30000:cadence.delay):cadence.delay;
+    const nextDelay=sync.error?(cadence.workHours?30000:cadence.delay):(sync.dirty?250:cadence.delay);
     if(!sync.error&&!sync.dirty&&!cadence.workHours){
       setIdleSyncBadge();
     }
@@ -1555,9 +1581,19 @@ async function runAutomaticSync(){
   }
 }
 
+async function checkApplicationUpdate(now=Date.now()){
+  const registration=sync.pwaRegistration;
+  if(!registration||sync.pwaChecking||!navigator.onLine||!syncDisplayVisible())return;
+  const interval=syncCadence(now).workHours?5*60*1000:30*60*1000;
+  if(now-sync.pwaCheckAt<interval)return;
+  sync.pwaChecking=true;sync.pwaCheckAt=now;
+  try{await registration.update()}
+  catch(error){console.warn('Application update check failed',error?.name||'Error')}
+  finally{sync.pwaChecking=false}
+}
 function auxiliaryCadence(now=Date.now()){
   const cadence=syncCadence(now);
-  if(cadence.workHours)return document.hidden?AUX_WORK_HIDDEN_MS:AUX_WORK_MS;
+  if(cadence.workHours)return syncDisplayVisible()?AUX_WORK_MS:AUX_WORK_HIDDEN_MS;
   return document.hidden?AUX_OFF_HOURS_HIDDEN_MS:AUX_OFF_HOURS_MS;
 }
 async function refreshAuxiliaryData({force=false}={}){
@@ -1581,11 +1617,11 @@ async function startAutomaticSync(){
 
   setBadge('connecting',lang==='en'?'Connecting automatically…':'جارٍ تفعيل المزامنة تلقائيًا…');
 
-  const wake=()=>{
+  const wake=(event)=>{
     clearTimeout(sync.autoTimer);
     const cadence=syncCadence();
     const elapsed=Date.now()-Number(sync.lastSync||0);
-    if(cadence.workHours||!sync.lastSync||elapsed>=cadence.delay)runAutomaticSync();
+    if(sync.dirty||event?.type==='online'||cadence.workHours||!sync.lastSync||elapsed>=cadence.delay)runAutomaticSync();
     else{
       setIdleSyncBadge();
       scheduleAutomaticSync(Math.max(1000,cadence.delay-elapsed));
@@ -1714,6 +1750,13 @@ function patientLabCases(patient,{activeOnly=true}={}){
   const terminal=new Set(['delivered_patient','cancelled']);
   return labCasesState.cases.filter(item=>labCaseMatchesPatient(item,patient)&&(!activeOnly||!terminal.has(item.status))).sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
 }
+function paymentItemRequiresLab(item={}){
+  const value=`${item.code||''} ${item.name||item.service||''}`.toLocaleLowerCase('en');
+  return /(?:crown|bridge|veneer|implant-crown|ceramic-crown|ceramic-veneer)|(?:تاج|كراون|جسر|فينير|تركيبة\s*زراعة|سيراميك)/i.test(value);
+}
+function patientNeedsLabCase(patient){
+  return Boolean(patient?.status==='done'&&patient?.paymentRequired&&(patient.paymentItems||[]).some(paymentItemRequiresLab)&&!patientLabCases(patient,{activeOnly:false}).length);
+}
 const LAB_STATUS_ORDER=['pending_send','sent_coordination','sent','in_production','ready_at_lab','received_clinic','delivered_coordination','delivered_patient','needs_adjustment','returned_lab','cancelled'];
 function labStatusText(status){return (lang==='en'?{pending_send:'Awaiting lab handoff',sent_coordination:'Sent to coordination',sent:'Handed to lab',in_production:'In production',ready_at_lab:'Ready at lab',received_clinic:'Received by clinic',delivered_coordination:'Handed to coordination',delivered_patient:'Delivered to patient',needs_adjustment:'Needs adjustment',returned_lab:'Returned to lab',cancelled:'Cancelled'}:{pending_send:'بانتظار التسليم للمعمل',sent_coordination:'أُرسلت للتنسيق',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'وصلت ولم تُسلّم',delivered_coordination:'تم تسليمها لموظفي التنسيق',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'})[status]||(lang==='en'?'Lab case':'حالة معمل')}
 function labElapsedDays(item){
@@ -1806,7 +1849,7 @@ function patientMatchesSearch(patient,rawQuery){
   const name=normalizeSearchText(patient?.name??patient?.fullName),compact=query.replace(/[\s-]/g,''),file=normalizeSearchText(patient?.file??patient?.fileNo).replace(/[\s-]/g,''),phone=normalizeSearchPhone(patient?.phone??patient?.mobile),digits=normalizeSearchPhone(rawQuery);
   return name.includes(query)||Boolean(compact&&file.includes(compact))||Boolean(digits&&phone.includes(digits));
 }
-function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0))}
+function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0),Number(patient?.dailyNoteUpdatedAt||0))}
 function copyPatientGroup(target,source,fields){fields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(source||{},field))target[field]=source[field]})}
 function mergePatientVersions(remote={},local={}){
   const remoteStamp=patientVersionStamp(remote),localStamp=patientVersionStamp(local);
@@ -1818,7 +1861,8 @@ function mergePatientVersions(remote={},local={}){
     [['treatmentPlanStatus','treatmentPlanUpdatedAt'],value=>Number(value?.treatmentPlanUpdatedAt||0)],
     [['treatmentPlanPrintedAt'],value=>Number(value?.treatmentPlanPrintedAt||0)],
     [['reviewRequestedAt','reviewRequestCount','reviewLastEventId'],value=>Number(value?.reviewRequestedAt||0)],
-    [['earliestAppointmentRequestId','earliestAppointmentRequestedAt','earliestAppointmentRequestedBy'],value=>Number(value?.earliestAppointmentRequestedAt||0)]
+    [['earliestAppointmentRequestId','earliestAppointmentRequestedAt','earliestAppointmentRequestedBy'],value=>Number(value?.earliestAppointmentRequestedAt||0)],
+    [['dailyNote','dailyNoteUpdatedAt'],value=>Number(value?.dailyNoteUpdatedAt||0)]
   ];
   groups.forEach(([fields,stamp])=>copyPatientGroup(merged,stamp(local)>=stamp(remote)?local:remote,fields));
   const addedAtValues=[Number(remote.addedAt||0),Number(local.addedAt||0)].filter(value=>value>0);
@@ -2054,15 +2098,21 @@ async function refreshTreatmentPlanRegistry(force=false){
     });
     const data=await response.json();
     if(!response.ok)throw new Error(data.error||'تعذر تحميل سجل الخطط');
-    treatmentPlanRegistry={
+    const nextRegistry={
       records:data.records&&typeof data.records==='object'?data.records:{},
       aliases:data.aliases&&typeof data.aliases==='object'?data.aliases:{},
       revision:Number(data.revision||0),updatedAt:Number(data.updatedAt||0),lastFetchedAt:Date.now()
     };
+    const changed=registryContentChanged(treatmentPlanRegistry,nextRegistry);
+    treatmentPlanRegistry=nextRegistry;
+    if(!changed&&!force)return true;
     updateTreatmentPlanCenterTrigger();
     render();
     return true;
   }catch(error){console.warn('Treatment plan registry unavailable',error);return false}
+}
+function registryContentChanged(previous,next){
+  return JSON.stringify(previous.records)!==JSON.stringify(next.records)||JSON.stringify(previous.aliases)!==JSON.stringify(next.aliases);
 }
 function patientIdentityRecordKey(record={}){
   const file=normalizedPlanFile(record.fileNo??record.file);
@@ -2448,6 +2498,37 @@ function patientWithDirectoryIdentity(patient){
     phoneRelationship:record.phoneRelationship??patient.phoneRelationship??''
   };
 }
+function applyPatientDirectoryCorrectionLocally(existing,item){
+  const record=directoryPatientFor(existing)||directoryPatientFor(item);if(!record)return false;
+  const correctedName=cleanDirectoryName(item.name||record.fullName);
+  Object.assign(record,{
+    fullName:correctedName||record.fullName,
+    authoritativeFullName:correctedName||record.authoritativeFullName||record.fullName,
+    fileNo:normalizeDirectoryFile(item.file)||record.fileNo,
+    mobile:normalizeDirectoryPhone(item.phone)||record.mobile,
+    nationalId:normalizeDirectoryNationalId(item.nationalId)||record.nationalId,
+    updatedAt:Date.now()
+  });
+  rebuildPatientIdentityAliasIndex();return true;
+}
+function applyAdminHubPatientCorrectionLocally(existing,item){
+  const oldFile=normalizeDirectoryFile(existing?.file),oldNational=normalizeDirectoryNationalId(existing?.nationalId),patientId=String(existing?.id||item?.id||'');
+  let changed=false;
+  adminPatientHub.records=adminPatientHub.records.map(record=>{
+    if(!Array.isArray(record?.patients))return record;
+    let recordChanged=false;
+    const nextPatients=record.patients.map(patient=>{
+      const matchesId=patientId&&record.clinic?.id===ACTIVE_CLINIC_ID&&String(patient.id||'')===patientId;
+      const matchesFile=oldFile&&normalizeDirectoryFile(patient.file)===oldFile;
+      const matchesNational=oldNational&&normalizeDirectoryNationalId(patient.nationalId)===oldNational;
+      if(!matchesId&&!matchesFile&&!matchesNational)return patient;
+      changed=true;recordChanged=true;
+      return{...patient,name:item.name||patient.name,file:item.file||patient.file,phone:item.phone??patient.phone,nationalId:item.nationalId??patient.nationalId,adminUpdatedAt:Number(item.adminUpdatedAt||Date.now())};
+    });
+    return recordChanged?{...record,patients:nextPatients}:record;
+  });
+  return changed;
+}
 async function refreshPatientIdentityDirectory(){
   patientIdentityDirectory.loading=true;
   patientIdentityDirectory.error='';
@@ -2593,12 +2674,12 @@ function renderPatientProfileTimeline(){
   document.querySelectorAll('[data-profile-tab]').forEach(button=>button.classList.toggle('active',button.dataset.profileTab===tab));
   if(tab==='appointments'){
     const items=profile.appointments||[];
-    target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event appointment"><span class="patient-event-mark" aria-hidden="true">${escapeHtml(item.date?.slice(-2)||'—')}</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(patientProfileDate(item.date))}</small><strong>${escapeHtml(item.procedure||'موعد عيادة')}</strong><p>${escapeHtml(item.start||'—')}–${escapeHtml(item.end||'—')} · ${escapeHtml(item.statusLabel||item.status||'')}</p></div><a href="${escapeHtml(`${location.pathname}?${new URLSearchParams({view:'admin',clinic:item.clinicId||'clinic-1',date:item.date||selectedDate})}`)}">فتح الموعد</a></article>`).join(''):patientProfileEmpty('لا توجد مواعيد مرتبطة بهذه الهوية.');
+    target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event appointment"><span class="patient-event-mark" aria-hidden="true">${escapeHtml(item.date?.slice(-2)||'—')}</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(patientProfileDate(item.date))}</small><strong>${escapeHtml(procedureDisplayName(item.procedure)||(lang==='en'?'Clinic appointment':'موعد عيادة'))}</strong><p>${escapeHtml(item.start||'—')}–${escapeHtml(item.end||'—')} · ${escapeHtml(statusText(item.status)||item.statusLabel||'')}</p></div><a href="${escapeHtml(`${location.pathname}?${new URLSearchParams({view:'admin',clinic:item.clinicId||'clinic-1',date:item.date||selectedDate})}`)}">${lang==='en'?'Open appointment':'فتح الموعد'}</a></article>`).join(''):patientProfileEmpty(lang==='en'?'No appointments are linked to this identity.':'لا توجد مواعيد مرتبطة بهذه الهوية.');
     return;
   }
   if(tab==='plans'){
     const items=profile.plans||[];
-    target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event plan"><span class="patient-event-mark" aria-hidden="true">▤</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))}</small><strong>${escapeHtml(item.planNo||'خطة علاجية')}</strong><p>${escapeHtml(planStatusText(item.status))}</p></div>${item.sourcePatientId&&item.sourceDate?`<button type="button" data-profile-open-plan="${escapeHtml(item.canonical)}">فتح الخطة</button>`:''}</article>`).join(''):patientProfileEmpty('لا توجد خطة علاجية مرتبطة بالمريض.');
+    target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event plan"><span class="patient-event-mark" aria-hidden="true">▤</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))}</small><strong>${escapeHtml(item.planNo||(lang==='en'?'Treatment plan':'خطة علاجية'))}</strong><p>${escapeHtml(planStatusText(item.status))}</p></div>${item.sourcePatientId&&item.sourceDate?`<button type="button" data-profile-open-plan="${escapeHtml(item.canonical)}">${lang==='en'?'Open plan':'فتح الخطة'}</button>`:''}</article>`).join(''):patientProfileEmpty(lang==='en'?'No treatment plan is linked to this patient.':'لا توجد خطة علاجية مرتبطة بالمريض.');
     return;
   }
   if(tab==='prescriptions'){
@@ -2606,38 +2687,38 @@ function renderPatientProfileTimeline(){
     target.innerHTML=items.length?items.map(item=>{
       const patient=item.patient||profile.patient||{};
       const href=`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||patient.id||'',date:item.sourceDate||selectedDate,clinic:item.clinicId||'clinic-1',view:'admin',patientName:patient.name||'',file:patient.file||'',phone:patient.phone||'',nationalId:patient.nationalId||''}).toString()}`;
-      return `<article class="patient-profile-event prescription"><span class="patient-event-mark" aria-hidden="true">💊</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId||'clinic-1'))} · ${escapeHtml(patientProfileDateTime(item.updatedAt))}</small><strong>${escapeHtml(item.prescriptionNo||'وصفة علاجية')}</strong><p>${escapeHtml(`${Number(item.medicineCount||0)} علاج · ${item.statusLabel||item.status||'محفوظة'}`)}</p></div><a href="${escapeHtml(href)}">فتح الوصفة</a></article>`;
-    }).join(''):patientProfileEmpty('لا توجد وصفات علاجية مرتبطة بالمريض.');
+      return `<article class="patient-profile-event prescription"><span class="patient-event-mark" aria-hidden="true">💊</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId||'clinic-1'))} · ${escapeHtml(patientProfileDateTime(item.updatedAt))}</small><strong>${escapeHtml(item.prescriptionNo||(lang==='en'?'Prescription':'وصفة علاجية'))}</strong><p>${escapeHtml(`${Number(item.medicineCount||0)} ${lang==='en'?'medicines':'علاج'} · ${lang==='en'?(item.status==='approved'?'Approved':'Saved'):(item.statusLabel||item.status||'محفوظة')}`)}</p></div><a href="${escapeHtml(href)}">${lang==='en'?'Open prescription':'فتح الوصفة'}</a></article>`;
+    }).join(''):patientProfileEmpty(lang==='en'?'No prescriptions are linked to this patient.':'لا توجد وصفات علاجية مرتبطة بالمريض.');
     return;
   }
   if(tab==='payments'){
     const items=(profile.appointments||[]).filter(item=>item.paymentRequired);
-    const labels={requested:'بانتظار استلام الإدارة',received:'بانتظار تنفيذ الدفع',completed:'تم تنفيذ الدفع'};
-    target.innerHTML=items.length?items.map(item=>{const stage=patientProfilePaymentStage(item);return`<article class="patient-profile-event payment ${stage}"><span class="patient-event-mark" aria-hidden="true">﷼</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(patientProfileDate(item.date))}</small><strong>${escapeHtml(item.paymentAction||'أمر دفع')}</strong><p>${escapeHtml(labels[stage]||'')}</p></div><span class="patient-profile-status">${escapeHtml(labels[stage]||'')}</span></article>`}).join(''):patientProfileEmpty('لا توجد أوامر دفع مسجلة للمريض.');
+    const labels=lang==='en'?{requested:'Awaiting administration receipt',received:'Awaiting payment completion',completed:'Payment completed'}:{requested:'بانتظار استلام الإدارة',received:'بانتظار تنفيذ الدفع',completed:'تم تنفيذ الدفع'};
+    target.innerHTML=items.length?items.map(item=>{const stage=patientProfilePaymentStage(item),action=item.paymentItems?.length?paymentItemsSummary(item.paymentItems,item.paymentDiscount):item.paymentAction||(lang==='en'?'Payment order':'أمر دفع');return`<article class="patient-profile-event payment ${stage}"><span class="patient-event-mark" aria-hidden="true">﷼</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(patientProfileDate(item.date))}</small><strong>${escapeHtml(action)}</strong><p>${escapeHtml(labels[stage]||'')}</p></div><span class="patient-profile-status">${escapeHtml(labels[stage]||'')}</span></article>`}).join(''):patientProfileEmpty(lang==='en'?'No payment orders are recorded for this patient.':'لا توجد أوامر دفع مسجلة للمريض.');
     return;
   }
   if(tab==='communications'){
     const items=profile.communications?.events||[];
-    const labels={plan_whatsapp:'إرسال خطة علاجية عبر واتساب',review_whatsapp:'إرسال طلب تقييم عبر واتساب'};
-    target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event communication ${escapeHtml(item.kind||'')}"><span class="patient-event-mark" aria-hidden="true">${item.kind==='review_whatsapp'?'★':'▤'}</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId||'clinic-1'))} · ${escapeHtml(patientProfileDateTime(item.at))}</small><strong>${escapeHtml(labels[item.kind]||'تواصل مع المريض')}</strong><p>${item.planNo?`${escapeHtml(item.planNo)} · `:''}${escapeHtml(item.actor||'مستخدم النظام')}</p></div><span class="patient-profile-status">${item.kind==='review_whatsapp'?'تقييم':'خطة'}</span></article>`).join(''):patientProfileEmpty('لم تسجل مشاركات واتساب لهذا المريض بعد.');
+    const labels=lang==='en'?{plan_whatsapp:'Treatment plan sent via WhatsApp',review_whatsapp:'Review request sent via WhatsApp'}:{plan_whatsapp:'إرسال خطة علاجية عبر واتساب',review_whatsapp:'إرسال طلب تقييم عبر واتساب'};
+    target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event communication ${escapeHtml(item.kind||'')}"><span class="patient-event-mark" aria-hidden="true">${item.kind==='review_whatsapp'?'★':'▤'}</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId||'clinic-1'))} · ${escapeHtml(patientProfileDateTime(item.at))}</small><strong>${escapeHtml(labels[item.kind]||(lang==='en'?'Patient communication':'تواصل مع المريض'))}</strong><p>${item.planNo?`${escapeHtml(item.planNo)} · `:''}${escapeHtml(item.actor||(lang==='en'?'System user':'مستخدم النظام'))}</p></div><span class="patient-profile-status">${item.kind==='review_whatsapp'?(lang==='en'?'Review':'تقييم'):(lang==='en'?'Plan':'خطة')}</span></article>`).join(''):patientProfileEmpty(lang==='en'?'No WhatsApp sharing has been recorded for this patient.':'لم تسجل مشاركات واتساب لهذا المريض بعد.');
     return;
   }
   const items=profile.labs||[];
-  target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event lab"><span class="patient-event-mark" aria-hidden="true">🦷</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(item.labName==='other'?(item.customLabName||'معمل آخر'):(item.labName||'المعمل'))}</small><strong>${escapeHtml((item.items||[]).map(entry=>`${entry.name} ×${entry.quantity}`).join('، ')||'حالة معمل')}</strong><p>${escapeHtml(labStatusText(item.status))}</p></div><a href="./lab.html?${new URLSearchParams({clinic:item.clinicId||'clinic-1',patient:profile.patient.file||profile.patient.phone||profile.patient.name}).toString()}">فتح الحالة</a></article>`).join(''):patientProfileEmpty('لا توجد حالات معمل مرتبطة بالمريض.');
+  target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event lab"><span class="patient-event-mark" aria-hidden="true">🦷</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(item.labName==='other'?(item.customLabName||(lang==='en'?'Other laboratory':'معمل آخر')):(item.labName||(lang==='en'?'Laboratory':'المعمل')))}</small><strong>${escapeHtml((item.items||[]).map(entry=>`${procedureDisplayName(entry.name,entry.code)} ×${entry.quantity}`).join(lang==='en'?', ':'، ')||(lang==='en'?'Laboratory case':'حالة معمل'))}</strong><p>${escapeHtml(labStatusText(item.status))}</p></div><a href="./lab.html?${new URLSearchParams({clinic:item.clinicId||'clinic-1',patient:profile.patient.file||profile.patient.phone||profile.patient.name}).toString()}">${lang==='en'?'Open case':'فتح الحالة'}</a></article>`).join(''):patientProfileEmpty(lang==='en'?'No laboratory cases are linked to this patient.':'لا توجد حالات معمل مرتبطة بالمريض.');
 }
 function renderPatientProfile(){
   const loading=$('patientProfileLoading'),content=$('patientProfileContent'),error=$('patientProfileError');
   loading.hidden=!patientProfileState.loading;content.hidden=patientProfileState.loading||!patientProfileState.profile;error.hidden=!patientProfileState.error;error.textContent=patientProfileState.error;
   const profile=patientProfileState.profile;if(!profile)return;
   const patient=profile.patient||{},clinicId=profile.appointments?.[0]?.clinicId||profile.plans?.[0]?.clinicId||profile.labs?.[0]?.clinicId||ACTIVE_CLINIC_ID;
-  $('patientProfileName').textContent=patient.name||'مريض بدون اسم';
-  $('patientProfileIdentity').textContent=`ملف ${patient.file||'—'} · ${patient.phone||'لا يوجد جوال'}${patient.nationalId?` · هوية ${patient.nationalId}`:''}`;
+  $('patientProfileName').textContent=patient.name||(lang==='en'?'Unnamed patient':'مريض بدون اسم');
+  $('patientProfileIdentity').textContent=`${lang==='en'?'File':'ملف'} ${patient.file||'—'} · ${patient.phone||(lang==='en'?'No mobile':'لا يوجد جوال')}${patient.nationalId?` · ${lang==='en'?'ID':'هوية'} ${patient.nationalId}`:''}`;
   $('patientProfileClinic').textContent=operationClinicLabel(clinicId);
   $('patientProfileNameInput').value=patient.name||'';$('patientProfileFileInput').value=patient.file||'';$('patientProfilePhoneInput').value=patient.phone||'';$('patientProfileNationalInput').value=patient.nationalId||'';
   $('patientProfileNotesInput').value=profile.directory?.adminNotes||'';$('patientProfileNotesReviewed').checked=Boolean(profile.directory?.notesReviewedAt)&&!profile.directory?.reviewRequired;
   const editable=authUser?.role==='admin';
   $('patientProfileForm').classList.toggle('read-only',!editable);$('patientProfileForm').querySelectorAll('input,textarea,button').forEach(control=>control.disabled=!editable);
-  $('patientProfileSave').textContent=editable?'حفظ وتحديث السجلات المرتبطة':'التعديل متاح لصفحة الإدارة';
+  $('patientProfileSave').textContent=editable?(lang==='en'?'Save and update linked records':'حفظ وتحديث السجلات المرتبطة'):(lang==='en'?'Editing is available on the administration page':'التعديل متاح لصفحة الإدارة');
   const schedule=patientScheduleCompleteness(patient),scheduleAction=document.querySelector('.patient-profile-schedule-action');
   applyPatientScheduleLanguage();
   if(scheduleAction){scheduleAction.hidden=!editable;scheduleAction.classList.toggle('is-incomplete',!schedule.completeName||!schedule.completeFile||!schedule.completeMobile)}
@@ -2646,8 +2727,8 @@ function renderPatientProfile(){
   const communication=profile.communications||{};
   $('patientProfileAppointmentCount').textContent=String(profile.summary?.appointments||0);$('patientProfilePlanCount').textContent=String(profile.summary?.plans||0);$('patientProfilePrescriptionCount').textContent=String(profile.summary?.prescriptions||0);$('patientProfilePaymentCount').textContent=String((profile.appointments||[]).filter(item=>item.paymentRequired).length);$('patientProfileLabCount').textContent=String(profile.summary?.labs||0);$('patientProfileCommunicationCount').textContent=String(Number(communication.planWhatsappCount||0)+Number(communication.reviewWhatsappCount||0));
   $('patientProfilePlanWhatsappCount').textContent=String(communication.planWhatsappCount||0);$('patientProfileReviewWhatsappCount').textContent=String(communication.reviewWhatsappCount||0);
-  $('patientProfileLastPlanWhatsapp').textContent=communication.lastPlanWhatsappAt?`آخر إرسال: ${patientProfileDateTime(communication.lastPlanWhatsappAt)}`:'لم ترسل خطة بعد';
-  $('patientProfileLastReviewWhatsapp').textContent=communication.lastReviewWhatsappAt?`آخر إرسال: ${patientProfileDateTime(communication.lastReviewWhatsappAt)}`:'لم يرسل طلب تقييم بعد';
+  $('patientProfileLastPlanWhatsapp').textContent=communication.lastPlanWhatsappAt?`${lang==='en'?'Last sent':'آخر إرسال'}: ${patientProfileDateTime(communication.lastPlanWhatsappAt)}`:(lang==='en'?'No plan has been sent yet':'لم ترسل خطة بعد');
+  $('patientProfileLastReviewWhatsapp').textContent=communication.lastReviewWhatsappAt?`${lang==='en'?'Last sent':'آخر إرسال'}: ${patientProfileDateTime(communication.lastReviewWhatsappAt)}`:(lang==='en'?'No review request has been sent yet':'لم يرسل طلب تقييم بعد');
   renderPatientProfileTimeline();
 }
 async function loadPatientProfile(lookup,{tab='appointments'}={}){
@@ -2668,18 +2749,25 @@ function openPatientProfilePlan(canonical){
 async function savePatientProfile(event){
   event.preventDefault();if(!patientProfileState.lookup||patientProfileState.loading||authUser?.role!=='admin')return;
   const patient={name:$('patientProfileNameInput').value.trim(),file:$('patientProfileFileInput').value.trim(),phone:$('patientProfilePhoneInput').value.trim(),nationalId:$('patientProfileNationalInput').value.trim(),adminNotes:$('patientProfileNotesInput').value.trim(),notesReviewed:$('patientProfileNotesReviewed').checked};
-  if(!patient.name||(!normalizedPlanFile(patient.file)&&!patient.nationalId)||(!patient.phone&&!patient.nationalId)){toast('بيانات المريض ناقصة','أدخل الاسم والملف مع الجوال، أو الاسم والهوية.');return}
-  if(patient.nationalId&&!/^\d{10}$/.test(patient.nationalId)){toast('رقم الهوية غير صحيح','يجب أن يتكون رقم الهوية من 10 أرقام.');return}
-  const button=$('patientProfileSave');button.disabled=true;button.textContent='جارٍ تحديث السجلات…';
+  if(!patient.name||(!normalizedPlanFile(patient.file)&&!patient.nationalId)||(!patient.phone&&!patient.nationalId)){toast(lang==='en'?'Incomplete patient details':'بيانات المريض ناقصة',lang==='en'?'Enter the name and file number with a mobile number, or the name and national ID.':'أدخل الاسم والملف مع الجوال، أو الاسم والهوية.');return}
+  if(patient.nationalId&&!/^\d{10}$/.test(patient.nationalId)){toast(lang==='en'?'Invalid national ID':'رقم الهوية غير صحيح',lang==='en'?'The national ID must contain 10 digits.':'يجب أن يتكون رقم الهوية من 10 أرقام.');return}
+  const button=$('patientProfileSave');button.disabled=true;button.textContent=lang==='en'?'Updating linked records…':'جارٍ تحديث السجلات…';
   try{
     const response=await request(PATIENT_PROFILE_API,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({lookup:patientProfileState.lookup,clinic:'all',patient})},45000),data=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(data.error||'تعذر حفظ بيانات المريض');
+    if(!response.ok)throw new Error(data.error||(lang==='en'?'Could not save patient details.':'تعذر حفظ بيانات المريض'));
+    patients=patients.map(item=>{
+      const file=normalizeDirectoryFile(item.file),national=normalizeDirectoryNationalId(item.nationalId);
+      const matches=patientProfileState.lookup.type==='file'?file===normalizeDirectoryFile(patientProfileState.lookup.value):national===normalizeDirectoryNationalId(patientProfileState.lookup.value);
+      return matches?{...item,name:patient.name,file:normalizeDirectoryFile(patient.file)||item.file,phone:normalizeDirectoryPhone(patient.phone)||'',nationalId:normalizeDirectoryNationalId(patient.nationalId)||'',adminUpdatedAt:Date.now()}:item;
+    });
+    applyAdminHubPatientCorrectionLocally({file:patientProfileState.lookup.type==='file'?patientProfileState.lookup.value:'',nationalId:patientProfileState.lookup.type==='national'?patientProfileState.lookup.value:''},patient);
+    render();
     patientSummaryCache.clear();patientSummaryOpen=null;
-    const updated=data.updated||{};toast('تم تحديث ملف المريض',`المواعيد ${updated.appointments||0} · الخطط ${updated.plans||0} · المعمل ${updated.labs||0}`);
+    const updated=data.updated||{};toast(lang==='en'?'Patient record updated':'تم تحديث ملف المريض',lang==='en'?`Appointments ${updated.appointments||0} · Plans ${updated.plans||0} · Laboratory ${updated.labs||0}`:`المواعيد ${updated.appointments||0} · الخطط ${updated.plans||0} · المعمل ${updated.labs||0}`);
     patientIdentityDirectory={records:{},revision:0,updatedAt:0,loading:false,error:''};patientIdentityAliasIndex=new Map();adminPatientHub.updatedAt=0;treatmentPlanRegistry.lastFetchedAt=0;
     const nextLookup=patient.file?{type:'file',value:patient.file}:{type:'national',value:patient.nationalId};
-    await Promise.all([loadPatientProfile(nextLookup),refreshPatientIdentityDirectory()]);refreshAdminPatientHub(true);refreshTreatmentPlanRegistry(true);
-  }catch(error){toast('تعذر تحديث ملف المريض',String(error.message||error));button.disabled=false;button.textContent='حفظ وتحديث السجلات المرتبطة'}
+    await Promise.all([loadPatientProfile(nextLookup),refreshPatientIdentityDirectory(),pullState(true)]);refreshAdminPatientHub(true);refreshTreatmentPlanRegistry(true);
+  }catch(error){toast(lang==='en'?'Could not update patient record':'تعذر تحديث ملف المريض',String(error.message||error));button.disabled=false;button.textContent=lang==='en'?'Save and update linked records':'حفظ وتحديث السجلات المرتبطة'}
 }
 function patientStatusOptionsMarkup(patient){
   const requested=Number(patient?.earliestAppointmentRequestedAt||0)>0;
@@ -2822,11 +2910,11 @@ function renderTable(){
   els.patientRows.innerHTML=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000;return`<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}">
         <td>${i+1}</td>
-        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${treatmentPlanComplianceBadgeMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</td>
+        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}${p.dailyNote?`<small class="daily-patient-note" title="${escapeHtml(p.dailyNote)}"><span aria-hidden="true">📝</span>${escapeHtml(p.dailyNote)}</small>`:''}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${treatmentPlanComplianceBadgeMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${patientNeedsLabCase(p)?`<span class="lab-required-badge"><span aria-hidden="true">!</span>${lang==='en'?'Laboratory case required':'يلزم إضافة حالة معمل'}</span>`:''}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}</td>
         <td>${escapeHtml(p.end)}</td>
-        <td>${escapeHtml(p.procedure||'—')}</td>
+        <td>${escapeHtml(procedureDisplayName(p.procedure)||'—')}</td>
         <td>
           <select class="status-select status-select-${escapeHtml(displayStatus)}" data-status-id="${escapeHtml(p.id)}" aria-label="${escapeHtml(`${lang==='en'?'Patient status':'حالة المريض'}: ${VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name)}`)}">
             ${patientStatusOptionsMarkup(p)}
@@ -2835,11 +2923,12 @@ function renderTable(){
         <td class="hide-screen">
           <div class="row-actions">
             ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
-            ${VIEW_MODE==='clinic'?clinicIconAction('🦷',lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض',`data-lab-entry-id="${escapeHtml(p.id)}"`,'clinic-row-action lab'): `<button class="mini lab-entry-btn" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>`}
+            ${VIEW_MODE==='clinic'?clinicIconAction('🦷',patientNeedsLabCase(p)?(lang==='en'?'Required: add crown laboratory case':'مطلوب: إضافة حالة التاج للمعمل'):(lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'),`data-lab-entry-id="${escapeHtml(p.id)}"`,`clinic-row-action lab${patientNeedsLabCase(p)?' lab-needed':''}`): `<button class="mini lab-entry-btn${patientNeedsLabCase(p)?' lab-needed':''}" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${patientNeedsLabCase(p)?(lang==='en'?'Required: add crown laboratory case':'مطلوب: إضافة حالة التاج للمعمل'):(lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض')}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>`}
             ${VIEW_MODE==='clinic'?clinicIconAction('📋',treatmentPlanButtonText(p),`data-plan-id="${escapeHtml(p.id)}"`,'clinic-row-action plan'): `<button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>`}
              ${earliestAppointmentActionMarkup(p,displayStatus)}
              ${VIEW_MODE==='clinic'&&displayStatus==='done'?clinicIconAction('💳',lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة',`data-completion-id="${escapeHtml(p.id)}"`,'clinic-row-action payment'):''}
              ${VIEW_MODE==='admin'&&paymentMissingAfterCompletion(p)?`<button class="mini payment-missing-action" type="button" data-payment-missing-id="${escapeHtml(p.id)}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</button>`:''}
+            ${VIEW_MODE==='clinic'?clinicIconAction('📝',lang==='en'?'Add today’s note':'إضافة ملاحظة اليوم',`data-daily-note-id="${escapeHtml(p.id)}"`,'clinic-row-action note'):`<button type="button" class="mini daily-note-action" data-daily-note-id="${escapeHtml(p.id)}">📝 ${lang==='en'?'Today note':'ملاحظة اليوم'}</button>`}
             <button type="button" class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button type="button" class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
@@ -2865,6 +2954,14 @@ function renderTable(){
 }
 
 function patientById(id){return patients.find(p=>String(p.id)===String(id))||null}
+function updatePatientDailyNote(id){
+  const patient=patientById(id);if(!patient)return;
+  const note=prompt(lang==='en'?`Today’s note for ${firstName(patient.name)}:`:`ملاحظة اليوم للمريض ${firstName(patient.name)}:`,String(patient.dailyNote||''));
+  if(note===null)return;
+  const cleaned=String(note).trim().replace(/\s+/g,' ').slice(0,240);
+  mutate(()=>{const target=patientById(id);if(target){target.dailyNote=cleaned;target.dailyNoteUpdatedAt=Date.now();target.adminUpdatedAt=Date.now()}});
+  toast(lang==='en'?'Today’s note saved':'تم حفظ ملاحظة اليوم',cleaned||(lang==='en'?'The previous note was removed.':'تم حذف الملاحظة السابقة.'));
+}
 function cacheTreatmentSource(patientId,source){
   localStorage.setItem(`bestcare_treatment_source_${patientId}`,JSON.stringify({
     __bestcareSource:1,
@@ -3060,7 +3157,7 @@ function renderPaymentProcedureOptions(preserve=false){
     const state=saved.get(item.id)||{selected:false,quantity:1,free:false};
     const isFavorite=favorites.has(item.id),usage=Number(paymentCatalogProfile.usage?.[item.id]||0);
     const badges=`${isFavorite?`<span class="lab-procedure-badge">${lang==='en'?'★ Favorite':'★ مفضل'}</span>`:''}${usage?`<span class="lab-procedure-badge">${lang==='en'?`Used ${usage}`:`استخدم ${usage}`}</span>`:''}`;
-    return `<div class="payment-procedure-row${isFavorite?' is-favorite':''}" data-payment-row="${escapeHtml(item.id)}"><button class="payment-favorite-toggle${isFavorite?' is-favorite':''}" type="button" data-payment-favorite="${escapeHtml(item.id)}" aria-pressed="${isFavorite}" title="${isFavorite?'إزالة من المفضلة':'إضافة إلى المفضلة'}">${isFavorite?'★':'☆'}</button><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${escapeHtml(item.id)}" ${state.selected?'checked':''}><span class="payment-procedure-copy"><span>${escapeHtml(item.name)}</span>${badges?`<small class="payment-procedure-meta">${badges}</small>`:''}</span></label><div class="payment-quantity"><small>${lang==='en'?'Quantity':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="${state.quantity}" data-payment-quantity="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${escapeHtml(item.id)}" ${state.free?'checked':''}><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`;
+    return `<div class="payment-procedure-row${isFavorite?' is-favorite':''}" data-payment-row="${escapeHtml(item.id)}"><button class="payment-favorite-toggle${isFavorite?' is-favorite':''}" type="button" data-payment-favorite="${escapeHtml(item.id)}" aria-pressed="${isFavorite}" title="${isFavorite?(lang==='en'?'Remove favorite':'إزالة من المفضلة'):(lang==='en'?'Add to favorites':'إضافة إلى المفضلة')}">${isFavorite?'★':'☆'}</button><label class="payment-procedure-name"><input type="checkbox" data-payment-select="${escapeHtml(item.id)}" ${state.selected?'checked':''}><span class="payment-procedure-copy"><span>${escapeHtml(procedureDisplayName(item.name,item.id))}</span>${badges?`<small class="payment-procedure-meta">${badges}</small>`:''}</span></label><div class="payment-quantity"><small>${lang==='en'?'Quantity':'العدد'}</small><span class="payment-stepper"><button type="button" data-payment-step="decrease" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Decrease quantity':'إنقاص العدد'}">−</button><input type="text" inputmode="numeric" readonly value="${state.quantity}" data-payment-quantity="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Procedure quantity':'عدد الإجراء'}"><button type="button" data-payment-step="increase" data-payment-code="${escapeHtml(item.id)}" aria-label="${lang==='en'?'Increase quantity':'زيادة العدد'}">+</button></span></div><label class="payment-free"><input type="checkbox" data-payment-free="${escapeHtml(item.id)}" ${state.free?'checked':''}><span>${lang==='en'?'Free':'مجاني'}</span></label></div>`;
   }).join(''):`<div class="payment-empty">${lang==='en'?'No services are available. Add them from Settings.':'لا توجد خدمات متاحة. أضفها من الإعدادات ← الإجراءات والخدمات والأسعار.'}</div>`;
 }
 async function updatePaymentPreference(body){
@@ -3097,15 +3194,15 @@ let labUnitsManuallyChanged=false;
 let pendingLabPatientId=null;
 function labAssignmentText(){
   const doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
-  const doctorLabel=doctor?(/^(?:د\.?|الدكتور)\s*/i.test(doctor)?doctor:`د. ${doctor}`):'الطبيب غير محدد';
-  return [doctorLabel,currentClinic?.name,currentClinic?.roomNumber?`غرفة ${currentClinic.roomNumber}`:''].filter(Boolean).join(' · ');
+  const doctorLabel=doctor?(lang==='en'?(/^(?:dr\.?|doctor)\s*/i.test(doctor)?doctor:`Dr. ${doctor}`):(/^(?:د\.?|الدكتور)\s*/i.test(doctor)?doctor:`د. ${doctor}`)):(lang==='en'?'Doctor not specified':'الطبيب غير محدد');
+  return [doctorLabel,currentClinic?.name,currentClinic?.roomNumber?(lang==='en'?`Room ${currentClinic.roomNumber}`:`غرفة ${currentClinic.roomNumber}`):''].filter(Boolean).join(' · ');
 }
 function openLabCaseEditor(patientId){
   const patient=patientById(patientId);if(!patient)return;
   pendingLabPatientId=String(patient.id);
   resetLabCaseEditor();
   $('labPatientName').textContent=firstName(patient.name);
-  $('labPatientIdentity').textContent=[patient.file?`ملف ${patient.file}`:'',patient.phone?`جوال ${patient.phone}`:''].filter(Boolean).join(' · ')||'بيانات المريض';
+  $('labPatientIdentity').textContent=[patient.file?`${lang==='en'?'File':'ملف'} ${patient.file}`:'',patient.phone?`${lang==='en'?'Mobile':'جوال'} ${patient.phone}`:''].filter(Boolean).join(' · ')||(lang==='en'?'Patient details':'بيانات المريض');
   const assignment=$('labAssignedDoctor');
   if(assignment)assignment.textContent=labAssignmentText();
   openModal('labCaseModal');
@@ -3128,11 +3225,11 @@ function resetLabCaseEditor(){
 function collectLabCaseDraft(){
   const workType=$('labWorkType').value;
   const customWork=$('labCustomWorkInput').value.trim();
-  if(!workType)return{error:'اختر نوع حالة المعمل.',focus:'labWorkType'};
-  if(workType==='other'&&!customWork)return{error:'اكتب الإجراء المعملي المطلوب.',focus:'labCustomWorkInput'};
+  if(!workType)return{error:lang==='en'?'Choose the laboratory case type.':'اختر نوع حالة المعمل.',focus:'labWorkType'};
+  if(workType==='other'&&!customWork)return{error:lang==='en'?'Enter the required laboratory procedure.':'اكتب الإجراء المعملي المطلوب.',focus:'labCustomWorkInput'};
   const labName=$('labNameSelect').value,customLabName=$('labCustomNameInput').value.trim();
-  if(!labName)return{error:'اختر اسم معمل الأسنان.',focus:'labNameSelect'};
-  if(labName==='other'&&!customLabName)return{error:'اكتب اسم المعمل الآخر.',focus:'labCustomNameInput'};
+  if(!labName)return{error:lang==='en'?'Choose the dental laboratory.':'اختر اسم معمل الأسنان.',focus:'labNameSelect'};
+  if(labName==='other'&&!customLabName)return{error:lang==='en'?'Enter the other laboratory name.':'اكتب اسم المعمل الآخر.',focus:'labCustomNameInput'};
   const units=Math.max(1,Math.min(99,Number($('labUnitsInput').value||1)));
   const procedureName=workType==='other'?customWork:workType;
   return{labName,customLabName:labName==='other'?customLabName:'',items:[{code:'direct-lab-entry',name:procedureName,quantity:units}],units,material:$('labMaterialInput').value.trim(),shade:$('labShadeInput').value.trim(),status:$('labSentNowCheck').checked?'sent':'pending_send',sentAt:$('labSentNowCheck').checked?Date.now():0};
@@ -3142,7 +3239,7 @@ async function createLabCase(patient,draft){
   const response=await request(`/api/lab-cases?clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,clinicId:ACTIVE_CLINIC_ID,clinicName:currentClinic?.name||'',roomNumber:currentClinic?.roomNumber||'',doctorName:currentClinic?.doctorName||authUser?.displayName||'',patient:{id:patient.id,name:resolvedPatient.name,file:resolvedPatient.file,phone:resolvedPatient.phone},sourceDate:selectedDate})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok){
-    const error=new Error(data.duplicate?'توجد حالة معمل نشطة مسجلة مسبقًا لنفس المريض والإجراء.':(data.error||'تعذر إنشاء حالة المعمل'));
+    const error=new Error(data.duplicate?(lang==='en'?'An active laboratory case already exists for this patient and procedure.':'توجد حالة معمل نشطة مسجلة مسبقًا لنفس المريض والإجراء.'):(data.error||(lang==='en'?'Could not create the laboratory case.':'تعذر إنشاء حالة المعمل')));
     error.code=data.code||'';
     error.duplicateCase=data.case||null;
     throw error;
@@ -3156,7 +3253,7 @@ async function saveLabCase(){
   const draft=collectLabCaseDraft();
   if(draft.error){$('labCaseError').textContent=draft.error;$(draft.focus)?.focus();return}
   const button=$('saveLabCaseBtn'),original=button.textContent;
-  button.disabled=true;button.textContent='جارٍ الحفظ…';$('labCaseError').textContent='';
+  button.disabled=true;button.textContent=lang==='en'?'Saving…':'جارٍ الحفظ…';$('labCaseError').textContent='';
   try{
     try{
       await createLabCase(patient,draft);
@@ -3164,17 +3261,17 @@ async function saveLabCase(){
       if(error.code!=='DUPLICATE_LAB_CASE')throw error;
       const duplicate=error.duplicateCase;
       const existingWork=(duplicate?.items||[]).map(item=>item.name).filter(Boolean).join('، ');
-      const proceed=confirm(`تنبيه: توجد حالة معمل نشطة لهذا المريض${existingWork?` (${existingWork})`:''}.\n\nهل تريد إنشاء حالة إضافية رغم ذلك؟`);
+      const proceed=confirm(lang==='en'?`Warning: this patient already has an active laboratory case${existingWork?` (${existingWork})`:''}.\n\nCreate an additional case anyway?`:`تنبيه: توجد حالة معمل نشطة لهذا المريض${existingWork?` (${existingWork})`:''}.\n\nهل تريد إنشاء حالة إضافية رغم ذلك؟`);
       if(!proceed)throw error;
       await createLabCase(patient,{...draft,allowDuplicate:true});
     }
     closeModal('labCaseModal');
     pendingLabPatientId=null;
     renderTable();
-    toast('تمت إضافة حالة المعمل',`${firstName(patient.name)} · ${draft.items[0].name} · ${draft.units} ${draft.units===1?'وحدة':'وحدات'}`);
+    toast(lang==='en'?'Laboratory case added':'تمت إضافة حالة المعمل',`${firstName(patient.name)} · ${procedureDisplayName(draft.items[0].name)} · ${draft.units} ${lang==='en'?(draft.units===1?'unit':'units'):(draft.units===1?'وحدة':'وحدات')}`);
   }catch(error){
     console.error('Direct lab case creation failed',error);
-    $('labCaseError').textContent=error.message||'تعذر حفظ حالة المعمل. تحقق من الاتصال ثم حاول مرة أخرى.';
+    $('labCaseError').textContent=error.message||(lang==='en'?'Could not save the laboratory case. Check the connection and try again.':'تعذر حفظ حالة المعمل. تحقق من الاتصال ثم حاول مرة أخرى.');
   }finally{button.disabled=false;button.textContent=original}
 }
 function resetPaymentProcedureEditor(){
@@ -3217,9 +3314,9 @@ async function updatePaymentCatalogFromSettings({notify=true}={}){
   }
 }
 function paymentItemsSummary(items,discount=''){
-  const parts=(Array.isArray(items)?items:[]).map(item=>`${item.name} ×${item.quantity}${item.free?' (مجاني)':''}`);
-  if(discount)parts.push(`الخصم: ${discount}`);
-  return parts.join('، ');
+  const parts=(Array.isArray(items)?items:[]).map(item=>`${procedureDisplayName(item.name,item.code)} ×${item.quantity}${item.free?` (${lang==='en'?'Free':'مجاني'})`:''}`);
+  if(discount)parts.push(`${lang==='en'?'Discount':'الخصم'}: ${discount}`);
+  return parts.join(lang==='en'?', ':'، ');
 }
 function paymentPlanNumber(patient,requestedAt){
   const identity=String(patient?.file||patient?.id||'patient').replace(/[^a-zA-Z0-9]/g,'').slice(-8)||'patient';
@@ -3312,8 +3409,8 @@ function renderCompletionLabOptions(patient){
   if(!active.length){field.hidden=true;list.innerHTML='';return}
   field.hidden=false;
   list.innerHTML=active.map(item=>{
-    const laboratory=item.labName==='other'?(item.customLabName||'معمل آخر'):(item.labName||'المعمل');
-    const work=(item.items||[]).map(entry=>`${entry.name} ×${entry.quantity}`).join('، ')||(lang==='en'?'Laboratory case':'حالة معمل');
+    const laboratory=item.labName==='other'?(item.customLabName||(lang==='en'?'Other laboratory':'معمل آخر')):(item.labName||(lang==='en'?'Laboratory':'المعمل'));
+    const work=(item.items||[]).map(entry=>`${procedureDisplayName(entry.name,entry.code)} ×${entry.quantity}`).join(lang==='en'?', ':'، ')||(lang==='en'?'Laboratory case':'حالة معمل');
     const elapsed=labElapsedDays(item);
     return `<div class="completion-lab-item"><div class="completion-lab-copy"><strong>${escapeHtml(laboratory)}</strong><small>${escapeHtml(work)}${elapsed?` · ${escapeHtml(elapsed)}`:''}</small></div><label><span>${lang==='en'?'Delivery stage':'مرحلة التسليم'}</span><select data-completion-lab-status="${escapeHtml(item.id)}" data-completion-lab-clinic="${escapeHtml(item.clinicId||ACTIVE_CLINIC_ID)}" aria-label="${lang==='en'?'Laboratory delivery stage':'مرحلة تسليم حالة المعمل'}">${labStatusOptionsMarkup(item.status)}</select></label></div>`;
   }).join('');
@@ -3493,7 +3590,7 @@ function queueCardMarkup(p,index){
   return `<article class="queue-card rank-${position} queue-${position} status-${escapeHtml(visualStatus)}${called?' called':''}${p.status==='asks_delay'?' status-asks-delay':''}${p.status==='arrived'?' status-arrived':''}${p.status==='early_arrival'?' status-early-arrival':''}" data-patient-card-id="${escapeHtml(p.id)}" style="animation-delay:${Math.min(index*45,280)}ms">
     <div class="queue-card-top"><div class="queue-position">${position===1?tr('nextDirect'):`${tr('patientNumber')} ${position+1}`}${lastCall}</div><span class="queue-orbit" aria-hidden="true">#${position+1}</span></div>
     <div class="queue-name">${escapeHtml(firstName(p.name))}${treatmentPlanBadgeMarkup(p)}${labCaseBadgeMarkup(p)}</div>
-    <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(p.procedure||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
+    <div class="queue-meta">${escapeHtml(tr('fileLabel'))}: ${escapeHtml(p.file||'—')} · ${escapeHtml(procedureDisplayName(p.procedure)||'—')} · ${escapeHtml(statusText(derivedStatus(p)))}</div>
     ${appointmentTimeDetailsMarkup(p)}
     <span class="queue-countdown" data-queue-countdown-id="${escapeHtml(p.id)}">${fmtMs(timeDate(p.start)-new Date())}</span>
     <span class="queue-proximity-meter" aria-hidden="true"><i></i></span>
@@ -3512,7 +3609,7 @@ function renderUpcoming(lead){
   const queue=lead?upcomingPatients(lead.id).slice(1):[];
   $('followingPatients').hidden=!queue.length;
   $('followingPatientsTitle').textContent=lang==='en'?`After the next patient (${queue.length})`:`بعد المريض التالي (${queue.length})`;
-  $('upcomingStack').innerHTML=queue.map((p,index)=>`<li class="clinic-following-row"><span class="clinic-following-order">${index+2}</span><strong>${escapeHtml(firstName(p.name))}</strong><time dir="ltr">${escapeHtml(p.start||'—')}</time><span class="clinic-following-status">${escapeHtml(statusText(derivedStatus(p)))}</span></li>`).join('');
+  $('upcomingStack').innerHTML=queue.map((p,index)=>`<li class="clinic-following-row"><span class="clinic-following-order">#${index+3}</span><strong>${escapeHtml(firstName(p.name))}</strong><time dir="ltr">${escapeHtml(p.start||'—')}–${escapeHtml(appointmentExitTime(p))}</time><span class="clinic-following-status">${escapeHtml(statusText(derivedStatus(p)))} · ${escapeHtml(procedureDisplayName(p.procedure)||'—')} · ${escapeHtml(appointmentDurationLabel(p))}</span></li>`).join('');
 }
 function updateUpcomingCardVisuals(){
   const cards=[...document.querySelectorAll('[data-patient-card-id]')];
@@ -3592,6 +3689,11 @@ function renderAlertUI(){
   els.alertRowDismissBtn.hidden=!active;
   els.alertRowDismissBtn.textContent=lang==='en'?'Dismiss':'إخفاء';
 }
+const liveMarkupCache=new WeakMap();
+function setLiveMarkup(element,markup){
+  if(liveMarkupCache.get(element)===markup)return;
+  element.innerHTML=markup;liveMarkupCache.set(element,markup);
+}
 function renderLive(updateStructure=true){
   const derived=patients.map(p=>derivedStatus(p));
   $('statTotal').textContent=patients.length;
@@ -3613,9 +3715,9 @@ function renderLive(updateStructure=true){
   card.className='card current-card '+stageFor(lead)+(lead?` status-${escapeHtml(leadStatus)}`:'')+` clinic-tone-${clinicTone}`+(treatmentOverrun?' treatment-overrun':'');
   $('currentVisualIcon').textContent=activelyTreating?'●':['arrived','early_arrival'].includes(leadStatus)?'✓':lead?'➜':'○';
   $('currentVisualIcon').classList.toggle('arrival-pulse',['arrived','early_arrival'].includes(leadStatus));
-  $('currentLabel').textContent=activelyTreating?tr('currentPatient'):['arrived','early_arrival'].includes(leadStatus)?statusText(leadStatus):tr('nextToCall');
-  $('currentName').innerHTML=lead?`${escapeHtml(firstName(lead.name))}<span class="current-plan-mark">${treatmentPlanBadgeMarkup(lead)}</span>${labCaseBadgeMarkup(lead)}`:escapeHtml(tr('noCurrent'));
-  $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${lead.procedure||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
+  $('currentLabel').textContent=activelyTreating?(lang==='en'?'CURRENT PATIENT — IN TREATMENT':'المريض الحالي — قيد العلاج'):['arrived','early_arrival'].includes(leadStatus)?statusText(leadStatus):tr('nextToCall');
+  setLiveMarkup($('currentName'),lead?`${escapeHtml(firstName(lead.name))}<span class="current-plan-mark">${treatmentPlanBadgeMarkup(lead)}</span>${labCaseBadgeMarkup(lead)}`:escapeHtml(tr('noCurrent')));
+  $('currentMeta').textContent=lead?`${tr('fileLabel')}: ${lead.file||'—'} • ${procedureDisplayName(lead.procedure)||'—'} • ${statusText(derivedStatus(lead))}`:tr('noSchedule');
   if($('currentStartTime'))$('currentStartTime').textContent=lead?.start||'—';
   if($('currentExitLabel'))$('currentExitLabel').textContent=appointmentExitLabel(lead);
   if($('currentEndTime'))$('currentEndTime').textContent=appointmentExitTime(lead);
@@ -3658,7 +3760,7 @@ function renderLive(updateStructure=true){
     }
     if(showNext){
       const nextDisplay=VIEW_MODE==='admin'?patientWithDirectoryIdentity(nextPatient):nextPatient;
-      $('nextPatientLabel').textContent=lang==='en'?'Next patient':'المريض التالي';
+      $('nextPatientLabel').textContent=lang==='en'?'NEXT PATIENT — IN QUEUE':'المريض التالي — في الدور';
       $('nextPatientName').textContent=VIEW_MODE==='admin'?String(nextDisplay.name||nextPatient.name||'—'):firstName(nextPatient.name);
       $('nextPatientMeta').textContent=`${tr('fileLabel')}: ${nextPatient.file||'—'} · ${statusText(derivedStatus(nextPatient))}`;
       if($('nextPatientStartLabel'))$('nextPatientStartLabel').textContent=lang==='en'?'Entry':'الدخول';
@@ -3717,18 +3819,18 @@ function renderDoctorWorkspace(){
       const isRevision=status==='rejected';
       const record=treatmentPlanRecord(patient);
       const detail=isRevision
-        ?(record?.rejectionReason?`سبب الإعادة: ${record.rejectionReason}`:'أعادتها الإدارة لتعديل الطبيب ثم إعادة إرسالها.')
-        :'مسودة خطة تحتاج مراجعة الطبيب واعتماده قبل إرسالها للإدارة.';
+        ?(record?.rejectionReason?(lang==='en'?`Return reason: ${record.rejectionReason}`:`سبب الإعادة: ${record.rejectionReason}`):(lang==='en'?'Administration returned it for correction and resubmission.':'أعادتها الإدارة لتعديل الطبيب ثم إعادة إرسالها.'))
+        :(lang==='en'?'A treatment plan draft needs review before it is sent to administration.':'مسودة خطة تحتاج مراجعة قبل إرسالها للإدارة.');
       return `<article class="doctor-action-item ${isRevision?'is-revision':'is-urgent'}">
         <span class="doctor-action-mark" aria-hidden="true">${isRevision?'↺':'✓'}</span>
-        <div><strong>${escapeHtml(firstName(patient.name))} — ${escapeHtml(patient.file||'بدون رقم ملف')}</strong><small>${escapeHtml(detail)}</small></div>
-        <button type="button" data-doctor-plan-id="${escapeHtml(patient.id)}">${isRevision?'تعديل وإعادة الإرسال':'مراجعة واعتماد المسودة'}</button>
+        <div><strong>${escapeHtml(firstName(patient.name))} — ${escapeHtml(patient.file||(lang==='en'?'No file number':'بدون رقم ملف'))}</strong><small>${escapeHtml(detail)}</small></div>
+        <button type="button" data-doctor-plan-id="${escapeHtml(patient.id)}">${isRevision?(lang==='en'?'Correct and resubmit':'تعديل وإعادة الإرسال'):(lang==='en'?'Review plan':'مراجعة الخطة')}</button>
       </article>`;
     }),
     ...postTreatmentTasks.map(patient=>`<article class="doctor-action-item">
       <span class="doctor-action-mark" aria-hidden="true">＋</span>
-      <div><strong>${escapeHtml(firstName(patient.name))} — ${escapeHtml(patient.file||'بدون رقم ملف')}</strong><small>اكتمل العلاج؛ أرسل أمر الدفع أو أنشئ مسودة خطة علاجية.</small></div>
-      <button type="button" data-doctor-completion-id="${escapeHtml(patient.id)}">إجراءات ما بعد العلاج</button>
+      <div><strong>${escapeHtml(firstName(patient.name))} — ${escapeHtml(patient.file||(lang==='en'?'No file number':'بدون رقم ملف'))}</strong><small>${lang==='en'?'Treatment is complete; send a payment order or create a treatment plan.':'اكتمل العلاج؛ أرسل أمر الدفع أو أنشئ خطة علاجية.'}</small></div>
+      <button type="button" data-doctor-completion-id="${escapeHtml(patient.id)}">${lang==='en'?'Post-treatment actions':'إجراءات ما بعد العلاج'}</button>
     </article>`)
   ];
   const currentAlert=visibleAlert();
@@ -3882,7 +3984,7 @@ function renderPaymentPanel(){
     const planStatus=effectiveTreatmentPlanStatus(p),planControl=planStatus?`<button type="button" class="payment-linked-plan-action ${planStatus==='submitted'?'ready':''}" data-payment-plan-id="${escapeHtml(p.id)}" data-payment-plan-share="${planStatus==='submitted'?'1':'0'}"><span aria-hidden="true">${planStatus==='submitted'?'↗':'▤'}</span>${planStatus==='submitted'?(lang==='en'?'Share plan + signature':'مشاركة الخطة والتوقيع'):(lang==='en'?'Open treatment plan':'فتح الخطة العلاجية')}</button>`:'';
     const controls=`<div class="payment-workflow-actions">${paymentControl}${planControl}</div>`;
     const items=Array.isArray(p.paymentItems)?p.paymentItems:[];
-    const details=items.length?`<div class="payment-items-summary">${items.map(item=>`<span class="payment-item-chip${item.free?' free':''}">${escapeHtml(item.name)} ×${Number(item.quantity||1)}${item.free?` · ${lang==='en'?'Free':'مجاني'}`:''}</span>`).join('')}</div>`:`<p>${escapeHtml(p.paymentAction||'إجراء دفع')}</p>`;
+    const details=items.length?`<div class="payment-items-summary">${items.map(item=>`<span class="payment-item-chip${item.free?' free':''}">${escapeHtml(procedureDisplayName(item.name,item.code))} ×${Number(item.quantity||1)}${item.free?` · ${lang==='en'?'Free':'مجاني'}`:''}</span>`).join('')}</div>`:`<p>${escapeHtml(p.paymentAction||(lang==='en'?'Payment action':'إجراء دفع'))}</p>`;
     const discount=p.paymentDiscount?`<p class="payment-discount-note">🏷 ${lang==='en'?'Discount':'الخصم'}: ${escapeHtml(p.paymentDiscount)}</p>`:'';
     return `<article class="payment-item ${stage}"><div><strong>💳 ${escapeHtml(firstName(p.name))} — ${escapeHtml(p.file||(lang==='en'?'No file number':'بدون رقم ملف'))}</strong>${details}${discount}<small>${p.paymentRequestedAt?new Date(Number(p.paymentRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'):''}</small></div>${controls}</article>`;
   }).join(''):`<div class="payment-empty">${lang==='en'?'No pending payment actions.':'لا توجد إجراءات دفع معلقة.'}</div>`;
@@ -4133,13 +4235,13 @@ async function savePatient(){
   const fileNumber=toLatinDigits($('fFile').value).replace(/\D/g,'').slice(0,40);
   const phoneDigits=normalizeSearchPhone($('fPhone').value);
   const nationalDigits=toLatinDigits($('fNationalId').value).replace(/\D/g,'');
-  if(nationalDigits&&!/^\d{10}$/.test(nationalDigits)){toast('رقم الهوية غير صحيح','أدخل 10 أرقام كاملة.');$('fNationalId').focus();return}
+  if(nationalDigits&&!/^\d{10}$/.test(nationalDigits)){toast(lang==='en'?'Invalid national ID':'رقم الهوية غير صحيح',lang==='en'?'Enter all 10 digits.':'أدخل 10 أرقام كاملة.');$('fNationalId').focus();return}
   const requireComplete=VIEW_MODE==='admin'&&!editingId;
   const start=$('fStart').value,end=$('fEnd').value;
-  if(!normalizedName||(requireComplete&&normalizedName.split(' ').filter(Boolean).length<2)){toast('الاسم الكامل مطلوب','اكتب اسم المريض كاملًا من كلمتين على الأقل.');$('fName').focus();return}
-  if(requireComplete&&(!fileNumber||isZeroFileNumber(fileNumber))&&!nationalDigits){toast('الملف أو الهوية مطلوب','أدخل رقم ملف أو هوية لتمييز المريض، ولا يُستخدم الجوال للدمج.');$('fNationalId').focus();return}
-  if((phoneDigits||requireComplete&&!nationalDigits)&&!/^05\d{8}$/.test(phoneDigits)){toast('رقم الجوال غير صحيح','أدخل جوالًا صحيحًا، أو اتركه فارغًا عند تسجيل الهوية.');$('fPhone').focus();return}
-  if(!start||!end||mins(end)<=mins(start)){toast('وقت غير صحيح','يجب أن يكون وقت النهاية بعد وقت البداية');$('fStart').focus();return}
+  if(!normalizedName||(requireComplete&&normalizedName.split(' ').filter(Boolean).length<2)){toast(lang==='en'?'Full name required':'الاسم الكامل مطلوب',lang==='en'?'Enter at least the patient’s two-part full name.':'اكتب اسم المريض كاملًا من كلمتين على الأقل.');$('fName').focus();return}
+  if(requireComplete&&(!fileNumber||isZeroFileNumber(fileNumber))&&!nationalDigits){toast(lang==='en'?'File number or national ID required':'الملف أو الهوية مطلوب',lang==='en'?'Enter a file number or national ID. Mobile numbers are never used to merge patients.':'أدخل رقم ملف أو هوية لتمييز المريض، ولا يُستخدم الجوال للدمج.');$('fNationalId').focus();return}
+  if((phoneDigits||requireComplete&&!nationalDigits)&&!/^05\d{8}$/.test(phoneDigits)){toast(lang==='en'?'Invalid mobile number':'رقم الجوال غير صحيح',lang==='en'?'Enter a valid mobile number, or leave it blank when a national ID is recorded.':'أدخل جوالًا صحيحًا، أو اتركه فارغًا عند تسجيل الهوية.');$('fPhone').focus();return}
+  if(!start||!end||mins(end)<=mins(start)){toast(lang==='en'?'Invalid appointment time':'وقت غير صحيح',lang==='en'?'The end time must be after the start time.':'يجب أن يكون وقت النهاية بعد وقت البداية');$('fStart').focus();return}
   const existing=editingId?patientById(editingId):null;
   const item={
     ...(existing||{}),
@@ -4157,7 +4259,8 @@ async function savePatient(){
     adminUpdatedAt:Date.now()
   };
   const wasEditing=Boolean(editingId);
-  if(wasEditing)queuePatientDirectoryCorrection(existing,item);
+  if(wasEditing&&queuePatientDirectoryCorrection(existing,item))applyPatientDirectoryCorrectionLocally(existing,item);
+  if(wasEditing)applyAdminHubPatientCorrectionLocally(existing,item);
   const targetDate=$('fDate').value||selectedDate;
   if(wasEditing&&targetDate!==selectedDate){
     await movePatientToDate(item,targetDate);
@@ -4169,7 +4272,7 @@ async function savePatient(){
       const file=normalizeDirectoryFile(patient.file),nextFile=normalizeDirectoryFile(item.file),national=normalizeDirectoryNationalId(patient.nationalId);
       return Boolean((file&&nextFile===file&&national&&item.nationalId&&national!==item.nationalId)||(national&&item.nationalId===national&&file&&nextFile&&file!==nextFile));
     });
-    if(identityConflict){toast('تعارض الملف والهوية','راجع رقم الملف والهوية قبل الإضافة؛ لم يتم دمج أي مريض.');return}
+    if(identityConflict){toast(lang==='en'?'File and national ID conflict':'تعارض الملف والهوية',lang==='en'?'Review both identifiers before adding. No patient records were merged.':'راجع رقم الملف والهوية قبل الإضافة؛ لم يتم دمج أي مريض.');return}
     const duplicate=patients.find(patient=>{
       const file=normalizeDirectoryFile(patient.file),nextFile=normalizeDirectoryFile(item.file),national=normalizeDirectoryNationalId(patient.nationalId);
       if(file&&nextFile&&file!==nextFile)return false;
@@ -4198,7 +4301,7 @@ async function savePatient(){
       persisted=await pushState();
     }
     if(!persisted){
-      toast('تعذر تثبيت تعديل الاسم','بقي التعديل محليًا وسيُعاد حفظه تلقائيًا عند عودة الاتصال.');
+      toast(lang==='en'?'Name update is pending':'تعذر تثبيت تعديل الاسم',lang==='en'?'The change remains on this device and will be saved automatically when the connection returns.':'بقي التعديل محليًا وسيُعاد حفظه تلقائيًا عند عودة الاتصال.');
       return;
     }
   }
@@ -4683,6 +4786,7 @@ async function openClinicTopmostDisplay(){
   try{
     const topmost=await window.documentPictureInPicture.requestWindow({width:980,height:720});
     clinicTopmostWindow=topmost;
+    scheduleAutomaticSync(100);
     const doc=topmost.document;
     const charset=doc.createElement('meta');charset.setAttribute('charset','utf-8');doc.head.appendChild(charset);
     const viewport=doc.createElement('meta');viewport.name='viewport';viewport.content='width=device-width,initial-scale=1';doc.head.appendChild(viewport);
@@ -4703,6 +4807,7 @@ async function registerPwa(){
   if(!('serviceWorker' in navigator)||!/^https?:$/.test(location.protocol))return;
   try{
     const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
+    sync.pwaRegistration=registration;sync.pwaCheckAt=Date.now();
     if(systemNotificationsEnabled())ensurePushSubscription().catch(error=>console.warn('Push subscription refresh failed',error));
     const showUpdate=async worker=>{
       waitingServiceWorker=worker;
@@ -4732,6 +4837,11 @@ function renderPwaUpdateCopy(){
   setText('#pwaUpdateSummary',lang==='en'?pendingReleaseSummary.en:pendingReleaseSummary.ar);
 }
 function setText(selector,value){const el=document.querySelector(selector);if(el)el.textContent=value}
+function setLabelLead(selector,value){
+  const label=document.querySelector(selector);if(!label)return;
+  const text=[...label.childNodes].find(node=>node.nodeType===Node.TEXT_NODE&&node.textContent.trim());
+  if(text)text.textContent=value;else label.prepend(document.createTextNode(value));
+}
 function setTexts(selector,values){document.querySelectorAll(selector).forEach((el,index)=>{if(values[index]!==undefined)el.textContent=values[index]})}
 function setLocalizedNode(node,english,arabic){
   if(!node)return;
@@ -4748,6 +4858,48 @@ function setLocalizedPlaceholder(input,english,arabic){
   if(!input)return;
   if(!input.dataset.defaultPlaceholder)input.dataset.defaultPlaceholder=arabic??(input.getAttribute('placeholder')||'');
   input.setAttribute('placeholder',lang==='en'?english:input.dataset.defaultPlaceholder);
+}
+function translateTreatmentAndLabModals(){
+  setText('#treatmentCatalogTitle',lang==='en'?'Procedures, services, and prices':'الإجراءات والخدمات والأسعار');
+  setText('#treatmentCatalogModal .catalog-head p',lang==='en'?'Edit the procedure name and its price before and after discount. Laboratory cases are added from the patient list.':'عدّل اسم الإجراء والسعر قبل الخصم وبعده. حالات المعمل تُضاف مباشرة من قائمة المرضى.');
+  setText('#treatmentCatalogModal .catalog-note',lang==='en'?'This list is used for payment orders and treatment plans only; it never creates laboratory cases automatically.':'هذه القائمة مخصصة لأوامر الدفع والخطط العلاجية فقط، ولا تُنشئ حالات معمل تلقائيًا.');
+  setTexts('#treatmentCatalogModal .catalog-columns span',[lang==='en'?'Procedure name':'اسم الإجراء',lang==='en'?'Before discount':'قبل الخصم',lang==='en'?'After discount':'بعد الخصم','']);
+  setTexts('#treatmentCatalogModal .modal-actions button',[lang==='en'?'Cancel':'إلغاء',lang==='en'?'+ Add procedure':'＋ إضافة إجراء',lang==='en'?'Save and update system':'حفظ وتحديث النظام']);
+  document.querySelector('#treatmentCatalogModal [data-close="treatmentCatalogModal"]')?.setAttribute('aria-label',lang==='en'?'Close':'إغلاق');
+  if($('treatmentCatalogModal')?.classList.contains('open'))renderTreatmentCatalog();
+
+  setText('#labCaseModalTitle',lang==='en'?'Add laboratory case':'إضافة حالة معمل');
+  setText('#labCaseModal .lab-case-modal-head p',lang==='en'?'Quick entry independent of the payment order':'إدخال سريع مستقل عن أمر الدفع');
+  document.querySelector('#labCaseModal [data-close="labCaseModal"]')?.setAttribute('aria-label',lang==='en'?'Close':'إغلاق');
+  setLabelLead('#labCaseModal label.lab-case-work',lang==='en'?'Case type':'نوع الحالة');
+  setLabelLead('#labCustomWorkLabel',lang==='en'?'Laboratory procedure':'الإجراء المعملي');
+  setLabelLead('#labCustomNameLabel',lang==='en'?'Other laboratory name':'اسم المعمل الآخر');
+  setLabelLead('#labCaseModal .lab-payment-grid>label:nth-child(3)',lang==='en'?'Laboratory name':'اسم المعمل');
+  setLabelLead('#labCaseModal .lab-payment-grid>label:nth-child(5)',lang==='en'?'Units':'عدد الوحدات');
+  setLabelLead('#labCaseModal .lab-payment-grid>label:nth-child(6)',lang==='en'?'Material or type':'المادة أو النوع');
+  setLabelLead('#labCaseModal .lab-payment-grid>label:nth-child(7)',lang==='en'?'Shade':'درجة اللون');
+  const workOptions=lang==='en'?['Choose case type','Crown','Veneer','Implant restoration','Whitening trays','Temporary restoration','Other laboratory procedure']:['اختر نوع الحالة','تركيب تاج','فينير','تركيبة زراعة','قوالب تبييض','تركيبة مؤقتة','إجراء معملي آخر'];
+  Array.from($('labWorkType')?.options||[]).forEach((option,index)=>{if(workOptions[index])option.textContent=workOptions[index]});
+  if($('labNameSelect')?.options[0])$('labNameSelect').options[0].textContent=lang==='en'?'Choose laboratory':'اختر المعمل';
+  const otherLab=[...($('labNameSelect')?.options||[])].find(option=>option.value==='other');if(otherLab)otherLab.textContent=lang==='en'?'Other laboratory':'معمل آخر';
+  setLocalizedPlaceholder($('labCustomWorkInput'),'Enter the required procedure','اكتب الإجراء المطلوب');
+  setLocalizedPlaceholder($('labCustomNameInput'),'Enter laboratory name','اكتب اسم المعمل');
+  setLocalizedPlaceholder($('labMaterialInput'),'Example: Zirconia, E-max','مثال: زركون، E-max');
+  setLocalizedPlaceholder($('labShadeInput'),'Optional','اختياري');
+  setText('#labSentNowCheck + span',lang==='en'?'Delivered to the laboratory now — elapsed-time tracking starts automatically':'تم تسليم الحالة للمعمل الآن — يبدأ عداد المدة تلقائيًا');
+  $('labUnitsMinus')?.setAttribute('aria-label',lang==='en'?'Decrease units':'إنقاص عدد الوحدات');
+  $('labUnitsPlus')?.setAttribute('aria-label',lang==='en'?'Increase units':'زيادة عدد الوحدات');
+  setTexts('#labCaseModal .lab-case-actions button',[lang==='en'?'Laboratory case list':'قائمة حالات المعمل',lang==='en'?'Cancel':'إلغاء',lang==='en'?'Save laboratory case':'حفظ حالة المعمل']);
+
+  document.querySelector('.completion-choice-grid')?.setAttribute('aria-label',lang==='en'?'Actions after completing treatment':'إجراءات ما بعد اكتمال العلاج');
+  setText('#paymentOrderingNote',lang==='en'?'★ Favorites first, followed by this doctor’s most-used procedures.':'★ المفضلة أولًا، ثم الإجراءات الأكثر استخدامًا لهذا الطبيب.');
+  setText('#paymentModal .payment-other-row .payment-quantity small',lang==='en'?'Quantity':'العدد');
+  setText('#paymentOtherFree + span',lang==='en'?'Free':'مجاني');
+  $('paymentOtherInput')?.setAttribute('aria-label',lang==='en'?'Other procedure name':'اسم الإجراء الآخر');
+  $('paymentOtherQuantity')?.setAttribute('aria-label',lang==='en'?'Other procedure quantity':'عدد الإجراء الآخر');
+  setText('#paymentPlanVatField strong',lang==='en'?'Confirm plan tax treatment':'تأكيد المعالجة الضريبية للخطة');
+  setText('#paymentPlanVatField small',lang==='en'?'I reviewed eligibility and tax treatment; this confirmation is required before sharing the plan for signature.':'راجعت أهلية المريض والمعالجة الضريبية؛ يلزم هذا التأكيد لتكون الخطة جاهزة للمشاركة والتوقيع.');
+  setText('#paymentModal .modal-actions [data-close="paymentModal"]',lang==='en'?'Cancel':'إلغاء');
 }
 const STATIC_EN=Object.freeze({
   'مركز العمليات':'Operations center','كل التنبيهات':'All alerts','مركز المواعيد':'Appointment center','مركز الخطط':'Treatment plan center','مركز المعمل':'Laboratory center','مركز الوصفات':'Prescription center',
@@ -4927,9 +5079,27 @@ function applyLang(){
   setText('#patientIdentitySearchHelp',lang==='en'?'Search by name, file, mobile, or national ID, then view patient data and all related actions.':'ابحث بالاسم أو رقم الملف أو الجوال أو الهوية، ثم استعرض بيانات المريض وجميع إجراءاته.');
   setText('#patientIdentitySearchHint',lang==='en'?'Plans, payments, lab cases, and appointments stay linked to the patient identity.':'ترتبط الخطط والدفع وحالات المعمل والمواعيد بهوية المريض وتبقى متاحة عند عودته.');
   if($('patientIdentitySearchInput'))$('patientIdentitySearchInput').placeholder=lang==='en'?'Name, file, mobile, or national ID':'الاسم، رقم الملف، الجوال، أو الهوية';
+  setText('#patientProfileBack',lang==='en'?'← Back to results':'← العودة للنتائج');
+  setText('#patientProfileSyncState',lang==='en'?'Central patient record':'سجل المريض المركزي');
+  setText('#patientProfileLoading',lang==='en'?'Loading patient record and actions…':'جارٍ تحميل ملف المريض وإجراءاته…');
+  setText('.patient-profile-hero small',lang==='en'?'Patient record':'ملف المريض');
+  setTexts('.patient-communication-counters article>div>small',[lang==='en'?'Plans sent via WhatsApp':'الخطط المرسلة عبر واتساب',lang==='en'?'Review requests sent':'طلبات التقييم المرسلة']);
+  setLabelLead('.patient-communication-counters article:nth-child(1)>div>strong',lang==='en'?' times':' مرة');
+  setLabelLead('.patient-communication-counters article:nth-child(2)>div>strong',lang==='en'?' times':' مرة');
+  setLabelLead('#patientProfileForm>label:nth-child(1)',lang==='en'?'Patient name':'اسم المريض');
+  setLabelLead('#patientProfileForm>label:nth-child(2)',lang==='en'?'File number (or national ID)':'رقم الملف (أو الهوية)');
+  setLabelLead('#patientProfileForm>label:nth-child(3)',lang==='en'?'Mobile (optional with national ID)':'الجوال (اختياري مع الهوية)');
+  setLabelLead('#patientProfileForm>label:nth-child(4)',lang==='en'?'National ID':'رقم الهوية');
+  setLabelLead('#patientProfileForm>label.patient-profile-notes',lang==='en'?'Administration notes':'ملاحظات الإدارة');
+  setLocalizedPlaceholder($('patientProfileNotesInput'),'Data correction or conflict notes','ملاحظات تصحيح البيانات أو التعارضات');
+  setLabelLead('#patientProfileForm label.patient-profile-review-check',lang==='en'?'Notes reviewed and required action completed':'تمت مراجعة الملاحظات ومعالجة المطلوب');
+  setText('#patientProfileForm .patient-profile-save small',lang==='en'?'Linked appointments, plans, prescriptions, and laboratory cases are updated together.':'يتم تحديث المواعيد والخطط والوصفات وحالات المعمل المرتبطة بالمريض.');
+  document.querySelector('.patient-profile-summary')?.setAttribute('aria-label',lang==='en'?'Patient action summary':'ملخص إجراءات المريض');
+  setTexts('.patient-profile-summary [data-profile-tab] span',[lang==='en'?'Appointments':'المواعيد',lang==='en'?'Plans':'الخطط',lang==='en'?'Prescriptions':'الوصفات',lang==='en'?'Payments':'الدفع',lang==='en'?'Laboratory':'المعمل',lang==='en'?'Communication':'التواصل']);
   setText('.patient-directory-import-note',lang==='en'?'The file number is the primary reference. A matching file corrects the full name and completes the same patient record without duplication. Blank values never replace valid data, and shared mobile numbers remain flagged for review.':'رقم الملف هو المرجع الأساسي: إذا كان موجودًا يُصحَّح الاسم الكامل وتُستكمل البيانات في السجل نفسه دون تكرار. لا تُستبدل قيمة صحيحة ببيان فارغ، والجوال المشترك يبقى معلّمًا للمراجعة.');
   applyPatientScheduleLanguage();
   renderPatientIdentitySearch();
+  if($('patientProfileView')&&!$('patientProfileView').hidden)renderPatientProfile();
   setText('#alertModalTitle',tr('alertModalTitle'));
   setText('.alert-modal-head p',lang==='en'?'Write a short note and choose who receives it. All clinics is the default.':'اكتب ملاحظة مختصرة وحدد الجهة المستلمة؛ العام هو الخيار الافتراضي.');
   setText('#alertTargetTitle',lang==='en'?'Alert destination':'جهة التنبيه');
@@ -4963,6 +5133,7 @@ function applyLang(){
   setText('#paymentDiscountLabel',lang==='en'?'Discount (written note)':'الخصم (كتابة)');
   $('paymentOtherInput').placeholder=lang==='en'?'Write the other procedure':'اكتب الإجراء الآخر';
   $('paymentDiscountInput').placeholder=lang==='en'?'Example: 10% or SAR 100 discount':'مثال: خصم 10% أو خصم 100 ريال';
+  translateTreatmentAndLabModals();
   renderPaymentProcedureOptions();
   setText('#reviewModalTitle',lang==='en'?'Request patient experience review':'طلب تقييم تجربة المريض');
   setText('#reviewPhoneLabel',lang==='en'?'Patient WhatsApp number (optional)':'رقم واتساب المريض (اختياري)');
@@ -5306,7 +5477,7 @@ els.patientRows.addEventListener('click',event=>{
     openModal('patientIdentitySearchModal');
     loadPatientProfile(patientSummaryOpen.lookup,{tab:summaryProfile.dataset.summaryTab||'appointments'});return;
   }
-  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,dailyNote=event.target.closest('[data-daily-note-id]')?.dataset.dailyNoteId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
   if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
   if(review)openReviewComposer(review);
@@ -5315,8 +5486,9 @@ els.patientRows.addEventListener('click',event=>{
   if(earliest&&VIEW_MODE==='clinic')requestEarliestAppointment(earliest,event.target.closest('[data-earliest-id]'));
   if(completion&&VIEW_MODE==='clinic')finishPatient(completion);
   if(paymentMissing&&VIEW_MODE==='admin')openMissingPaymentOrder(paymentMissing);
+  if(dailyNote)updatePatientDailyNote(dailyNote);
   if(edit)openPatient(edit);
-  if(del&&confirm('حذف هذا المريض؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
+  if(del&&confirm(lang==='en'?'Delete this patient from today’s list?':'حذف هذا المريض من قائمة اليوم؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
 });
 $('doctorActionQueue').addEventListener('click',event=>{
   const planId=event.target.closest('[data-doctor-plan-id]')?.dataset.doctorPlanId;

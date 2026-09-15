@@ -861,12 +861,32 @@ body.view-clinic .queue-actions .clinic-queue-action{width:38px;min-width:38px;h
 body.view-clinic .row-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 body.view-clinic .row-actions .clinic-row-action{width:36px;min-width:36px;height:34px;min-height:34px;border-radius:10px;padding:4px;font-size:16px}
 body.view-clinic .row-actions .clinic-row-action.lab{border-color:#8bc5d5;background:linear-gradient(145deg,#effbfe,#dceff6);color:#1c718c}
+body.view-clinic .row-actions .clinic-row-action.note{border-color:#d8c58c;background:linear-gradient(145deg,#fffbed,#f5eccd);color:#7a5c08}
+body.view-clinic .row-actions .clinic-row-action.lab.lab-needed,.lab-entry-btn.lab-needed{border:2px solid #d33b4f!important;background:linear-gradient(145deg,#fff1f3,#ffd9df)!important;color:#a71931!important;box-shadow:0 0 0 5px rgba(211,59,79,.11),0 8px 20px rgba(170,25,49,.18)!important;animation:labRequiredPulse 1.7s ease-in-out infinite!important}
+.lab-required-badge{display:inline-flex;align-items:center;gap:5px;width:max-content;max-width:100%;margin-top:5px;padding:5px 8px;border:1px solid #e39aa5;border-radius:9px;background:#fff0f2;color:#a51d34;font-size:9px;font-weight:950}.lab-required-badge>span{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:#c92d45;color:#fff}.daily-patient-note{display:flex!important;align-items:center;gap:5px;max-width:280px;margin-top:4px;padding:4px 7px;border:1px solid #e1d5ad;border-radius:8px;background:#fffbed;color:#695718;font-size:9px!important;font-weight:800;line-height:1.45;white-space:normal;overflow-wrap:anywhere}.daily-note-action{border-color:#d8c58c!important;background:#fffbed!important;color:#71580c!important}
+@keyframes labRequiredPulse{50%{transform:translateY(-2px) scale(1.04);box-shadow:0 0 0 8px rgba(211,59,79,.08),0 10px 23px rgba(170,25,49,.23)}}
+html[data-theme="dark"] .daily-patient-note,html[data-theme="dark"] .daily-note-action{border-color:#685c36!important;background:#38321f!important;color:#f0dc96!important}html[data-theme="dark"] .lab-required-badge{border-color:#9d5563;background:#3b2027;color:#ffd9df}
 body.view-clinic .row-actions .clinic-row-action.plan{border-color:#b8c8e1;background:linear-gradient(145deg,#f1f5ff,#e1eafa);color:#3c6091}
 body.view-clinic .row-actions .clinic-row-action.payment{border-color:#ddbf72;background:linear-gradient(145deg,#fff9e5,#ffefbd);color:#8a6100}
 body.view-clinic .row-actions .clinic-row-action.earliest{border-color:#e39b35;background:linear-gradient(145deg,#fff7dd,#ffe5a7);color:#9a5a00;box-shadow:0 5px 14px rgba(211,137,27,.18)}
 body.view-clinic .row-actions .clinic-row-action.earliest:not(:disabled){animation:earliestAppointmentPulse 2s ease-in-out infinite}
 body.view-clinic .row-actions .clinic-row-action.earliest.is-requested{border-color:#aeb9bf;background:linear-gradient(145deg,#f3f6f7,#e7edef);color:#5b6b73;box-shadow:none;animation:none}
 @keyframes earliestAppointmentPulse{50%{transform:translateY(-2px) scale(1.04);box-shadow:0 0 0 5px rgba(227,155,53,.12),0 8px 18px rgba(211,137,27,.22)}}
+
+/* Strong visual hierarchy for the current patient, next patient, and following queue. */
+body.view-clinic .current-card.clinic-tone-green:not(.treatment-overrun){border-width:3px;border-inline-start-width:11px;box-shadow:0 18px 42px rgba(15,115,70,.2)}
+body.view-clinic .current-card.treatment-overrun{border-width:3px;border-inline-start-width:11px;box-shadow:0 18px 44px rgba(169,20,45,.24)}
+body.view-clinic #currentLabel{display:inline-flex;width:max-content;padding:7px 12px;border-radius:999px;background:#116f47;color:#fff;font-size:12px;font-weight:950;letter-spacing:.02em;box-shadow:0 5px 13px rgba(17,111,71,.2)}
+body.view-clinic .treatment-overrun #currentLabel{background:#ac1730;box-shadow:0 5px 13px rgba(172,23,48,.22)}
+body.view-clinic .next-patient-callout{margin-top:16px;padding:15px 16px;border:4px solid #237eb8;border-inline-start-width:11px;background:linear-gradient(135deg,#cceaff,#f4fbff 68%,#b9dcf7);box-shadow:0 13px 30px rgba(28,102,151,.22)}
+body.view-clinic .next-patient-callout .next-patient-icon{width:44px;height:44px;background:#126ba4;font-size:23px}
+body.view-clinic .next-patient-callout #nextPatientLabel{display:inline-flex;width:max-content;padding:4px 8px;border-radius:999px;background:#126ba4;color:#fff;font-size:10px!important;font-weight:950}
+body.view-clinic .next-patient-callout #nextPatientName{margin-top:5px;color:#0d4670;font-size:clamp(21px,2.5vw,31px);font-weight:950}
+body.view-clinic .next-patient-callout.is-overrun{border-color:#237eb8;border-inline-start-color:#126ba4;background:linear-gradient(135deg,#cceaff,#fff 68%,#b9dcf7)}
+body.view-clinic .next-patient-callout.is-overrun #nextPatientLabel{background:#126ba4;color:#fff}
+body.view-clinic .clinic-following{border-top:2px dashed #78afd0;background:rgba(255,255,255,.48);padding:10px;border-radius:11px}
+body.view-clinic .clinic-following h3{font-size:12px;text-transform:uppercase;letter-spacing:.02em}
+body.view-clinic .clinic-following-row{opacity:.88;border-style:dashed}
 html[data-theme="dark"] body.view-clinic .clinic-icon-action{border-color:#3c6273;background:linear-gradient(145deg,#203e4b,#19313c);color:#bde8f5;box-shadow:0 5px 13px rgba(0,0,0,.22)}
 html[data-theme="dark"] body.view-clinic .clinic-icon-action:hover{border-color:#65b6d1;background:#254c5c}
 html[data-theme="dark"] body.view-clinic .clinic-compact-badge{box-shadow:0 3px 8px rgba(0,0,0,.22)}

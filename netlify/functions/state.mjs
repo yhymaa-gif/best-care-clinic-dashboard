@@ -56,6 +56,8 @@ const cleanPatient=p=>({
  earliestAppointmentRequestId:String(p?.earliestAppointmentRequestId||'').slice(0,80),
  earliestAppointmentRequestedAt:Number(p?.earliestAppointmentRequestedAt||0),
  earliestAppointmentRequestedBy:String(p?.earliestAppointmentRequestedBy||'').slice(0,120),
+ dailyNote:String(p?.dailyNote||'').replace(/\s+/g,' ').trim().slice(0,240),
+ dailyNoteUpdatedAt:Number(p?.dailyNoteUpdatedAt||0),
  addedAt:Number(p?.addedAt||0),
  adminUpdatedAt:Number(p?.adminUpdatedAt||0)
 });
@@ -119,4 +121,4 @@ export default async request=>{
  return reply({error:'Method not allowed'},405);
 };
 
-export const __test={pushEvents,patientStatusPush};
+export const __test={cleanPatient,pushEvents,patientStatusPush};

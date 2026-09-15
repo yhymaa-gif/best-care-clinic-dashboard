@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260907-patient-strong-identity';
+const CACHE_NAME='bestcare-dashboard-v1-20260915-patient-workflow-polish';
 const APP_SHELL=[
   './',
   './index.html',

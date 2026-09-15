@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.07-patient-strong-identity",
-  "publishedAt": "2026-09-07",
+  "version": "2026.09.15-patient-workflow-polish",
+  "publishedAt": "2026-09-15",
   "summary": {
-    "ar": "الربط بالملف ثم الهوية دون دمج بالجوال؛ تسجيل بالهوية دون ملف أو جوال، وإضافة صلة القرابة لصاحب الجوال.",
-    "en": "Match by file then national ID, never merge by mobile. Register with ID alone and record the phone owner's relationship."
+    "ar": "حفظ الاسم والملاحظات أسرع، تنبيه المعمل للتاج، ترتيب أوضح للدور، وترجمة إنجليزية موسعة.",
+    "en": "Faster name and note saving, crown lab alerts, clearer patient queue, and expanded English coverage."
   }
 }

@@ -10,7 +10,7 @@ test('following list excludes the detailed next patient, preserves order and doe
   const before=JSON.stringify(queue);
   const nodes={followingPatients:{},followingPatientsTitle:{},upcomingStack:{}};
   let pending=queue;
-  const context=vm.createContext({$:id=>nodes[id],lang:'en',upcomingPatients:()=>pending,firstName:name=>name.split(' ')[0],escapeHtml:String,statusText:String,derivedStatus:()=> 'Waiting'});
+  const context=vm.createContext({$:id=>nodes[id],lang:'en',upcomingPatients:()=>pending,firstName:name=>name.split(' ')[0],escapeHtml:String,statusText:String,derivedStatus:()=> 'Waiting',appointmentExitTime:patient=>patient.end||'—',appointmentDurationLabel:()=> '30 min',procedureDisplayName:value=>value||'—'});
   vm.runInContext(render+';renderUpcoming({id:1})',context);
   assert.equal(nodes.followingPatients.hidden,false);
   assert.doesNotMatch(nodes.upcomingStack.innerHTML,/>Next</);
