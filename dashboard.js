@@ -97,9 +97,9 @@ const PATIENT_PROFILE_API='/api/patient-profile';
 const PATIENTS_API='/api/patients';
 const PATIENT_LOOKUP_API='/api/patient-lookup';
 const ALERT_DISPLAY_MS=5*60*1000;
-const POLL_MS=5000;
-const SYNC_WORK_HIDDEN_MS=15000;
-const SYNC_OFF_HOURS_MS=5*60*1000;
+const POLL_MS=15*1000;
+const SYNC_WORK_HIDDEN_MS=5*60*1000;
+const SYNC_OFF_HOURS_MS=15*60*1000;
 const SYNC_OFF_HOURS_HIDDEN_MS=15*60*1000;
 // Auxiliary feeds (plans, alerts, labs) do not need to run on every patient
 // revision poll. Keeping them on their own cadence reduces render/API churn
@@ -114,7 +114,7 @@ function syncCadence(now=Date.now()){
   const riyadh=new Date(now+RIYADH_OFFSET_MS);
   const day=riyadh.getUTCDay(),hour=riyadh.getUTCHours();
   const friday=day===5;
-  const workHours=!friday&&hour>=14&&hour<23;
+  const workHours=hour>=7;
   const hidden=!syncDisplayVisible();
   return {
     friday,
@@ -1541,8 +1541,8 @@ function scheduleAutomaticSync(delay=POLL_MS){
 function syncDelayUntilWorkStart(delay,now=Date.now()){
   if(syncCadence(now).workHours)return delay;
   const local=new Date(now+RIYADH_OFFSET_MS);
-  let start=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate(),14)-RIYADH_OFFSET_MS;
-  while(start<=now||new Date(start+RIYADH_OFFSET_MS).getUTCDay()===5)start+=86400000;
+  let start=Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate(),7)-RIYADH_OFFSET_MS;
+  if(start<=now)start+=86400000;
   return Math.min(delay,Math.max(100,start-now));
 }
 
