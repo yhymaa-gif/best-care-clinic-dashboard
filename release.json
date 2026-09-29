@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.30-payment-revenue-ledger",
+  "version": "2026.09.30-operational-income-summary",
   "publishedAt": "2026-09-30",
   "summary": {
-    "ar": "تسجيل وتعديل دفعات أوامر الدفع، مع إجمالي يومي وشهري واضح للإدارة.",
-    "en": "Record and edit payment-order receipts with clear daily and monthly revenue totals."
+    "ar": "إحصاء تشغيلي مبسط للدخل اليومي والشهري من المبالغ التي تسجلها الإدارة.",
+    "en": "Simple operational daily and monthly income totals from amounts entered by administration."
   }
 }
