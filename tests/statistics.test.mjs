@@ -28,7 +28,7 @@ test('summary counts appointments, unique patients, payments, plans and lab case
         clinicId: 'clinic-1',
         date: '2026-07-30',
         patients: [
-          { file: '100', phone: '0500000001', status: 'done', start: '14:00', arrivedAt: Date.UTC(2026, 6, 30, 11), completedAt: Date.UTC(2026, 6, 30, 12, 30), actualStartedAt: Date.UTC(2026, 6, 30, 11, 10), paymentRequired: true, paymentCompletedAt: 1 },
+          { file: '100', phone: '0500000001', status: 'done', start: '14:00', arrivedAt: Date.UTC(2026, 6, 30, 11), completedAt: Date.UTC(2026, 6, 30, 12, 30), actualStartedAt: Date.UTC(2026, 6, 30, 11, 10), paymentRequired: true, paymentCompletedAt: 1, paymentReceipts: [{ id: 'pay-1', amountCents: 125050, paidAt: Date.UTC(2026, 6, 30, 12), updatedAt: Date.UTC(2026, 6, 30, 12) }] },
           { file: '200', phone: '0500000002', status: 'cancel', start: '15:00' },
         ],
       },
@@ -55,6 +55,11 @@ test('summary counts appointments, unique patients, payments, plans and lab case
   assert.equal(output.summary.completed, 1);
   assert.equal(output.summary.cancelled, 1);
   assert.equal(output.summary.paymentPending, 1);
+  assert.equal(output.summary.revenueCents, 125050);
+  assert.equal(output.summary.paymentTransactionCount, 1);
+  assert.equal(output.daily[0].revenueCents, 125050);
+  assert.equal(output.daily[0].paymentCount, 1);
+  assert.equal(output.clinics[0].revenueCents, 125050);
   assert.equal(output.summary.planTotal, 1);
   assert.equal(output.summary.labActive, 1);
   assert.equal(output.summary.averageDelayMinutes, 10);
@@ -63,6 +68,18 @@ test('summary counts appointments, unique patients, payments, plans and lab case
   assert.equal(output.clinics[0].averageStayMinutes, 90);
   assert.equal(output.summary.reviewWhatsappShares, 2);
   assert.deepEqual(output.communicationCounts, { planWhatsapp: 1, reviewWhatsapp: 2 });
+});
+
+test('payment receipts are de-duplicated by transaction id', () => {
+  const receipt = { id: 'same-payment', amountCents: 50000, paidAt: Date.UTC(2026, 6, 30, 9) };
+  const output = stats.summarize({
+    from: '2026-07-30', to: '2026-07-30', clinicFilter: 'all',
+    clinics: [{ id: 'clinic-1', name: 'العيادة 1', doctorName: '', roomNumber: '1' }],
+    records: [{ clinicId: 'clinic-1', date: '2026-07-30', patients: [{ id: '1', status: 'done', paymentReceipts: [receipt] }, { id: '2', status: 'done', paymentReceipts: [receipt] }] }],
+    plans: [], labCases: [],
+  });
+  assert.equal(output.summary.revenueCents, 50000);
+  assert.equal(output.summary.paymentTransactionCount, 1);
 });
 
 test('WhatsApp communication statistics respect clinic and Riyadh date filters', () => {

@@ -137,8 +137,8 @@ function adminHubCadence(){
   if(cadence.workHours)return syncDisplayVisible()?20000:60000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.64-patient-save-fix-v2';
-const RELEASE_SUMMARY_FALLBACK={ar:'تصحيح الخطط العلاجية ومشاركتها، وتنظيم التنبيهات.',en:'Treatment-plan and sharing fixes, plus notification scheduling.'};
+const DASHBOARD_BUILD='7.65-payment-revenue-ledger';
+const RELEASE_SUMMARY_FALLBACK={ar:'تسجيل وتعديل دفعات أوامر الدفع، مع إجمالي يومي وشهري واضح للإدارة.',en:'Record and edit payment-order receipts with clear daily and monthly revenue totals.'};
 let pendingReleaseSummary={...RELEASE_SUMMARY_FALLBACK};
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
@@ -168,7 +168,12 @@ const IOS_INSTALL_COPY={
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
-let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let paymentCollectionPatientId=null; let paymentReceiptEditingId=null; let revenueSummary={todayCents:0,todayCount:0,monthCents:0,monthCount:0,updatedAt:0,date:''}; let revenueSummaryLoading=false; let lang=localStorage.getItem('bestcare_lang')||'ar';
+function ensurePaymentRevenueModals(){
+  if($('paymentCollectionModal'))return;
+  document.body.insertAdjacentHTML('beforeend',`<div id="paymentCollectionModal" class="modal"><div class="modal-card payment-collection-card" role="dialog" aria-modal="true" aria-labelledby="paymentCollectionTitle"><div class="payment-collection-head"><div><small>سجل التحصيل المرتبط بأمر الدفع</small><h3 id="paymentCollectionTitle">تأكيد وتسجيل الدفع</h3><p id="paymentCollectionPatient">—</p></div><strong id="paymentCollectionTotal">0 ر.س</strong></div><div class="payment-collection-grid"><label>المبلغ المدفوع (ر.س)<input id="paymentReceiptAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></label><label>طريقة الدفع<select id="paymentReceiptMethod"><option value="card">بطاقة</option><option value="cash">نقدًا</option><option value="transfer">تحويل</option><option value="insurance">تأمين</option><option value="other">أخرى</option></select></label><label class="full">ملاحظة اختيارية<input id="paymentReceiptNote" type="text" maxlength="240" placeholder="مثال: دفعة أولى أو سداد المتبقي"></label></div><label class="payment-complete-check"><input id="paymentReceiptComplete" type="checkbox" checked><span><strong>اكتمل تنفيذ أمر الدفع</strong><small>ألغِ التحديد إذا كانت هذه دفعة جزئية وسيبقى الطلب قيد المتابعة.</small></span></label><p id="paymentReceiptError" class="auth-error" role="alert"></p><div class="payment-receipt-list-head"><strong>الدفعات المسجلة</strong><small>يمكن تعديل أي دفعة أو إضافة دفعة أخرى</small></div><div id="paymentReceiptList" class="payment-receipt-list"></div><div class="modal-actions"><button type="button" data-close="paymentCollectionModal">إغلاق</button><button id="paymentReceiptResetBtn" type="button" hidden>إلغاء التعديل</button><button id="savePaymentReceiptBtn" type="button" class="primary">حفظ الدفعة</button></div></div></div><div id="revenueSummaryModal" class="modal"><div class="modal-card revenue-summary-card" role="dialog" aria-modal="true" aria-labelledby="revenueSummaryTitle"><div class="revenue-summary-head"><div><small>مراجعة نهاية اليوم</small><h3 id="revenueSummaryTitle">ملخص المدفوعات</h3><p>الأرقام محسوبة من الدفعات التي أكّدتها الإدارة، ويمكن تصحيحها من أمر الدفع نفسه.</p></div><button type="button" data-close="revenueSummaryModal" aria-label="إغلاق">×</button></div><div class="revenue-summary-kpis"><article><small>دخل اليوم</small><strong id="revenueSummaryToday">0 ر.س</strong><span id="revenueSummaryTodayCount">0 دفعة</span></article><article><small>دخل الشهر</small><strong id="revenueSummaryMonth">0 ر.س</strong><span id="revenueSummaryMonthCount">0 دفعة</span></article></div><div class="revenue-ledger-head"><strong>دفعات اليوم</strong><button id="refreshRevenueSummaryBtn" type="button">↻ تحديث</button></div><div id="revenueTodayList" class="revenue-today-list"></div><div class="modal-actions"><a class="button-link" href="./statistics.html">فتح الإحصائيات الكاملة</a><button type="button" data-close="revenueSummaryModal">تمت المراجعة</button></div></div></div>`);
+}
+ensurePaymentRevenueModals();
 let manualAlertFetchedAt=0;
 let audioContext=null;
 let presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
@@ -1849,7 +1854,8 @@ function patientMatchesSearch(patient,rawQuery){
   const name=normalizeSearchText(patient?.name??patient?.fullName),compact=query.replace(/[\s-]/g,''),file=normalizeSearchText(patient?.file??patient?.fileNo).replace(/[\s-]/g,''),phone=normalizeSearchPhone(patient?.phone??patient?.mobile),digits=normalizeSearchPhone(rawQuery);
   return name.includes(query)||Boolean(compact&&file.includes(compact))||Boolean(digits&&phone.includes(digits));
 }
-function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0),Number(patient?.dailyNoteUpdatedAt||0))}
+function paymentReceiptStamp(patient){return Math.max(0,...(Array.isArray(patient?.paymentReceipts)?patient.paymentReceipts:[]).map(item=>Number(item?.updatedAt||item?.recordedAt||0)))}
+function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),paymentReceiptStamp(patient),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0),Number(patient?.dailyNoteUpdatedAt||0))}
 function copyPatientGroup(target,source,fields){fields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(source||{},field))target[field]=source[field]})}
 function mergePatientVersions(remote={},local={}){
   const remoteStamp=patientVersionStamp(remote),localStamp=patientVersionStamp(local);
@@ -1857,7 +1863,7 @@ function mergePatientVersions(remote={},local={}){
   const groups=[
     [['name','file','phone','nationalId','phoneRelationship','start','end','procedure','adminUpdatedAt'],value=>Number(value?.adminUpdatedAt||value?.recordUpdatedAt||0)],
     [['status','statusUpdatedAt','arrivedAt','actualStartedAt','actualEndedAt','completedAt','lastCalledAt','callCount'],value=>Math.max(Number(value?.statusUpdatedAt||0),Number(value?.arrivedAt||0),Number(value?.actualStartedAt||0),Number(value?.actualEndedAt||0),Number(value?.completedAt||0),Number(value?.lastCalledAt||0))],
-    [['paymentRequired','paymentAction','paymentItems','paymentDiscount','paymentRequestedAt','paymentAcknowledgedAt','paymentCompletedAt'],value=>Math.max(Number(value?.paymentRequestedAt||0),Number(value?.paymentAcknowledgedAt||0),Number(value?.paymentCompletedAt||0))],
+    [['paymentRequired','paymentAction','paymentItems','paymentDiscount','paymentRequestedAt','paymentAcknowledgedAt','paymentCompletedAt','paymentReceipts'],value=>Math.max(Number(value?.paymentRequestedAt||0),Number(value?.paymentAcknowledgedAt||0),Number(value?.paymentCompletedAt||0),paymentReceiptStamp(value))],
     [['treatmentPlanStatus','treatmentPlanUpdatedAt'],value=>Number(value?.treatmentPlanUpdatedAt||0)],
     [['treatmentPlanPrintedAt'],value=>Number(value?.treatmentPlanPrintedAt||0)],
     [['reviewRequestedAt','reviewRequestCount','reviewLastEventId'],value=>Number(value?.reviewRequestedAt||0)],
@@ -3943,6 +3949,8 @@ function render(){
   renderAdminPatientHub();
   renderPaymentPanel();
   renderDoctorWorkspace();
+  renderRevenueSummary();
+  refreshRevenueSummary();
   updateModernAdminSidebar();
 }
 function viewUrl(mode,clinicId=ACTIVE_CLINIC_ID){
@@ -4021,6 +4029,60 @@ function renderPaymentMissingAlert(){
   const help=lang==='en'?'Treatment is completed, but no payment order was recorded. Review each patient before closing the visit.':'اكتمل العلاج، لكن لم يُسجّل أمر دفع. راجع كل مريض لاستكمال تحصيل المبلغ قبل إغلاق الزيارة.';
   alert.innerHTML=`<div class="payment-missing-alert-icon" aria-hidden="true">!</div><div class="payment-missing-alert-copy"><strong>${escapeHtml(title)} <b>${missing.length}</b></strong><small>${escapeHtml(help)}</small><div class="payment-missing-alert-list">${missing.map(patient=>{const display=patientWithDirectoryIdentity(patient);return `<button type="button" class="payment-missing-alert-item" data-payment-missing-id="${escapeHtml(patient.id)}"><span><b>${escapeHtml(String(display.name||patient.name||'—').trim()||'—')}</b><small>${escapeHtml(lang==='en'?'File':'ملف')} ${escapeHtml(display.file||patient.file||'—')}${display.phone?` · ${escapeHtml(display.phone)}`:''}</small></span><strong>${lang==='en'?'Complete payment':'استكمال الدفع'}</strong></button>`}).join('')}</div></div>`;
 }
+function paymentReceipts(patient){return (Array.isArray(patient?.paymentReceipts)?patient.paymentReceipts:[]).filter(item=>item&&Number(item.amountCents)>0&&Number(item.paidAt)>0).slice().sort((a,b)=>Number(b.paidAt||0)-Number(a.paidAt||0))}
+function paymentPaidTotalCents(patient){return paymentReceipts(patient).reduce((sum,item)=>sum+Math.max(0,Math.round(Number(item.amountCents||0))),0)}
+function formatSar(cents){const amount=Math.max(0,Number(cents||0))/100;return `${new Intl.NumberFormat(lang==='en'?'en-SA':'ar-SA',{minimumFractionDigits:amount%1?2:0,maximumFractionDigits:2}).format(amount)} ${lang==='en'?'SAR':'ر.س'}`}
+function paymentMethodLabel(method){return (lang==='en'?{card:'Card',cash:'Cash',transfer:'Transfer',insurance:'Insurance',other:'Other'}:{card:'بطاقة',cash:'نقدًا',transfer:'تحويل',insurance:'تأمين',other:'أخرى'})[method]||(lang==='en'?'Other':'أخرى')}
+function parsePaymentCents(value){const normalized=toLatinDigits(value).replace(/,/g,'').trim();if(!/^\d+(?:\.\d{1,2})?$/.test(normalized))return 0;return Math.round(Number(normalized)*100)}
+function resetPaymentReceiptEditor(){paymentReceiptEditingId=null;$('paymentReceiptAmount').value='';$('paymentReceiptMethod').value='card';$('paymentReceiptNote').value='';$('paymentReceiptError').textContent='';$('paymentReceiptResetBtn').hidden=true;$('savePaymentReceiptBtn').textContent=lang==='en'?'Save payment':'حفظ الدفعة'}
+function renderPaymentReceiptList(){
+  const patient=patientById(paymentCollectionPatientId);if(!patient)return;
+  const receipts=paymentReceipts(patient),total=paymentPaidTotalCents(patient);
+  $('paymentCollectionTotal').textContent=formatSar(total);
+  $('paymentReceiptList').innerHTML=receipts.length?receipts.map(item=>`<article class="payment-receipt-row"><div><strong>${escapeHtml(formatSar(item.amountCents))} · ${escapeHtml(paymentMethodLabel(item.method))}</strong><small>${escapeHtml(new Date(Number(item.paidAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'))}${item.recordedBy?` · ${escapeHtml(item.recordedBy)}`:''}${item.note?` · ${escapeHtml(item.note)}`:''}</small></div><div class="payment-receipt-actions"><button type="button" data-payment-receipt-edit="${escapeHtml(item.id)}">${lang==='en'?'Edit':'تعديل'}</button><button type="button" class="danger" data-payment-receipt-delete="${escapeHtml(item.id)}">${lang==='en'?'Delete':'حذف'}</button></div></article>`).join(''):`<div class="payment-empty">${lang==='en'?'No payments recorded yet.':'لم تُسجّل أي دفعة حتى الآن.'}</div>`;
+}
+function openPaymentCollection(id){
+  const patient=patientById(id);if(!patient||VIEW_MODE!=='admin')return;
+  paymentCollectionPatientId=String(id);resetPaymentReceiptEditor();
+  $('paymentCollectionPatient').textContent=`${patient.name||'—'} · ${lang==='en'?'File':'ملف'} ${patient.file||'—'}`;
+  $('paymentReceiptComplete').checked=Boolean(patient.paymentCompletedAt)||!paymentReceipts(patient).length;
+  renderPaymentReceiptList();openModal('paymentCollectionModal');
+}
+function editPaymentReceipt(id){
+  const patient=patientById(paymentCollectionPatientId),item=paymentReceipts(patient).find(entry=>String(entry.id)===String(id));if(!item)return;
+  paymentReceiptEditingId=String(id);$('paymentReceiptAmount').value=(Number(item.amountCents)/100).toFixed(Number(item.amountCents)%100?2:0);$('paymentReceiptMethod').value=item.method||'card';$('paymentReceiptNote').value=item.note||'';$('paymentReceiptResetBtn').hidden=false;$('savePaymentReceiptBtn').textContent=lang==='en'?'Update payment':'تحديث الدفعة';$('paymentReceiptAmount').focus();
+}
+function deletePaymentReceipt(id){
+  const patient=patientById(paymentCollectionPatientId);if(!patient)return;
+  const item=paymentReceipts(patient).find(entry=>String(entry.id)===String(id));if(!item)return;
+  if(!confirm(lang==='en'?`Delete ${formatSar(item.amountCents)} from this order?`:`حذف دفعة ${formatSar(item.amountCents)} من هذا الأمر؟`))return;
+  mutate(()=>{patient.paymentReceipts=(patient.paymentReceipts||[]).filter(entry=>String(entry.id)!==String(id));if(!patient.paymentReceipts.length)patient.paymentCompletedAt=0});
+  resetPaymentReceiptEditor();renderPaymentReceiptList();renderPaymentPanel();setTimeout(()=>refreshRevenueSummary({force:true}),700);
+  toast(lang==='en'?'Payment deleted':'تم حذف الدفعة',lang==='en'?'Daily and monthly totals were updated.':'تم تحديث إجمالي اليوم والشهر.');
+}
+function savePaymentReceipt(){
+  const patient=patientById(paymentCollectionPatientId);if(!patient)return;
+  const amountCents=parsePaymentCents($('paymentReceiptAmount').value);
+  if(amountCents<1){$('paymentReceiptError').textContent=lang==='en'?'Enter a valid paid amount.':'أدخل مبلغًا مدفوعًا صحيحًا.';$('paymentReceiptAmount').focus();return}
+  const now=Date.now(),actor=String(authUser?.displayName||authUser?.username||'الإدارة').slice(0,120),method=$('paymentReceiptMethod').value,note=$('paymentReceiptNote').value.trim();
+  mutate(()=>{patient.paymentReceipts=Array.isArray(patient.paymentReceipts)?patient.paymentReceipts:[];const existing=paymentReceiptEditingId?patient.paymentReceipts.find(item=>String(item.id)===String(paymentReceiptEditingId)):null;if(existing){existing.amountCents=amountCents;existing.method=method;existing.note=note;existing.updatedAt=now;existing.recordedBy=actor}else patient.paymentReceipts.push({id:`pay_${now}_${Math.random().toString(36).slice(2,9)}`,amountCents,paidAt:now,recordedAt:now,updatedAt:now,recordedBy:actor,method,note});patient.paymentAcknowledgedAt=patient.paymentAcknowledgedAt||now;patient.paymentCompletedAt=$('paymentReceiptComplete').checked?(patient.paymentCompletedAt||now):0;updateAlert={active:true,message:lang==='en'?`Payment recorded for ${firstName(patient.name)}`:`تم تسجيل دفعة للمريض ${firstName(patient.name)}`,updatedAt:now,kind:'payment-completed'}});
+  resetPaymentReceiptEditor();renderPaymentReceiptList();renderPaymentPanel();setTimeout(()=>refreshRevenueSummary({force:true}),700);
+  toast(lang==='en'?'Payment saved':'تم حفظ الدفعة',lang==='en'?'Today and month totals have been updated.':'تم تحديث تحصيل اليوم والشهر.');
+}
+function monthStart(date){return /^\d{4}-\d{2}-\d{2}$/.test(date||'')?`${date.slice(0,7)}-01`:today().slice(0,7)+'-01'}
+function localRevenueEntries(){return patients.flatMap(patient=>paymentReceipts(patient).map(receipt=>({patient,receipt}))).filter(({receipt})=>riyadhDateKey(Number(receipt.paidAt))===selectedDate).sort((a,b)=>Number(b.receipt.paidAt)-Number(a.receipt.paidAt))}
+function renderRevenueSummary(){
+  const button=$('floatingRevenueBtn');if(!button)return;button.hidden=VIEW_MODE!=='admin';
+  $('floatingRevenueToday').textContent=formatSar(revenueSummary.todayCents);$('floatingRevenueMonth').textContent=`${lang==='en'?'Month':'الشهر'}: ${formatSar(revenueSummary.monthCents)}`;
+  $('revenueSummaryToday').textContent=formatSar(revenueSummary.todayCents);$('revenueSummaryTodayCount').textContent=lang==='en'?`${revenueSummary.todayCount} payments`:`${revenueSummary.todayCount} دفعة`;$('revenueSummaryMonth').textContent=formatSar(revenueSummary.monthCents);$('revenueSummaryMonthCount').textContent=lang==='en'?`${revenueSummary.monthCount} payments`:`${revenueSummary.monthCount} دفعة`;
+  const entries=localRevenueEntries();$('revenueTodayList').innerHTML=entries.length?entries.map(({patient,receipt})=>`<article class="revenue-entry"><div><strong>${escapeHtml(patient.name||'—')}</strong><small>${escapeHtml(new Date(Number(receipt.paidAt)).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'}))} · ${escapeHtml(paymentMethodLabel(receipt.method))}</small></div><b>${escapeHtml(formatSar(receipt.amountCents))}</b></article>`).join(''):`<div class="payment-empty">${lang==='en'?'No payments recorded for this date.':'لا توجد دفعات مسجلة لهذا التاريخ.'}</div>`;
+}
+async function refreshRevenueSummary({force=false}={}){
+  if(VIEW_MODE!=='admin'||revenueSummaryLoading||!selectedDate)return;
+  if(!force&&revenueSummary.date===selectedDate&&Date.now()-revenueSummary.updatedAt<30000){renderRevenueSummary();return}
+  revenueSummaryLoading=true;
+  try{const response=await request(`/api/statistics?from=${encodeURIComponent(monthStart(selectedDate))}&to=${encodeURIComponent(selectedDate)}&clinic=all`,{cache:'no-store'});const data=await response.json();if(!response.ok)throw new Error(data.error||'Revenue unavailable');const todayEntry=(data.daily||[]).find(item=>item.date===selectedDate)||{};revenueSummary={todayCents:Number(todayEntry.revenueCents||0),todayCount:Number(todayEntry.paymentCount||0),monthCents:Number(data.summary?.revenueCents||0),monthCount:Number(data.summary?.paymentTransactionCount||0),updatedAt:Date.now(),date:selectedDate}}catch(error){console.warn('Revenue summary refresh failed',error);const entries=localRevenueEntries();revenueSummary={...revenueSummary,todayCents:entries.reduce((sum,item)=>sum+Number(item.receipt.amountCents||0),0),todayCount:entries.length,updatedAt:Date.now(),date:selectedDate}}finally{revenueSummaryLoading=false;renderRevenueSummary()}
+}
 function renderPaymentPanel(){
   if(!$('paymentQueue'))return;
   renderPaymentMissingAlert();
@@ -4029,13 +4091,14 @@ function renderPaymentPanel(){
   $('paymentCount').textContent=String(pending.length);
   $('paymentQueue').innerHTML=invoices.length?invoices.map(p=>{
     const stage=paymentStage(p);
-    const paymentControl=stage==='completed'?`<span class="payment-done">✓ ${lang==='en'?'Payment completed':'تم تنفيذ الدفع'}</span>`:stage==='received'?`<div class="payment-actions-inline"><span class="payment-received">✓ ${lang==='en'?'Request received':'تم استلام الطلب'}</span><button type="button" data-payment-complete-id="${escapeHtml(p.id)}"><span aria-hidden="true">💳</span>${lang==='en'?'Confirm payment completion':'تأكيد تنفيذ الدفع'}</button></div>`:`<button type="button" data-payment-ack-id="${escapeHtml(p.id)}"><span aria-hidden="true">💳</span>${lang==='en'?'Acknowledge payment request':'تأكيد استلام طلب الدفع'}</button>`;
+    const paidTotal=paymentPaidTotalCents(p),paidBadge=paidTotal?`<span class="payment-paid-total">${lang==='en'?'Collected':'تم تحصيل'} ${escapeHtml(formatSar(paidTotal))}</span>`:'';
+    const paymentControl=stage==='completed'?`<div class="payment-actions-inline"><span class="payment-done">✓ ${lang==='en'?'Payment completed':'تم تنفيذ الدفع'}</span><button type="button" class="payment-edit-receipts" data-payment-complete-id="${escapeHtml(p.id)}">${lang==='en'?'Edit / add payment':'تعديل / إضافة دفعة'}</button></div>`:stage==='received'?`<div class="payment-actions-inline"><span class="payment-received">✓ ${lang==='en'?'Request received':'تم استلام الطلب'}</span><button type="button" data-payment-complete-id="${escapeHtml(p.id)}"><span aria-hidden="true">💳</span>${lang==='en'?'Record paid amount':'تسجيل المبلغ المدفوع'}</button></div>`:`<button type="button" data-payment-ack-id="${escapeHtml(p.id)}"><span aria-hidden="true">💳</span>${lang==='en'?'Acknowledge payment request':'تأكيد استلام طلب الدفع'}</button>`;
     const planStatus=effectiveTreatmentPlanStatus(p),planControl=planStatus?`<button type="button" class="payment-linked-plan-action ${planStatus==='submitted'?'ready':''}" data-payment-plan-id="${escapeHtml(p.id)}" data-payment-plan-share="${planStatus==='submitted'?'1':'0'}"><span aria-hidden="true">${planStatus==='submitted'?'↗':'▤'}</span>${planStatus==='submitted'?(lang==='en'?'Share plan + signature':'مشاركة الخطة والتوقيع'):(lang==='en'?'Open treatment plan':'فتح الخطة العلاجية')}</button>`:'';
     const controls=`<div class="payment-workflow-actions">${paymentControl}${planControl}</div>`;
     const items=Array.isArray(p.paymentItems)?p.paymentItems:[];
     const details=items.length?`<div class="payment-items-summary">${items.map(item=>`<span class="payment-item-chip${item.free?' free':''}">${escapeHtml(procedureDisplayName(item.name,item.code))} ×${Number(item.quantity||1)}${item.free?` · ${lang==='en'?'Free':'مجاني'}`:''}</span>`).join('')}</div>`:`<p>${escapeHtml(p.paymentAction||(lang==='en'?'Payment action':'إجراء دفع'))}</p>`;
     const discount=p.paymentDiscount?`<p class="payment-discount-note">🏷 ${lang==='en'?'Discount':'الخصم'}: ${escapeHtml(p.paymentDiscount)}</p>`:'';
-    return `<article class="payment-item ${stage}"><div><strong>💳 ${escapeHtml(firstName(p.name))} — ${escapeHtml(p.file||(lang==='en'?'No file number':'بدون رقم ملف'))}</strong>${details}${discount}<small>${p.paymentRequestedAt?new Date(Number(p.paymentRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'):''}</small></div>${controls}</article>`;
+    return `<article class="payment-item ${stage}"><div><strong>💳 ${escapeHtml(firstName(p.name))} — ${escapeHtml(p.file||(lang==='en'?'No file number':'بدون رقم ملف'))}</strong>${details}${discount}${paidBadge}<small>${p.paymentRequestedAt?new Date(Number(p.paymentRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'):''}</small></div>${controls}</article>`;
   }).join(''):`<div class="payment-empty">${lang==='en'?'No pending payment actions.':'لا توجد إجراءات دفع معلقة.'}</div>`;
 }
 function suggestedTimes(){
@@ -4949,6 +5012,17 @@ function translateTreatmentAndLabModals(){
   setText('#paymentPlanVatField strong',lang==='en'?'Confirm plan tax treatment':'تأكيد المعالجة الضريبية للخطة');
   setText('#paymentPlanVatField small',lang==='en'?'I reviewed eligibility and tax treatment; this confirmation is required before sharing the plan for signature.':'راجعت أهلية المريض والمعالجة الضريبية؛ يلزم هذا التأكيد لتكون الخطة جاهزة للمشاركة والتوقيع.');
   setText('#paymentModal .modal-actions [data-close="paymentModal"]',lang==='en'?'Cancel':'إلغاء');
+  setLabelLead('#paymentCollectionModal .payment-collection-grid>label:nth-child(1)',lang==='en'?'Paid amount (SAR)':'المبلغ المدفوع (ر.س)');
+  setLabelLead('#paymentCollectionModal .payment-collection-grid>label:nth-child(2)',lang==='en'?'Payment method':'طريقة الدفع');
+  setLabelLead('#paymentCollectionModal .payment-collection-grid>label:nth-child(3)',lang==='en'?'Optional note':'ملاحظة اختيارية');
+  const paymentMethods=lang==='en'?['Card','Cash','Transfer','Insurance','Other']:['بطاقة','نقدًا','تحويل','تأمين','أخرى'];
+  Array.from($('paymentReceiptMethod')?.options||[]).forEach((option,index)=>{if(paymentMethods[index])option.textContent=paymentMethods[index]});
+  setLocalizedPlaceholder($('paymentReceiptNote'),'Example: first payment or remaining balance','مثال: دفعة أولى أو سداد المتبقي');
+  setText('#paymentCollectionModal .payment-complete-check strong',lang==='en'?'Payment order is complete':'اكتمل تنفيذ أمر الدفع');
+  setText('#paymentCollectionModal .payment-complete-check small',lang==='en'?'Clear this for a partial payment; the order will remain open.':'ألغِ التحديد إذا كانت هذه دفعة جزئية وسيبقى الطلب قيد المتابعة.');
+  setTexts('#paymentCollectionModal .modal-actions button',[lang==='en'?'Close':'إغلاق',lang==='en'?'Cancel editing':'إلغاء التعديل',paymentReceiptEditingId?(lang==='en'?'Update payment':'تحديث الدفعة'):(lang==='en'?'Save payment':'حفظ الدفعة')]);
+  setText('#floatingRevenueTodayLabel',lang==='en'?'Today collected':'تحصيل اليوم');
+  renderRevenueSummary();
 }
 const STATIC_EN=Object.freeze({
   'مركز العمليات':'Operations center','كل التنبيهات':'All alerts','مركز المواعيد':'Appointment center','مركز الخطط':'Treatment plan center','مركز المعمل':'Laboratory center','مركز الوصفات':'Prescription center',
@@ -4956,7 +5030,8 @@ const STATIC_EN=Object.freeze({
   'اضغط تحديث لعرض الخطط العلاجية.':'Select refresh to load treatment plans.','جميع العيادات':'All clinics','جميع الحالات':'All statuses','غير المعتمدة فقط':'Unapproved only','إجمالي الخطط':'Total plans','غير مكتملة الاعتماد':'Awaiting approval','معتمدة وموقعة':'Approved and signed','تحتاج تصحيح رقم الملف':'File number needs correction',
   'قاعدة بيانات المرضى':'Patient database','استيراد قائمة مرضى كاملة':'Import full patient list','إضافة مريض إلى القاعدة':'Add patient to database','إضافة مريض جديد':'Add new patient','الاسم الكامل *':'Full name *','رقم الملف':'File number','رقم الجوال':'Mobile number','رقم الهوية':'National ID','حفظ في قاعدة المرضى':'Save to patient database','مراجعة قائمة المرضى':'Review patient list','إلغاء الاستيراد':'Cancel import',
   'فتح سجل المريض':'Open patient record','بحث وتعديل وتتبع':'Search, edit, and track','إجراءات ما بعد العلاج':'Post-treatment actions','فتح الخطة':'Open plan','فتح وتعديل':'Open and edit','حذف الخطة':'Delete plan','حالة الاعتماد':'Approval status','رقم الخطة':'Plan number','غير مسجل':'Not registered','ملف':'File','جوال':'Mobile',
-  'إجراءات الدفع المطلوبة للعيادة المحددة':'Payment actions for selected clinic','متابعة الإدارة':'Administration follow-up','لا توجد إجراءات دفع معلقة.':'No pending payment actions.','إضافة مريض':'Add patient','إضافة حالة معمل جديدة':'Add new lab case','تنبيهات الإدارة':'Admin alerts','ضغط العمل':'Workload','الإعدادات':'Settings','تحديث':'Refresh','إغلاق':'Close','إلغاء':'Cancel','حفظ':'Save','حذف':'Delete','بحث':'Search','المريض':'Patient','الحالة':'Status','الإجراء':'Procedure','الملاحظات':'Notes','لا توجد بيانات':'No data available'
+  'إجراءات الدفع المطلوبة للعيادة المحددة':'Payment actions for selected clinic','متابعة الإدارة':'Administration follow-up','لا توجد إجراءات دفع معلقة.':'No pending payment actions.','إضافة مريض':'Add patient','إضافة حالة معمل جديدة':'Add new lab case','تنبيهات الإدارة':'Admin alerts','ضغط العمل':'Workload','الإعدادات':'Settings','تحديث':'Refresh','إغلاق':'Close','إلغاء':'Cancel','حفظ':'Save','حذف':'Delete','بحث':'Search','المريض':'Patient','الحالة':'Status','الإجراء':'Procedure','الملاحظات':'Notes','لا توجد بيانات':'No data available',
+  'سجل التحصيل المرتبط بأمر الدفع':'Collection ledger linked to the payment order','تأكيد وتسجيل الدفع':'Confirm and record payment','المبلغ المدفوع (ر.س)':'Paid amount (SAR)','طريقة الدفع':'Payment method','بطاقة':'Card','نقدًا':'Cash','تحويل':'Transfer','تأمين':'Insurance','أخرى':'Other','ملاحظة اختيارية':'Optional note','اكتمل تنفيذ أمر الدفع':'Payment order is complete','ألغِ التحديد إذا كانت هذه دفعة جزئية وسيبقى الطلب قيد المتابعة.':'Clear this if it is a partial payment; the order will remain open.','الدفعات المسجلة':'Recorded payments','يمكن تعديل أي دفعة أو إضافة دفعة أخرى':'Edit a payment or add another payment','إلغاء التعديل':'Cancel editing','حفظ الدفعة':'Save payment','مراجعة نهاية اليوم':'End-of-day review','ملخص المدفوعات':'Payment summary','الأرقام محسوبة من الدفعات التي أكّدتها الإدارة، ويمكن تصحيحها من أمر الدفع نفسه.':'Totals come from administration-confirmed payments and can be corrected from the payment order.','دخل اليوم':'Today income','دخل الشهر':'Monthly income','دفعات اليوم':'Today payments','فتح الإحصائيات الكاملة':'Open full statistics','تمت المراجعة':'Reviewed'
 });
 function translateStaticArabicDom(){
   document.querySelectorAll('body *').forEach(node=>{
@@ -5393,6 +5468,11 @@ $('appointmentEntryPageBtn')?.addEventListener('click',()=>{setSettingsMenuOpen(
 $('appointmentEntryTopLink')?.addEventListener('click',event=>{event.preventDefault();openAppointmentEntryPage()});
 $('appointmentRequestsPageBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);location.href='./appointment-requests.html'});
 $('floatingLabBtn').addEventListener('click',()=>openLabCasesPage());
+$('floatingRevenueBtn')?.addEventListener('click',()=>{renderRevenueSummary();openModal('revenueSummaryModal');refreshRevenueSummary({force:true})});
+$('refreshRevenueSummaryBtn')?.addEventListener('click',()=>refreshRevenueSummary({force:true}));
+$('savePaymentReceiptBtn')?.addEventListener('click',savePaymentReceipt);
+$('paymentReceiptResetBtn')?.addEventListener('click',resetPaymentReceiptEditor);
+$('paymentReceiptList')?.addEventListener('click',event=>{const edit=event.target.closest('[data-payment-receipt-edit]')?.dataset.paymentReceiptEdit,remove=event.target.closest('[data-payment-receipt-delete]')?.dataset.paymentReceiptDelete;if(edit)editPaymentReceipt(edit);if(remove)deletePaymentReceipt(remove)});
 $('clinicsBtn').addEventListener('click',openClinicDirectory);
 $('addClinicSlotBtn').addEventListener('click',addClinicSlot);
 $('saveClinicsBtn').addEventListener('click',saveClinicDirectory);
@@ -5661,8 +5741,7 @@ $('paymentQueue').addEventListener('click',event=>{
     toast(lang==='en'?'Payment request received':'تم استلام طلب الدفع',lang==='en'?'It is now ready for execution.':'أصبح الطلب جاهزًا للتنفيذ.');
   }
   if(completeId){
-    mutate(()=>{const p=patientById(completeId);if(p){p.paymentAcknowledgedAt=p.paymentAcknowledgedAt||Date.now();p.paymentCompletedAt=Date.now();updateAlert={active:true,message:lang==='en'?`Payment completed for ${firstName(p.name)}`:`تم تنفيذ الدفع للمريض ${firstName(p.name)}`,updatedAt:Date.now(),kind:'payment-completed'}}});
-    toast(lang==='en'?'Payment completed':'تم تنفيذ الدفع',lang==='en'?'A clear completion mark now appears on both pages.':'ظهرت علامة إتمام الدفع في صفحة الإدارة وصفحة العيادة.');
+    openPaymentCollection(completeId);
   }
 });
 $('reviewUrlInput').addEventListener('change',refreshReviewMessageFromUrl);

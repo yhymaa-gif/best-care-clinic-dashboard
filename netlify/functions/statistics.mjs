@@ -107,7 +107,7 @@ const scheduledStart = (date, time) => {
 function buildDateSeries(from, to) {
   const series = [];
   for (let date = from; date <= to; date = addDays(date, 1)) {
-    series.push({ date, appointments: 0, completed: 0, cancelled: 0, paymentRequests: 0 });
+    series.push({ date, appointments: 0, completed: 0, cancelled: 0, paymentRequests: 0, revenueCents: 0, paymentCount: 0 });
   }
   return series;
 }
@@ -128,11 +128,14 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
     completed: 0,
     cancelled: 0,
     paymentPending: 0,
+    revenueCents: 0,
+    paymentCount: 0,
     plans: 0,
     stayTotalMinutes: 0,
     stayMeasured: 0,
   }]));
-  const payments = { requested: 0, acknowledged: 0, completed: 0, pending: 0 };
+  const payments = { requested: 0, acknowledged: 0, completed: 0, pending: 0, collectedCents: 0, transactionCount: 0 };
+  const countedReceipts = new Set();
   let appointments = 0;
   let delaysTotalMinutes = 0;
   let delaysMeasured = 0;
@@ -163,6 +166,26 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       if (patient?.paymentAcknowledgedAt && !patient?.paymentCompletedAt) payments.acknowledged += 1;
       if (patient?.paymentCompletedAt) payments.completed += 1;
       if (patient?.paymentRequired && !patient?.paymentCompletedAt) payments.pending += 1;
+      (Array.isArray(patient?.paymentReceipts) ? patient.paymentReceipts : []).forEach(receipt => {
+        const receiptId = String(receipt?.id || '').trim();
+        const amountCents = Math.max(0, Math.round(numeric(receipt?.amountCents)));
+        const paidAt = numeric(receipt?.paidAt);
+        if (!receiptId || countedReceipts.has(receiptId) || !amountCents || !paidAt) return;
+        const paidDate = riyadhDate(paidAt);
+        if (paidDate < from || paidDate > to) return;
+        countedReceipts.add(receiptId);
+        payments.collectedCents += amountCents;
+        payments.transactionCount += 1;
+        const receiptDay = dailyMap.get(paidDate);
+        if (receiptDay) {
+          receiptDay.revenueCents += amountCents;
+          receiptDay.paymentCount += 1;
+        }
+        if (clinicItem) {
+          clinicItem.revenueCents += amountCents;
+          clinicItem.paymentCount += 1;
+        }
+      });
       const arrivedAt = numeric(patient?.arrivedAt);
       const completedAt = numeric(patient?.completedAt || patient?.actualEndedAt);
       if (status === 'done' && arrivedAt > 0 && completedAt >= arrivedAt) {
@@ -235,6 +258,8 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       averageStayMinutes: stayMeasured ? Math.round(stayTotalMinutes / stayMeasured) : 0,
       stayMeasured,
       paymentPending: payments.pending,
+      revenueCents: payments.collectedCents,
+      paymentTransactionCount: payments.transactionCount,
       planTotal,
       labActive: labTotal - numeric(labStatusCounts.delivered_patient) - numeric(labStatusCounts.cancelled),
       reviewWhatsappShares: communicationCounts.reviewWhatsapp,

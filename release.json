@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.30-admin-signature-verification",
+  "version": "2026.09.30-payment-revenue-ledger",
   "publishedAt": "2026-09-30",
   "summary": {
-    "ar": "يمكن للإدارة تأكيد توقيع ورقي أو خارجي بعد توثيق اسم الموقّع وطريقة التحقق، مع حماية سجل الموافقة.",
-    "en": "Administration can confirm paper or external signatures after documenting the signer and verification method, with consent audit protection."
+    "ar": "تسجيل وتعديل دفعات أوامر الدفع، مع إجمالي يومي وشهري واضح للإدارة.",
+    "en": "Record and edit payment-order receipts with clear daily and monthly revenue totals."
   }
 }

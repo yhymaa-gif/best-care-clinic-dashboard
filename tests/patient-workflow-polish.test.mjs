@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { __test as state } from '../netlify/functions/state.mjs';
 
+test('payment receipt ledger is sanitized and retained with integer cents', () => {
+  const patient=state.cleanPatient({id:'p1',name:'مريض',paymentReceipts:[{id:'pay_1',amountCents:12345.4,paidAt:1000,recordedAt:1000,updatedAt:1100,recordedBy:' الإدارة ',method:'cash',note:' دفعة أولى '},{id:'bad',amountCents:0,paidAt:1000}]});
+  assert.deepEqual(patient.paymentReceipts,[{id:'pay_1',amountCents:12345,paidAt:1000,recordedAt:1000,updatedAt:1100,recordedBy:'الإدارة',method:'cash',note:'دفعة أولى'}]);
+});
+
+test('administration records paid amounts before completing payment and exposes revenue totals', async () => {
+  const [dashboard,html,statistics]=await Promise.all([
+    readFile(new URL('../dashboard.js',import.meta.url),'utf8'),
+    readFile(new URL('../index.html',import.meta.url),'utf8'),
+    readFile(new URL('../netlify/functions/statistics.mjs',import.meta.url),'utf8'),
+  ]);
+  assert.match(dashboard,/function openPaymentCollection\(id\)/);
+  assert.match(dashboard,/function savePaymentReceipt\(\)/);
+  assert.match(dashboard,/openPaymentCollection\(completeId\)/);
+  assert.match(dashboard,/paymentReceipts/);
+  assert.match(html,/id="floatingRevenueBtn"/);
+  assert.match(statistics,/revenueCents/);
+});
+
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 
 test('same-day patient notes survive server cleaning with their own revision time', () => {

@@ -21,6 +21,16 @@ const patientStatusPush={
  left:{title:'مغادرة المريض',actionLabel:'غادر العيادة',color:'#dc2626'}
 };
 const cleanPaymentItems=items=>(Array.isArray(items)?items:[]).slice(0,10).map(item=>({code:String(item?.code||'other').slice(0,40),name:String(item?.name||'').slice(0,100),quantity:Math.max(1,Math.min(99,Number(item?.quantity||1))),free:Boolean(item?.free)})).filter(item=>item.name);
+const cleanPaymentReceipts=items=>(Array.isArray(items)?items:[]).slice(0,50).filter(item=>Number(item?.amountCents)>0).map(item=>({
+ id:String(item?.id||'').replace(/[^a-zA-Z0-9:_-]/g,'').slice(0,100),
+ amountCents:Math.max(1,Math.min(100000000,Math.round(Number(item?.amountCents||0)))),
+ paidAt:Math.max(0,Number(item?.paidAt||0)),
+ recordedAt:Math.max(0,Number(item?.recordedAt||0)),
+ updatedAt:Math.max(0,Number(item?.updatedAt||0)),
+ recordedBy:String(item?.recordedBy||'').replace(/\s+/g,' ').trim().slice(0,120),
+ method:['card','cash','transfer','insurance','other'].includes(item?.method)?item.method:'card',
+ note:String(item?.note||'').replace(/\s+/g,' ').trim().slice(0,240)
+})).filter(item=>item.id&&item.amountCents>0&&item.paidAt>0);
 const cleanPatient=p=>({
  id:String(p?.id||'').slice(0,80),
  name:String(p?.name||'').slice(0,80),
@@ -47,6 +57,7 @@ const cleanPatient=p=>({
  paymentRequestedAt:Number(p?.paymentRequestedAt||0),
  paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0),
  paymentCompletedAt:Number(p?.paymentCompletedAt||0),
+ paymentReceipts:cleanPaymentReceipts(p?.paymentReceipts),
  treatmentPlanStatus:['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
  treatmentPlanUpdatedAt:Number(p?.treatmentPlanUpdatedAt||0),
  treatmentPlanPrintedAt:Number(p?.treatmentPlanPrintedAt||0),
@@ -71,6 +82,7 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
   if(Number(patient.paymentRequestedAt||0)>Number(old.paymentRequestedAt||0))events.push(decorate({type:'payment',title:'أمر دفع جديد',body:'يوجد أمر دفع جديد بانتظار الإدارة.',tag:`payment-request-${patient.id}`},patient));
   else if(Number(patient.paymentAcknowledgedAt||0)>Number(old.paymentAcknowledgedAt||0))events.push(decorate({type:'payment',title:'تم استلام أمر الدفع',body:'أكدت الإدارة استلام طلب الدفع.',tag:`payment-ack-${patient.id}`},patient));
   else if(Number(patient.paymentCompletedAt||0)>Number(old.paymentCompletedAt||0))events.push(decorate({type:'payment',title:'تم تنفيذ الدفع',body:'اكتمل تنفيذ أحد أوامر الدفع.',tag:`payment-done-${patient.id}`},patient));
+  else if(Math.max(0,...(patient.paymentReceipts||[]).map(item=>Number(item.updatedAt||item.recordedAt||0)))>Math.max(0,...(old.paymentReceipts||[]).map(item=>Number(item.updatedAt||item.recordedAt||0))))events.push(decorate({type:'payment',title:'تم تحديث دفعة',body:'حدّثت الإدارة سجل تحصيل أحد أوامر الدفع.',tag:`payment-receipt-${patient.id}`},patient));
   else if(String(patient.treatmentPlanStatus||'')!==String(old.treatmentPlanStatus||'')){
    const planStatus=patient.treatmentPlanStatus;
    const statusCopy={
@@ -103,7 +115,7 @@ export default async request=>{
  if(!canAccessClinic(auth.user,clinicId))return reply({error:'Clinic access denied'},403);
  const store=getStore({name:'clinic-dashboard-days',consistency:'strong'}),key=clinicId==='clinic-1'?`days/${date}`:`clinics/${clinicId}/days/${date}`;
   if(request.method==='GET'){const state=await store.get(key,{type:'json',consistency:'strong'});if(!state)return reply({exists:false,date,patients:[],notes:'',updateAlert:cleanAlert(null),revision:0,updatedAt:0});if(auth.user?.role!=='admin')return reply({exists:true,...state,updateAlert:cleanAlert(state.updateAlert)});const patientDirectory=await getPatientDirectory();const patients=Array.isArray(state.patients)?state.patients.map(patient=>enrichPatientFromDirectory(patientDirectory,patient)):[];return reply({exists:true,...state,patients,updateAlert:cleanAlert(state.updateAlert)})}
-  if(request.method==='PUT'||request.method==='POST'){let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}if(!Array.isArray(body.patients)||body.patients.length>300)return reply({error:'Invalid patients'},400);const clinic={id:clinicId,name:String(body.clinic?.name||'').slice(0,80),doctorName:String(body.clinic?.doctorName||'').slice(0,80),roomNumber:String(body.clinic?.roomNumber||'').slice(0,20)};const existing=await store.get(key,{type:'json',consistency:'strong'});const expected=Number(body.expectedRevision);const currentRevision=Number(existing?.revision||0);if(Number.isFinite(expected)&&expected>=0&&expected!==currentRevision)return reply({error:'Revision conflict',revision:currentRevision,updatedAt:Number(existing?.updatedAt||0)},409);const existingPatients=new Map((existing?.patients||[]).map(patient=>[String(patient.id),patient]));const cleanedPatients=body.patients.map(cleanPatient).map(patient=>{if(auth.user?.role==='admin')return patient;const previous=existingPatients.get(String(patient.id));patient.paymentAcknowledgedAt=Number(previous?.paymentAcknowledgedAt||0);patient.paymentCompletedAt=Number(previous?.paymentCompletedAt||0);if(['patient_accepted','approved','approved_signed','cancelled'].includes(patient.treatmentPlanStatus))patient.treatmentPlanStatus=String(previous?.treatmentPlanStatus||'');return patient});const state={date,clinic,patients:cleanedPatients,notes:String(body.notes||'').slice(0,5000),updateAlert:cleanAlert(body.updateAlert),clientId:String(body.clientId||'').slice(0,100),revision:currentRevision+1,updatedAt:Date.now(),updatedBy:String(auth.user?.displayName||auth.user?.username||'').slice(0,120)};await store.setJSON(key,state);
+  if(request.method==='PUT'||request.method==='POST'){let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}if(!Array.isArray(body.patients)||body.patients.length>300)return reply({error:'Invalid patients'},400);const clinic={id:clinicId,name:String(body.clinic?.name||'').slice(0,80),doctorName:String(body.clinic?.doctorName||'').slice(0,80),roomNumber:String(body.clinic?.roomNumber||'').slice(0,20)};const existing=await store.get(key,{type:'json',consistency:'strong'});const expected=Number(body.expectedRevision);const currentRevision=Number(existing?.revision||0);if(Number.isFinite(expected)&&expected>=0&&expected!==currentRevision)return reply({error:'Revision conflict',revision:currentRevision,updatedAt:Number(existing?.updatedAt||0)},409);const existingPatients=new Map((existing?.patients||[]).map(patient=>[String(patient.id),patient]));const cleanedPatients=body.patients.map(cleanPatient).map(patient=>{if(auth.user?.role==='admin')return patient;const previous=existingPatients.get(String(patient.id));patient.paymentAcknowledgedAt=Number(previous?.paymentAcknowledgedAt||0);patient.paymentCompletedAt=Number(previous?.paymentCompletedAt||0);patient.paymentReceipts=cleanPaymentReceipts(previous?.paymentReceipts);if(['patient_accepted','approved','approved_signed','cancelled'].includes(patient.treatmentPlanStatus))patient.treatmentPlanStatus=String(previous?.treatmentPlanStatus||'');return patient});const state={date,clinic,patients:cleanedPatients,notes:String(body.notes||'').slice(0,5000),updateAlert:cleanAlert(body.updateAlert),clientId:String(body.clientId||'').slice(0,100),revision:currentRevision+1,updatedAt:Date.now(),updatedBy:String(auth.user?.displayName||auth.user?.username||'').slice(0,120)};await store.setJSON(key,state);
     // Apply identity corrections as part of the same server request.  The
     // directory intentionally locks corrected identities against ordinary
     // imports, so a daily state save must explicitly promote an admin edit.
@@ -121,4 +133,4 @@ export default async request=>{
  return reply({error:'Method not allowed'},405);
 };
 
-export const __test={cleanPatient,pushEvents,patientStatusPush};
+export const __test={cleanPatient,cleanPaymentReceipts,pushEvents,patientStatusPush};

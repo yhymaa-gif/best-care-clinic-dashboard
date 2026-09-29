@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260930-admin-signature-verification';
+const CACHE_NAME='bestcare-dashboard-v1-20260930-payment-revenue-ledger';
 const APP_SHELL=[
   './',
   './index.html',
