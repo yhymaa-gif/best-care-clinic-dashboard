@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 const source=await readFile(new URL('../dashboard.js',import.meta.url),'utf8');
 const slice=(start,end)=>source.slice(source.indexOf(start),source.indexOf(end));
-const working=Date.parse('2026-09-07T14:00:00+03:00');
+const working=Date.parse('2026-09-07T07:00:00+03:00');
 test('unchanged plan feed skips a full render but record and identity changes are detected',()=>{
   const c=vm.createContext({});
   vm.runInContext(slice('function registryContentChanged','function patientIdentityRecordKey'),c);
@@ -41,47 +41,47 @@ function harness(overrides={}){
 
 test('working-hours cadence covers visible, background and floating clinic display',()=>{
   const {context:c}=harness();
-  assert.equal(c.syncCadence(working).delay,5000);
+  assert.equal(c.syncCadence(working).delay,15000);
   c.document.hidden=true;
-  assert.equal(c.syncCadence(working).delay,15000);
+  assert.equal(c.syncCadence(working).delay,300000);
   c.window.documentPictureInPicture={window:{closed:false}};
-  assert.equal(c.syncCadence(working).delay,5000);
-  c.window.documentPictureInPicture.window.closed=true;
   assert.equal(c.syncCadence(working).delay,15000);
-  assert.equal(c.syncCadence(Date.parse('2026-09-11T16:00:00+03:00')).delay,900000);
-  assert.equal(c.syncCadence(Date.parse('2026-09-07T23:00:00+03:00')).workHours,false);
+  c.window.documentPictureInPicture.window.closed=true;
+  assert.equal(c.syncCadence(working).delay,300000);
+  assert.equal(c.syncCadence(Date.parse('2026-09-11T16:00:00+03:00')).delay,300000);
+  assert.equal(c.syncCadence(Date.parse('2026-09-07T06:59:59+03:00')).workHours,false);
+  assert.equal(c.syncCadence(Date.parse('2026-09-07T23:59:59+03:00')).workHours,true);
 });
 
-test('reduced polling wakes at 14:00 Riyadh without treating Friday as a work day',()=>{
+test('reduced polling wakes at 07:00 Riyadh every day',()=>{
   const {context:c}=harness();
   assert.equal(c.syncDelayUntilWorkStart(900000,working-10000),10000);
-  assert.equal(c.syncDelayUntilWorkStart(900000,Date.parse('2026-09-11T13:59:50+03:00')),900000);
-  assert.equal(c.syncDelayUntilWorkStart(900000,Date.parse('2026-09-12T13:59:50+03:00')),10000);
+  assert.equal(c.syncDelayUntilWorkStart(900000,Date.parse('2026-09-11T06:59:50+03:00')),10000);
 });
 
 test('slow auxiliary feeds do not hold up patient synchronization',async()=>{
   const {context:c,calls}=harness({refreshAuxiliaryData:()=>new Promise(()=>{})});
-  c.syncCadence=()=>({workHours:true,delay:5000});
+  c.syncCadence=()=>({workHours:true,delay:15000});
   await c.runAutomaticSync();
   assert.equal(calls.pull,1);
-  assert.deepEqual(calls.delays,[5000]);
+  assert.deepEqual(calls.delays,[15000]);
   assert.equal(c.sync.cycleRunning,false);
 });
 
 test('simultaneous wake signals run one patient pull',async()=>{
   let finish,pulls=0;
   const {context:c,calls}=harness({pullState:()=>{pulls++;return new Promise(resolve=>{finish=resolve})}});
-  c.syncCadence=()=>({workHours:true,delay:5000});
+  c.syncCadence=()=>({workHours:true,delay:15000});
   const first=c.runAutomaticSync();
   await c.runAutomaticSync();
   assert.equal(pulls,1);
   finish();await first;
-  assert.deepEqual(calls.delays,[5000]);
+  assert.deepEqual(calls.delays,[15000]);
 });
 
 test('pending edits take priority and get a prompt retry without pulling over them',async()=>{
   const {context:c,calls}=harness();
-  c.syncCadence=()=>({workHours:true,delay:5000});c.sync.dirty=true;
+  c.syncCadence=()=>({workHours:true,delay:15000});c.sync.dirty=true;
   await c.runAutomaticSync();
   assert.equal(calls.pull,0);assert.equal(calls.push,1);
   assert.deepEqual(calls.delays,[250]);
@@ -91,7 +91,7 @@ test('pending edits take priority and get a prompt retry without pulling over th
 
 test('offline work pauses network traffic and retains pending edits',async()=>{
   const {context:c,calls}=harness();
-  c.syncCadence=()=>({workHours:true,delay:5000});
+  c.syncCadence=()=>({workHours:true,delay:15000});
   c.navigator.onLine=false;c.sync.dirty=true;
   await c.runAutomaticSync();
   assert.equal(calls.pull+calls.push,0);assert.equal(c.sync.dirty,true);
