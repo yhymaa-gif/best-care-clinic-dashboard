@@ -2067,7 +2067,7 @@ function canChangePlanStatus(current,next){
   if(current==='cancelled')return next==='draft';
   const transitions={
     draft:['submitted'],
-    submitted:['rejected'],
+    submitted:['approved_signed','rejected'],
     patient_accepted:['approved_signed','rejected'],
     approved:['approved_signed','rejected'],
     approved_signed:['rejected'],
@@ -2995,21 +2995,52 @@ function applyPlanStatusMetadata(plan,nextStatus,rejectionReason='',cancellation
   plan.meta.lastPrintedAt=0;
   if(nextStatus!=='cancelled')Object.assign(plan.meta,{cancelledAt:0,cancelledBy:'',cancellationReason:''});
   if(nextStatus==='draft'){
-    Object.assign(plan.meta,{doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
+    Object.assign(plan.meta,{doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(nextStatus==='submitted'){
     Object.assign(plan.meta,VIEW_MODE==='clinic'
       ?{doctorApprovedAt:now,doctorApprovedBy:actor,administrationPreparedAt:0,administrationPreparedBy:''}
       :{doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:now,administrationPreparedBy:actor},
-      {submittedAt:now,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
+      {submittedAt:now,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0,rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(nextStatus==='patient_accepted'){
     Object.assign(plan.meta,{patientAcceptedAt:now,patientAcceptedBy:actor,approvedAt:0,approvedBy:'',rejectedAt:0,rejectedBy:'',rejectionReason:''});
   }else if(['approved','approved_signed'].includes(nextStatus)){
     Object.assign(plan.meta,{approvedAt:now,approvedBy:actor,rejectedAt:0,rejectedBy:'',rejectionReason:'',revision:Math.max(1,Number(plan.meta.revision||1)+1)});
   }else if(nextStatus==='rejected'){
-    Object.assign(plan.meta,{rejectedAt:now,rejectedBy:actor,rejectionReason:String(rejectionReason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500),patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0});
+    Object.assign(plan.meta,{rejectedAt:now,rejectedBy:actor,rejectionReason:String(rejectionReason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500),patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0});
   }else if(nextStatus==='cancelled'){
     Object.assign(plan.meta,{cancelledAt:now,cancelledBy:actor,cancellationReason:String(cancellationReason||'أُلغيت الخطة بقرار الإدارة.').trim().slice(0,500)});
   }
+}
+function collectAdministrationSignatureVerification(plan){
+  const patientName=String(plan?.patient?.fullName||'').trim();
+  const signerName=prompt(
+    lang==='en'?'Enter the name of the patient or guardian whose signature administration verified:':'اكتب اسم المريض أو الوصي الذي تحققت الإدارة من توقيعه:',
+    String(plan?.signatures?.signerName||patientName).trim()
+  );
+  if(signerName===null)return null;
+  const cleanSigner=String(signerName).trim().slice(0,120);
+  if(!cleanSigner){toast(lang==='en'?'Signer name required':'اسم الموقّع مطلوب',lang==='en'?'Enter the patient or guardian name.':'اكتب اسم المريض أو الوصي الموقّع.');return null}
+  const verificationNote=prompt(
+    lang==='en'?'Record how the signature was verified (for example: signed paper copy reviewed by administration):':'اكتب طريقة التحقق من التوقيع (مثال: تمت معاينة النسخة الورقية الموقعة لدى الإدارة):',
+    lang==='en'?'Signed paper copy reviewed by administration':'تمت معاينة النسخة الورقية الموقعة لدى الإدارة'
+  );
+  if(verificationNote===null)return null;
+  const cleanNote=String(verificationNote).trim().replace(/\s+/g,' ').slice(0,500);
+  if(cleanNote.length<8){toast(lang==='en'?'Verification detail required':'تفاصيل التحقق مطلوبة',lang==='en'?'Write a clear verification method.':'اكتب طريقة واضحة للتحقق من التوقيع.');return null}
+  const confirmed=confirm(lang==='en'
+    ?'I confirm that administration actually reviewed the patient/guardian signature. This action is audited and does not create a signature on the patient’s behalf.'
+    :'أؤكد أن الإدارة عاينت فعليًا توقيع المريض/الوصي. سيتم تسجيل العملية، ولا يعني ذلك إنشاء توقيع بالنيابة عن المريض.');
+  if(!confirmed)return null;
+  return{signerName:cleanSigner,note:cleanNote};
+}
+function applyAdministrationSignatureVerification(plan,verification){
+  const now=Date.now(),actor=String(authUser?.displayName||authUser?.username||(lang==='en'?'Administration':'الإدارة')).trim().slice(0,120);
+  plan.signatures=plan.signatures&&typeof plan.signatures==='object'?plan.signatures:{};
+  plan.consent=plan.consent&&typeof plan.consent==='object'?plan.consent:{};
+  plan.signatures.signerName=verification.signerName;
+  Object.assign(plan.meta,{patientAcceptedAt:now,patientAcceptedBy:verification.signerName,consentMethod:'admin_verified',consentEvidenceId:crypto.randomUUID?.()||`admin-verified-${now}`,consentVerifiedAt:now,consentVerifiedBy:actor,consentVerificationNote:verification.note,consentPlanRevision:Number(plan.meta.revision||1),consentVersion:2});
+  plan.consent.termsVersion=2;
+  plan.consent.photoConsentRecorded=plan.consent.photoConsentRecorded===true;
 }
 async function changeTreatmentPlanStatus(id,nextStatus,select){
   const patient=patientById(id),currentStatus=patient?effectiveTreatmentPlanStatus(patient):'';
@@ -3051,8 +3082,21 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
     if(!loaded.ok||!loadedData.exists||!loadedData.plan)throw new Error(lang==='en'?'Open and save the treatment plan first.':'افتح الخطة العلاجية واحفظها أولًا.');
     originalPlan=loadedData.plan;
     const updatedPlan=JSON.parse(JSON.stringify(originalPlan));
-    if(nextStatus==='approved_signed'&&!updatedPlan.signatures?.patientSignature)throw new Error(lang==='en'?'A recorded patient signature is required. Open the plan to complete it.':'يلزم وجود توقيع موثق للمريض. افتح الخطة واستكمل التوقيع.');
+    let administrationVerification=null;
+    if(nextStatus==='approved_signed'&&!updatedPlan.signatures?.patientSignature){
+      administrationVerification=collectAdministrationSignatureVerification(updatedPlan);
+      if(!administrationVerification){select.value=currentStatus;return}
+    }
     applyPlanStatusMetadata(updatedPlan,nextStatus,rejectionReason,cancellationReason);
+    if(nextStatus==='approved_signed'){
+      if(administrationVerification)applyAdministrationSignatureVerification(updatedPlan,administrationVerification);
+      else if(!['patient_link','in_clinic'].includes(updatedPlan.meta?.consentMethod)){
+        const now=Date.now();
+        updatedPlan.signatures=updatedPlan.signatures&&typeof updatedPlan.signatures==='object'?updatedPlan.signatures:{};
+        updatedPlan.signatures.signerName=String(updatedPlan.signatures.signerName||updatedPlan.patient?.fullName||'').trim();
+        Object.assign(updatedPlan.meta,{patientAcceptedAt:Number(updatedPlan.meta.patientAcceptedAt||now),patientAcceptedBy:updatedPlan.signatures.signerName,consentMethod:'in_clinic',consentEvidenceId:updatedPlan.meta.consentEvidenceId||crypto.randomUUID?.()||`in-clinic-${now}`,consentPlanRevision:Number(updatedPlan.meta.revision||1),consentVersion:2});
+      }
+    }
 
     const saved=await request(planUrl,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:updatedPlan})});
     if(!saved.ok)throw new Error(lang==='en'?'Could not save the treatment plan.':'تعذر حفظ الخطة العلاجية.');
@@ -3069,6 +3113,11 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
         patientAcceptedBy:updatedPlan.meta?.patientAcceptedBy||'',
         approvedAt:updatedPlan.meta?.approvedAt||0,
         approvedBy:updatedPlan.meta?.approvedBy||'',
+        consentMethod:updatedPlan.meta?.consentMethod||'',
+        consentEvidenceId:updatedPlan.meta?.consentEvidenceId||'',
+        consentVerifiedAt:updatedPlan.meta?.consentVerifiedAt||0,
+        consentVerifiedBy:updatedPlan.meta?.consentVerifiedBy||'',
+        consentVerificationNote:updatedPlan.meta?.consentVerificationNote||'',
         photoConsent:updatedPlan.consent?.photoConsent===true,
         photoConsentRecorded:updatedPlan.consent?.photoConsentRecorded===true||(Number(updatedPlan.consent?.termsVersion||0)>=2&&Number(updatedPlan.meta?.patientAcceptedAt||0)>0),
         consentTermsVersion:Number(updatedPlan.consent?.termsVersion||0),

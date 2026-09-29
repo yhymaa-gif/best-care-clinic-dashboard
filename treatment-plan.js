@@ -58,7 +58,7 @@
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
       clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:source.nationalId||'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -432,14 +432,15 @@
       const signature=String(state?.signatures?.patientSignature||'');
       const hasStoredSignature=signature.startsWith('data:image/png;base64,');
       const verifiedPatientLink=hasStoredSignature&&state?.meta?.status==='approved_signed'&&state?.meta?.consentMethod==='patient_link'&&Boolean(state?.meta?.consentEvidenceId);
+      const verifiedByAdministration=state?.meta?.status==='approved_signed'&&state?.meta?.consentMethod==='admin_verified'&&Boolean(state?.meta?.consentEvidenceId)&&Number(state?.meta?.consentVerifiedAt||0)>0;
       if(hasStoredSignature){toggle.checked=true;wrap.classList.add('active','has-stored-signature');line.style.display='none'}
-      else{wrap.classList.remove('has-stored-signature');if(!toggle.checked)wrap.classList.remove('active');line.style.display=toggle.checked?'none':'block'}
-      toggle.disabled=verifiedPatientLink;
-      $('clearSignatureBtn').disabled=verifiedPatientLink;
-      $('fixSignatureBtn').disabled=verifiedPatientLink;
-      $('signerName').readOnly=verifiedPatientLink;
-      if(notice){notice.hidden=!hasStoredSignature;notice.textContent=verifiedPatientLink?'✓ توقيع المريض محفوظ وموثق من رابط التوقيع':'✓ يوجد توقيع محفوظ داخل الخطة'}
-      canvas.setAttribute('aria-label',verifiedPatientLink?'توقيع المريض المحفوظ والموثق':'لوحة توقيع المريض');
+      else{wrap.classList.remove('has-stored-signature');if(!toggle.checked||verifiedByAdministration)wrap.classList.remove('active');line.style.display=toggle.checked&&!verifiedByAdministration?'none':'block'}
+      toggle.disabled=verifiedPatientLink||verifiedByAdministration;
+      $('clearSignatureBtn').disabled=verifiedPatientLink||verifiedByAdministration;
+      $('fixSignatureBtn').disabled=verifiedPatientLink||verifiedByAdministration;
+      $('signerName').readOnly=verifiedPatientLink||verifiedByAdministration;
+      if(notice){notice.hidden=!hasStoredSignature&&!verifiedByAdministration;notice.textContent=verifiedPatientLink?'✓ توقيع المريض محفوظ وموثق من رابط التوقيع':verifiedByAdministration?`✓ أكدت الإدارة معاينة توقيع ${state.signatures.signerName||state.patient.fullName||'المريض'} — ${state.meta.consentVerificationNote||'تم التحقق من التوقيع الخارجي'}`:'✓ يوجد توقيع محفوظ داخل الخطة'}
+      canvas.setAttribute('aria-label',verifiedPatientLink?'توقيع المريض المحفوظ والموثق':verifiedByAdministration?'توقيع خارجي عاينته الإدارة':'لوحة توقيع المريض');
       if(!hasStoredSignature){
         if(renderedSignatureValue){canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);renderedSignatureValue=''}
         signatureFixed=false;
@@ -649,7 +650,7 @@
         }
       }
       else if(['patient_accepted','approved','approved_signed','rejected'].includes(state.meta.status)){
-        state.meta.status='submitted';state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;
+        state.meta.status='submitted';state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentVerifiedAt=0;state.meta.consentVerifiedBy='';state.meta.consentVerificationNote='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;
       }
       $('paper').classList.remove('approved');
       $('saveStatus').classList.remove('saved');$('saveStatus').textContent='تعديلات غير محفوظة';
@@ -715,6 +716,9 @@
             approvedBy:state.meta.approvedBy||'',
             consentMethod:state.meta.consentMethod||'',
             consentEvidenceId:state.meta.consentEvidenceId||'',
+            consentVerifiedAt:state.meta.consentVerifiedAt||0,
+            consentVerifiedBy:state.meta.consentVerifiedBy||'',
+            consentVerificationNote:state.meta.consentVerificationNote||'',
             photoConsent:state.consent?.photoConsent===true,
             photoConsentRecorded:state.consent?.photoConsentRecorded===true||(Number(state.consent?.termsVersion||0)>=2&&Number(state.meta.patientAcceptedAt||0)>0),
             consentTermsVersion:Number(state.consent?.termsVersion||0),
@@ -750,6 +754,9 @@
       state.meta.approvedBy='';
       state.meta.consentMethod='';
       state.meta.consentEvidenceId='';
+      state.meta.consentVerifiedAt=0;
+      state.meta.consentVerifiedBy='';
+      state.meta.consentVerificationNote='';
       state.meta.consentPlanRevision=0;
       state.meta.consentVersion=0;
       state.meta.rejectedAt=0;
@@ -777,7 +784,7 @@
       collectHeaderFields();const missing=missingFields();
       if(missing.length){toast('تعذر الإرسال',`أكمل: ${missing.join('، ')}`);renderProgress();return}
       const approvalTime=Date.now();
-      state.meta.status='submitted';state.meta.doctorApprovedAt=approvalTime;state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';state.meta.administrationPreparedAt=0;state.meta.administrationPreparedBy='';state.meta.submittedAt=approvalTime;state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
+      state.meta.status='submitted';state.meta.doctorApprovedAt=approvalTime;state.meta.doctorApprovedBy=currentUser?.displayName||currentUser?.username||'الطبيب';state.meta.administrationPreparedAt=0;state.meta.administrationPreparedBy='';state.meta.submittedAt=approvalTime;state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentVerifiedAt=0;state.meta.consentVerifiedBy='';state.meta.consentVerificationNote='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;state.meta.rejectedAt=0;state.meta.rejectedBy='';state.meta.rejectionReason='';
       const saved=await savePlan(true);if(!saved){state.meta.status='draft';render();return}
       await Promise.all([syncPlanStatusToDashboard('submitted'),syncPlanRegistry('submitted')]);render();toast('تم اعتماد المسودة وإرسالها','اعتمد الطبيب المسودة، وأصبحت الآن لدى الإدارة لاستكمال الإجراءات.');
     }
@@ -799,6 +806,9 @@
       state.meta.approvedBy='';
       state.meta.consentMethod='';
       state.meta.consentEvidenceId='';
+      state.meta.consentVerifiedAt=0;
+      state.meta.consentVerifiedBy='';
+      state.meta.consentVerificationNote='';
       state.meta.consentPlanRevision=0;
       state.meta.consentVersion=0;
       state.meta.rejectedAt=0;
@@ -846,7 +856,7 @@
       const previousStatus=state.meta.status;
       const reason=prompt('اكتب سبب عدم اعتماد الخطة أو التعديل المطلوب:','تحتاج الخطة إلى مراجعة الإجراءات أو الأسعار.');
       if(reason===null)return;
-      state.meta.status='rejected';state.meta.rejectedAt=Date.now();state.meta.rejectedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.rejectionReason=String(reason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500);state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;
+      state.meta.status='rejected';state.meta.rejectedAt=Date.now();state.meta.rejectedBy=currentUser?.displayName||currentUser?.username||'الإدارة';state.meta.rejectionReason=String(reason||'تحتاج الخطة إلى تعديل.').trim().slice(0,500);state.meta.patientAcceptedAt=0;state.meta.patientAcceptedBy='';state.meta.approvedAt=0;state.meta.approvedBy='';state.meta.consentMethod='';state.meta.consentEvidenceId='';state.meta.consentVerifiedAt=0;state.meta.consentVerifiedBy='';state.meta.consentVerificationNote='';state.meta.consentPlanRevision=0;state.meta.consentVersion=0;
       const saved=await savePlan(true);if(!saved){state.meta.status=previousStatus;render();return}
       await Promise.all([syncPlanStatusToDashboard('rejected'),syncPlanRegistry('rejected',state.meta.rejectionReason)]);
       render();toast('أُعيدت الخطة إلى العيادة','ستظهر علامة «خطة غير معتمدة» بجانب المريض حتى يتم تعديلها وإرسالها مجددًا.');
@@ -1320,7 +1330,7 @@
         applyPaymentSourceToNewPlan();
       }else if(remoteResult?.carriedForward&&!local){
         const previousPlanNo=state.meta.planNo||'';
-        state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
+        state.meta={...state.meta,planNo:nextPlanNo(),issuedAt:new Date().toISOString(),status:'draft',revision:1,relation:'addendum',parentPlanNo:previousPlanNo,doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''};
         state.consent={photoConsent:true,photoConsentRecorded:false,photoConsentDefaultVersion:2,photoConsentAcceptedAt:0,termsVersion:0};
         state.signatures={patientSignature:'',signerName:'',guardianRelation:'',doctorName:'',doctorSignedAt:'',witnessName:'',witnessSignedAt:''};
         if(source.file)state.patient.fileNo=source.file;

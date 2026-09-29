@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.15-patient-workflow-polish",
-  "publishedAt": "2026-09-15",
+  "version": "2026.09.30-admin-signature-verification",
+  "publishedAt": "2026-09-30",
   "summary": {
-    "ar": "حفظ الاسم والملاحظات أسرع، تنبيه المعمل للتاج، ترتيب أوضح للدور، وترجمة إنجليزية موسعة.",
-    "en": "Faster name and note saving, crown lab alerts, clearer patient queue, and expanded English coverage."
+    "ar": "يمكن للإدارة تأكيد توقيع ورقي أو خارجي بعد توثيق اسم الموقّع وطريقة التحقق، مع حماية سجل الموافقة.",
+    "en": "Administration can confirm paper or external signatures after documenting the signer and verification method, with consent audit protection."
   }
 }

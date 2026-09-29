@@ -67,8 +67,11 @@ const cleanPlan = plan => ({
     patientAcceptedBy: cleanText(plan?.meta?.patientAcceptedBy, 120),
     approvedAt: cleanNumber(plan?.meta?.approvedAt, 0, Number.MAX_SAFE_INTEGER),
     approvedBy: cleanText(plan?.meta?.approvedBy, 120),
-    consentMethod: ['patient_link', 'in_clinic'].includes(plan?.meta?.consentMethod) ? plan.meta.consentMethod : '',
+    consentMethod: ['patient_link', 'in_clinic', 'admin_verified'].includes(plan?.meta?.consentMethod) ? plan.meta.consentMethod : '',
     consentEvidenceId: cleanText(plan?.meta?.consentEvidenceId, 80),
+    consentVerifiedAt: cleanNumber(plan?.meta?.consentVerifiedAt, 0, Number.MAX_SAFE_INTEGER),
+    consentVerifiedBy: cleanText(plan?.meta?.consentVerifiedBy, 120),
+    consentVerificationNote: cleanText(plan?.meta?.consentVerificationNote, 500),
     consentPlanRevision: cleanNumber(plan?.meta?.consentPlanRevision, 0, 100_000),
     consentVersion: cleanNumber(plan?.meta?.consentVersion, 0, 100),
     lastPrintedAt: cleanNumber(plan?.meta?.lastPrintedAt, 0, Number.MAX_SAFE_INTEGER),
@@ -234,23 +237,37 @@ export default async request => {
     const previousStatus = String(existingForPlan?.plan?.meta?.status || '');
     const existingSignature = String(existingForPlan?.plan?.signatures?.patientSignature || '');
     const existingConsentEvidence = cleanText(existingForPlan?.plan?.meta?.consentEvidenceId, 80);
+    const existingConsentMethod = cleanText(existingForPlan?.plan?.meta?.consentMethod, 40);
+    const existingHasVerifiedConsent = Boolean(existingSignature)
+      || (existingConsentMethod === 'admin_verified'
+        && Boolean(existingConsentEvidence)
+        && Number(existingForPlan?.plan?.meta?.consentVerifiedAt || 0) > 0);
     const preservesSignedConsent = plan.meta.status === 'approved_signed'
-      && Boolean(existingSignature)
       && plan.signatures.patientSignature === existingSignature
       && Boolean(existingConsentEvidence)
       && plan.meta.consentEvidenceId === existingConsentEvidence
+      && plan.meta.consentMethod === existingConsentMethod
       && Number(plan.meta.patientAcceptedAt || 0) === Number(existingForPlan?.plan?.meta?.patientAcceptedAt || 0);
-    if (previousStatus === 'approved_signed' && existingSignature && !preservesSignedConsent) {
+    if (previousStatus === 'approved_signed' && existingHasVerifiedConsent && !preservesSignedConsent) {
       return reply({ error: 'الخطة الموقعة محمية ولا يمكن مسح توقيع المريض أو استبدال موافقته. أنشئ خطة أو ملحقًا جديدًا للتعديل.' }, 409);
     }
     if (plan.meta.status === 'patient_accepted' && previousStatus !== 'patient_accepted') {
       return reply({ error: 'Patient consent must be completed through the plan signature flow' }, 409);
     }
     if (['approved', 'approved_signed'].includes(plan.meta.status) && plan.meta.status !== previousStatus) {
-      const hasSignatureEvidence = Boolean(plan.signatures?.patientSignature)
+      const hasDigitalSignatureEvidence = Boolean(plan.signatures?.patientSignature)
         && Boolean(plan.meta.consentEvidenceId)
         && ['patient_link', 'in_clinic'].includes(plan.meta.consentMethod);
-      if (!hasSignatureEvidence) return reply({ error: 'Verified patient signature evidence is required' }, 409);
+      const hasAdministrationVerification = auth.user?.role === 'admin'
+        && plan.meta.consentMethod === 'admin_verified'
+        && Boolean(plan.meta.consentEvidenceId)
+        && Number(plan.meta.consentVerifiedAt || 0) > 0
+        && Boolean(plan.meta.consentVerifiedBy)
+        && Boolean(plan.meta.consentVerificationNote)
+        && Number(plan.meta.patientAcceptedAt || 0) > 0
+        && Boolean(plan.meta.patientAcceptedBy)
+        && Boolean(plan.signatures?.signerName);
+      if (!hasDigitalSignatureEvidence && !hasAdministrationVerification) return reply({ error: 'Verified patient signature evidence is required' }, 409);
     }
     if (auth.user?.role !== 'admin' && !['draft', 'submitted', 'rejected'].includes(plan.meta.status)) {
       return reply({ error: 'Administration approval is required for this plan status' }, 403);

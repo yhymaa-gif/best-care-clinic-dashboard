@@ -6,7 +6,7 @@ import {
   normalizePatient,
   samePatient,
   validatePatient
-} from './appointment-entry-core.js?v=20260915-patient-workflow-polish';
+} from './appointment-entry-core.js?v=20260930-admin-signature-verification';
 
 const $=id=>document.getElementById(id);
 const API={auth:'/api/auth?action=session',clinics:'/api/clinics',lookup:'/api/patient-lookup',patients:'/api/patients',profile:'/api/patient-profile',state:'/api/state'};

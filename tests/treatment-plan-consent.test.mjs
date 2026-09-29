@@ -96,7 +96,7 @@ test('a stored WhatsApp signature is restored visibly and protected from stale p
     read('netlify/functions/treatment-plan-consent.mjs')
   ]);
   assert.match(html, /id="storedSignatureNotice"/);
-  assert.match(html, /treatment-plan\.js\?v=20260915-patient-workflow-polish/);
+  assert.match(html, /treatment-plan\.js\?v=20260930-admin-signature-verification/);
   assert.match(client, /function renderStoredPatientSignature\(\)/);
   assert.match(client, /renderStoredPatientSignature\(\);/);
   assert.match(client, /image\.src=signature/);
@@ -162,14 +162,19 @@ test('signature page mirrors the principal plan terms and keeps photography cons
   assert.doesNotMatch(consentPage, /id="photoConsent"[^>]+required/);
 });
 
-test('manual administration status change cannot bypass patient signature evidence', async () => {
+test('administration may confirm an externally signed plan only with explicit audited verification', async () => {
   const [dashboard, planClient, planCenter, planEndpoint] = await Promise.all([read('dashboard.js'), read('treatment-plan.js'), read('treatment-plans.js'), read('netlify/functions/treatment-plan.mjs')]);
-  assert.match(dashboard, /submitted:\['rejected'\]/);
-  assert.match(dashboard, /nextStatus==='approved_signed'&&!updatedPlan\.signatures\?\.patientSignature/);
+  assert.match(dashboard, /submitted:\['approved_signed','rejected'\]/);
+  assert.match(dashboard, /collectAdministrationSignatureVerification/);
+  assert.match(dashboard, /consentMethod:'admin_verified'/);
+  assert.match(dashboard, /لا يعني ذلك إنشاء توقيع بالنيابة عن المريض/);
   assert.match(planClient, /if\(!state\.signatures\.patientSignature\)/);
   assert.match(planClient, /consentMethod='in_clinic'/);
+  assert.match(planClient, /verifiedByAdministration/);
   assert.match(planCenter, /if\(!canManageStatus\(previous,status\)\)/);
   assert.match(planCenter, /لا يمكن اعتماد الخطة يدويًا/);
   assert.match(planEndpoint, /Patient consent must be completed through the plan signature flow/);
+  assert.match(planEndpoint, /hasAdministrationVerification/);
+  assert.match(planEndpoint, /consentVerificationNote/);
   assert.match(planEndpoint, /Verified patient signature evidence is required/);
 });
