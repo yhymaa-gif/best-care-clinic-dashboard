@@ -137,8 +137,8 @@ function adminHubCadence(){
   if(cadence.workHours)return syncDisplayVisible()?20000:60000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.66-operational-income-summary';
-const RELEASE_SUMMARY_FALLBACK={ar:'إحصاء تشغيلي مبسط للدخل اليومي والشهري من المبالغ التي تسجلها الإدارة.',en:'Simple operational daily and monthly income totals from amounts entered by administration.'};
+const DASHBOARD_BUILD='7.67-review-request-counter';
+const RELEASE_SUMMARY_FALLBACK={ar:'إظهار عدد مرات إرسال طلب تقييم الخرائط لكل مريض مع وقت آخر إرسال.',en:'Shows each patient’s map review request count and the most recent request time.'};
 let pendingReleaseSummary={...RELEASE_SUMMARY_FALLBACK};
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
@@ -1956,7 +1956,8 @@ async function sendReviewWhatsapp(){
     if(!tracked)tracked=await recordPatientCommunication(patient,'review_whatsapp',{source:'dashboard',retry:true},eventId);
     closeModal('reviewModal');
     renderTable();
-    toast(lang==='en'?'Review request recorded':'تم تسجيل طلب التقييم',tracked?(lang==='en'?'WhatsApp opened and the statistics counter was updated.':'تم فتح واتساب وتحديث عداد الإحصائيات.'):(lang==='en'?'WhatsApp opened; statistics tracking will need another attempt.':'تم فتح واتساب، وتعذر تحديث الإحصائية بعد محاولتين.'));
+    const requestCount=Math.max(1,Number(patient.reviewRequestCount||0));
+    toast(lang==='en'?'Review request recorded':'تم تسجيل طلب التقييم',tracked?(lang==='en'?`WhatsApp opened. This patient has received ${requestCount} review request${requestCount===1?'':'s'}.`:`تم فتح واتساب. أُرسل طلب التقييم لهذا المريض ${requestCount} ${requestCount===1?'مرة':'مرات'}.`):(lang==='en'?`WhatsApp opened and the patient counter is now ${requestCount}; central statistics tracking will retry later.`:`تم فتح واتساب وأصبح عداد المريض ${requestCount}، وستعاد محاولة تحديث الإحصائية المركزية لاحقًا.`));
   }finally{
     if(sendButton){sendButton.disabled=false;sendButton.textContent=originalLabel}
   }
@@ -2928,7 +2929,7 @@ function renderTable(){
         </td>
         <td class="hide-screen">
           <div class="row-actions">
-            ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b><i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
+            ${displayStatus==='done'?`<button class="mini review-row-btn" type="button" data-review-id="${escapeHtml(p.id)}" title="${lang==='en'?'Request a Google review via WhatsApp':'طلب تقييم Google عبر واتساب'}"><span class="whatsapp-gold-mark" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.149-.67.149-.198.297-.767.967-.94 1.166-.174.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.174-.297-.018-.458.13-.606.134-.133.298-.347.446-.521.149-.173.198-.297.298-.495.099-.198.05-.372-.025-.521-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.009-.371-.011-.57-.011-.198 0-.52.074-.792.372-.273.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.262.489 1.693.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347M12.004 21.5h-.004a9.45 9.45 0 0 1-4.817-1.318l-.345-.205-3.582.94.956-3.493-.224-.358A9.44 9.44 0 0 1 2.54 12.03C2.542 6.806 6.795 2.55 12.01 2.55a9.39 9.39 0 0 1 6.709 2.785 9.42 9.42 0 0 1 2.773 6.711c-.002 5.224-4.255 9.474-9.488 9.474m8.064-17.544A11.32 11.32 0 0 0 12.01.615C5.732.615.62 5.724.618 12.03c0 2.012.525 3.974 1.521 5.704L.522 23.64l6.043-1.585a11.4 11.4 0 0 0 5.435 1.383h.005c6.279 0 11.393-5.11 11.395-11.392a11.32 11.32 0 0 0-3.332-8.09"/></svg></span><b>${lang==='en'?'Request review':'طلب تقييم'}</b>${Number(p.reviewRequestCount||0)>0?`<span class="review-request-count" aria-label="${lang==='en'?`${Number(p.reviewRequestCount)} requests sent`:`أرسل ${Number(p.reviewRequestCount)} مرات`}">×${Number(p.reviewRequestCount)}</span>`:''}<i class="review-star star-one" aria-hidden="true">★</i><i class="review-star star-two" aria-hidden="true">✦</i><i class="review-star star-three" aria-hidden="true">★</i></button>`:''}
             ${VIEW_MODE==='clinic'?clinicIconAction('🦷',patientNeedsLabCase(p)?(lang==='en'?'Required: add crown laboratory case':'مطلوب: إضافة حالة التاج للمعمل'):(lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض'),`data-lab-entry-id="${escapeHtml(p.id)}"`,`clinic-row-action lab${patientNeedsLabCase(p)?' lab-needed':''}`): `<button class="mini lab-entry-btn${patientNeedsLabCase(p)?' lab-needed':''}" type="button" data-lab-entry-id="${escapeHtml(p.id)}" title="${patientNeedsLabCase(p)?(lang==='en'?'Required: add crown laboratory case':'مطلوب: إضافة حالة التاج للمعمل'):(lang==='en'?'Add dental lab case':'إضافة حالة معمل للمريض')}"><span class="lab-entry-icon" aria-hidden="true"><span class="lab-entry-tooth">🦷</span><span class="lab-entry-brush">🪥</span></span><span class="lab-entry-label">${lang==='en'?'Dental lab':'معمل'}</span></button>`}
             ${VIEW_MODE==='clinic'?clinicIconAction('📋',treatmentPlanButtonText(p),`data-plan-id="${escapeHtml(p.id)}"`,'clinic-row-action plan'): `<button class="mini plan-row-btn" type="button" data-plan-id="${escapeHtml(p.id)}">${escapeHtml(treatmentPlanButtonText(p))}</button>`}
              ${earliestAppointmentActionMarkup(p,displayStatus)}
@@ -2950,10 +2951,15 @@ function renderTable(){
     if(!patient.reviewRequestedAt)return;
     const button=els.patientRows.querySelector(`[data-review-id="${CSS.escape(String(patient.id))}"]`);if(!button)return;
     button.classList.add('review-requested');
+    const count=Math.max(1,Number(patient.reviewRequestCount||0));
+    let countBadge=button.querySelector('.review-request-count');
+    if(!countBadge){countBadge=document.createElement('span');countBadge.className='review-request-count';button.querySelector('b')?.after(countBadge)}
+    countBadge.textContent=`×${count}`;
+    countBadge.setAttribute('aria-label',lang==='en'?`${count} review requests sent`:`أرسل طلب التقييم ${count} ${count===1?'مرة':'مرات'}`);
     const label=button.querySelector('b');if(label)label.textContent=lang==='en'?'Review requested':'تم طلب التقييم';
     button.querySelectorAll('.review-star').forEach(star=>star.remove());
     const when=new Date(Number(patient.reviewRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA',{dateStyle:'short',timeStyle:'short'});
-    button.title=lang==='en'?`Review requested ${when}. Click to request again.`:`تم طلب التقييم ${when}. اضغط لإعادة الطلب.`;
+    button.title=lang==='en'?`Sent ${count} time${count===1?'':'s'}. Last request: ${when}. Click to request again.`:`أُرسل ${count} ${count===1?'مرة':'مرات'}. آخر طلب: ${when}. اضغط لإعادة الطلب.`;
   });
   $('statusLegend').innerHTML=
     Object.keys(STATUS).map(key=>`<span class="legend-chip legend-${key}">${escapeHtml(statusText(key))}</span>`).join('');

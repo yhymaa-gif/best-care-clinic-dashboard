@@ -68,6 +68,8 @@ test('successful WhatsApp actions record central patient communication', async (
   assert.match(dashboard, /patient\.reviewRequestedAt=requestedAt/);
   assert.match(dashboard, /if\(sendButton\?\.disabled\)return/);
   assert.match(dashboard, /review-requested/);
+  assert.match(dashboard, /review-request-count/);
+  assert.match(dashboard, /أُرسل طلب التقييم/);
   assert.match(state, /reviewRequestedAt:Number/);
   assert.match(state, /reviewRequestCount:Math\.max/);
   assert.match(state, /reviewLastEventId:String/);

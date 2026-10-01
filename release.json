@@ -1,8 +1,8 @@
 {
-  "version": "2026.09.30-operational-income-summary",
-  "publishedAt": "2026-09-30",
+  "version": "2026.10.01-review-request-counter",
+  "publishedAt": "2026-10-01",
   "summary": {
-    "ar": "إحصاء تشغيلي مبسط للدخل اليومي والشهري من المبالغ التي تسجلها الإدارة.",
-    "en": "Simple operational daily and monthly income totals from amounts entered by administration."
+    "ar": "إظهار عدد مرات إرسال طلب تقييم الخرائط لكل مريض مع وقت آخر إرسال.",
+    "en": "Shows each patient’s map review request count and the most recent request time."
   }
 }

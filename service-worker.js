@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20260930-operational-income-summary';
+const CACHE_NAME='bestcare-dashboard-v1-20261001-review-request-counter';
 const APP_SHELL=[
   './',
   './index.html',
