@@ -52,6 +52,22 @@ test('preparatory crown and post work is initial while the implant restoration a
   assert.match(dashboard,/\['implant-prosthetic-abutment','دعامة زراعة للتركيب'\]/);
 });
 
+test('examination and CBCT are grouped correctly and known procedures have English labels', async () => {
+  const [client,catalog,dashboard]=await Promise.all([
+    read('treatment-plan.js'),
+    read('netlify/functions/treatment-catalog.mjs'),
+    read('dashboard.js')
+  ]);
+  assert.match(client,/\['examination','الكشف','initial'\]/);
+  assert.match(client,/\['cbct-scan','أشعة مقطعية','implant'\]/);
+  assert.match(catalog,/\['examination', 'الكشف', 'initial'\]/);
+  assert.match(catalog,/\['cbct-scan', 'أشعة مقطعية', 'implant'\]/);
+  assert.match(client,/examination:'Examination'/);
+  assert.match(client,/'cbct-scan':'CBCT scan'/);
+  assert.match(client,/procedureDisplayName\(option\)/);
+  assert.match(dashboard,/view:VIEW_MODE,lang/);
+});
+
 test('stored plans retain their phases while only new empty plans get the template', async () => {
   const [client,endpoint]=await Promise.all([read('treatment-plan.js'),read('netlify/functions/treatment-plan.mjs')]);
   assert.match(client, /Array\.isArray\(next\.phases\)&&next\.phases\.length\?next\.phases:defaultTreatmentPhases\(\)/);

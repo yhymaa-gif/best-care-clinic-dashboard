@@ -10,6 +10,7 @@
     const requestedDraftId=(params.get('draftId')||'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,50);
     const requestedAction=params.get('action')==='share'?'share':'';
     const viewMode=params.get('view')==='clinic'?'clinic':'admin';
+    const uiLang=params.get('lang')==='en'||localStorage.getItem('bestcare_lang')==='en'?'en':'ar';
     const SOURCE_KEY=`bestcare_treatment_source_${patientId}`;
     const LOCAL_KEY=`bestcare_treatment_plan_${clinicId}_${appointmentDate||'undated'}_${patientId||'blank'}_${requestedPlanNo||(requestedNewPlan?`new-${requestedDraftId||'draft'}`:'latest')}`;
     const LOCAL_DRAFT_TTL_MS=12*60*60*1000;
@@ -48,12 +49,12 @@
       {kind:'prosthetic',title:'التركيبات',hint:'المراحل التعويضية والتركيبات المؤقتة والنهائية'}
     ];
     const DEFAULT_PROCEDURES=[
-      ['cosmetic-filling','حشوة تجميلية','initial'],['post-rct-filling','حشوة تجميلية بعد علاج العصب','initial'],
+      ['examination','الكشف','initial'],['cosmetic-filling','حشوة تجميلية','initial'],['post-rct-filling','حشوة تجميلية بعد علاج العصب','initial'],
       ['root-canal','علاج عصب','initial'],['root-canal-retreatment','إعادة علاج عصب','initial'],
       ['cleaning-standard','تنظيف أسنان عادي','initial'],['cleaning-gbt','تنظيف أسنان GBT','initial'],
       ['periodontal-treatment','معالجة اللثة وتهيئة الأنسجة','initial'],['smile-analysis','تحليل ابتسامة','initial'],
       ['extraction','خلع الأسنان','implant'],['bone-graft','تطعيم عظمي','implant'],
-      ['sinus-lift','رفع الجيب الأنفي','implant'],['implant-surgery','زراعة — الجزء الجراحي','implant'],
+      ['sinus-lift','رفع الجيب الأنفي','implant'],['cbct-scan','أشعة مقطعية','implant'],['implant-surgery','زراعة — الجزء الجراحي','implant'],
       ['implant-uncovering','كشف الزراعة','implant'],['healing-abutment','تركيب دعامة الالتئام','implant'],
       ['remove-post','إزالة وتد','initial'],['place-post','تركيب وتد','initial'],
       ['remove-crown','إزالة تاج','initial'],['recement-crown','إعادة تثبيت تاج','initial'],
@@ -62,13 +63,17 @@
       ['implant-prosthetic-abutment','دعامة زراعة للتركيب','prosthetic'],['implant-crown','تركيبة زراعة نهائية','prosthetic'],['temporary','تركيب مؤقت','prosthetic'],
       ['smile-design','تصميم ابتسامة','initial'],['other','إجراء آخر','all']
     ].map(([id,name,category])=>({id,name,category,beforePrice:'',afterPrice:''}));
+    const PROCEDURE_EN_BY_ID=Object.freeze({
+      examination:'Examination','cosmetic-filling':'Cosmetic filling','post-rct-filling':'Post-root-canal filling','root-canal':'Root canal treatment','root-canal-retreatment':'Root canal retreatment','cleaning-standard':'Standard dental cleaning','cleaning-gbt':'GBT dental cleaning','periodontal-treatment':'Periodontal treatment and tissue preparation','smile-analysis':'Smile analysis','remove-post':'Post removal','place-post':'Post placement','remove-crown':'Crown removal','recement-crown':'Crown recementation','smile-design':'Smile design',extraction:'Tooth extraction','bone-graft':'Bone graft','sinus-lift':'Sinus lift','cbct-scan':'CBCT scan','implant-surgery':'Dental implant — surgical stage','implant-uncovering':'Implant uncovering','healing-abutment':'Healing abutment placement','ceramic-crown':'Ceramic crown','ceramic-veneer':'Ceramic veneer','implant-impression':'Implant impression or digital scan','implant-temporary':'Temporary implant restoration','implant-prosthetic-abutment':'Implant prosthetic abutment','implant-crown':'Final implant restoration',temporary:'Temporary restoration',other:'Other procedure'
+    });
+    const procedureDisplayName=value=>uiLang==='en'?(PROCEDURE_EN_BY_ID[String(value?.id||value?.code||'')]||String(value?.name||value?.service||'')):String(value?.name||value?.service||'');
     let procedureCatalog=DEFAULT_PROCEDURES.map(item=>({...item}));
     const DEFAULT_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.';
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const inferProcedureCategory=value=>{
       const code=String(value?.id||value?.code||'').toLowerCase(),name=String(value?.name||value?.service||'');
-      if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis','remove-post','place-post','remove-crown','recement-crown','smile-design'].includes(code))return'initial';
-      if(/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
+      if(['examination','cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis','remove-post','place-post','remove-crown','recement-crown','smile-design'].includes(code))return'initial';
+      if(/implant-surgery|extraction|bone-graft|sinus-lift|cbct-scan|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|أشعة مقطعية|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
       if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary|implant-prosthetic-abutment/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة|دعامة زراعة للتركيب/.test(name))return'prosthetic';
       return'initial';
     };
@@ -547,7 +552,7 @@
         const rows=phase.items.map((item,iIndex)=>{
           const total=itemTotals(item),active=activeItem.phase===pIndex&&activeItem.item===iIndex;
           const phaseCatalog=phase.kind?procedureCatalog.filter(option=>option.category===phase.kind||option.category==='all'||option.id===item.code):procedureCatalog;
-          const procedureOptions=`<option value="">اختر الإجراء</option>`+phaseCatalog.map(option=>`<option value="${escapeAttr(option.id)}" ${(item.code===option.id||(!item.code&&item.service===option.name))?'selected':''}>${escapeHtml(option.name)}</option>`).join('');
+          const procedureOptions=`<option value="">${uiLang==='en'?'Select procedure':'اختر الإجراء'}</option>`+phaseCatalog.map(option=>`<option value="${escapeAttr(option.id)}" ${(item.code===option.id||(!item.code&&item.service===option.name))?'selected':''}>${escapeHtml(procedureDisplayName(option))}</option>`).join('');
           const variant=item.code==='ceramic-veneer'?`<select class="line-input variant-select" data-field="variant"><option value="">اختر النوع</option><option value="with-prep" ${item.variant==='with-prep'?'selected':''}>بتحضير</option><option value="without-prep" ${item.variant==='without-prep'?'selected':''}>بدون تحضير</option></select>`:'';
           const custom=item.code==='other'?`<input class="line-input custom-procedure" data-field="customService" value="${escapeAttr(item.customService||'')}" placeholder="اكتب الإجراء">`:'';
           return`<tr data-item-row="${pIndex}:${iIndex}" style="${active?'box-shadow:inset -3px 0 0 var(--teal)':''}">
@@ -893,7 +898,7 @@
       render();toast('أُعيدت الخطة إلى العيادة','ستظهر علامة «خطة غير معتمدة» بجانب المريض حتى يتم تعديلها وإرسالها مجددًا.');
     }
     function displayProcedure(item){
-      const base=item.code==='other'?(item.customService||item.service||'إجراء آخر'):(item.service||'إجراء');
+      const base=item.code==='other'?(item.customService||item.service||(uiLang==='en'?'Other procedure':'إجراء آخر')):(procedureDisplayName(item)||(uiLang==='en'?'Procedure':'إجراء'));
       if(item.code==='ceramic-veneer')return`${base} — ${item.variant==='without-prep'?'بدون تحضير':'بتحضير'}`;
       return base;
     }

@@ -486,18 +486,18 @@ let treatmentCatalog=[];
 let treatmentCatalogLoadedAt=0;
 let paymentCatalogProfile={favorites:[],usage:{}};
 const DEFAULT_TREATMENT_CATALOG=[
-  ['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
+  ['examination','الكشف'],['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
   ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
   ['remove-post','إزالة وتد'],['place-post','تركيب وتد'],['remove-crown','إزالة تاج'],
   ['recement-crown','إعادة تثبيت تاج'],['ceramic-crown','تركيب سيراميك تاج'],
   ['ceramic-veneer','تركيب سيراميك فينير'],['implant-prosthetic-abutment','دعامة زراعة للتركيب'],['implant-crown','تركيبة زراعة'],
-  ['implant-surgery','زراعة — الجزء الجراحي'],['extraction','خلع الأسنان'],
+  ['implant-surgery','زراعة — الجزء الجراحي'],['cbct-scan','أشعة مقطعية'],['extraction','خلع الأسنان'],
   ['temporary','تركيب مؤقت'],['smile-design','تصميم ابتسامة'],
   ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
   ['cleaning-gbt','تنظيف أسنان GBT'],['whitening-trays','قوالب تبييض'],['other','إجراء آخر']
 ].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
 const PROCEDURE_EN_BY_ID=Object.freeze({
-  'cosmetic-filling':'Cosmetic filling','post-rct-filling':'Post-root-canal filling','root-canal':'Root canal treatment','root-canal-retreatment':'Root canal retreatment','remove-post':'Post removal','place-post':'Post placement','remove-crown':'Crown removal','recement-crown':'Crown recementation','ceramic-crown':'Ceramic crown','ceramic-veneer':'Ceramic veneer','implant-prosthetic-abutment':'Implant prosthetic abutment','implant-crown':'Implant crown','implant-surgery':'Dental implant — surgical stage','extraction':'Tooth extraction','temporary':'Temporary restoration','smile-design':'Smile design','smile-analysis':'Smile analysis','cleaning-standard':'Standard dental cleaning','cleaning-gbt':'GBT dental cleaning','whitening-trays':'Whitening trays','other':'Other procedure'
+  'examination':'Examination','cosmetic-filling':'Cosmetic filling','post-rct-filling':'Post-root-canal filling','root-canal':'Root canal treatment','root-canal-retreatment':'Root canal retreatment','remove-post':'Post removal','place-post':'Post placement','remove-crown':'Crown removal','recement-crown':'Crown recementation','ceramic-crown':'Ceramic crown','ceramic-veneer':'Ceramic veneer','implant-prosthetic-abutment':'Implant prosthetic abutment','implant-crown':'Implant crown','implant-surgery':'Dental implant — surgical stage','cbct-scan':'CBCT scan','extraction':'Tooth extraction','temporary':'Temporary restoration','smile-design':'Smile design','smile-analysis':'Smile analysis','cleaning-standard':'Standard dental cleaning','cleaning-gbt':'GBT dental cleaning','whitening-trays':'Whitening trays','other':'Other procedure'
 });
 const PROCEDURE_EN_BY_AR=Object.freeze(Object.fromEntries(DEFAULT_TREATMENT_CATALOG.map(item=>[item.name,PROCEDURE_EN_BY_ID[item.id]||item.name])));
 const LAB_WORK_EN=Object.freeze({'تركيب تاج':'Crown','فينير':'Veneer','تركيبة زراعة':'Implant restoration','قوالب تبييض':'Whitening trays','تركيبة مؤقتة':'Temporary restoration','إجراء معملي آخر':'Other laboratory procedure'});
@@ -1270,7 +1270,7 @@ function adminClinicUrl(clinicId,hash='patientListTitle'){
   return `${location.pathname}?${params.toString()}#${hash}`;
 }
 function adminPlanUrl(item){
-  const params=new URLSearchParams({patientId:String(item.patient.id||''),date:selectedDate,planNo:String(item.planNo||''),clinic:item.clinic.id,view:'admin'});
+  const params=new URLSearchParams({patientId:String(item.patient.id||''),date:selectedDate,planNo:String(item.planNo||''),clinic:item.clinic.id,view:'admin',lang});
   return `./treatment-plan.html?${params.toString()}`;
 }
 function renderAdminPatientHub(){
@@ -2327,7 +2327,7 @@ function openTreatmentPlanCenter(){
 function openPlanCenterRecord(canonical,{share=false}={}){
   const record=treatmentPlanCenter.records?.[canonical];if(!record?.sourcePatientId||!record?.sourceDate)return;
   cacheTreatmentSource(record.sourcePatientId,{id:record.sourcePatientId,name:record.fullName||'',file:record.fileNo||'',phone:record.mobile||'',nationalId:record.nationalId||'',date:record.sourceDate,start:'',view:'admin',returnUrl:location.href});
-  const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin'});if(share&&record.status==='submitted')params.set('action','share');
+  const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin',lang});if(share&&record.status==='submitted')params.set('action','share');
   location.href=`./treatment-plan.html?${params.toString()}`;
 }
 async function changePlanCenterStatus(canonical,nextStatus,select){
@@ -2751,7 +2751,7 @@ function openPatientIdentityResult(button){const lookup=patientProfileLookupFrom
 function openPatientProfilePlan(canonical){
   const record=(patientProfileState.profile?.plans||[]).find(item=>item.canonical===canonical);if(!record?.sourcePatientId||!record?.sourceDate)return;
   try{cacheTreatmentSource(record.sourcePatientId,{id:record.sourcePatientId,name:record.fullName||patientProfileState.profile?.patient?.name||'',file:record.fileNo||patientProfileState.profile?.patient?.file||'',phone:record.mobile||patientProfileState.profile?.patient?.phone||'',nationalId:record.nationalId||patientProfileState.profile?.patient?.nationalId||'',date:record.sourceDate,start:'',view:'admin',returnUrl:location.href})}catch{}
-  location.href=`./treatment-plan.html?${new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin'})}`;
+  location.href=`./treatment-plan.html?${new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1',view:'admin',lang})}`;
 }
 async function savePatientProfile(event){
   event.preventDefault();if(!patientProfileState.lookup||patientProfileState.loading||authUser?.role!=='admin')return;
@@ -2990,7 +2990,7 @@ function openTreatmentPlan(id,{share=false,newPlan=false}={}){
   const patient=patientById(id);if(!patient)return;
   const source={id:String(patient.id),name:String(patient.name||''),file:String(patient.file||''),phone:String(patient.phone||''),nationalId:String(patient.nationalId||''),procedure:String(patient.procedure||''),paymentItems:Array.isArray(patient.paymentItems)?patient.paymentItems:[],paymentDiscount:String(patient.paymentDiscount||''),paymentRequestedAt:Number(patient.paymentRequestedAt||0),date:selectedDate,start:String(patient.start||''),view:VIEW_MODE,returnUrl:location.href};
   cacheTreatmentSource(patient.id,source);
-  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE});
+  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE,lang});
   if(share&&effectiveTreatmentPlanStatus(patient)==='submitted')params.set('action','share');
   if(newPlan){params.set('newPlan','1');params.set('draftId',String(Date.now()))}
   location.href=`./treatment-plan.html?${params.toString()}`;
@@ -3395,8 +3395,8 @@ function paymentLinkedPlanItem(item){
 }
 function paymentPlanPhaseKind(item){
   const code=String(item?.code||'').toLowerCase(),name=String(item?.name||'');
-  if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis','remove-post','place-post','remove-crown','recement-crown','smile-design'].includes(code))return'initial';
-  if(/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
+  if(['examination','cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis','remove-post','place-post','remove-crown','recement-crown','smile-design'].includes(code))return'initial';
+  if(/implant-surgery|extraction|bone-graft|sinus-lift|cbct-scan|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|أشعة مقطعية|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
   if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary|implant-prosthetic-abutment/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة|دعامة زراعة للتركيب/.test(name))return'prosthetic';
   return'initial';
 }

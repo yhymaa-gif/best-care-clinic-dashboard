@@ -10,12 +10,13 @@ const inferCategory = item => {
   const code = String(item?.id || '').toLowerCase();
   const name = String(item?.name || '');
   if (code === 'other') return 'all';
-  if (['cosmetic-filling', 'post-rct-filling', 'root-canal', 'root-canal-retreatment', 'cleaning-standard', 'cleaning-gbt', 'periodontal-treatment', 'smile-analysis', 'remove-post', 'place-post', 'remove-crown', 'recement-crown', 'smile-design'].includes(code)) return 'initial';
-  if (/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code) || /زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name)) return 'implant';
+  if (['examination', 'cosmetic-filling', 'post-rct-filling', 'root-canal', 'root-canal-retreatment', 'cleaning-standard', 'cleaning-gbt', 'periodontal-treatment', 'smile-analysis', 'remove-post', 'place-post', 'remove-crown', 'recement-crown', 'smile-design'].includes(code)) return 'initial';
+  if (/implant-surgery|extraction|bone-graft|sinus-lift|cbct-scan|implant-uncovering|healing-abutment/.test(code) || /زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|أشعة مقطعية|كشف الزراعة|دعامة الالتئام/.test(name)) return 'implant';
   if (/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary|implant-prosthetic-abutment/.test(code) || /تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة|دعامة زراعة للتركيب/.test(name)) return 'prosthetic';
   return 'initial';
 };
 const DEFAULT_ITEMS = [
+  ['examination', 'الكشف', 'initial'],
   ['cosmetic-filling', 'حشوة تجميلية', 'initial'],
   ['post-rct-filling', 'حشوة تجميلية بعد علاج العصب', 'initial'],
   ['root-canal', 'علاج عصب', 'initial'],
@@ -27,6 +28,7 @@ const DEFAULT_ITEMS = [
   ['extraction', 'خلع الأسنان', 'implant'],
   ['bone-graft', 'تطعيم عظمي', 'implant'],
   ['sinus-lift', 'رفع الجيب الأنفي', 'implant'],
+  ['cbct-scan', 'أشعة مقطعية', 'implant'],
   ['implant-surgery', 'زراعة — الجزء الجراحي', 'implant'],
   ['implant-uncovering', 'كشف الزراعة', 'implant'],
   ['healing-abutment', 'تركيب دعامة الالتئام', 'implant'],
