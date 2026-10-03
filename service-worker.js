@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261001-review-request-counter';
+const CACHE_NAME='bestcare-dashboard-v1-20261003-implant-plan-stages';
 const APP_SHELL=[
   './',
   './index.html',

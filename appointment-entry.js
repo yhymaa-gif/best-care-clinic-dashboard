@@ -6,7 +6,7 @@ import {
   normalizePatient,
   samePatient,
   validatePatient
-} from './appointment-entry-core.js?v=20261001-review-request-counter';
+} from './appointment-entry-core.js?v=20261003-implant-plan-stages';
 
 const $=id=>document.getElementById(id);
 const API={auth:'/api/auth?action=session',clinics:'/api/clinics',lookup:'/api/patient-lookup',patients:'/api/patients',profile:'/api/patient-profile',state:'/api/state'};

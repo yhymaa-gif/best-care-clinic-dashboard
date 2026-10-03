@@ -39,7 +39,9 @@ const cleanItem = item => ({
 });
 const cleanPhase = (phase, index) => ({
   index,
+  kind: ['initial', 'implant', 'prosthetic'].includes(phase?.kind) ? phase.kind : '',
   title: cleanText(phase?.title, 100) || `المرحلة ${index + 1}`,
+  deferred: Boolean(phase?.deferred),
   estimatedVisits: cleanText(phase?.estimatedVisits, 30),
   estimatedDuration: cleanText(phase?.estimatedDuration, 80),
   items: (Array.isArray(phase?.items) ? phase.items : []).slice(0, 30).map(cleanItem)

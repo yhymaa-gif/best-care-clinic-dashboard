@@ -137,8 +137,8 @@ function adminHubCadence(){
   if(cadence.workHours)return syncDisplayVisible()?20000:60000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.67-review-request-counter';
-const RELEASE_SUMMARY_FALLBACK={ar:'إظهار عدد مرات إرسال طلب تقييم الخرائط لكل مريض مع وقت آخر إرسال.',en:'Shows each patient’s map review request count and the most recent request time.'};
+const DASHBOARD_BUILD='7.68-implant-plan-stages';
+const RELEASE_SUMMARY_FALLBACK={ar:'تنظيم خطط الزراعة إلى أقسام قابلة للترتيب مع خيار إضافة المرحلة لاحقًا.',en:'Organizes implant plans into reorderable sections with an add-later option.'};
 let pendingReleaseSummary={...RELEASE_SUMMARY_FALLBACK};
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));
@@ -3393,6 +3393,23 @@ function paymentLinkedPlanItem(item){
     unitPriceBefore:before,unitPriceAfter:after,beforePriceSource:before!==''?'catalog':'',afterPriceSource:after!==''?'catalog':'',priceSource:after!==''?'catalog':'',type:free?'included':'billable',includedLabel:free?(lang==='en'?'Included at no charge':'مجاني ضمن أمر الدفع'):''
   };
 }
+function paymentPlanPhaseKind(item){
+  const code=String(item?.code||'').toLowerCase(),name=String(item?.name||'');
+  if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis'].includes(code))return'initial';
+  if(/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
+  if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة/.test(name))return'prosthetic';
+  return'initial';
+}
+function paymentLinkedPlanPhases(items){
+  const phases=[
+    {index:0,kind:'initial',title:lang==='en'?'Preliminary treatment':'المعالجات الأولية',deferred:false,estimatedVisits:'',estimatedDuration:'',items:[]},
+    {index:1,kind:'implant',title:lang==='en'?'Surgery and implants':'الجراحة والزراعة',deferred:false,estimatedVisits:'',estimatedDuration:'',items:[]},
+    {index:2,kind:'prosthetic',title:lang==='en'?'Prosthetics':'التركيبات',deferred:false,estimatedVisits:'',estimatedDuration:'',items:[]}
+  ];
+  (Array.isArray(items)?items:[]).forEach(item=>phases.find(phase=>phase.kind===paymentPlanPhaseKind(item)).items.push(paymentLinkedPlanItem(item)));
+  phases.forEach(phase=>{if(!phase.items.length)phase.deferred=true});
+  return phases;
+}
 function buildPaymentLinkedTreatmentPlan(patient,items,requestedAt,{vatConfirmed=false}={}){
   const identity=patientWithDirectoryIdentity(patient),doctor=String(currentClinic?.doctorName||authUser?.displayName||authUser?.username||'').trim();
   const planNo=paymentPlanNumber(identity,requestedAt),priced=(Array.isArray(items)?items:[]).every(item=>item.free||(item.beforePrice!==''&&item.beforePrice!==undefined&&item.afterPrice!==''&&item.afterPrice!==undefined)),status=paymentLinkedPlanStatus({priced,vatConfirmed}),submitted=status==='submitted';
@@ -3402,7 +3419,7 @@ function buildPaymentLinkedTreatmentPlan(patient,items,requestedAt,{vatConfirmed
     patient:{fullName:String(identity.name||patient.name||''),fileNo:String(identity.file||patient.file||''),nationalId:String(identity.nationalId||patient.nationalId||''),nationality:'saudi',age:'',mobile:String(identity.phone||patient.phone||'')},
     doctor:{name:doctor,scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:doctor},
     clinical:{diagnosis:PAYMENT_LINKED_PLAN_DIAGNOSIS,radiographs:'',notes:lang==='en'?'Generated from the doctor-selected payment order procedures.':'أُنشئت من الإجراءات التي حددها الطبيب في أمر الدفع.'},
-    phases:[{index:0,title:lang==='en'?'Treatment phase':'المرحلة العلاجية',estimatedVisits:'',estimatedDuration:'',items:(Array.isArray(items)?items:[]).map(paymentLinkedPlanItem)}],
+    phases:paymentLinkedPlanPhases(items),
     alternatives:'',noTreatment:'',risks:'',financial:{vatMode:'borne_by_state',vatConfirmed:Boolean(vatConfirmed),paymentPlan:[]},
     consent:{photoConsent:true,photoConsentRecorded:false,photoConsentDefaultVersion:2,photoConsentAcceptedAt:0,termsVersion:0},
     signatures:{patientSignature:'',signerName:'',guardianRelation:'',doctorName:doctor,doctorSignedAt:submitted?new Date(Number(requestedAt)).toISOString():'',witnessName:'',witnessSignedAt:''}

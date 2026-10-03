@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.01-review-request-counter",
-  "publishedAt": "2026-10-01",
+  "version": "2026.10.03-implant-plan-stages",
+  "publishedAt": "2026-10-03",
   "summary": {
-    "ar": "إظهار عدد مرات إرسال طلب تقييم الخرائط لكل مريض مع وقت آخر إرسال.",
-    "en": "Shows each patient’s map review request count and the most recent request time."
+    "ar": "تنظيم خطط الزراعة إلى أقسام قابلة للترتيب مع خيار إضافة المرحلة لاحقًا.",
+    "en": "Organizes implant plans into reorderable sections with an add-later option."
   }
 }

@@ -322,9 +322,9 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   ]);
   assert.match(dashboard, /patientDirectoryImportShortcutBtn'\)\?\.addEventListener/);
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
-  assert.match(html, /dashboard\.js\?v=20261001-review-request-counter/);
+  assert.match(html, /dashboard\.js\?v=20261003-implant-plan-stages/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20261001-review-request-counter/);
+  assert.match(serviceWorker, /20261003-implant-plan-stages/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

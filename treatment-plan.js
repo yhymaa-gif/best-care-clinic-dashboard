@@ -42,28 +42,48 @@
       localStorage.setItem(key,String(next));
       return `TP-${year}-${String(next).padStart(6,'0')}`;
     };
+    const TREATMENT_PHASES=[
+      {kind:'initial',title:'المعالجات الأولية',hint:'تهيئة الحالة ومعالجة الأسنان والأنسجة قبل الزراعة'},
+      {kind:'implant',title:'الجراحة والزراعة',hint:'الإجراءات الجراحية ومراحل وضع وتجهيز الزراعة'},
+      {kind:'prosthetic',title:'التركيبات',hint:'المراحل التعويضية والتركيبات المؤقتة والنهائية'}
+    ];
     const DEFAULT_PROCEDURES=[
-      ['cosmetic-filling','حشوة تجميلية'],['post-rct-filling','حشوة تجميلية بعد علاج العصب'],
-      ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
-      ['remove-post','إزالة وتد'],['place-post','تركيب وتد'],['remove-crown','إزالة تاج'],
-      ['recement-crown','إعادة تثبيت تاج'],['ceramic-crown','تركيب سيراميك تاج'],
-      ['ceramic-veneer','تركيب سيراميك فينير'],['implant-crown','تركيبة زراعة'],
-      ['implant-surgery','زراعة — الجزء الجراحي'],['extraction','خلع الأسنان'],
-      ['temporary','تركيب مؤقت'],['smile-design','تصميم ابتسامة'],
-      ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
-      ['cleaning-gbt','تنظيف أسنان GBT'],['other','إجراء آخر']
-    ].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
+      ['cosmetic-filling','حشوة تجميلية','initial'],['post-rct-filling','حشوة تجميلية بعد علاج العصب','initial'],
+      ['root-canal','علاج عصب','initial'],['root-canal-retreatment','إعادة علاج عصب','initial'],
+      ['cleaning-standard','تنظيف أسنان عادي','initial'],['cleaning-gbt','تنظيف أسنان GBT','initial'],
+      ['periodontal-treatment','معالجة اللثة وتهيئة الأنسجة','initial'],['smile-analysis','تحليل ابتسامة','initial'],
+      ['extraction','خلع الأسنان','implant'],['bone-graft','تطعيم عظمي','implant'],
+      ['sinus-lift','رفع الجيب الأنفي','implant'],['implant-surgery','زراعة — الجزء الجراحي','implant'],
+      ['implant-uncovering','كشف الزراعة','implant'],['healing-abutment','تركيب دعامة الالتئام','implant'],
+      ['remove-post','إزالة وتد','prosthetic'],['place-post','تركيب وتد','prosthetic'],
+      ['remove-crown','إزالة تاج','prosthetic'],['recement-crown','إعادة تثبيت تاج','prosthetic'],
+      ['ceramic-crown','تركيب سيراميك تاج','prosthetic'],['ceramic-veneer','تركيب سيراميك فينير','prosthetic'],
+      ['implant-impression','طبعة أو مسح رقمي للزراعة','prosthetic'],['implant-temporary','تركيبة مؤقتة على الزراعة','prosthetic'],
+      ['implant-crown','تركيبة زراعة نهائية','prosthetic'],['temporary','تركيب مؤقت','prosthetic'],
+      ['smile-design','تصميم ابتسامة','prosthetic'],['other','إجراء آخر','all']
+    ].map(([id,name,category])=>({id,name,category,beforePrice:'',afterPrice:''}));
     let procedureCatalog=DEFAULT_PROCEDURES.map(item=>({...item}));
     const DEFAULT_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.';
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
-    const blankPhase=index=>({index,title:`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]});
+    const inferProcedureCategory=value=>{
+      const code=String(value?.id||value?.code||'').toLowerCase(),name=String(value?.name||value?.service||'');
+      if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis'].includes(code))return'initial';
+      if(/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
+      if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة/.test(name))return'prosthetic';
+      return'initial';
+    };
+    const blankPhase=(index,kind='')=>{
+      const definition=TREATMENT_PHASES.find(item=>item.kind===kind);
+      return{index,kind:definition?.kind||'',title:definition?.title||`المرحلة ${['الأولى','الثانية','الثالثة','الرابعة','الخامسة'][index]||index+1}`,deferred:false,estimatedVisits:'',estimatedDuration:'',items:[blankItem()]};
+    };
+    const defaultTreatmentPhases=()=>TREATMENT_PHASES.map((phase,index)=>blankPhase(index,phase.kind));
     const defaultState=planNo=>({
       meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
       clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:source.nationalId||'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
       clinical:{diagnosis:DEFAULT_DIAGNOSIS,radiographs:'',notes:''},
-      phases:[blankPhase(0)],
+      phases:defaultTreatmentPhases(),
       alternatives:'',noTreatment:'',risks:'',
       financial:{vatMode:'borne_by_state',vatConfirmed:false,paymentPlan:[]},
       consent:{photoConsent:true,photoConsentRecorded:false,photoConsentDefaultVersion:2,photoConsentAcceptedAt:0,termsVersion:0},
@@ -244,7 +264,7 @@
         financial:{...fallback.financial,...(next.financial||{})},
         consent:{...fallback.consent,...(next.consent||{})},
         signatures:{...fallback.signatures,...(next.signatures||{})},
-        phases:(Array.isArray(next.phases)&&next.phases.length?next.phases:[blankPhase(0)]).map((phase,index)=>({
+        phases:(Array.isArray(next.phases)&&next.phases.length?next.phases:defaultTreatmentPhases()).map((phase,index)=>({
           ...blankPhase(index),...phase,index,
           items:(Array.isArray(phase.items)&&phase.items.length?phase.items:[blankItem()]).map(item=>({...blankItem(),...item,teeth:Array.isArray(item.teeth)?item.teeth.map(String):[]}))
         }))
@@ -259,11 +279,16 @@
     }
     function applyPaymentSourceToNewPlan(){
       const items=Array.isArray(source?.paymentItems)?source.paymentItems.filter(item=>String(item?.name||'').trim()):[];if(!items.length)return;
-      state.phases=[{index:0,title:'المرحلة العلاجية',estimatedVisits:'',estimatedDuration:'',items:items.map(item=>{
+      state.phases=defaultTreatmentPhases();
+      state.phases.forEach(phase=>{phase.items=[]});
+      items.forEach(item=>{
         const catalog=procedureCatalog.find(option=>option.id===item.code)||procedureCatalog.find(option=>option.name===item.name),free=Boolean(item.free);
         const before=free?0:(item.beforePrice??catalog?.beforePrice??''),after=free?0:(item.afterPrice??catalog?.afterPrice??'');
-        return{...blankItem(),code:String(item.code||'other'),service:String(item.name||''),customService:item.code==='other'?String(item.name||''):'',qty:Math.max(1,Math.min(99,Number(item.quantity||1))),unitPriceBefore:before,unitPriceAfter:after,beforePriceSource:before!==''?'catalog':'',afterPriceSource:after!==''?'catalog':'',priceSource:after!==''?'catalog':'',type:free?'included':'billable',includedLabel:free?'مجاني ضمن أمر الدفع':''};
-      })}];
+        const planItem={...blankItem(),code:String(item.code||'other'),service:String(item.name||''),customService:item.code==='other'?String(item.name||''):'',qty:Math.max(1,Math.min(99,Number(item.quantity||1))),unitPriceBefore:before,unitPriceAfter:after,beforePriceSource:before!==''?'catalog':'',afterPriceSource:after!==''?'catalog':'',priceSource:after!==''?'catalog':'',type:free?'included':'billable',includedLabel:free?'مجاني ضمن أمر الدفع':''};
+        const category=catalog?.category&&catalog.category!=='all'?catalog.category:inferProcedureCategory({...item,id:item.code,name:item.name});
+        (state.phases.find(phase=>phase.kind===category)||state.phases[0]).items.push(planItem);
+      });
+      state.phases.forEach(phase=>{if(!phase.items.length)phase.items=[blankItem()]});
       state.clinical.notes='أُنشئت من الإجراءات المحددة في أمر الدفع.';
       // Price completeness does not prove the patient's tax treatment. Keep this
       // unchecked until an authorised user explicitly confirms it.
@@ -349,10 +374,13 @@
       try{
         const response=await fetch(`/api/treatment-catalog?clinic=${encodeURIComponent(clinicId)}`,{credentials:'include',cache:'no-store'});
         if(!response.ok)return false;
-        const data=await response.json(),items=Array.isArray(data.items)&&data.items.length?data.items:DEFAULT_PROCEDURES;
+        const data=await response.json(),remoteItems=Array.isArray(data.items)&&data.items.length?data.items:[];
+        const remoteIds=new Set(remoteItems.map(item=>String(item?.id||'')));
+        const items=remoteItems.length?[...remoteItems,...DEFAULT_PROCEDURES.filter(item=>!remoteIds.has(item.id))]:DEFAULT_PROCEDURES;
         const changed=JSON.stringify(items)!==JSON.stringify(procedureCatalog);
         procedureCatalog=items.map(item=>({
           id:safeText(item.id,50),name:safeText(item.name,120),
+          category:['initial','implant','prosthetic','all'].includes(item.category)?item.category:inferProcedureCategory(item),
           beforePrice:item.beforePrice===''?'':Number(item.beforePrice),
           afterPrice:(item.afterPrice??item.price)===''?'':Number(item.afterPrice??item.price)
         })).filter(item=>item.id&&item.name);
@@ -518,7 +546,8 @@
         const total=phaseTotals(phase);
         const rows=phase.items.map((item,iIndex)=>{
           const total=itemTotals(item),active=activeItem.phase===pIndex&&activeItem.item===iIndex;
-          const procedureOptions=`<option value="">اختر الإجراء</option>`+procedureCatalog.map(option=>`<option value="${escapeAttr(option.id)}" ${(item.code===option.id||(!item.code&&item.service===option.name))?'selected':''}>${escapeHtml(option.name)}</option>`).join('');
+          const phaseCatalog=phase.kind?procedureCatalog.filter(option=>option.category===phase.kind||option.category==='all'||option.id===item.code):procedureCatalog;
+          const procedureOptions=`<option value="">اختر الإجراء</option>`+phaseCatalog.map(option=>`<option value="${escapeAttr(option.id)}" ${(item.code===option.id||(!item.code&&item.service===option.name))?'selected':''}>${escapeHtml(option.name)}</option>`).join('');
           const variant=item.code==='ceramic-veneer'?`<select class="line-input variant-select" data-field="variant"><option value="">اختر النوع</option><option value="with-prep" ${item.variant==='with-prep'?'selected':''}>بتحضير</option><option value="without-prep" ${item.variant==='without-prep'?'selected':''}>بدون تحضير</option></select>`:'';
           const custom=item.code==='other'?`<input class="line-input custom-procedure" data-field="customService" value="${escapeAttr(item.customService||'')}" placeholder="اكتب الإجراء">`:'';
           return`<tr data-item-row="${pIndex}:${iIndex}" style="${active?'box-shadow:inset -3px 0 0 var(--teal)':''}">
@@ -530,9 +559,11 @@
             <td class="edit-only"><button type="button" class="row-action" data-toggle-included="${pIndex}:${iIndex}" title="تبديل مجاني">${item.type==='included'?'مدفوع':'مجاني'}</button><button type="button" class="row-action" data-delete-item="${pIndex}:${iIndex}" title="حذف">×</button></td>
           </tr>`}).join('');
         const collapsed=collapsedPhases.has(pIndex);
-        return`<div class="phase-block${collapsed?' collapsed':''}" data-phase="${pIndex}">
-          <div class="phase-head"><div class="phase-name"><span class="phase-index">${pIndex+1}</span><input data-phase-title="${pIndex}" aria-label="اسم المرحلة العلاجية ${pIndex+1}" value="${escapeAttr(phase.title)}"></div><div class="phase-actions edit-only"><button type="button" class="phase-collapse" data-toggle-phase="${pIndex}" aria-expanded="${collapsed?'false':'true'}" aria-label="${collapsed?'فتح':'طي'} المرحلة">⌄</button><button type="button" data-delete-phase="${pIndex}" ${state.phases.length===1?'disabled':''}>حذف المرحلة</button></div></div>
+        const definition=TREATMENT_PHASES.find(item=>item.kind===phase.kind);
+        return`<div class="phase-block${collapsed?' collapsed':''}${phase.deferred?' phase-deferred':''}" data-phase="${pIndex}">
+          <div class="phase-head"><div class="phase-name"><span class="phase-index">${pIndex+1}</span><span class="phase-title-stack"><input data-phase-title="${pIndex}" aria-label="اسم المرحلة العلاجية ${pIndex+1}" value="${escapeAttr(phase.title)}">${definition?`<small>${escapeHtml(definition.hint)}</small>`:''}</span></div><div class="phase-actions edit-only">${phase.kind?`<label class="phase-order-control">الترتيب <select data-phase-order="${pIndex}" aria-label="ترتيب قسم ${escapeAttr(phase.title)}">${state.phases.map((_,orderIndex)=>`<option value="${orderIndex+1}" ${orderIndex===pIndex?'selected':''}>${orderIndex+1}</option>`).join('')}</select></label><button type="button" class="phase-defer-btn${phase.deferred?' active':''}" data-toggle-deferred="${pIndex}">${phase.deferred?'إضافة الآن':'إضافة لاحقًا'}</button>`:''}<button type="button" class="phase-collapse" data-toggle-phase="${pIndex}" aria-expanded="${collapsed?'false':'true'}" aria-label="${collapsed?'فتح':'طي'} المرحلة">⌄</button><button type="button" data-delete-phase="${pIndex}" ${state.phases.length===1?'disabled':''}>حذف المرحلة</button></div></div>
           <div class="phase-content">
+            ${phase.deferred?`<div class="phase-deferred-note">هذه المرحلة محددة للاستكمال لاحقًا، ويمكن فتحها وإضافة الإجراءات في أي وقت.</div>`:''}
             <table><thead><tr><th style="width:25%">الإجراء</th><th class="num" style="width:14%">العدد</th><th class="money" style="width:16%">قبل الخصم</th><th class="money" style="width:16%">بعد الخصم</th><th class="money" style="width:17%">الإجمالي</th><th class="edit-only" style="width:12%">إجراء</th></tr></thead><tbody>${rows}</tbody></table>
             <button type="button" class="add-item edit-only" data-add-item="${pIndex}">＋ إضافة إجراء</button>
             <div class="phase-total"><span>قبل الخصم: <b>${formatMoney(total.before)}</b></span><span>بعد الخصم: <b>${formatMoney(total.after)}</b></span></div>
@@ -874,17 +905,18 @@
       const preparedByAdministration=awaitingPatientSignature&&Number(state.meta.administrationPreparedAt||0)>0&&!preparedByDoctor;
       const phases=state.phases.map((phase,index)=>({
         title:phase.title||`المرحلة ${index+1}`,
+        deferred:Boolean(phase.deferred),
         items:phase.items.filter(item=>item.service).map(item=>({
           name:displayProcedure(item),qty:Math.max(1,Number(item.qty||1)),
           before:item.type==='included'?'مجاني':formatMoney(itemTotals(item).before),
           after:item.type==='included'?'مجاني':formatMoney(itemTotals(item).after)
         }))
-      })).filter(phase=>phase.items.length);
+      })).filter(phase=>phase.items.length||phase.deferred);
       const total=totals(),dates=planDates();
       const photoDecision=finalPlan
         ?state.consent?.photoConsent===true?'وافق المريض على التصوير والاستخدام المحدد أدناه.':'لم يوافق المريض على التصوير؛ لا يجوز التقاط الصور أو استخدامها أو مشاركتها.'
         :'يختار المريض القبول أو الرفض داخل نموذج التوقيع؛ هذه الموافقة مستقلة وليست شرطًا للعلاج.';
-      const phaseHtml=phases.map((phase,index)=>`<section class="sp-phase"><h3><b>${index+1}</b>${escapeHtml(phase.title)}</h3><table><thead><tr><th>الإجراء</th><th>العدد</th><th>قبل الخصم</th><th>بعد الخصم</th></tr></thead><tbody>${phase.items.map(item=>`<tr><td>${escapeHtml(item.name)}</td><td>${item.qty}</td><td>${escapeHtml(item.before)}</td><td>${escapeHtml(item.after)}</td></tr>`).join('')}</tbody></table></section>`).join('');
+      const phaseHtml=phases.map((phase,index)=>`<section class="sp-phase"><h3><b>${index+1}</b>${escapeHtml(phase.title)}</h3>${phase.deferred&&!phase.items.length?`<p class="sp-phase-deferred">سيتم استكمال تفاصيل هذه المرحلة وإضافتها لاحقًا.</p>`:`<table><thead><tr><th>الإجراء</th><th>العدد</th><th>قبل الخصم</th><th>بعد الخصم</th></tr></thead><tbody>${phase.items.map(item=>`<tr><td>${escapeHtml(item.name)}</td><td>${item.qty}</td><td>${escapeHtml(item.before)}</td><td>${escapeHtml(item.after)}</td></tr>`).join('')}</tbody></table>`}</section>`).join('');
       const generatedAt=dateTimeFormatter.format(new Date());
       const body=`<div class="share-plan ${finalPlan?'sp-final-plan':'sp-draft-plan'}" dir="rtl">
         <div class="sp-watermark" aria-hidden="true"></div>
@@ -1163,6 +1195,18 @@
     function addItem(pIndex){state.phases[pIndex].items.push(blankItem());activeItem={phase:pIndex,item:state.phases[pIndex].items.length-1};markDirty();render()}
     function deleteItem(pIndex,iIndex){const phase=state.phases[pIndex];if(phase.items.length===1){phase.items[0]=blankItem()}else phase.items.splice(iIndex,1);activeItem={phase:pIndex,item:0};markDirty();render()}
     function deletePhase(pIndex){if(state.phases.length===1)return;state.phases.splice(pIndex,1);state.phases.forEach((phase,index)=>phase.index=index);collapsedPhases.clear();activeItem={phase:0,item:0};markDirty();render()}
+    function togglePhaseDeferred(pIndex){
+      const phase=state.phases[pIndex];if(!phase)return;
+      phase.deferred=!phase.deferred;
+      if(phase.deferred)collapsedPhases.add(pIndex);else collapsedPhases.delete(pIndex);
+      markDirty();render();
+      toast(phase.deferred?'ستُضاف المرحلة لاحقًا':'المرحلة جاهزة للإدخال',phase.deferred?'يمكن حفظ ومشاركة الخطة الآن، وسيظهر للمريض أن تفاصيل هذه المرحلة ستُستكمل لاحقًا.':'أضف إجراءات هذه المرحلة ثم احفظ الخطة.');
+    }
+    function movePhaseToOrder(fromIndex,order){
+      const toIndex=Math.max(0,Math.min(state.phases.length-1,Number(order)-1));if(fromIndex===toIndex)return;
+      const [phase]=state.phases.splice(fromIndex,1);state.phases.splice(toIndex,0,phase);
+      state.phases.forEach((item,index)=>{item.index=index});collapsedPhases.clear();activeItem={phase:toIndex,item:0};markDirty();render();
+    }
     function toggleIncluded(pIndex,iIndex){const item=state.phases[pIndex].items[iIndex];item.type=item.type==='included'?'billable':'included';if(item.type==='included'){item.unitPriceBefore='';item.unitPriceAfter='';item.beforePriceSource='';item.afterPriceSource='';item.priceSource='';item.includedLabel='بدون تكلفة'}markDirty();render()}
     function togglePreview(){
       collectHeaderFields();document.body.classList.toggle('preview-mode');
@@ -1282,7 +1326,8 @@
       document.addEventListener('change',event=>{if(event.target.matches('.edit-field')&&!event.target.closest('#phasesContainer'))markDirty();if(event.target.matches('[data-field]'))updateItemFromInput(event.target,true)});
       $('phasesContainer').addEventListener('focusin',event=>{const row=event.target.closest('[data-item-row]');if(row){const [phase,item]=row.dataset.itemRow.split(':').map(Number);activeItem={phase,item};document.querySelectorAll('[data-item-row]').forEach(itemRow=>itemRow.style.boxShadow=itemRow===row?'inset -3px 0 0 var(--teal)':'')}});
       $('phasesContainer').addEventListener('click',event=>{
-        const add=event.target.closest('[data-add-item]'),delItem=event.target.closest('[data-delete-item]'),delPhase=event.target.closest('[data-delete-phase]'),included=event.target.closest('[data-toggle-included]'),togglePhase=event.target.closest('[data-toggle-phase]'),qtyButton=event.target.closest('[data-qty-action]');
+        const add=event.target.closest('[data-add-item]'),delItem=event.target.closest('[data-delete-item]'),delPhase=event.target.closest('[data-delete-phase]'),included=event.target.closest('[data-toggle-included]'),togglePhase=event.target.closest('[data-toggle-phase]'),toggleDeferred=event.target.closest('[data-toggle-deferred]'),qtyButton=event.target.closest('[data-qty-action]');
+        if(toggleDeferred){togglePhaseDeferred(Number(toggleDeferred.dataset.toggleDeferred));return}
         if(qtyButton){
           const row=qtyButton.closest('[data-item-row]');
           if(row){const [p,i]=row.dataset.itemRow.split(':').map(Number),item=state.phases[p]?.items[i];if(item){const delta=qtyButton.dataset.qtyAction==='increase'?1:-1;item.qty=Math.max(1,Math.min(99,Number(item.qty||1)+delta));activeItem={phase:p,item:i};markDirty();render()}}
@@ -1294,6 +1339,7 @@
         if(included){const [p,i]=included.dataset.toggleIncluded.split(':').map(Number);toggleIncluded(p,i)}
         if(togglePhase){const index=Number(togglePhase.dataset.togglePhase);if(collapsedPhases.has(index))collapsedPhases.delete(index);else collapsedPhases.add(index);renderPhases()}
       });
+      $('phasesContainer').addEventListener('change',event=>{if(event.target.matches('[data-phase-order]')){movePhaseToOrder(Number(event.target.dataset.phaseOrder),Number(event.target.value));return}});
       $('phasesContainer').addEventListener('input',event=>{if(event.target.dataset.phaseTitle!==undefined){state.phases[Number(event.target.dataset.phaseTitle)].title=event.target.value;markDirty()}});
       $('digitalSignToggle').addEventListener('change',()=>{$('signatureCanvasWrap').classList.toggle('active',$('digitalSignToggle').checked);$('paperSignatureLine').style.display=$('digitalSignToggle').checked?'none':'block'});
       $('importJsonBtn').addEventListener('click',()=>{try{state=normalizeState(JSON.parse($('jsonInput').value));hydrateFields();render();markDirty();toast('تم تحليل البيانات')}catch{toast('تعذر تحليل JSON','تأكد من صحة التنسيق.')}});

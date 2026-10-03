@@ -6,28 +6,44 @@ const reply = (data, status = 200) => new Response(JSON.stringify(data), { statu
 const store = getStore({ name: 'clinic-treatment-catalog', consistency: 'strong' });
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
+const inferCategory = item => {
+  const code = String(item?.id || '').toLowerCase();
+  const name = String(item?.name || '');
+  if (code === 'other') return 'all';
+  if (['cosmetic-filling', 'post-rct-filling', 'root-canal', 'root-canal-retreatment', 'cleaning-standard', 'cleaning-gbt', 'periodontal-treatment', 'smile-analysis'].includes(code)) return 'initial';
+  if (/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code) || /زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name)) return 'implant';
+  if (/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary/.test(code) || /تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة/.test(name)) return 'prosthetic';
+  return 'initial';
+};
 const DEFAULT_ITEMS = [
-  ['cosmetic-filling', 'حشوة تجميلية'],
-  ['post-rct-filling', 'حشوة تجميلية بعد علاج العصب'],
-  ['root-canal', 'علاج عصب'],
-  ['root-canal-retreatment', 'إعادة علاج عصب'],
-  ['remove-post', 'إزالة وتد'],
-  ['place-post', 'تركيب وتد'],
-  ['remove-crown', 'إزالة تاج'],
-  ['recement-crown', 'إعادة تثبيت تاج'],
-  ['ceramic-crown', 'تركيب سيراميك تاج'],
-  ['ceramic-veneer', 'تركيب سيراميك فينير'],
-  ['implant-crown', 'تركيبة زراعة'],
-  ['implant-surgery', 'زراعة — الجزء الجراحي'],
-  ['extraction', 'خلع الأسنان'],
-  ['temporary', 'تركيب مؤقت'],
-  ['smile-design', 'تصميم ابتسامة'],
-  ['smile-analysis', 'تحليل ابتسامة'],
-  ['cleaning-standard', 'تنظيف أسنان عادي'],
-  ['cleaning-gbt', 'تنظيف أسنان GBT'],
-  ['whitening-trays', 'قوالب تبييض'],
-  ['other', 'إجراء آخر']
-].map(([id, name]) => ({ id, name, beforePrice: '', afterPrice: '' }));
+  ['cosmetic-filling', 'حشوة تجميلية', 'initial'],
+  ['post-rct-filling', 'حشوة تجميلية بعد علاج العصب', 'initial'],
+  ['root-canal', 'علاج عصب', 'initial'],
+  ['root-canal-retreatment', 'إعادة علاج عصب', 'initial'],
+  ['cleaning-standard', 'تنظيف أسنان عادي', 'initial'],
+  ['cleaning-gbt', 'تنظيف أسنان GBT', 'initial'],
+  ['periodontal-treatment', 'معالجة اللثة وتهيئة الأنسجة', 'initial'],
+  ['smile-analysis', 'تحليل ابتسامة', 'initial'],
+  ['extraction', 'خلع الأسنان', 'implant'],
+  ['bone-graft', 'تطعيم عظمي', 'implant'],
+  ['sinus-lift', 'رفع الجيب الأنفي', 'implant'],
+  ['implant-surgery', 'زراعة — الجزء الجراحي', 'implant'],
+  ['implant-uncovering', 'كشف الزراعة', 'implant'],
+  ['healing-abutment', 'تركيب دعامة الالتئام', 'implant'],
+  ['remove-post', 'إزالة وتد', 'prosthetic'],
+  ['place-post', 'تركيب وتد', 'prosthetic'],
+  ['remove-crown', 'إزالة تاج', 'prosthetic'],
+  ['recement-crown', 'إعادة تثبيت تاج', 'prosthetic'],
+  ['ceramic-crown', 'تركيب سيراميك تاج', 'prosthetic'],
+  ['ceramic-veneer', 'تركيب سيراميك فينير', 'prosthetic'],
+  ['implant-impression', 'طبعة أو مسح رقمي للزراعة', 'prosthetic'],
+  ['implant-temporary', 'تركيبة مؤقتة على الزراعة', 'prosthetic'],
+  ['implant-crown', 'تركيبة زراعة نهائية', 'prosthetic'],
+  ['temporary', 'تركيب مؤقت', 'prosthetic'],
+  ['smile-design', 'تصميم ابتسامة', 'prosthetic'],
+  ['whitening-trays', 'قوالب تبييض', 'prosthetic'],
+  ['other', 'إجراء آخر', 'all']
+].map(([id, name, category]) => ({ id, name, category, beforePrice: '', afterPrice: '' }));
 
 const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map((item, index) => {
   const id = cleanText(item?.id, 50).toLowerCase().replace(/[^a-z0-9_-]/g, '') || `custom-${index + 1}`;
@@ -39,6 +55,7 @@ const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map
   return {
     id,
     name: cleanText(item?.name, 120),
+    category: ['initial', 'implant', 'prosthetic', 'all'].includes(item?.category) ? item.category : inferCategory({ id, name: item?.name }),
     beforePrice,
     afterPrice
   };
