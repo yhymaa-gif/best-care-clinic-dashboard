@@ -44,6 +44,7 @@
     button:active{transform:scale(.98)}button:disabled{cursor:not-allowed;opacity:.5;transform:none}
     .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:10px 18px;background:rgba(250,252,251,.96);border-bottom:1px solid var(--rule);backdrop-filter:blur(15px)}
     .topbar-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.topbar .brand{display:flex;align-items:center;gap:10px;font-weight:900}.topbar .brand img{width:36px;height:36px;object-fit:contain}
+    .document-language-control{display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:6px 10px;border:1px solid #b8d7cb;border-radius:12px;background:#eef8f4;color:#1e5d47;font-size:12px;font-weight:900}.document-language-control select{border:0;border-radius:8px;padding:5px 8px;background:#fff;color:var(--ink);font-weight:800}
     .status-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #c9ddd6;border-radius:999px;padding:7px 11px;background:#fff;color:var(--ink-2);font-size:12px;font-weight:800}
     .status-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#d2a52b}.status-pill.saved::before{background:#2c9a66}
     .workflow-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:#eaf1f6;color:#42677f;font-size:12px;font-weight:900}.workflow-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}.workflow-pill.submitted{background:#fff2d8;color:#946311}.workflow-pill.patient_accepted{background:#e8efff;color:#315f98}.workflow-pill.approved,.workflow-pill.approved_signed{background:#dff3e8;color:#176445}.workflow-pill.rejected{background:#fde8e8;color:#a32e35}.workflow-pill.cancelled{background:#eef1f2;color:#44535b}
@@ -76,6 +77,8 @@
     .paper-wrap{min-width:0}
     .paper{position:relative;isolation:isolate;display:flex;flex-direction:column;width:210mm;min-height:297mm;margin:0 auto;background:var(--paper);box-shadow:var(--shadow);padding:9mm 14mm 17mm;overflow:visible}
     .paper::before{content:"مسودة";position:absolute;inset:43% auto auto 18%;z-index:0;transform:rotate(-28deg);font-size:88pt;font-weight:900;color:rgba(38,70,83,.055);pointer-events:none}
+    html[lang="en"] .paper::before{content:"DRAFT"}
+    html[lang="en"] body.draft-pdf .paper::before{content:"DRAFT FOR REVIEW"}
     .paper::after{content:"";position:absolute;inset:18mm 10mm 16mm;z-index:0;background:url("./best-care-logo.png") center 48%/74% auto no-repeat;opacity:.026;filter:grayscale(1) contrast(1.08);pointer-events:none}
     .paper.approved::before{display:none}
     .paper>*{position:relative;z-index:1}
@@ -153,6 +156,8 @@
     body.preview-mode .edit-only{display:none!important}body.preview-mode .line-input{border-bottom-color:transparent}body.preview-mode .phase-content,body.draft-pdf .phase-content{display:block!important}body.preview-mode .qty-stepper{display:inline-flex;background:transparent;border-color:transparent;padding:0}body.preview-mode .qty-stepper button{display:none}body.preview-mode select{appearance:none;background-image:none;pointer-events:none}
     .financial-layout{display:grid;grid-template-columns:1fr;gap:4mm}.financial-summary,.clinical-summary{border:1px solid var(--rule);border-radius:3mm;padding:3mm;break-inside:avoid}
     .vat-control{margin-top:3mm;padding:3mm;border:2px solid #d5a522;border-radius:3mm;background:linear-gradient(135deg,#fff8d9,#fffdf4);box-shadow:0 6px 18px rgba(190,139,10,.12)}.vat-control::before{content:"تنبيه ضريبي — تحقق من أهلية المريض";display:block;margin-bottom:2mm;color:#8b5e00;font-size:8.5pt;font-weight:950}.vat-control select{border:1px solid #c99814!important;background:#fff!important;font-weight:900;color:#704b00}.vat-confirm{display:flex;align-items:flex-start;gap:7px;margin-top:2mm;padding:2mm;border-radius:2mm;background:#fff;color:#704b00;font-size:8pt;font-weight:850}.vat-confirm input{width:17px;height:17px;accent-color:#c38a00}.vat-control.confirmed{border-color:#198754;background:linear-gradient(135deg,#e6f6ed,#fff)}.vat-control.confirmed::before{content:"✓ تم تأكيد وضع الضريبة";color:#176445}
+    html[lang="en"] .vat-control::before{content:"Tax notice — verify patient eligibility"}
+    html[lang="en"] .vat-control.confirmed::before{content:"✓ VAT status confirmed"}
     .money-row{display:flex;justify-content:space-between;gap:12px;padding:1.5mm 0;border-bottom:.4pt solid var(--rule);font-size:8.5pt}.money-row:last-child{border-bottom:0}.money-row strong{direction:ltr;font-variant-numeric:tabular-nums}
     .money-row.net{margin-top:1mm;padding:2mm;background:var(--teal-tint);border-radius:2mm;border:0;font-size:10pt}.saving-box{margin-top:2mm;border:1px solid var(--teal);border-radius:2mm;padding:2mm;text-align:center;color:var(--teal-dark);font-weight:900}
     .clinical-summary textarea{min-height:16mm}
@@ -250,6 +255,7 @@
         <span id="workflowStatus" class="workflow-pill">جارٍ تحميل حالة الخطة…</span>
       </div>
       <div class="topbar-group">
+        <label class="document-language-control"><span>لغة الخطة والمشاركة</span><select id="documentLanguageSelect" aria-label="لغة الخطة والمشاركة"><option value="ar">العربية</option><option value="en">الإنجليزية</option></select></label>
         <button id="addPhaseBtn" class="ghost" type="button">＋ إضافة مرحلة</button>
         <button id="compactEntryBtn" class="ghost" type="button">إدخال سريع</button>
         <button id="previewBtn" class="ghost" type="button">معاينة الطباعة</button>
@@ -345,7 +351,7 @@
             <span class="doc-header-spacer" aria-hidden="true"></span>
             <div class="clinic-title">
               <strong>عيادات أفضل عناية الاستشارية للأسنان</strong>
-              <span>Best Care Dental Clinics — أبها</span>
+              <span>عيادات أفضل عناية — أبها</span>
             </div>
             <img class="doc-logo" src="./best-care-logo.png" width="613" height="900" alt="شعار عيادات أفضل عناية الاستشارية للأسنان">
           </header>
@@ -538,6 +544,7 @@
     </div>
   </div>
 
-<script src="./treatment-plan.js?v=20261003-implant-plan-stages"></script>
+<script src="./treatment-plan-i18n.js?v=20261003-bilingual-plan"></script>
+<script src="./treatment-plan.js?v=20261003-bilingual-plan"></script>
 </body>
 </html>

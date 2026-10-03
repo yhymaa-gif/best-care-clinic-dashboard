@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.03-implant-plan-stages",
+  "version": "2026.10.03-bilingual-plan",
   "publishedAt": "2026-10-03",
   "summary": {
-    "ar": "تنظيم خطط الزراعة إلى أقسام قابلة للترتيب مع خيار إضافة المرحلة لاحقًا.",
-    "en": "Organizes implant plans into reorderable sections with an add-later option."
+    "ar": "خطط علاجية ثنائية اللغة بأقسام زراعة مرتبة ومشاركة وتوقيع بالعربية أو الإنجليزية.",
+    "en": "Bilingual treatment plans with ordered implant stages and Arabic or English sharing and signing."
   }
 }

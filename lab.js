@@ -4,15 +4,18 @@ const $=id=>document.getElementById(id);
     const statusLabels={pending_send:'الطبعة جاهزة',sent_coordination:'أُرسلت للتنسيق',sent:'أُرسلت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة لدى المعمل',received_clinic:'استُلمت من المعمل',delivered_coordination:'تم تسليمها لموظفي التنسيق',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'};
     const statusLabelsEn={pending_send:'Impression ready',sent_coordination:'Sent to coordination',sent:'Sent to laboratory',in_production:'In production',ready_at_lab:'Ready at laboratory',received_clinic:'Received from laboratory',delivered_coordination:'Handed to coordination staff',delivered_patient:'Delivered to patient',needs_adjustment:'Needs adjustment',returned_lab:'Returned to laboratory',cancelled:'Cancelled'};
     const statusOrder=['pending_send','sent_coordination','sent','in_production','ready_at_lab','received_clinic','delivered_coordination','delivered_patient','needs_adjustment','returned_lab','cancelled'];
+    const standardWorkEn={'تركيب تاج':'Crown','فينير':'Veneer','تركيبة زراعة':'Implant restoration','قوالب تبييض':'Whitening trays','تركيبة مؤقتة':'Temporary restoration','تركيب سيراميك تاج':'Ceramic crown','دعامة زراعة للتركيب':'Implant prosthetic abutment'};
+    const standardMaterialEn={'زركون':'Zirconia','قوالب شفافة':'Clear trays'};
+    const displayStandard=(value,translations)=>lang==='en'?(translations[String(value||'').trim()]||value):value;
     const LAB_I18N={
       ar:{title:'حالات معمل الأسنان',subtitle:'متابعة الإرسال والاستلام والتسليم للمريض',newCase:'＋ حالة جديدة',refresh:'↻ تحديث',print:'طباعة القائمة',back:'العودة للداشبورد',heroTitle:'الحالة من الطبعة إلى تسليم المريض',heroHelp:'اسم المعمل والمدة منذ الإرسال ظاهران دائمًا، والمسار الزمني يحفظ كل تحديث.',active:'حالة نشطة',atLab:'لدى المعمل',pending:'قبل الإرسال للمعمل',received:'استُلمت من المعمل',deliveredCoordination:'تم تسليمها للتنسيق',adjust:'تحتاج تعديلًا',done:'سُلّمت للمريض',allClinics:'جميع العيادات',allDoctors:'جميع الأطباء',allLabs:'جميع المعامل',activeCases:'الحالات النشطة',allCases:'كل الحالات',printCopy:'نسخة للطباعة',statusKey:['الطبعة جاهزة','لدى المعمل','استُلمت من المعمل','سُلّمت للتنسيق','تحتاج تعديلًا','سُلّمت للمريض'],listTitle:'حالات المعمل',listHelp:'المتأخرة أولًا، ثم الأقدم منذ الإرسال للمعمل.',case:'حالة',unit:'وحدة',units:'وحدات',noCases:'لا توجد حالات معمل مطابقة للتصفية.',loading:'جارٍ تحميل حالات المعمل…',labStatus:'تحديث الحالة',delete:'حذف الحالة',file:'ملف',mobile:'جوال',number:'رقم',doctor:'د.',notStarted:'لم يبدأ العداد',sinceHandoff:'منذ الإرسال للمعمل',duration:'استغرقت',elapsed:'مضى',newCaseTitle:'إضافة حالة معمل جديدة',newCaseHelp:'اربط الحالة بسجل المريض أولًا، ثم أكمل بيانات العمل المعملي.',lookup:'البحث عن المريض',fileNumber:'رقم الملف',phone:'رقم الجوال',nationalId:'رقم الهوية',search:'بحث وربط',lookupHint:'تتم المطابقة التامة مع سجل المريض، ولن تُنشأ الحالة قبل تأكيد الارتباط.',choose:'اختر',workType:'نوع الحالة',labName:'اسم المعمل',unitsLabel:'عدد الوحدات',material:'المادة أو النوع',shade:'درجة اللون',notes:'ملاحظات المعمل',cancel:'إلغاء',save:'حفظ حالة المعمل',linked:'مرتبط بالسجل',sentNow:'تم إرسال الحالة للمعمل الآن وبدء العداد',lang:'English',patientHead:'المريض',labHead:'المعمل',workHead:'العمل',stageHead:'المرحلة الحالية',timerHead:'عداد المعمل',actionHead:'تحديث الحالة',paceFast:'سريع',paceNormal:'ضمن الوقت',paceLate:'متأخر',timeline:'المسار الزمني',historyHelp:'كل تغيير موثق بوقته',impressionReady:'الطبعة جاهزة',sentCoordination:'أُرسلت للتنسيق',sentLab:'أُرسلت للمعمل',receivedLab:'استُلمت من المعمل',deliveredPatient:'سُلّمت للمريض'},
       en:{title:'Dental lab cases',subtitle:'Track handoff, production, receipt, and patient delivery',newCase:'＋ New lab case',refresh:'↻ Refresh',print:'Print list',back:'Back to dashboard',heroTitle:'From impression to patient delivery',heroHelp:'The laboratory name and elapsed time remain visible, while the timeline preserves every update.',active:'Active cases',atLab:'At laboratory',pending:'Before laboratory handoff',received:'Received from laboratory',deliveredCoordination:'Handed to coordination',adjust:'Needs adjustment',done:'Delivered to patient',allClinics:'All clinics',allDoctors:'All doctors',allLabs:'All laboratories',activeCases:'Active cases',allCases:'All cases',printCopy:'Print copy',statusKey:['Impression ready','At laboratory','Received from laboratory','Handed to coordination','Needs adjustment','Delivered to patient'],listTitle:'Laboratory cases',listHelp:'Overdue cases appear first, followed by the oldest laboratory handoff.',case:'case',unit:'unit',units:'units',noCases:'No laboratory cases match the current filters.',loading:'Loading laboratory cases…',labStatus:'Update status',delete:'Delete case',file:'File',mobile:'Mobile',number:'No.',doctor:'Dr.',notStarted:'Timer has not started',sinceHandoff:'Since laboratory handoff',duration:'Took',elapsed:'Elapsed',newCaseTitle:'Add a new laboratory case',newCaseHelp:'Link the case to a patient record first, then complete the laboratory details.',lookup:'Find patient',fileNumber:'File number',phone:'Mobile number',nationalId:'National ID',search:'Find and link',lookupHint:'The match must be confirmed before a laboratory case can be created.',choose:'Choose',workType:'Case type',labName:'Laboratory',unitsLabel:'Units',material:'Material or type',shade:'Shade',notes:'Laboratory notes',cancel:'Cancel',save:'Save laboratory case',linked:'Linked to record',sentNow:'Sent to the laboratory now — start timer',lang:'العربية',patientHead:'Patient',labHead:'Laboratory',workHead:'Work',stageHead:'Current stage',timerHead:'Laboratory timer',actionHead:'Update status',paceFast:'Fast',paceNormal:'On time',paceLate:'Overdue',timeline:'Timeline',historyHelp:'Every change is time-stamped',impressionReady:'Impression ready',sentCoordination:'Sent to coordination',sentLab:'Sent to laboratory',receivedLab:'Received from laboratory',deliveredPatient:'Delivered to patient'}
     };
-    let lang=localStorage.getItem('bestcare_lang')||'ar';
+    let lang=params.get('lang')==='en'||localStorage.getItem('bestcare_lang')==='en'?'en':'ar';
     const tx=key=>LAB_I18N[lang]?.[key]??LAB_I18N.ar[key]??key;
     const statusLabel=status=>lang==='en'?(statusLabelsEn[status]||status): (statusLabels[status]||status);
     const terminalStatuses=new Set(['delivered_patient','cancelled']);
-    let authUser=null,cases=[],clinics=[],scope='clinic',loading=false,selectedLookupPatient=null,lookupBusy=false,saveBusy=false;
+    let authUser=null,cases=[],clinics=[],scope='clinic',loading=false,selectedLookupPatient=null,lookupBusy=false,saveBusy=false,lastUpdatedAt=0;
     const openRows=new Set();
     const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
     const normalize=value=>String(value||'').replace(/\D/g,'');
@@ -128,6 +131,8 @@ const $=id=>document.getElementById(id);
         return (!q||searchable.includes(q))&&(clinic==='all'||item.clinicId===clinic)&&(doctor==='all'||assignedDoctor===doctor)&&(lab==='all'||displayLab(item)===lab)&&(status==='all'||!terminalStatuses.has(item.status));
       }).sort((a,b)=>priorityRank(a)-priorityRank(b)||Number(a.sentAt||Number.MAX_SAFE_INTEGER)-Number(b.sentAt||Number.MAX_SAFE_INTEGER)||Number(b.updatedAt||0)-Number(a.updatedAt||0));
     }
+    function labMessage(ar,en){return lang==='en'?en:ar}
+    function apiError(error,ar,en){const message=String(error?.message||error||'');return lang==='en'&&/[\u0600-\u06ff]/.test(message)?en:(message||labMessage(ar,en))}
     function applyLanguage(){
       document.documentElement.lang=lang;document.documentElement.dir=lang==='en'?'ltr':'rtl';
       document.title=`${tx('title')} — ${lang==='en'?'Best Care':'أفضل عناية'}`;
@@ -137,7 +142,9 @@ const $=id=>document.getElementById(id);
       set('.stat.sent span','atLab');set('.stat.pending span','pending');set('.stat.received span','received');set('.stat.adjust span','adjust');set('.stat.done span','done');
       $('searchInput').placeholder=lang==='en'?'Search by patient, file, mobile, or lab':'بحث باسم المريض أو رقم الملف أو الجوال أو المعمل';
       $('clinicFilter').options[0].textContent=tx('allClinics');$('doctorFilter').options[0].textContent=tx('allDoctors');$('labFilter').options[0].textContent=tx('allLabs');
+      const statusValue=$('statusFilter').value;
       $('statusFilter').innerHTML=`<option value="active">${esc(tx('activeCases'))}</option><option value="all">${esc(tx('allCases'))}</option>`;
+      $('statusFilter').value=statusValue==='all'?'all':'active';
       set('#compactPrintBtn','printCopy');
       ['patientHead','labHead','workHead','stageHead','timerHead','actionHead','paceFastLabel','paceNormalLabel','paceLateLabel'].forEach(id=>{if($(id))$(id).textContent=tx(id.replace('Label',''))});
       const keyLabels=document.querySelectorAll('.status-key span');tx('statusKey').forEach((label,index)=>{if(keyLabels[index])keyLabels[index].lastChild.textContent=label});
@@ -149,8 +156,19 @@ const $=id=>document.getElementById(id);
       const labels=document.querySelectorAll('.new-case-form>label');
       if(labels[0])labels[0].firstChild.textContent=tx('workType');if(labels[2])labels[2].firstChild.textContent=tx('labName');if(labels[4])labels[4].firstChild.textContent=tx('unitsLabel');if(labels[5])labels[5].firstChild.textContent=tx('material');if(labels[6])labels[6].firstChild.textContent=tx('shade');if(labels[7])labels[7].firstChild.textContent=tx('notes');
       set('#saveNewLabCaseBtn','save');
+      document.querySelector('#newLabCustomWorkLabel')?.firstChild&&(document.querySelector('#newLabCustomWorkLabel').firstChild.textContent=labMessage('الإجراء المعملي','Laboratory procedure'));
+      document.querySelector('#newLabCustomNameLabel')?.firstChild&&(document.querySelector('#newLabCustomNameLabel').firstChild.textContent=labMessage('اسم المعمل الآخر','Other laboratory name'));
+      $('newLabCustomWork').placeholder=labMessage('اكتب الإجراء المطلوب','Enter the required procedure');
+      $('newLabCustomName').placeholder=labMessage('اكتب اسم المعمل','Enter laboratory name');
+      $('newLabMaterial').placeholder=labMessage('مثال: زركون، E-max','Example: Zirconia, E-max');
+      $('newLabShade').placeholder=labMessage('اختياري','Optional');
+      const sentLabel=document.querySelector('.sent-check span');if(sentLabel)sentLabel.textContent=tx('sentNow');
       document.querySelectorAll('[data-close-new-case]').forEach(button=>{if(button.matches('button:not(.modal-close)'))button.textContent=tx('cancel')});
       const toggle=$('languageBtn');if(toggle)toggle.textContent=tx('lang');
+      if(lastUpdatedAt)$('syncState').textContent=`${labMessage('محدّث','Updated')} ${new Date(lastUpdatedAt).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`;
+      else if(params.get('preview')==='1')$('syncState').textContent=labMessage('معاينة محلية','Local preview');
+      else $('syncState').textContent=labMessage('محدّث الآن','Updated now');
+      const linkedBadge=document.querySelector('.selected-patient-badge');if(linkedBadge)linkedBadge.textContent=tx('linked');
       render();
     }
     function displayLab(item){return item.labName==='other'?(item.customLabName||(lang==='en'?'Other laboratory':'معمل آخر')):(item.labName||'—')}
@@ -162,7 +180,7 @@ const $=id=>document.getElementById(id);
       $('receivedCount').textContent=active.filter(item=>['received_clinic','delivered_coordination'].includes(item.status)).length;
       $('adjustCount').textContent=active.filter(item=>['needs_adjustment','returned_lab'].includes(item.status)).length;
       $('doneCount').textContent=cases.filter(item=>item.status==='delivered_patient').length;
-      const labs=[...new Set(cases.map(displayLab).filter(value=>value&&value!=='—'))].sort((a,b)=>a.localeCompare(b,'ar'));
+      const labs=[...new Set(cases.map(displayLab).filter(value=>value&&value!=='—'))].sort((a,b)=>a.localeCompare(b,lang==='en'?'en':'ar'));
       const labValue=$('labFilter').value;
       $('labFilter').innerHTML=`<option value="all">${esc(tx('allLabs'))}</option>${labs.map(lab=>`<option value="${esc(lab)}">${esc(lab)}</option>`).join('')}`;
       if(labs.includes(labValue))$('labFilter').value=labValue;
@@ -173,7 +191,7 @@ const $=id=>document.getElementById(id);
       const visible=filteredCases();
       $('visibleCount').textContent=`${visible.length} ${tx('case')}${visible.length===1||lang==='ar'?'':'s'}`;
       $('caseList').innerHTML=visible.length?visible.map(item=>{
-        const lab=displayLab(item),work=(item.items||[]).map(entry=>`${entry.name} ×${entry.quantity}`).join(lang==='en'?', ': '، ')||'—';
+        const lab=displayLab(item),work=(item.items||[]).map(entry=>`${displayStandard(entry.name,standardWorkEn)} ×${entry.quantity}`).join(lang==='en'?', ': '، ')||'—';
         const clinic=clinics.find(row=>row.id===item.clinicId);
         const clinicText=clinic?`${clinic.name} · ${tx('number')} ${clinic.roomNumber}`:(item.clinicName||item.clinicId);
         const doctor=displayDoctor(item);
@@ -181,7 +199,7 @@ const $=id=>document.getElementById(id);
         const pace=paceMeta(item),open=openRows.has(item.id);
         return `<tr class="case-row pace-${pace.code}">
           <td data-label="${esc(tx('patientHead'))}"><div class="patient"><strong>${esc(item.patient?.name||'—')}</strong><small>${esc(tx('file'))} ${esc(item.patient?.file||'—')}${item.patient?.phone?` · ${esc(item.patient.phone)}`:''}</small><div class="assignment"><span class="clinic-pill">${esc(clinicText)}</span><span class="doctor-pill">${esc(tx('doctor'))} ${esc(doctor)}</span></div></div></td>
-          <td data-label="${esc(tx('labHead'))}"><div class="lab"><strong>${esc(lab)}</strong><small>${esc(item.material||(lang==='en'?'Material not specified':'المادة غير محددة'))}${item.shade?` · ${lang==='en'?'Shade':'لون'} ${esc(item.shade)}`:''}</small></div></td>
+          <td data-label="${esc(tx('labHead'))}"><div class="lab"><strong>${esc(lab)}</strong><small>${esc(displayStandard(item.material,standardMaterialEn)||(lang==='en'?'Material not specified':'المادة غير محددة'))}${item.shade?` · ${lang==='en'?'Shade':'لون'} ${esc(item.shade)}`:''}</small></div></td>
           <td data-label="${esc(tx('workHead'))}"><div class="work"><strong>${esc(work)}</strong><small>${item.units} ${item.units===1?tx('unit'):tx('units')}${item.notes?` · ${esc(item.notes)}`:''}</small></div></td>
           <td data-label="${esc(tx('stageHead'))}"><span class="stage-pill">${esc(statusLabel(item.status))}</span></td>
           <td data-label="${esc(tx('timerHead'))}"><div class="timer"><b>${esc(duration.value)}</b><small>${esc(pace.label)} · ${esc(duration.detail)}</small></div></td>
@@ -192,7 +210,7 @@ const $=id=>document.getElementById(id);
     async function loadClinics(){
       const response=await api('/api/clinics'),data=await response.json().catch(()=>({}));
       if(response.status===401){location.replace('./');return}
-      if(!response.ok)throw new Error(data.error||'تعذر تحميل العيادات');
+      if(!response.ok)throw new Error(data.error||labMessage('تعذر تحميل العيادات','Could not load clinics.'));
       clinics=(Array.isArray(data.clinics)?data.clinics:[]).filter(item=>item.active);
       const active=authUser?.role==='admin'?clinics:clinics.filter(item=>item.id===authUser?.clinicId);
       $('clinicFilter').innerHTML=`${authUser?.role==='admin'?`<option value="all">${esc(tx('allClinics'))}</option>`:''}${active.map(item=>`<option value="${esc(item.id)}">${esc(item.name)} · ${esc(tx('number'))} ${esc(item.roomNumber)}</option>`).join('')}`;
@@ -207,9 +225,9 @@ const $=id=>document.getElementById(id);
         if(response.status===401){location.replace('./');return}
         if(!response.ok)throw new Error(data.error||'تعذر تحميل حالات المعمل');
         cases=Array.isArray(data.cases)?data.cases:[];
-        $('syncState').textContent=`${lang==='en'?'Updated':'محدّث'} ${new Date().toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`;
+        lastUpdatedAt=Date.now();$('syncState').textContent=`${labMessage('محدّث','Updated')} ${new Date(lastUpdatedAt).toLocaleTimeString(lang==='en'?'en-GB':'ar-SA',{hour:'2-digit',minute:'2-digit'})}`;
         render();
-      }catch(error){$('errorBox').hidden=false;$('errorBox').textContent=String(error.message||error);$('caseList').innerHTML=`<div class="empty">${esc(lang==='en'?'Could not load lab cases. Press Refresh to try again.':'تعذر تحميل الحالات. اضغط تحديث للمحاولة مرة أخرى.')}</div>`}
+      }catch(error){$('errorBox').hidden=false;$('errorBox').textContent=apiError(error,'تعذر تحميل حالات المعمل','Could not load laboratory cases.');$('caseList').innerHTML=`<div class="empty">${esc(lang==='en'?'Could not load lab cases. Press Refresh to try again.':'تعذر تحميل الحالات. اضغط تحديث للمحاولة مرة أخرى.')}</div>`}
       finally{loading=false;$('refreshBtn').disabled=false}
     }
     async function changeStatus(select){
@@ -220,7 +238,7 @@ const $=id=>document.getElementById(id);
         const data=await response.json().catch(()=>({}));
         if(!response.ok)throw new Error(data.error||'تعذر تحديث الحالة');
         cases=cases.map(row=>row.id===item.id?data.case:row);render();
-      }catch(error){item.status=previous;render();$('errorBox').hidden=false;$('errorBox').textContent=String(error.message||error)}
+      }catch(error){item.status=previous;render();$('errorBox').hidden=false;$('errorBox').textContent=apiError(error,'تعذر تحديث الحالة','Could not update laboratory status.')}
     }
     async function deleteCase(button){
       const item=cases.find(row=>row.id===button.dataset.deleteCase);if(!item)return;
@@ -233,7 +251,7 @@ const $=id=>document.getElementById(id);
         if(!response.ok)throw new Error(data.error||'تعذر حذف حالة المعمل');
         cases=cases.filter(row=>row.id!==item.id);
         render();
-      }catch(error){button.disabled=false;$('errorBox').hidden=false;$('errorBox').textContent=String(error.message||error)}
+      }catch(error){button.disabled=false;$('errorBox').hidden=false;$('errorBox').textContent=apiError(error,'تعذر حذف حالة المعمل','Could not delete laboratory case.')}
     }
     function clinicLabel(clinicId){
       const clinic=clinics.find(item=>item.id===clinicId);
@@ -289,19 +307,19 @@ const $=id=>document.getElementById(id);
       selectedLookupPatient=match;
       const patient=match.patient||{};
       $('selectedPatientName').textContent=patient.name||'—';
-      $('selectedPatientMeta').textContent=[patient.file?`ملف ${patient.file}`:'',patient.phone?`جوال ${patient.phone}`:'',patient.nationalId?`هوية ${patient.nationalId}`:'',clinicLabel(match.clinicId)].filter(Boolean).join(' · ');
+      $('selectedPatientMeta').textContent=[patient.file?`${tx('file')} ${patient.file}`:'',patient.phone?`${tx('mobile')} ${patient.phone}`:'',patient.nationalId?`${lang==='en'?'ID':'هوية'} ${patient.nationalId}`:'',clinicLabel(match.clinicId)].filter(Boolean).join(' · ');
       $('labCreateDetails').hidden=false;
       $('saveNewLabCaseBtn').disabled=false;
-      $('labLookupResults').innerHTML='<div class="lookup-message">تم العثور على سجل مطابق وربط الحالة به. أكمل تفاصيل المعمل أدناه.</div>';
+      $('labLookupResults').innerHTML=`<div class="lookup-message">${labMessage('تم العثور على سجل مطابق وربط الحالة به. أكمل تفاصيل المعمل أدناه.','Matching patient record linked. Complete the laboratory details below.')}</div>`;
       setTimeout(()=>$('newLabWorkType').focus(),60);
     }
     function renderLookupMatches(matches){
-      if(!matches.length){$('labLookupResults').innerHTML='<div class="lookup-message error">لم يتم العثور على سجل مطابق. جرّب رقم الجوال أو رقم الهوية، أو تأكد من الرقم المدخل.</div>';return}
+      if(!matches.length){$('labLookupResults').innerHTML=`<div class="lookup-message error">${labMessage('لم يتم العثور على سجل مطابق. جرّب رقم الجوال أو رقم الهوية، أو تأكد من الرقم المدخل.','No matching record found. Check the number or try mobile or national ID.')}</div>`;return}
       if(matches.length===1){selectLookupMatch(matches[0]);return}
       $('labLookupResults').innerHTML=matches.map((match,index)=>{
         const patient=match.patient||{};
-        const meta=[patient.file?`ملف ${patient.file}`:'',patient.phone?`جوال ${patient.phone}`:'',patient.nationalId?`هوية ${patient.nationalId}`:'',clinicLabel(match.clinicId)].filter(Boolean).join(' · ');
-        return `<article class="lookup-result"><div><strong>${esc(patient.name||'—')}</strong><small>${esc(meta)}</small></div><button type="button" data-select-lookup="${index}">اختيار وربط</button></article>`;
+        const meta=[patient.file?`${tx('file')} ${patient.file}`:'',patient.phone?`${tx('mobile')} ${patient.phone}`:'',patient.nationalId?`${lang==='en'?'ID':'هوية'} ${patient.nationalId}`:'',clinicLabel(match.clinicId)].filter(Boolean).join(' · ');
+        return `<article class="lookup-result"><div><strong>${esc(patient.name||'—')}</strong><small>${esc(meta)}</small></div><button type="button" data-select-lookup="${index}">${labMessage('اختيار وربط','Select and link')}</button></article>`;
       }).join('');
       $('labLookupResults').querySelectorAll('[data-select-lookup]').forEach(button=>button.addEventListener('click',()=>selectLookupMatch(matches[Number(button.dataset.selectLookup)])));
     }
@@ -319,10 +337,10 @@ const $=id=>document.getElementById(id);
       if(lookupBusy)return;
       const type=$('labLookupType').value,value=$('labLookupValue').value.trim();
       clearSelectedLookupPatient();
-      if(!value){$('labLookupResults').innerHTML='<div class="lookup-message error">أدخل رقم البحث أولًا.</div>';$('labLookupValue').focus();return}
-      if(type==='national'&&normalize(value).length!==10){$('labLookupResults').innerHTML='<div class="lookup-message error">رقم الهوية يجب أن يتكون من 10 أرقام.</div>';return}
-      if(type==='phone'&&normalize(value).length<9){$('labLookupResults').innerHTML='<div class="lookup-message error">أدخل رقم جوال صحيحًا.</div>';return}
-      lookupBusy=true;$('labLookupBtn').disabled=true;$('labLookupBtn').textContent='جارٍ البحث…';$('labLookupResults').innerHTML='<div class="lookup-message">جارٍ البحث عن سجل مطابق…</div>';
+      if(!value){$('labLookupResults').innerHTML=`<div class="lookup-message error">${labMessage('أدخل رقم البحث أولًا.','Enter a number to search.')}</div>`;$('labLookupValue').focus();return}
+      if(type==='national'&&normalize(value).length!==10){$('labLookupResults').innerHTML=`<div class="lookup-message error">${labMessage('رقم الهوية يجب أن يتكون من 10 أرقام.','National ID must be 10 digits.')}</div>`;return}
+      if(type==='phone'&&normalize(value).length<9){$('labLookupResults').innerHTML=`<div class="lookup-message error">${labMessage('أدخل رقم جوال صحيحًا.','Enter a valid mobile number.')}</div>`;return}
+      lookupBusy=true;$('labLookupBtn').disabled=true;$('labLookupBtn').textContent=labMessage('جارٍ البحث…','Searching…');$('labLookupResults').innerHTML=`<div class="lookup-message">${labMessage('جارٍ البحث عن سجل مطابق…','Searching for a matching record…')}</div>`;
       try{
         if(['127.0.0.1','localhost'].includes(location.hostname)&&params.get('preview')==='1'){
           renderLookupMatches(localLookup(type,value));return;
@@ -331,20 +349,20 @@ const $=id=>document.getElementById(id);
         const query=new URLSearchParams({type,value,clinic:selectedClinic});
         const response=await api(`/api/patient-lookup?${query.toString()}`),data=await response.json().catch(()=>({}));
         if(response.status===401){location.replace('./');return}
-        if(!response.ok)throw new Error(data.error||'تعذر البحث عن المريض');
+        if(!response.ok)throw new Error(data.error||labMessage('تعذر البحث عن المريض','Could not search for the patient.'));
         renderLookupMatches(Array.isArray(data.matches)?data.matches:[]);
-      }catch(error){$('labLookupResults').innerHTML=`<div class="lookup-message error">${esc(error.message||'تعذر البحث عن المريض')}</div>`}
-      finally{lookupBusy=false;$('labLookupBtn').disabled=false;$('labLookupBtn').textContent='بحث وربط'}
+      }catch(error){$('labLookupResults').innerHTML=`<div class="lookup-message error">${esc(apiError(error,'تعذر البحث عن المريض','Could not search for the patient.'))}</div>`}
+      finally{lookupBusy=false;$('labLookupBtn').disabled=false;$('labLookupBtn').textContent=tx('search')}
     }
     function changeNewLabUnits(delta){$('newLabUnits').value=String(Math.max(1,Math.min(99,Number($('newLabUnits').value||1)+delta)))}
     function collectNewLabDraft(){
-      if(!selectedLookupPatient)return{error:'ابحث عن المريض واربط الحالة بسجله أولًا.'};
+      if(!selectedLookupPatient)return{error:labMessage('ابحث عن المريض واربط الحالة بسجله أولًا.','Find and link the patient record first.')};
       const work=$('newLabWorkType').value,customWork=$('newLabCustomWork').value.trim();
-      if(!work)return{error:'اختر نوع حالة المعمل.',focus:'newLabWorkType'};
-      if(work==='other'&&!customWork)return{error:'اكتب الإجراء المعملي المطلوب.',focus:'newLabCustomWork'};
+      if(!work)return{error:labMessage('اختر نوع حالة المعمل.','Choose a laboratory case type.'),focus:'newLabWorkType'};
+      if(work==='other'&&!customWork)return{error:labMessage('اكتب الإجراء المعملي المطلوب.','Enter the required laboratory procedure.'),focus:'newLabCustomWork'};
       const labName=$('newLabName').value,customLabName=$('newLabCustomName').value.trim();
-      if(!labName)return{error:'اختر اسم معمل الأسنان.',focus:'newLabName'};
-      if(labName==='other'&&!customLabName)return{error:'اكتب اسم المعمل الآخر.',focus:'newLabCustomName'};
+      if(!labName)return{error:labMessage('اختر اسم معمل الأسنان.','Choose the dental laboratory.'),focus:'newLabName'};
+      if(labName==='other'&&!customLabName)return{error:labMessage('اكتب اسم المعمل الآخر.','Enter the other laboratory name.'),focus:'newLabCustomName'};
       const units=Math.max(1,Math.min(99,Number($('newLabUnits').value||1)));
       return{labName,customLabName:labName==='other'?customLabName:'',items:[{code:'lab-page-entry',name:work==='other'?customWork:work,quantity:units}],units,material:$('newLabMaterial').value.trim(),shade:$('newLabShade').value.trim(),notes:$('newLabNotes').value.trim(),status:$('newLabSentNow').checked?'sent':'pending_send',sentAt:$('newLabSentNow').checked?Date.now():0};
     }
@@ -352,27 +370,27 @@ const $=id=>document.getElementById(id);
       const match=selectedLookupPatient,patient=match.patient||{},clinic=clinics.find(item=>item.id===match.clinicId);
       const response=await api(`/api/lab-cases?clinic=${encodeURIComponent(match.clinicId)}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({...draft,allowDuplicate,clinicId:match.clinicId,clinicName:clinic?.name||'',roomNumber:clinic?.roomNumber||'',doctorName:clinic?.doctorName||authUser?.displayName||'',patient:{id:patient.id,name:patient.name,file:patient.file,phone:patient.phone},sourceDate:match.sourceDate||''})});
       const data=await response.json().catch(()=>({}));
-      if(!response.ok){const error=new Error(data.duplicate?'توجد حالة معمل نشطة لنفس المريض والإجراء.':(data.error||'تعذر حفظ حالة المعمل'));error.code=data.code||'';error.duplicateCase=data.case||null;throw error}
+      if(!response.ok){const error=new Error(data.duplicate?labMessage('توجد حالة معمل نشطة لنفس المريض والإجراء.','An active case exists for this patient and procedure.'):(data.error||labMessage('تعذر حفظ حالة المعمل','Could not save the laboratory case.')));error.code=data.code||'';error.duplicateCase=data.case||null;throw error}
       return data;
     }
     async function saveNewLabCase(){
       if(saveBusy)return;
       const draft=collectNewLabDraft();
       if(draft.error){$('newLabCaseError').hidden=false;$('newLabCaseError').textContent=draft.error;if(draft.focus)$(draft.focus).focus();return}
-      saveBusy=true;const button=$('saveNewLabCaseBtn'),original=button.textContent;button.disabled=true;button.textContent='جارٍ الحفظ…';$('newLabCaseError').hidden=true;
+      saveBusy=true;const button=$('saveNewLabCaseBtn');button.disabled=true;button.textContent=labMessage('جارٍ الحفظ…','Saving…');$('newLabCaseError').hidden=true;
       try{
         let data;
         try{data=await postNewLabCase(draft)}catch(error){
           if(error.code!=='DUPLICATE_LAB_CASE')throw error;
-          if(!confirm('توجد حالة معمل نشطة مسجلة لنفس المريض والإجراء. هل تريد إضافة حالة أخرى؟'))throw error;
+          if(!confirm(labMessage('توجد حالة معمل نشطة مسجلة لنفس المريض والإجراء. هل تريد إضافة حالة أخرى؟','An active laboratory case already exists for this patient and procedure. Add another case?')))throw error;
           data=await postNewLabCase(draft,true);
         }
         if(data.case)cases=[data.case,...cases.filter(item=>item.id!==data.case.id)];
         render();closeNewCaseModal(true);
-        $('errorBox').hidden=false;$('errorBox').textContent=`تم حفظ حالة المعمل وربطها بالمريض ${selectedLookupPatient?.patient?.name||''}.`;
+        $('errorBox').hidden=false;$('errorBox').textContent=lang==='en'?`Laboratory case saved and linked to ${selectedLookupPatient?.patient?.name||''}.`:`تم حفظ حالة المعمل وربطها بالمريض ${selectedLookupPatient?.patient?.name||''}.`;
         setTimeout(()=>{$('errorBox').hidden=true},4500);
-      }catch(error){$('newLabCaseError').hidden=false;$('newLabCaseError').textContent=String(error.message||'تعذر حفظ حالة المعمل')}
-      finally{saveBusy=false;button.disabled=!selectedLookupPatient;button.textContent=original}
+      }catch(error){$('newLabCaseError').hidden=false;$('newLabCaseError').textContent=apiError(error,'تعذر حفظ حالة المعمل','Could not save the laboratory case.')}
+      finally{saveBusy=false;button.disabled=!selectedLookupPatient;button.textContent=tx('save')}
     }
     async function init(){
       applyLanguage();
@@ -388,7 +406,7 @@ const $=id=>document.getElementById(id);
           {id:'preview-3',clinicId:'clinic-1',patient:{name:'ريم',file:'7652',phone:'0550000003'},labName:'معمل مروان',items:[{name:'تركيبة زراعة',quantity:1}],units:1,material:'E-max',shade:'B1',status:'needs_adjustment',sentAt:Date.now()-8*86400000,updatedAt:Date.now()-7200000}
         ];
         $('clinicFilter').innerHTML='<option value="all">جميع العيادات</option>'+clinics.map(item=>`<option value="${esc(item.id)}">${esc(item.name)} · رقم ${esc(item.roomNumber)}</option>`).join('');
-        $('syncState').textContent='معاينة محلية';
+        $('syncState').textContent=labMessage('معاينة محلية','Local preview');
         render();
         if(params.get('create')==='1')openNewCaseModal();
         return;
@@ -401,7 +419,7 @@ const $=id=>document.getElementById(id);
       await loadCases();
       if(params.get('create')==='1')openNewCaseModal();
     }
-    $('languageBtn').addEventListener('click',()=>{lang=lang==='en'?'ar':'en';localStorage.setItem('bestcare_lang',lang);applyLanguage()});
+    $('languageBtn').addEventListener('click',()=>{lang=lang==='en'?'ar':'en';localStorage.setItem('bestcare_lang',lang);const nextUrl=new URL(location.href);nextUrl.searchParams.set('lang',lang);history.replaceState(null,'',nextUrl);applyLanguage()});
     $('refreshBtn').addEventListener('click',loadCases);
     $('printBtn').addEventListener('click',()=>window.print());
     $('compactPrintBtn').addEventListener('click',()=>window.print());
@@ -425,5 +443,5 @@ const $=id=>document.getElementById(id);
     $('newLabUnitsPlus').addEventListener('click',()=>changeNewLabUnits(1));
     $('saveNewLabCaseBtn').addEventListener('click',saveNewLabCase);
     document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('newLabCaseModal').classList.contains('open'))closeNewCaseModal()});
-    init().catch(error=>{$('errorBox').hidden=false;$('errorBox').textContent=String(error.message||error)});
+    init().catch(error=>{$('errorBox').hidden=false;$('errorBox').textContent=apiError(error,'تعذر تحميل شاشة المعمل','Could not load the laboratory screen.')});
     setInterval(()=>{if(cases.length)render()},60000);

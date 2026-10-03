@@ -10,7 +10,7 @@ let adminLayoutMode=(()=>{try{return localStorage.getItem(ADMIN_LAYOUT_KEY)==='m
 let modernSidebarCollapsed=(()=>{try{const stored=localStorage.getItem(ADMIN_SIDEBAR_COLLAPSED_KEY);return stored===null?Boolean(matchMedia?.('(max-width: 1400px)')?.matches):stored==='1'}catch{return false}})();
 function applyTheme(theme,{save=false}={}){
   currentTheme=theme==='dark'?'dark':'light';document.documentElement.dataset.theme=currentTheme;document.body?.classList.toggle('dark-theme',currentTheme==='dark');
-  const button=$('themeToggleBtn'),icon=$('themeToggleIcon');if(icon)icon.textContent=currentTheme==='dark'?'☀':'☾';if(button){const label=currentTheme==='dark'?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن';button.setAttribute('aria-label',label);button.title=label;button.setAttribute('aria-pressed',String(currentTheme==='dark'))}
+  const button=$('themeToggleBtn'),icon=$('themeToggleIcon');if(icon)icon.textContent=currentTheme==='dark'?'☀':'☾';if(button){const english=typeof lang!=='undefined'&&lang==='en',label=currentTheme==='dark'?(english?'Enable light mode':'تفعيل الوضع الفاتح'):(english?'Enable dark mode':'تفعيل الوضع الداكن');button.setAttribute('aria-label',label);button.title=label;button.setAttribute('aria-pressed',String(currentTheme==='dark'))}
   if(save)try{localStorage.setItem(THEME_KEY,currentTheme)}catch{}
 }
 function applyModernSidebarCollapsed(collapsed,{save=false}={}){
@@ -168,7 +168,7 @@ const IOS_INSTALL_COPY={
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
-let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let paymentCollectionPatientId=null; let paymentReceiptEditingId=null; let revenueSummary={todayCents:0,todayCount:0,monthCents:0,monthCount:0,updatedAt:0,date:''}; let revenueSummaryLoading=false; let lang=localStorage.getItem('bestcare_lang')||'ar';
+let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let paymentCollectionPatientId=null; let paymentReceiptEditingId=null; let revenueSummary={todayCents:0,todayCount:0,monthCents:0,monthCount:0,updatedAt:0,date:''}; let revenueSummaryLoading=false; const requestedLang=new URLSearchParams(location.search).get('lang');let lang=requestedLang==='en'?'en':requestedLang==='ar'?'ar':localStorage.getItem('bestcare_lang')||'ar';
 function ensurePaymentRevenueModals(){
   if($('paymentCollectionModal'))return;
   document.body.insertAdjacentHTML('beforeend',`<div id="paymentCollectionModal" class="modal"><div class="modal-card payment-collection-card" role="dialog" aria-modal="true" aria-labelledby="paymentCollectionTitle"><div class="payment-collection-head"><div><small>إحصاء تشغيلي مبسط</small><h3 id="paymentCollectionTitle">تسجيل مبلغ للدخل</h3><p id="paymentCollectionPatient">—</p></div><strong id="paymentCollectionTotal">0 ر.س</strong></div><p class="operational-income-note">هذا ملخص تقديري لمتابعة دخل اليوم والشهر، وليس نظامًا محاسبيًا أو كشفًا ماليًا.</p><div class="payment-collection-grid"><label>المبلغ المسجل (ر.س)<input id="paymentReceiptAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00"></label><label>طريقة الدفع (اختياري)<select id="paymentReceiptMethod"><option value="card">بطاقة</option><option value="cash">نقدًا</option><option value="transfer">تحويل</option><option value="insurance">تأمين</option><option value="other">أخرى</option></select></label><label class="full">ملاحظة اختيارية<input id="paymentReceiptNote" type="text" maxlength="240" placeholder="مثال: دفعة أولى أو سداد المتبقي"></label></div><label class="payment-complete-check"><input id="paymentReceiptComplete" type="checkbox" checked><span><strong>اكتمل تنفيذ أمر الدفع</strong><small>ألغِ التحديد إذا كانت هذه دفعة جزئية وسيبقى الطلب قيد المتابعة.</small></span></label><p id="paymentReceiptError" class="auth-error" role="alert"></p><div class="payment-receipt-list-head"><strong>المبالغ المسجلة</strong><small>يمكن تصحيح المبلغ أو إضافة مبلغ آخر</small></div><div id="paymentReceiptList" class="payment-receipt-list"></div><div class="modal-actions"><button type="button" data-close="paymentCollectionModal">إغلاق</button><button id="paymentReceiptResetBtn" type="button" hidden>إلغاء التعديل</button><button id="savePaymentReceiptBtn" type="button" class="primary">إضافة للإحصاء</button></div></div></div><div id="revenueSummaryModal" class="modal"><div class="modal-card revenue-summary-card" role="dialog" aria-modal="true" aria-labelledby="revenueSummaryTitle"><div class="revenue-summary-head"><div><small>مراجعة تشغيلية</small><h3 id="revenueSummaryTitle">ملخص الدخل التقديري</h3><p>يُجمع تلقائيًا من المبالغ التي تسجلها الإدارة عند تنفيذ أوامر الدفع.</p></div><button type="button" data-close="revenueSummaryModal" aria-label="إغلاق">×</button></div><div class="revenue-summary-kpis"><article><small>دخل اليوم المسجل</small><strong id="revenueSummaryToday">0 ر.س</strong><span id="revenueSummaryTodayCount">0 عملية</span></article><article><small>دخل الشهر المسجل</small><strong id="revenueSummaryMonth">0 ر.س</strong><span id="revenueSummaryMonthCount">0 عملية</span></article></div><div class="revenue-ledger-head"><strong>مبالغ اليوم</strong><button id="refreshRevenueSummaryBtn" type="button">↻ تحديث</button></div><div id="revenueTodayList" class="revenue-today-list"></div><div class="modal-actions"><a class="button-link" href="./statistics.html">فتح الإحصائيات الكاملة</a><button type="button" data-close="revenueSummaryModal">تمت المراجعة</button></div></div></div>`);
@@ -211,13 +211,14 @@ let currentClinic={...clinicDirectory[clinicNumber(ACTIVE_CLINIC_ID)-1]};
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email'; let localStateHydrated=false; let authUser=null;
 function setupEmailAuth(){const step=$('authRequestStep'),phone=$('authPhone');if(!step||!phone||$('authEmail'))return;const methods=document.createElement('div');methods.className='auth-methods';methods.innerHTML='<label><input type="radio" name="authMethod" value="email" checked> البريد الإلكتروني</label><label><input type="radio" name="authMethod" value="phone"> الجوال</label>';const emailLabel=document.createElement('label');emailLabel.id='authEmailLabel';emailLabel.innerHTML='البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">';step.insertBefore(methods,phone.parentElement);step.insertBefore(emailLabel,phone.parentElement);phone.parentElement.id='authPhoneLabel';phone.parentElement.hidden=true;methods.querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{authMethod=input.value;emailLabel.hidden=authMethod!=='email';phone.parentElement.hidden=authMethod!=='phone'}));}
-const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=message||''};
+const localizeAuthError=message=>{const text=String(message||'');if(lang!=='en')return text;const map={'اسم المستخدم أو كلمة المرور غير صحيحة':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة.':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.':'Incorrect username or password. Enter the current password manually.','محاولات كثيرة. حاول لاحقًا.':'Too many attempts. Try again later.','طلبات كثيرة لرمز التحقق. حاول لاحقًا.':'Too many verification-code requests. Try again later.','تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.':'Could not reach the sign-in service. Check the connection and try again.','خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.':'The sign-in service is unavailable in this deployment. Redeploy the project with its server functions.','تعذر الاتصال بخدمة الدخول':'Could not connect to the sign-in service','استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.':'The sign-in response is incomplete. Reload after deployment finishes.'};return map[text]||text};
+const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=localizeAuthError(message)};
 async function authRequest(path,options={}){
   let response;
   try{
     response=await fetch(`/api/auth${path}`,{credentials:'include',cache:'no-store',...options});
   }catch{
-    throw new Error('تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.');
+    throw new Error(lang==='en'?'Could not reach the sign-in service. Check the connection and try again.':'تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.');
   }
   const contentType=String(response.headers.get('content-type')||'').toLowerCase();
   let data={};
@@ -226,9 +227,9 @@ async function authRequest(path,options={}){
   }
   if(!response.ok&&response.status!==401){
     const unavailable=response.status>=500||!contentType.includes('application/json');
-    throw new Error(data.error||(unavailable?'خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.':'تعذر الاتصال بخدمة الدخول'));
+    throw new Error(data.error||(unavailable?(lang==='en'?'The sign-in service is unavailable in this deployment. Redeploy the project with its server functions.':'خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.'):(lang==='en'?'Could not connect to the sign-in service':'تعذر الاتصال بخدمة الدخول')));
   }
-  if(response.ok&&!contentType.includes('application/json'))throw new Error('استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.');
+  if(response.ok&&!contentType.includes('application/json'))throw new Error(lang==='en'?'The sign-in response is incomplete. Reload after deployment finishes.':'استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.');
   return{response,data};
 }
 function setProtectedUiLocked(locked){
@@ -312,8 +313,8 @@ function lockApp(message='انتهت الجلسة بسبب الخمول. سجّ�
   authErrorMessage(message);
   requestAnimationFrame(()=>$('authUsername')?.focus());
 }
-async function initAuth(){document.body.classList.add('auth-checking');document.body.classList.remove('auth-locked');$('authGate').hidden=true;try{const {response,data}=await authRequest('?action=session');if(!data.enabled){lockApp('الحماية غير مفعّلة بعد. يجب ضبط AUTH_ENABLED في Netlify قبل استخدام التطبيق.');return}if(data.authenticated){unlockApp(data.user);return}lockApp('')}catch(error){lockApp(error.message||'تعذر التحقق من الجلسة')}}
-async function requestAuthOtp(){prepareAudio();const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage('أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage('جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){if($('authPassword'))$('authPassword').value='';authErrorMessage(data.error||'اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.');return}if($('authPassword'))$('authPassword').value='';unlockApp(data.user)}catch(error){if($('authPassword'))$('authPassword').value='';authErrorMessage(error.message)}}
+async function initAuth(){document.body.classList.add('auth-checking');document.body.classList.remove('auth-locked');$('authGate').hidden=true;try{const {response,data}=await authRequest('?action=session');if(!data.enabled){lockApp(lang==='en'?'Protection is not enabled yet. AUTH_ENABLED must be configured before using the app.':'الحماية غير مفعّلة بعد. يجب ضبط AUTH_ENABLED في Netlify قبل استخدام التطبيق.');return}if(data.authenticated){unlockApp(data.user);return}lockApp('')}catch(error){lockApp(error.message||(lang==='en'?'Could not verify the session':'تعذر التحقق من الجلسة'))}}
+async function requestAuthOtp(){prepareAudio();const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage(lang==='en'?'Enter the username and password.':'أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage(lang==='en'?'Signing in…':'جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){if($('authPassword'))$('authPassword').value='';authErrorMessage(data.error||(lang==='en'?'Incorrect username or password. Enter the current password manually.':'اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.'));return}if($('authPassword'))$('authPassword').value='';unlockApp(data.user)}catch(error){if($('authPassword'))$('authPassword').value='';authErrorMessage(error.message)}}
 async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp(data.user)}catch(error){authErrorMessage(error.message)}}
 function openUsersModal(){openModal('usersModal');$('usersError').textContent=''}
 function normalizeClinicDirectory(items){
@@ -460,17 +461,17 @@ function addClinicSlot(){
 async function saveClinicDirectory(){
   collectClinicDirectoryEditor();
   const invalid=clinicDirectory.find(clinic=>clinic.active&&(!clinic.name.trim()||!clinic.roomNumber.trim()));
-  if(invalid){$('clinicsError').textContent=`أكمل اسم ورقم العيادة ${clinicNumber(invalid.id)}.`;return}
-  $('clinicsError').textContent='جارٍ حفظ إعدادات العيادات…';
+  if(invalid){$('clinicsError').textContent=lang==='en'?`Complete the name and room number for clinic ${clinicNumber(invalid.id)}.`:`أكمل اسم ورقم العيادة ${clinicNumber(invalid.id)}.`;return}
+  $('clinicsError').textContent=lang==='en'?'Saving clinic settings…':'جارٍ حفظ إعدادات العيادات…';
   $('saveClinicsBtn').disabled=true;
   try{
     const response=await request('/api/clinics',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({clinics:clinicDirectory})});
     const data=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(data.error||'تعذر حفظ إعدادات العيادات');
+    if(!response.ok)throw new Error(data.error||(lang==='en'?'Could not save clinic settings':'تعذر حفظ إعدادات العيادات'));
     clinicDirectory=normalizeClinicDirectory(data.clinics);
     renderClinicSwitcher();
     closeModal('clinicsModal');
-    toast('تم تحديث العيادات','ستظهر فقط العيادات المفعلة، ولكل عيادة قائمة وبيانات مستقلة.');
+    toast(lang==='en'?'Clinics updated':'تم تحديث العيادات',lang==='en'?'Only active clinics will appear, each with its own list and data.':'ستظهر فقط العيادات المفعلة، ولكل عيادة قائمة وبيانات مستقلة.');
   }catch(error){$('clinicsError').textContent=error.message}
   finally{$('saveClinicsBtn').disabled=false}
 }
@@ -500,11 +501,12 @@ const PROCEDURE_EN_BY_ID=Object.freeze({
   'examination':'Examination','cosmetic-filling':'Cosmetic filling','post-rct-filling':'Post-root-canal filling','root-canal':'Root canal treatment','root-canal-retreatment':'Root canal retreatment','remove-post':'Post removal','place-post':'Post placement','remove-crown':'Crown removal','recement-crown':'Crown recementation','ceramic-crown':'Ceramic crown','ceramic-veneer':'Ceramic veneer','implant-prosthetic-abutment':'Implant prosthetic abutment','implant-crown':'Implant crown','implant-surgery':'Dental implant — surgical stage','cbct-scan':'CBCT scan','extraction':'Tooth extraction','temporary':'Temporary restoration','smile-design':'Smile design','smile-analysis':'Smile analysis','cleaning-standard':'Standard dental cleaning','cleaning-gbt':'GBT dental cleaning','whitening-trays':'Whitening trays','other':'Other procedure'
 });
 const PROCEDURE_EN_BY_AR=Object.freeze(Object.fromEntries(DEFAULT_TREATMENT_CATALOG.map(item=>[item.name,PROCEDURE_EN_BY_ID[item.id]||item.name])));
-const LAB_WORK_EN=Object.freeze({'تركيب تاج':'Crown','فينير':'Veneer','تركيبة زراعة':'Implant restoration','قوالب تبييض':'Whitening trays','تركيبة مؤقتة':'Temporary restoration','إجراء معملي آخر':'Other laboratory procedure'});
+const LAB_WORK_EN=Object.freeze({'تركيب تاج':'Crown','فينير':'Veneer','تركيبة زراعة':'Implant restoration','قوالب تبييض':'Whitening trays','تركيبة مؤقتة':'Temporary restoration','إجراء معملي آخر':'Other laboratory procedure','تركيب سيراميك تاج':'Ceramic crown','دعامة زراعة للتركيب':'Implant prosthetic abutment'});
 function procedureDisplayName(value,code=''){
   const name=String(value||'').trim();
   return lang==='en'?(PROCEDURE_EN_BY_ID[String(code||'')]||PROCEDURE_EN_BY_AR[name]||LAB_WORK_EN[name]||name):name;
 }
+function localizedSystemError(error,englishFallback){const message=String(error?.message||error||'');return lang==='en'&&/[\u0600-\u06ff]/.test(message)?englishFallback:message||englishFallback}
 const PAYMENT_LINKED_PLAN_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.';
 const treatmentCatalogLocalKey=()=>`bestcare_treatment_catalog_${ACTIVE_CLINIC_ID}`;
 function paymentDoctorKey(){
@@ -2183,7 +2185,7 @@ function operationCenterItems(){
       id:`prescription:${item.canonical}`,type:'prescriptions',canonical:item.canonical,status:item.status,priority:84,updatedAt:Number(item.updatedAt||0),
       title:lang==='en'?'Approved prescription awaiting administration sharing':'وصفة معتمدة بانتظار مشاركة الإدارة',patient:item.patient?.name||(lang==='en'?'Unnamed patient':'مريض بدون اسم'),identity:item.patient?.file?`${lang==='en'?'File':'ملف'} ${item.patient.file}`:(item.patient?.phone||''),
       detail:lang==='en'?`${Number(item.medicineCount||0)} medicine(s) · Approved by ${item.updatedBy||'doctor'}`:`${Number(item.medicineCount||0)} علاج · معتمدة بواسطة ${item.updatedBy||'الطبيب'}`,source:`${lang==='en'?'Prescription center':'مركز الوصفات'} · ${operationClinicLabel(item.clinicId)}`,
-      tone:'prescription',href:`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||item.patient?.id||'',date:item.sourceDate||today(),clinic:item.clinicId||'clinic-1',view:'admin',patientName:item.patient?.name||'',file:item.patient?.file||'',phone:item.patient?.phone||'',nationalId:item.patient?.nationalId||''}).toString()}`
+      tone:'prescription',href:`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||item.patient?.id||'',date:item.sourceDate||today(),clinic:item.clinicId||'clinic-1',view:'admin',lang,patientName:item.patient?.name||'',file:item.patient?.file||'',phone:item.patient?.phone||'',nationalId:item.patient?.nationalId||''}).toString()}`
     }));
   return [...appointmentItems,...planItems,...labItems,...prescriptionItems].sort((a,b)=>b.priority-a.priority||b.updatedAt-a.updatedAt);
 }
@@ -2293,8 +2295,8 @@ async function changeOperationLabStatus(id,clinicId,status,select){
     const index=operationsCenter.labCases.findIndex(entry=>String(entry.id)===String(id));
     if(index>=0)operationsCenter.labCases[index]=data.case;
     if(clinicId===ACTIVE_CLINIC_ID){const localIndex=labCasesState.cases.findIndex(entry=>String(entry.id)===String(id));if(localIndex>=0)labCasesState.cases[localIndex]=data.case;renderFloatingLabButton();renderTable()}
-    renderOperationsCenter();updateTreatmentPlanCenterTrigger();toast('تم تحديث حالة المعمل',`${item.patient?.name||'المريض'} — ${labStatusText(status)}`);
-  }catch(error){select.value=previous;toast('تعذر تحديث حالة المعمل',String(error.message||error))}
+    renderOperationsCenter();updateTreatmentPlanCenterTrigger();toast(lang==='en'?'Laboratory status updated':'تم تحديث حالة المعمل',`${item.patient?.name||(lang==='en'?'Patient':'المريض')} — ${labStatusText(status)}`);
+  }catch(error){select.value=previous;toast(lang==='en'?'Could not update laboratory status':'تعذر تحديث حالة المعمل',localizedSystemError(error,'Please check the connection and try again.'))}
   finally{select.disabled=false}
 }
 async function updateDashboardLabStatus(id,clinicId,status,select,{silent=false}={}){
@@ -2312,11 +2314,11 @@ async function updateDashboardLabStatus(id,clinicId,status,select,{silent=false}
     const operationsIndex=operationsCenter.labCases.findIndex(entry=>String(entry.id)===String(id));
     if(operationsIndex>=0)operationsCenter.labCases[operationsIndex]=updated;
     renderFloatingLabButton();renderTable();renderOperationsCenter();updateTreatmentPlanCenterTrigger();
-    if(!silent)toast(lang==='en'?'Laboratory status updated':'تم تحديث حالة المعمل',`${updated.patient?.name||'المريض'} — ${labStatusText(status)}`);
+    if(!silent)toast(lang==='en'?'Laboratory status updated':'تم تحديث حالة المعمل',`${updated.patient?.name||(lang==='en'?'Patient':'المريض')} — ${labStatusText(status)}`);
     return updated;
   }catch(error){
     if(select)select.value=previous;
-    if(!silent)toast(lang==='en'?'Could not update laboratory status':'تعذر تحديث حالة المعمل',String(error.message||error));
+    if(!silent)toast(lang==='en'?'Could not update laboratory status':'تعذر تحديث حالة المعمل',localizedSystemError(error,'Please check the connection and try again.'));
     throw error;
   }finally{if(select)select.disabled=false}
 }
@@ -2334,17 +2336,17 @@ async function changePlanCenterStatus(canonical,nextStatus,select){
   const record=treatmentPlanCenter.records?.[canonical],previous=record?.status;if(!record||!PLAN_STATUS_VALUES.includes(nextStatus)){if(select)select.value=previous||'draft';return}
   let cancellationReason='';
   if(nextStatus==='cancelled'){
-    cancellationReason=prompt(`سبب إلغاء خطة ${record.fullName||'المريض'}:`,`أُلغيت الخطة بقرار الإدارة.`);
+    cancellationReason=prompt(lang==='en'?`Reason for cancelling ${record.fullName||'the patient'}'s plan:`:`سبب إلغاء خطة ${record.fullName||'المريض'}:`,lang==='en'?'The plan was cancelled by administration.':`أُلغيت الخطة بقرار الإدارة.`);
     if(cancellationReason===null){if(select)select.value=previous;return}
-  }else if(!confirm(`تغيير حالة خطة ${record.fullName||'المريض'} إلى «${planStatusText(nextStatus)}»؟`)){if(select)select.value=previous;return}
+  }else if(!confirm(lang==='en'?`Change ${record.fullName||'the patient'}'s plan status to “${planStatusText(nextStatus)}”?`:`تغيير حالة خطة ${record.fullName||'المريض'} إلى «${planStatusText(nextStatus)}»؟`)){if(select)select.value=previous;return}
   select.disabled=true;
   try{
-    const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1'}),loaded=await request(`/api/treatment-plan?${params.toString()}`),data=await loaded.json();if(!loaded.ok||!data.exists||!data.plan)throw new Error('تعذر العثور على ملف الخطة الكامل');
+    const params=new URLSearchParams({patientId:record.sourcePatientId,date:record.sourceDate,planNo:record.planNo||'',clinic:record.clinicId||'clinic-1'}),loaded=await request(`/api/treatment-plan?${params.toString()}`),data=await loaded.json();if(!loaded.ok||!data.exists||!data.plan)throw new Error(lang==='en'?'The complete treatment plan could not be found':'تعذر العثور على ملف الخطة الكامل');
     applyPlanStatusMetadata(data.plan,nextStatus,'',cancellationReason);
-    const saved=await request(`/api/treatment-plan?${params.toString()}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:data.plan})});if(!saved.ok)throw new Error('تعذر حفظ حالة الخطة');
+    const saved=await request(`/api/treatment-plan?${params.toString()}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({plan:data.plan})});if(!saved.ok)throw new Error(lang==='en'?'Could not save the plan status':'تعذر حفظ حالة الخطة');
     const registry=await request(`${PLAN_REGISTRY_API}?clinic=${encodeURIComponent(record.clinicId||'clinic-1')}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({canonical,patient:{fullName:record.fullName,fileNo:record.fileNo,mobile:record.mobile,nationalId:record.nationalId},status:nextStatus,planNo:record.planNo,parentPlanNo:record.parentPlanNo||'',relation:record.relation||'standalone',sourcePatientId:record.sourcePatientId,sourceDate:record.sourceDate,lastPrintedAt:data.plan.meta?.lastPrintedAt||0,cancelledAt:data.plan.meta?.cancelledAt||0,cancelledBy:data.plan.meta?.cancelledBy||'',cancellationReason:data.plan.meta?.cancellationReason||''})});if(!registry.ok)throw new Error('حُفظت الخطة وتعذر تحديث الفهرس');
-    await refreshTreatmentPlanCenter();treatmentPlanRegistry.lastFetchedAt=0;await refreshTreatmentPlanRegistry(true);toast('تم تحديث حالة الخطة',`${record.fullName||'المريض'} — ${planStatusText(nextStatus)}`)
-  }catch(error){select.value=previous;toast('تعذر تحديث الخطة',String(error.message||error))}finally{select.disabled=false}
+    await refreshTreatmentPlanCenter();treatmentPlanRegistry.lastFetchedAt=0;await refreshTreatmentPlanRegistry(true);toast(lang==='en'?'Plan status updated':'تم تحديث حالة الخطة',`${record.fullName||(lang==='en'?'Patient':'المريض')} — ${planStatusText(nextStatus)}`)
+  }catch(error){select.value=previous;toast(lang==='en'?'Could not update plan':'تعذر تحديث الخطة',String(error.message||error))}finally{select.disabled=false}
 }
 async function deletePlanCenterRecord(canonical){
   const record=treatmentPlanCenter.records?.[canonical];if(!record)return;
@@ -2693,7 +2695,7 @@ function renderPatientProfileTimeline(){
     const items=profile.prescriptions||[];
     target.innerHTML=items.length?items.map(item=>{
       const patient=item.patient||profile.patient||{};
-      const href=`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||patient.id||'',date:item.sourceDate||selectedDate,clinic:item.clinicId||'clinic-1',view:'admin',patientName:patient.name||'',file:patient.file||'',phone:patient.phone||'',nationalId:patient.nationalId||''}).toString()}`;
+      const href=`./prescription.html?${new URLSearchParams({patientId:item.sourcePatientId||patient.id||'',date:item.sourceDate||selectedDate,clinic:item.clinicId||'clinic-1',view:'admin',lang,patientName:patient.name||'',file:patient.file||'',phone:patient.phone||'',nationalId:patient.nationalId||''}).toString()}`;
       return `<article class="patient-profile-event prescription"><span class="patient-event-mark" aria-hidden="true">💊</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId||'clinic-1'))} · ${escapeHtml(patientProfileDateTime(item.updatedAt))}</small><strong>${escapeHtml(item.prescriptionNo||(lang==='en'?'Prescription':'وصفة علاجية'))}</strong><p>${escapeHtml(`${Number(item.medicineCount||0)} ${lang==='en'?'medicines':'علاج'} · ${lang==='en'?(item.status==='approved'?'Approved':'Saved'):(item.statusLabel||item.status||'محفوظة')}`)}</p></div><a href="${escapeHtml(href)}">${lang==='en'?'Open prescription':'فتح الوصفة'}</a></article>`;
     }).join(''):patientProfileEmpty(lang==='en'?'No prescriptions are linked to this patient.':'لا توجد وصفات علاجية مرتبطة بالمريض.');
     return;
@@ -2711,7 +2713,7 @@ function renderPatientProfileTimeline(){
     return;
   }
   const items=profile.labs||[];
-  target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event lab"><span class="patient-event-mark" aria-hidden="true">🦷</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(item.labName==='other'?(item.customLabName||(lang==='en'?'Other laboratory':'معمل آخر')):(item.labName||(lang==='en'?'Laboratory':'المعمل')))}</small><strong>${escapeHtml((item.items||[]).map(entry=>`${procedureDisplayName(entry.name,entry.code)} ×${entry.quantity}`).join(lang==='en'?', ':'، ')||(lang==='en'?'Laboratory case':'حالة معمل'))}</strong><p>${escapeHtml(labStatusText(item.status))}</p></div><a href="./lab.html?${new URLSearchParams({clinic:item.clinicId||'clinic-1',patient:profile.patient.file||profile.patient.phone||profile.patient.name}).toString()}">${lang==='en'?'Open case':'فتح الحالة'}</a></article>`).join(''):patientProfileEmpty(lang==='en'?'No laboratory cases are linked to this patient.':'لا توجد حالات معمل مرتبطة بالمريض.');
+  target.innerHTML=items.length?items.map(item=>`<article class="patient-profile-event lab"><span class="patient-event-mark" aria-hidden="true">🦷</span><div><small>${escapeHtml(operationClinicLabel(item.clinicId))} · ${escapeHtml(item.labName==='other'?(item.customLabName||(lang==='en'?'Other laboratory':'معمل آخر')):(item.labName||(lang==='en'?'Laboratory':'المعمل')))}</small><strong>${escapeHtml((item.items||[]).map(entry=>`${procedureDisplayName(entry.name,entry.code)} ×${entry.quantity}`).join(lang==='en'?', ':'، ')||(lang==='en'?'Laboratory case':'حالة معمل'))}</strong><p>${escapeHtml(labStatusText(item.status))}</p></div><a href="./lab.html?${new URLSearchParams({clinic:item.clinicId||'clinic-1',patient:profile.patient.file||profile.patient.phone||profile.patient.name,lang}).toString()}">${lang==='en'?'Open case':'فتح الحالة'}</a></article>`).join(''):patientProfileEmpty(lang==='en'?'No laboratory cases are linked to this patient.':'لا توجد حالات معمل مرتبطة بالمريض.');
 }
 function renderPatientProfile(){
   const loading=$('patientProfileLoading'),content=$('patientProfileContent'),error=$('patientProfileError');
@@ -2997,7 +2999,7 @@ function openTreatmentPlan(id,{share=false,newPlan=false}={}){
 }
 function openPrescription(id){
   const patient=patientById(id);if(!patient)return;
-  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE});
+  const params=new URLSearchParams({patientId:String(patient.id),date:selectedDate,clinic:ACTIVE_CLINIC_ID,view:VIEW_MODE,lang});
   location.href=`./prescription.html?${params}`;
 }
 function applyPlanStatusMetadata(plan,nextStatus,rejectionReason='',cancellationReason=''){
@@ -3064,7 +3066,13 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
   if(nextStatus===currentStatus)return;
 
   let rejectionReason='',cancellationReason='';
-  const confirmations={
+  const confirmations=lang==='en'?{
+    submitted:'Save the plan and prepare it for patient review and signature?',
+    patient_accepted:'Confirm that the patient or guardian accepted and signed the plan?',
+    approved_signed:'Confirm final approval of the signed plan?',
+    approved:'Confirm plan approval?',
+    draft:'Return the plan to an editable draft?'
+  }:{
     submitted:'هل تريد حفظ الخطة وتجهيزها لمراجعة وتوقيع المريض؟',
     patient_accepted:'هل تؤكد أن المريض أو الوصي وافق على الخطة ووقّع عليها؟',
     approved_signed:'هل تؤكد الاعتماد النهائي للخطة الموقعة؟',
@@ -3072,10 +3080,10 @@ async function changeTreatmentPlanStatus(id,nextStatus,select){
     draft:'هل تريد إعادة الخطة إلى مسودة قابلة للتعديل؟'
   };
   if(nextStatus==='rejected'){
-    rejectionReason=prompt('اكتب سبب إعادة الخطة للتعديل:','تحتاج الخطة إلى مراجعة الإجراءات أو الأسعار.');
+    rejectionReason=prompt(lang==='en'?'Enter the reason for returning the plan:':'اكتب سبب إعادة الخطة للتعديل:',lang==='en'?'The procedures or prices need review.':'تحتاج الخطة إلى مراجعة الإجراءات أو الأسعار.');
     if(rejectionReason===null){select.value=currentStatus;return}
   }else if(nextStatus==='cancelled'){
-    cancellationReason=prompt('اكتب سبب إلغاء الخطة:','أُلغيت الخطة بقرار الإدارة.');
+    cancellationReason=prompt(lang==='en'?'Enter the reason for cancelling the plan:':'اكتب سبب إلغاء الخطة:',lang==='en'?'The plan was cancelled by administration.':'أُلغيت الخطة بقرار الإدارة.');
     if(cancellationReason===null){select.value=currentStatus;return}
   }else if(confirmations[nextStatus]&&!confirm(confirmations[nextStatus])){
     select.value=currentStatus;
@@ -3190,7 +3198,7 @@ function startActualTreatment(id){
   if(other&&String(other.id)!==String(id)){toast(lang==='en'?'Another patient is in treatment':'يوجد مريض قيد العلاج',lang==='en'?`Finish ${firstName(other.name)} first`:`أنهِ حالة ${firstName(other.name)} أولًا`);return}
   if(p.actualStartedAt){toast(lang==='en'?'Actual timer is already running':'الوقت الفعلي يعمل',lang==='en'?`Started at ${new Date(Number(p.actualStartedAt)).toLocaleTimeString('en-GB')}`:`بدأ عند ${new Date(Number(p.actualStartedAt)).toLocaleTimeString('ar-SA')}`);return}
   mutate(()=>{p.status='active';p.actualStartedAt=Date.now();p.lastCalledAt=p.lastCalledAt||Date.now()});
-  toast('بدأ الوقت الفعلي',`${firstName(p.name)} — دون تغيير وقت الموعد الأصلي`);
+  toast(lang==='en'?'Actual timer started':'بدأ الوقت الفعلي',lang==='en'?`${firstName(p.name)} — scheduled appointment time remains unchanged`:`${firstName(p.name)} — دون تغيير وقت الموعد الأصلي`);
 }
 function currentPaymentSelections(){
   const selections=new Map();
@@ -3552,7 +3560,7 @@ async function confirmPatientCompletion(){
   const confirmButton=$('confirmCompletionBtn');
   const originalConfirmText=confirmButton.textContent;
   confirmButton.disabled=true;
-  confirmButton.textContent='جارٍ الحفظ…';
+  confirmButton.textContent=lang==='en'?'Saving…':'جارٍ الحفظ…';
   try{
     mutate(()=>{
     p.status='done';
@@ -3603,20 +3611,20 @@ async function confirmPatientCompletion(){
     if(labUpdates.length){
       const results=await Promise.allSettled(labUpdates.map(update=>updateDashboardLabStatus(update.id,update.clinicId,update.status,null,{silent:true})));
       labUpdateFailures=results.filter(result=>result.status==='rejected').length;
-      if(labUpdateFailures)toast(lang==='en'?'Visit completed, but some laboratory stages need retry':'اكتمل العلاج، لكن تعذر تحديث بعض حالات المعمل','افتح حالة المعمل من القائمة وأعد المحاولة.');
-      else toast(lang==='en'?'Laboratory delivery stages updated':'تم تحديث مراحل تسليم المعمل','ظهرت التحديثات لدى الإدارة والمعمل.');
+      if(labUpdateFailures)toast(lang==='en'?'Visit completed, but some laboratory stages need retry':'اكتمل العلاج، لكن تعذر تحديث بعض حالات المعمل',lang==='en'?'Open the laboratory case and try the status update again.':'افتح حالة المعمل من القائمة وأعد المحاولة.');
+      else toast(lang==='en'?'Laboratory delivery stages updated':'تم تحديث مراحل تسليم المعمل',lang==='en'?'The updates are visible to administration and the laboratory.':'ظهرت التحديثات لدى الإدارة والمعمل.');
     }
     closeModal('paymentModal');
     pendingCompletionId=null;
     if(createPrescription){
       await pushState();
-      toast(paymentPlanResult?.created?'تم تجهيز الخطة والوصفة':manualPlanDraft?'تم تجهيز المسودة والوصفة':'تم تجهيز الوصفة',paymentPlanResult?.created?'أصبحت الخطة في مركز الخطط، واختر الآن نوع علاج الوصفة.':'اختر نوع العلاج وأكمل الحقول، ثم اعتمدها ليصل التنبيه إلى الإدارة.');
+      toast(lang==='en'?(paymentPlanResult?.created?'Plan and prescription ready':manualPlanDraft?'Draft and prescription ready':'Prescription ready'):(paymentPlanResult?.created?'تم تجهيز الخطة والوصفة':manualPlanDraft?'تم تجهيز المسودة والوصفة':'تم تجهيز الوصفة'),lang==='en'?(paymentPlanResult?.created?'The plan is in Treatment Plans. Choose the prescription treatment type now.':'Choose the treatment type, complete the fields, and approve it to notify administration.'):(paymentPlanResult?.created?'أصبحت الخطة في مركز الخطط، واختر الآن نوع علاج الوصفة.':'اختر نوع العلاج وأكمل الحقول، ثم اعتمدها ليصل التنبيه إلى الإدارة.'));
       openPrescription(p.id);
       return;
     }
     if(manualPlanDraft){
       await pushState();
-      toast(hadExistingPlan?'تم فتح خطة إضافية':'تم إنشاء مسودة الخطة',hadExistingPlan?'ستُحفظ كخطة إلحاقية جديدة دون تعديل الخطة السابقة.':'أكمل بيانات الخطة؛ ويمكن للإدارة حفظها ومشاركتها للتوقيع مباشرة دون اعتماد طبيب منفصل.');
+      toast(lang==='en'?(hadExistingPlan?'Additional plan opened':'Treatment plan draft created'):(hadExistingPlan?'تم فتح خطة إضافية':'تم إنشاء مسودة الخطة'),lang==='en'?(hadExistingPlan?'The additional plan will be saved without changing the previous plan.':'Complete the plan; administration can save and share it for signature without a separate doctor approval step.'):(hadExistingPlan?'ستُحفظ كخطة إلحاقية جديدة دون تعديل الخطة السابقة.':'أكمل بيانات الخطة؛ ويمكن للإدارة حفظها ومشاركتها للتوقيع مباشرة دون اعتماد طبيب منفصل.'));
       openTreatmentPlan(p.id,{newPlan:true});
       return;
     }
@@ -3629,10 +3637,10 @@ async function confirmPatientCompletion(){
       return;
     }
     const upcoming=flowLeadPatient();
-    toast(paymentRequired?'تم إرسال إجراء الدفع للإدارة':'اكتمل العلاج',paymentRequired?paymentAction:(upcoming?`أصبح ${firstName(upcoming.name)} في مقدمة الانتظار`:'لا يوجد مريض تالٍ'));
+    toast(lang==='en'?(paymentRequired?'Payment action sent to administration':'Treatment completed'):(paymentRequired?'تم إرسال إجراء الدفع للإدارة':'اكتمل العلاج'),paymentRequired?(lang==='en'?selection.items.map(item=>`${procedureDisplayName(item.name,item.code)} ×${item.quantity}`).join(', '):paymentAction):(upcoming?(lang==='en'?`${firstName(upcoming.name)} is now first in the waiting list`:`أصبح ${firstName(upcoming.name)} في مقدمة الانتظار`):(lang==='en'?'No next patient':'لا يوجد مريض تالٍ')));
   }catch(error){
     console.error('Patient completion failed',error);
-    toast('تعذر إكمال الطلب','لم تتغير حالة المريض. تحقق من الاتصال ثم حاول مرة أخرى.');
+    toast(lang==='en'?'Could not complete the visit':'تعذر إكمال الطلب',lang==='en'?'The patient status did not change. Check the connection and try again.':'لم تتغير حالة المريض. تحقق من الاتصال ثم حاول مرة أخرى.');
   }finally{
     confirmButton.disabled=false;
     confirmButton.textContent=originalConfirmText;
@@ -5088,6 +5096,9 @@ function applyLang(){
   document.documentElement.lang=lang;
   document.documentElement.dir=lang==='en'?'ltr':'rtl';
   document.body.classList.toggle('lang-en',lang==='en');
+  const authCopy=lang==='en'?['Sign in','Best Care Dental Clinics internal communication app','Treatment-plan and internal-operations management','Username','Password','Enter username','Enter the current password manually','Sign in','Extended session; idle sign-out is paused during working hours from 2:00 PM to 11:00 PM Riyadh time.']:['تسجيل الدخول','تطبيق التواصل الداخلي بعيادات أفضل عناية الاستشارية','إدارة الخطط العلاجية والعمليات الداخلية','اسم المستخدم','كلمة المرور','أدخل اسم المستخدم','اكتب كلمة المرور الحالية يدويًا','دخول','جلسة ممتدة؛ يتوقف الخروج التلقائي بسبب الخمول خلال وقت العمل من ٢:٠٠ ظهرًا حتى ١١:٠٠ مساءً بتوقيت الرياض.'];
+  setText('.auth-brand h2',authCopy[0]);setText('.auth-subtitle',authCopy[1]);setText('.auth-purpose',authCopy[2]);const authLabels=document.querySelectorAll('#authRequestStep label');authLabels[0]?.childNodes[0]&&(authLabels[0].childNodes[0].nodeValue=authCopy[3]);authLabels[1]?.childNodes[0]&&(authLabels[1].childNodes[0].nodeValue=authCopy[4]);$('authUsername')?.setAttribute('placeholder',authCopy[5]);$('authPassword')?.setAttribute('placeholder',authCopy[6]);setText('#authRequestBtn',authCopy[7]);setText('.auth-session-note',authCopy[8]);
+  document.querySelector('.auth-brand-mark img')?.setAttribute('alt',lang==='en'?'Best Care Dental Clinics logo':'شعار عيادات أفضل عناية');applyTheme(currentTheme);yahyaAssistantLabels();
   document.title=VIEW_MODE==='admin'
     ?(lang==='en'?'Best Care Administration & Scheduling':'إدارة وتنسيق مواعيد عيادات أفضل عناية الاستشارية للأسنان')
     :(lang==='en'?'Best Care Doctor Workspace':'صفحة الطبيب — عيادات أفضل عناية الاستشارية للأسنان');
@@ -5743,7 +5754,7 @@ $('labNameSelect').addEventListener('change',()=>{$('labCustomNameLabel').hidden
 $('labWorkType').addEventListener('change',()=>{$('labCustomWorkLabel').hidden=$('labWorkType').value!=='other';if(!$('labCustomWorkLabel').hidden)$('labCustomWorkInput').focus()});
 $('saveLabCaseBtn').addEventListener('click',saveLabCase);
 $('openLabCasesPageBtn').addEventListener('click',()=>openLabCasesPage(patientById(pendingLabPatientId)));
-$('newLabCaseShortcutBtn').addEventListener('click',()=>{const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,create:'1'});location.href=`./lab.html?${params.toString()}`});
+$('newLabCaseShortcutBtn').addEventListener('click',()=>{const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,create:'1',lang});location.href=`./lab.html?${params.toString()}`});
 $('confirmCompletionBtn').addEventListener('click',confirmPatientCompletion);
 $('paymentPanel').addEventListener('click',event=>{
   const missingId=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId;
@@ -5820,6 +5831,7 @@ function yahyaAssistantLabels(){
   setText('#yahyaAssistantTitle',en?'Hassina Smart Assistant':'المساعدة الذكية حسينة');
   setText('#yahyaAssistantSubtitle',en?'Ask Hassina about any dashboard step':'اسأليني عن أي خطوة في الداشبورد');
   const input=$('yahyaAssistantInput');if(input)input.placeholder=en?'Type your question…':'اكتب سؤالك هنا…';
+  setText('#yahyaAssistantBtn .yahya-assistant-fab-copy strong',en?'Ask Hassina':'اسأل حسينة');setText('#yahyaAssistantBtn .yahya-assistant-fab-copy small',en?'Your smart assistant':'مساعدتك الذكية');
   const btn=$('yahyaAssistantBtn');if(btn){btn.setAttribute('aria-label',en?'Open Hassina Smart Assistant':'فتح المساعدة الذكية حسينة');btn.title=en?'Ask Hassina':'اسأل المساعدة حسينة'}
 }
 function yahyaAssistantAddMessage(text,role='bot'){

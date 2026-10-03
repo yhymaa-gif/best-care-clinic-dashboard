@@ -96,7 +96,7 @@ test('a stored WhatsApp signature is restored visibly and protected from stale p
     read('netlify/functions/treatment-plan-consent.mjs')
   ]);
   assert.match(html, /id="storedSignatureNotice"/);
-  assert.match(html, /treatment-plan\.js\?v=20261003-implant-plan-stages/);
+  assert.match(html, /treatment-plan\.js\?v=20261003-bilingual-plan/);
   assert.match(client, /function renderStoredPatientSignature\(\)/);
   assert.match(client, /renderStoredPatientSignature\(\);/);
   assert.match(client, /image\.src=signature/);

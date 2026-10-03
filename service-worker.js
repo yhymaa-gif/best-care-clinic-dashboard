@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261003-implant-plan-stages';
+const CACHE_NAME='bestcare-dashboard-v1-20261003-bilingual-plan';
 const APP_SHELL=[
   './',
   './index.html',
@@ -10,6 +10,7 @@ const APP_SHELL=[
   './theme-boot.js',
   './splash.js',
   './treatment-plan.html',
+  './treatment-plan-i18n.js',
   './treatment-plan.js',
   './plan-consent.html',
   './plan-consent.css',

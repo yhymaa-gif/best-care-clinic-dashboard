@@ -52,3 +52,19 @@ test('patient completion exposes inline laboratory delivery updates without a se
   assert.match(styles, /\.completion-lab-field\{/);
   assert.match(styles, /\.lab-status-inline-select\{/);
 });
+
+test('standard laboratory procedures and interactive messages switch with language without translating patient names', async () => {
+  const [lab, dashboard] = await Promise.all([read('lab.js'), read('dashboard.js')]);
+  assert.match(lab, /standardWorkEn=\{/);
+  assert.match(lab, /displayStandard\(entry\.name,standardWorkEn\)/);
+  assert.match(lab, /Matching patient record linked/);
+  assert.match(lab, /Searching for a matching record/);
+  assert.match(lab, /An active laboratory case already exists/);
+  assert.match(lab, /params\.get\('lang'\)==='en'/);
+  assert.match(lab, /Updated now/);
+  assert.match(lab, /Could not load the laboratory screen/);
+  assert.match(lab, /item\.patient\?\.name/);
+  assert.match(dashboard, /Laboratory delivery stages updated/);
+  assert.match(dashboard, /Payment action sent to administration/);
+  assert.match(dashboard, /procedureDisplayName\(item\.name,item\.code\)/);
+});

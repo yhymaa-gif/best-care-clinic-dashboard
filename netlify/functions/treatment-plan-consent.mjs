@@ -83,9 +83,12 @@ const publicSummary = plan => ({
   photoConsent: Boolean(plan?.consent?.photoConsent),
   phases: (Array.isArray(plan?.phases) ? plan.phases : []).slice(0, 12).map((phase, phaseIndex) => ({
     title: cleanText(phase?.title, 100) || `المرحلة ${phaseIndex + 1}`,
+    kind: cleanText(phase?.kind, 30),
     deferred: Boolean(phase?.deferred),
     items: (Array.isArray(phase?.items) ? phase.items : []).filter(item => item?.service).slice(0, 30).map(item => ({
+      code: cleanText(item?.code, 80),
       service: cleanText(item?.service, 160),
+      customService: cleanText(item?.customService, 160),
       quantity: Math.max(1, Math.min(99, Number(item?.qty || 1))),
       included: item?.type === 'included'
     }))

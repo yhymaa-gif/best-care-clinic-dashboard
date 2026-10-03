@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="./prescription.css">
 </head>
 <body>
-  <header class="topbar"><a id="backLink" href="./">← العودة</a><div><strong>الوصفة الطبية الإلكترونية</strong><small>عيادات أفضل عناية الاستشارية للأسنان</small></div><img src="./best-care-logo.png" alt="شعار العيادة"></header>
+  <header class="topbar"><a id="backLink" href="./">← العودة</a><div><strong>الوصفة الطبية الإلكترونية</strong><small>عيادات أفضل عناية الاستشارية للأسنان</small></div><button id="languageToggle" type="button" aria-label="Switch language">English</button><img src="./best-care-logo.png" alt="شعار العيادة"></header>
   <main>
     <section class="patient-card" aria-labelledby="patientTitle"><div><span>المريض</span><h1 id="patientTitle">جارٍ تحميل البيانات…</h1></div><div><span>رقم الملف</span><b id="patientFile">—</b></div><div><span>الجوال</span><b id="patientPhone">—</b></div><div><span>التاريخ</span><b id="visitDate">—</b></div></section>
     <section class="safety-notice" role="note"><strong>تنبيه إلزامي</strong><p>هذه أداة توثيق فقط. يختار الطبيب المخوّل الدواء والجرعة والتكرار والمدة من القائمة المعتمدة محليًا بعد المراجعة السريرية.</p><b>DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</b></section>
@@ -28,6 +28,6 @@
     <section class="panel history-panel"><div class="section-title"><span>↺</span><div><h2>وصفات المريض السابقة</h2><p>سجل دائم مرتبط ببيانات المريض ويمكن استعادته بعد الاعتماد.</p></div></div><div id="prescriptionHistory"><div class="empty-state">لا توجد وصفات سابقة محفوظة.</div></div></section>
     <section id="printSheet" class="print-sheet" aria-label="معاينة الوصفة"><div class="print-head"><img src="./best-care-logo.png" alt=""><div><h2>عيادات أفضل عناية الاستشارية للأسنان</h2><p>وصفة طبية</p></div></div><p class="print-warning">DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</p><div id="printPatient"></div><div id="printDiagnosis"></div><ol id="printMedicines"></ol><div id="printNotes"></div><footer>لا تُصرف هذه الوصفة إلا بعد اعتماد الطبيب · تاريخ الإصدار: <span id="issuedAt">—</span></footer></section>
   </main>
-  <script src="./prescription.js" defer></script>
+  <script src="./prescription.js?v=20261003-bilingual-secondary" defer></script>
 </body>
 </html>
