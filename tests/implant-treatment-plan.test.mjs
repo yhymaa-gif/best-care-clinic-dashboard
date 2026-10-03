@@ -37,6 +37,21 @@ test('payment-created plans distribute procedures into the same sections', async
   assert.equal(context.result,'initial');
 });
 
+test('preparatory crown and post work is initial while the implant restoration abutment is prosthetic', async () => {
+  const [client,catalog,dashboard]=await Promise.all([
+    read('treatment-plan.js'),
+    read('netlify/functions/treatment-catalog.mjs'),
+    read('dashboard.js')
+  ]);
+  for(const code of ['remove-post','place-post','remove-crown','recement-crown','smile-design']){
+    assert.match(client,new RegExp(`\\['${code}'[^\\n]+,'initial'\\]`));
+    assert.match(catalog,new RegExp(`\\['${code}'[^\\n]+, 'initial'\\]`));
+  }
+  assert.match(client,/\['implant-prosthetic-abutment','دعامة زراعة للتركيب','prosthetic'\]/);
+  assert.match(catalog,/\['implant-prosthetic-abutment', 'دعامة زراعة للتركيب', 'prosthetic'\]/);
+  assert.match(dashboard,/\['implant-prosthetic-abutment','دعامة زراعة للتركيب'\]/);
+});
+
 test('stored plans retain their phases while only new empty plans get the template', async () => {
   const [client,endpoint]=await Promise.all([read('treatment-plan.js'),read('netlify/functions/treatment-plan.mjs')]);
   assert.match(client, /Array\.isArray\(next\.phases\)&&next\.phases\.length\?next\.phases:defaultTreatmentPhases\(\)/);

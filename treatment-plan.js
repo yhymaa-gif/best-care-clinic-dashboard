@@ -55,21 +55,21 @@
       ['extraction','خلع الأسنان','implant'],['bone-graft','تطعيم عظمي','implant'],
       ['sinus-lift','رفع الجيب الأنفي','implant'],['implant-surgery','زراعة — الجزء الجراحي','implant'],
       ['implant-uncovering','كشف الزراعة','implant'],['healing-abutment','تركيب دعامة الالتئام','implant'],
-      ['remove-post','إزالة وتد','prosthetic'],['place-post','تركيب وتد','prosthetic'],
-      ['remove-crown','إزالة تاج','prosthetic'],['recement-crown','إعادة تثبيت تاج','prosthetic'],
+      ['remove-post','إزالة وتد','initial'],['place-post','تركيب وتد','initial'],
+      ['remove-crown','إزالة تاج','initial'],['recement-crown','إعادة تثبيت تاج','initial'],
       ['ceramic-crown','تركيب سيراميك تاج','prosthetic'],['ceramic-veneer','تركيب سيراميك فينير','prosthetic'],
       ['implant-impression','طبعة أو مسح رقمي للزراعة','prosthetic'],['implant-temporary','تركيبة مؤقتة على الزراعة','prosthetic'],
-      ['implant-crown','تركيبة زراعة نهائية','prosthetic'],['temporary','تركيب مؤقت','prosthetic'],
-      ['smile-design','تصميم ابتسامة','prosthetic'],['other','إجراء آخر','all']
+      ['implant-prosthetic-abutment','دعامة زراعة للتركيب','prosthetic'],['implant-crown','تركيبة زراعة نهائية','prosthetic'],['temporary','تركيب مؤقت','prosthetic'],
+      ['smile-design','تصميم ابتسامة','initial'],['other','إجراء آخر','all']
     ].map(([id,name,category])=>({id,name,category,beforePrice:'',afterPrice:''}));
     let procedureCatalog=DEFAULT_PROCEDURES.map(item=>({...item}));
     const DEFAULT_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.';
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const inferProcedureCategory=value=>{
       const code=String(value?.id||value?.code||'').toLowerCase(),name=String(value?.name||value?.service||'');
-      if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis'].includes(code))return'initial';
+      if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis','remove-post','place-post','remove-crown','recement-crown','smile-design'].includes(code))return'initial';
       if(/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
-      if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة/.test(name))return'prosthetic';
+      if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary|implant-prosthetic-abutment/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة|دعامة زراعة للتركيب/.test(name))return'prosthetic';
       return'initial';
     };
     const blankPhase=(index,kind='')=>{

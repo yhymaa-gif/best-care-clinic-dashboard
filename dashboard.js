@@ -490,14 +490,14 @@ const DEFAULT_TREATMENT_CATALOG=[
   ['root-canal','علاج عصب'],['root-canal-retreatment','إعادة علاج عصب'],
   ['remove-post','إزالة وتد'],['place-post','تركيب وتد'],['remove-crown','إزالة تاج'],
   ['recement-crown','إعادة تثبيت تاج'],['ceramic-crown','تركيب سيراميك تاج'],
-  ['ceramic-veneer','تركيب سيراميك فينير'],['implant-crown','تركيبة زراعة'],
+  ['ceramic-veneer','تركيب سيراميك فينير'],['implant-prosthetic-abutment','دعامة زراعة للتركيب'],['implant-crown','تركيبة زراعة'],
   ['implant-surgery','زراعة — الجزء الجراحي'],['extraction','خلع الأسنان'],
   ['temporary','تركيب مؤقت'],['smile-design','تصميم ابتسامة'],
   ['smile-analysis','تحليل ابتسامة'],['cleaning-standard','تنظيف أسنان عادي'],
   ['cleaning-gbt','تنظيف أسنان GBT'],['whitening-trays','قوالب تبييض'],['other','إجراء آخر']
 ].map(([id,name])=>({id,name,beforePrice:'',afterPrice:''}));
 const PROCEDURE_EN_BY_ID=Object.freeze({
-  'cosmetic-filling':'Cosmetic filling','post-rct-filling':'Post-root-canal filling','root-canal':'Root canal treatment','root-canal-retreatment':'Root canal retreatment','remove-post':'Post removal','place-post':'Post placement','remove-crown':'Crown removal','recement-crown':'Crown recementation','ceramic-crown':'Ceramic crown','ceramic-veneer':'Ceramic veneer','implant-crown':'Implant crown','implant-surgery':'Dental implant — surgical stage','extraction':'Tooth extraction','temporary':'Temporary restoration','smile-design':'Smile design','smile-analysis':'Smile analysis','cleaning-standard':'Standard dental cleaning','cleaning-gbt':'GBT dental cleaning','whitening-trays':'Whitening trays','other':'Other procedure'
+  'cosmetic-filling':'Cosmetic filling','post-rct-filling':'Post-root-canal filling','root-canal':'Root canal treatment','root-canal-retreatment':'Root canal retreatment','remove-post':'Post removal','place-post':'Post placement','remove-crown':'Crown removal','recement-crown':'Crown recementation','ceramic-crown':'Ceramic crown','ceramic-veneer':'Ceramic veneer','implant-prosthetic-abutment':'Implant prosthetic abutment','implant-crown':'Implant crown','implant-surgery':'Dental implant — surgical stage','extraction':'Tooth extraction','temporary':'Temporary restoration','smile-design':'Smile design','smile-analysis':'Smile analysis','cleaning-standard':'Standard dental cleaning','cleaning-gbt':'GBT dental cleaning','whitening-trays':'Whitening trays','other':'Other procedure'
 });
 const PROCEDURE_EN_BY_AR=Object.freeze(Object.fromEntries(DEFAULT_TREATMENT_CATALOG.map(item=>[item.name,PROCEDURE_EN_BY_ID[item.id]||item.name])));
 const LAB_WORK_EN=Object.freeze({'تركيب تاج':'Crown','فينير':'Veneer','تركيبة زراعة':'Implant restoration','قوالب تبييض':'Whitening trays','تركيبة مؤقتة':'Temporary restoration','إجراء معملي آخر':'Other laboratory procedure'});
@@ -3395,9 +3395,9 @@ function paymentLinkedPlanItem(item){
 }
 function paymentPlanPhaseKind(item){
   const code=String(item?.code||'').toLowerCase(),name=String(item?.name||'');
-  if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis'].includes(code))return'initial';
+  if(['cosmetic-filling','post-rct-filling','root-canal','root-canal-retreatment','cleaning-standard','cleaning-gbt','periodontal-treatment','smile-analysis','remove-post','place-post','remove-crown','recement-crown','smile-design'].includes(code))return'initial';
   if(/implant-surgery|extraction|bone-graft|sinus-lift|implant-uncovering|healing-abutment/.test(code)||/زراع.*جراح|خلع|تطعيم عظمي|رفع الجيب|كشف الزراعة|دعامة الالتئام/.test(name))return'implant';
-  if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة/.test(name))return'prosthetic';
+  if(/crown|veneer|post|temporary|smile-design|implant-impression|implant-temporary|implant-prosthetic-abutment/.test(code)||/تاج|تركيب|تركيبة|فينير|وتد|طبعة|مسح رقمي|تصميم ابتسامة|دعامة زراعة للتركيب/.test(name))return'prosthetic';
   return'initial';
 }
 function paymentLinkedPlanPhases(items){
