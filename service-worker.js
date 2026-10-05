@@ -1,9 +1,10 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261006-completion-payment-lab';
+const CACHE_NAME='bestcare-dashboard-v1-20261006-admin-queue';
 const APP_SHELL=[
   './',
   './index.html',
   './dashboard.css',
   './dashboard.js',
+  './admin-patient-queue.js',
   './patient-summary.js',
   './patient-summary.css',
   './theme.css',
