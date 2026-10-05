@@ -139,7 +139,7 @@ function adminHubCadence(){
   if(cadence.workHours)return syncDisplayVisible()?10000:60000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.71-admin-patient-queue';
+const DASHBOARD_BUILD='7.72-admin-queue-visible';
 const RELEASE_SUMMARY_FALLBACK={ar:'تنظيم شاشة الإدارة إلى مرضى في الانتظار ومرضى تم إنجازهم، مع تقديم من حان موعده تلقائيًا.',en:'Administration lists are grouped into waiting and completed patients, with appointments due now automatically moved to the top.'};
 let pendingReleaseSummary={...RELEASE_SUMMARY_FALLBACK};
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
@@ -1418,9 +1418,9 @@ function renderAdminPatientHub(){
       </div>
     </article>`;
   }).join('');
-  const waitingMarkup=waiting.length?`<section class="admin-queue-section waiting" aria-labelledby="adminWaitingSectionTitle"><header><div><h3 id="adminWaitingSectionTitle">${lang==='en'?'Waiting and in progress':'في الانتظار والمتابعة'}</h3><p>${lang==='en'?'The patient due now is automatically placed first.':'يظهر من حان موعده تلقائيًا في أعلى القائمة.'}</p></div><b>${waiting.length}</b></header>${renderItems(waiting,'waiting')}</section>`:'';
+  const waitingMarkup=`<section class="admin-queue-section waiting" aria-labelledby="adminWaitingSectionTitle"><header><div><h3 id="adminWaitingSectionTitle">${lang==='en'?'Waiting and in progress':'في الانتظار والمتابعة'}</h3><p>${lang==='en'?'The patient due now is automatically placed first.':'يظهر من حان موعده تلقائيًا في أعلى القائمة.'}</p></div><b>${waiting.length}</b></header>${waiting.length?renderItems(waiting,'waiting'):`<div class="admin-queue-empty-state">${lang==='en'?'No patients are waiting right now.':'لا يوجد مرضى في الانتظار حاليًا.'}</div>`}</section>`;
   const completedOpen=(completedWasOpen===null?($('adminHubScopeFilter')?.value||'attention')==='attention':completedWasOpen)?' open':'';
-  const completedMarkup=completed.length?`<details class="admin-queue-section completed"${completedOpen}><summary><span><strong>${lang==='en'?'Completed':'تم إنجازه'}</strong><small>${lang==='en'?'Completed patients remain available for review.':'تبقى الحالات المنجزة متاحة للمراجعة.'}</small></span><b>${completed.length}</b></summary><div class="admin-queue-completed-list">${renderItems(completed,'completed')}</div></details>`:'';
+  const completedMarkup=`<details class="admin-queue-section completed"${completedOpen}><summary><span><strong>${lang==='en'?'Completed':'تم إنجازه'}</strong><small>${lang==='en'?'Completed patients remain available for review.':'تبقى الحالات المنجزة متاحة للمراجعة.'}</small></span><b>${completed.length}</b></summary><div class="admin-queue-completed-list">${completed.length?renderItems(completed,'completed'):`<div class="admin-queue-empty-state">${lang==='en'?'No completed patients yet.':'لا يوجد مرضى منجزون حتى الآن.'}</div>`}</div></details>`;
   list.innerHTML=waitingMarkup+completedMarkup;
   list.scrollTop=previousScrollTop;
   if(focusedCompletedSummary)list.querySelector('details.admin-queue-section.completed>summary')?.focus({preventScroll:true});
@@ -2999,7 +2999,7 @@ function renderTable(){
     });
 
   let previousAdminGroup='';
-  els.patientRows.innerHTML=visible.length
+  let patientRowsMarkup=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000,queueGroup=VIEW_MODE==='admin'?adminQueueGroup(p):'',queueTiming=VIEW_MODE==='admin'?adminQueueTiming(p,queueClock):null;let groupHeading='';if(VIEW_MODE==='admin'&&queueGroup!==previousAdminGroup){previousAdminGroup=queueGroup;groupHeading=`<tr class="admin-table-group-divider ${queueGroup}"><td colspan="8"><span><strong>${queueGroup==='completed'?(lang==='en'?'Completed':'تم إنجازه'):(lang==='en'?'Waiting and in progress':'في الانتظار والمتابعة')}</strong><small>${queueGroup==='completed'?(lang==='en'?'Completed patients':'المرضى المنجزون'):(lang==='en'?'Due appointments are shown first':'من حان موعده يظهر أولًا')}</small></span></td></tr>`;}return`${groupHeading}<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}${VIEW_MODE==='admin'&&queueTiming?` admin-queue-row queue-state-${escapeHtml(queueTiming.state)}`:''}">
         <td>${i+1}</td>
         <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}${p.dailyNote?`<small class="daily-patient-note" title="${escapeHtml(p.dailyNote)}"><span aria-hidden="true">📝</span>${escapeHtml(p.dailyNote)}</small>`:''}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${treatmentPlanComplianceBadgeMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${patientNeedsLabCase(p)?`<span class="lab-required-badge"><span aria-hidden="true">!</span>${lang==='en'?'Laboratory case required':'يلزم إضافة حالة معمل'}</span>`:''}${labCaseBadgeMarkup(p)}</td>
@@ -3027,6 +3027,14 @@ function renderTable(){
         </td>
       </tr>${VIEW_MODE==='admin'&&patientSummaryOpen?.id===String(p.id)?`<tr class="patient-summary-row"><td colspan="8"><section class="patient-summary" id="patientSummaryPanel" aria-label="${lang==='en'?'Patient summary':'ملخص المريض'}"></section></td></tr>`:''}`}).join('')
     : `<tr><td colspan="8" class="empty">${escapeHtml(tr('noAppointments'))}</td></tr>`;
+  if(VIEW_MODE==='admin'&&visible.length){
+    const hasWaiting=visible.some(patient=>adminQueueGroup(patient)==='waiting');
+    const hasCompleted=visible.some(patient=>adminQueueGroup(patient)==='completed');
+    const emptySection=(group)=>`<tr class="admin-table-group-divider ${group}"><td colspan="8"><span><strong>${group==='completed'?(lang==='en'?'Completed':'تم إنجازه'):(lang==='en'?'Waiting and in progress':'في الانتظار والمتابعة')}</strong><small>${group==='completed'?(lang==='en'?'No completed patients yet':'لا يوجد مرضى منجزون حتى الآن'):(lang==='en'?'No patients are waiting right now':'لا يوجد مرضى في الانتظار حاليًا')}</small></span></td></tr>`;
+    if(!hasWaiting)patientRowsMarkup=emptySection('waiting')+patientRowsMarkup;
+    if(!hasCompleted)patientRowsMarkup+=emptySection('completed');
+  }
+  els.patientRows.innerHTML=patientRowsMarkup;
   renderPatientSummaryPanel();
   els.patientRows.querySelectorAll('[data-summary-toggle]').forEach(button=>{
     if(button.dataset.summaryToggle===patientSummaryOpen?.id)button.setAttribute('aria-controls','patientSummaryPanel');
