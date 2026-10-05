@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261003-bilingual-plan';
+const CACHE_NAME='bestcare-dashboard-v1-20261006-completion-payment-lab';
 const APP_SHELL=[
   './',
   './index.html',

@@ -113,6 +113,31 @@ function registryMatches(registry, aliases, scope) {
     .sort((left, right) => Number(right.record?.updatedAt || 0) - Number(left.record?.updatedAt || 0));
 }
 
+async function updateMatchedDayIdentity(daysStore, day, aliases, next, actor, maxAttempts = 4) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const entry = await daysStore.getWithMetadata(day.key, { type: 'json', consistency: 'strong' });
+    const current = entry?.data;
+    if (!current || !entry?.etag || !Array.isArray(current.patients)) return 0;
+    let matched = 0;
+    const now = Date.now();
+    const patients = current.patients.map(item => {
+      if (!hasAlias(item, aliases)) return item;
+      matched += 1;
+      return { ...item, name: next.name, file: next.file, phone: next.phone, nationalId: next.nationalId, adminUpdatedAt: now };
+    });
+    if (!matched) return 0;
+    const write = await daysStore.setJSON(day.key, {
+      ...current,
+      patients,
+      revision: Number(current.revision || 0) + 1,
+      updatedAt: now,
+      updatedBy: actor
+    }, { onlyIfMatch: entry.etag });
+    if (write?.modified) return matched;
+  }
+  throw new Error(`Concurrent update prevented identity correction for ${day.key}`);
+}
+
 async function loadLabMatches(scope, aliases) {
   const labsStore = store('clinic-lab-cases');
   const clinicIds = scope.all ? Array.from({ length: 15 }, (_, index) => `clinic-${index + 1}`) : [scope.clinicId];
@@ -171,7 +196,7 @@ function profilePayload(patient, dayMatches, plans, labs, communications = [], p
     id: cleanText(item.id, 100), clinicId: day.clinicId, date: day.date, start: cleanText(item.start, 8), end: cleanText(item.end, 8),
     procedure: cleanText(item.procedure, 180), status: cleanText(item.status, 30), statusLabel: statusLabel(item.status),
     paymentRequired: Boolean(item.paymentRequired), paymentAction: cleanText(item.paymentAction, 180), paymentRequestedAt: Number(item.paymentRequestedAt || 0),
-    paymentAcknowledgedAt: Number(item.paymentAcknowledgedAt || 0), paymentCompletedAt: Number(item.paymentCompletedAt || 0),
+    paymentAcknowledgedAt: Number(item.paymentAcknowledgedAt || 0), paymentCompletedAt: Number(item.paymentCompletedAt || 0), paymentNotRequiredAt: Number(item.paymentNotRequiredAt || 0),
     arrivedAt: Number(item.arrivedAt || 0), actualStartedAt: Number(item.actualStartedAt || 0), completedAt: Number(item.completedAt || 0),
     paymentItems: (Array.isArray(item.paymentItems) ? item.paymentItems : []).slice(0, 100).map(entry => ({
       code: cleanText(entry?.code, 50), name: cleanText(entry?.name, 160),
@@ -343,15 +368,18 @@ export default async request => {
   const directoryConflict = nextAliases.filter(alias => !alias.startsWith('phone:')).map(alias => directoryRegistry.aliases?.[alias]).find(canonical => canonical && canonical !== directoryCanonical);
   if (directoryConflict) return reply({ error: 'The new identity is already linked to another patient' }, 409);
 
-  let appointmentUpdates = 0;
-  await Promise.all(dayMatches.map(async day => {
-    const patients = day.patients.map(item => {
-      if (!hasAlias(item, lookupAliases)) return item;
-      appointmentUpdates += 1;
-      return { ...item, name: next.name, file: next.file, phone: next.phone, nationalId: next.nationalId, adminUpdatedAt: Date.now() };
-    });
-    await daysStore.setJSON(day.key, { ...day.state, patients, revision: Number(day.state?.revision || 0) + 1, updatedAt: Date.now(), updatedBy: cleanText(auth.user?.displayName || auth.user?.username, 120) });
-  }));
+  const sourceClinicId = clinicPattern.test(String(body?.source?.clinicId || '')) ? String(body.source.clinicId) : '';
+  const sourceDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body?.source?.date || '')) ? String(body.source.date) : '';
+  const sourcePatientId = cleanText(body?.source?.patientId, 100);
+  const isSourceDay = day => Boolean(sourceClinicId && sourceDate && sourcePatientId && day.clinicId === sourceClinicId && day.date === sourceDate && day.matches.some(item => cleanText(item?.id, 100) === sourcePatientId));
+  const actor = cleanText(auth.user?.displayName || auth.user?.username, 120);
+  // The live source day was already revision-safely saved by /api/state.
+  // Excluding it here prevents a slower historical identity propagation from
+  // overwriting a newer status or timing update with the snapshot loaded above.
+  const appointmentResults = await Promise.all(dayMatches
+    .filter(day => !isSourceDay(day))
+    .map(day => updateMatchedDayIdentity(daysStore, day, lookupAliases, next, actor)));
+  const appointmentUpdates = appointmentResults.reduce((total, count) => total + Number(count || 0), 0);
 
   const updatedRegistry = { records: { ...(registry.records || {}) }, aliases: { ...(registry.aliases || {}) }, revision: Number(registry.revision || 0), updatedAt: Date.now() };
   plans.forEach(({ canonical, record }) => {
@@ -443,4 +471,4 @@ export default async request => {
   return reply({ ok: true, patient: next, updated: { appointments: appointmentUpdates, plans: planUpdates, prescriptions: prescriptionUpdates, labs: labUpdates } });
 };
 
-export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel, communicationMatches, communicationPayload, prescriptionMatches, profilePayload };
+export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel, communicationMatches, communicationPayload, prescriptionMatches, profilePayload, updateMatchedDayIdentity };

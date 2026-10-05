@@ -13,6 +13,7 @@ test('completed patients without a payment order create an administration action
   assert.match(script, /function dailyQuickActionsVisible\(date=selectedDate\)/);
   assert.match(script, /function paymentMissingAfterCompletion\(p\)/);
   assert.match(script, /VIEW_MODE==='admin'&&dailyQuickActionsVisible\(\)&&derivedStatus\(p\)==='done'/);
+  assert.match(script, /!Number\(p\?\.paymentNotRequiredAt\|\|0\)/);
   assert.match(script, /add\('payment_missing'/);
   assert.match(script, /function paymentMissingBadgeMarkup\(p\)[\s\S]*payment-missing-badge/);
   assert.match(script, /data-payment-missing-id=/);
@@ -28,4 +29,17 @@ test('completed patients without a payment order create an administration action
   assert.match(css, /\.payment-missing-badge\{/);
   assert.match(css, /\.payment-missing-action\{/);
   assert.match(css, /\.payment-missing-alert\{/);
+});
+
+test('doctor can explicitly complete a visit with no payment required', async () => {
+  const [html, script] = await Promise.all([
+    readFile(new URL('index.html', root), 'utf8'),
+    readFile(new URL('dashboard.js', root), 'utf8')
+  ]);
+  assert.match(html, /id="noPaymentRequiredCheck"/);
+  assert.match(html, /id="noPaymentChoiceTitle">لا توجد دفعة مطلوبة/);
+  assert.match(script, /p\.paymentNotRequiredAt=noPaymentRequired\?Date\.now\(\):0/);
+  assert.match(script, /kind:'payment-not-required'/);
+  assert.match(script, /if\(\$\('paymentRequiredCheck'\)\.checked\)\$\('noPaymentRequiredCheck'\)\.checked=false/);
+  assert.match(script, /if\(paymentRequired&&selection\.error\)/);
 });

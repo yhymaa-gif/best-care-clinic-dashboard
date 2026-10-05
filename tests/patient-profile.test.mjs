@@ -17,6 +17,35 @@ test('patient profile links appointments by any stable patient identity', () => 
   assert.equal(profile.hasAlias({ file: 'A121', phone: '0500000000' }, aliases), false);
 });
 
+test('patient profile retains the doctor no-payment decision', () => {
+  const output=profile.profilePayload({id:'p1',name:'مريض'},[{clinicId:'clinic-1',date:'2026-10-06',state:{updatedAt:10},matches:[{id:'p1',status:'done',paymentRequired:false,paymentNotRequiredAt:1234}]}],[],[]);
+  assert.equal(output.appointments[0].paymentNotRequiredAt,1234);
+  assert.equal(output.summary.openPayments,0);
+});
+
+test('identity correction retries with ETag and preserves a concurrent patient status update', async () => {
+  let current={patients:[{id:'p1',file:'100',name:'Old name',status:'waiting'}],revision:1,updatedAt:1};
+  let etag='v1',firstWrite=true;
+  const daysStore={
+    async getWithMetadata(){return{data:structuredClone(current),etag}},
+    async setJSON(key,value,options){
+      assert.equal(options.onlyIfMatch,etag);
+      if(firstWrite){
+        firstWrite=false;
+        current={...current,patients:current.patients.map(item=>({...item,status:'done'})),revision:2,updatedAt:2};
+        etag='v2';
+        return{modified:false};
+      }
+      current=structuredClone(value);etag='v3';return{modified:true,etag};
+    }
+  };
+  const updated=await profile.updateMatchedDayIdentity(daysStore,{key:'days/2026-10-06'},new Set(['file:100']),{name:'Correct name',file:'100',phone:'',nationalId:''},'Admin');
+  assert.equal(updated,1);
+  assert.equal(current.patients[0].name,'Correct name');
+  assert.equal(current.patients[0].status,'done');
+  assert.equal(current.revision,3);
+});
+
 test('patient profile hydrates historical treatment plans before matching a searched patient', async () => {
   const source = await readFile(new URL('../netlify/functions/patient-profile.mjs', import.meta.url), 'utf8');
   assert.match(source, /hydrateTreatmentPlanRegistry/);

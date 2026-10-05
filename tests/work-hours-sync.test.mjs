@@ -41,11 +41,11 @@ function harness(overrides={}){
 
 test('working-hours cadence covers visible, background and floating clinic display',()=>{
   const {context:c}=harness();
-  assert.equal(c.syncCadence(working).delay,15000);
+  assert.equal(c.syncCadence(working).delay,5000);
   c.document.hidden=true;
   assert.equal(c.syncCadence(working).delay,300000);
   c.window.documentPictureInPicture={window:{closed:false}};
-  assert.equal(c.syncCadence(working).delay,15000);
+  assert.equal(c.syncCadence(working).delay,5000);
   c.window.documentPictureInPicture.window.closed=true;
   assert.equal(c.syncCadence(working).delay,300000);
   assert.equal(c.syncCadence(Date.parse('2026-09-11T16:00:00+03:00')).delay,300000);
@@ -76,7 +76,7 @@ test('simultaneous wake signals run one patient pull',async()=>{
   await c.runAutomaticSync();
   assert.equal(pulls,1);
   finish();await first;
-  assert.deepEqual(calls.delays,[15000]);
+  assert.deepEqual(calls.delays,[50]);
 });
 
 test('pending edits take priority and get a prompt retry without pulling over them',async()=>{
