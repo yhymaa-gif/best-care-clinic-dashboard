@@ -316,10 +316,6 @@
   <span class="floating-lab-symbol" aria-hidden="true"><span class="tooth">🦷</span><span class="brush">🪥</span></span>
   <strong id="floatingLabCount" class="floating-lab-count">0</strong>
 </button>
-<button id="floatingRevenueBtn" class="floating-revenue-btn hide-screen" type="button" aria-label="فتح ملخص المدفوعات اليومية والشهرية" title="ملخص تحصيل اليوم والشهر" hidden>
-  <span class="floating-revenue-icon" aria-hidden="true">﷼</span>
-  <span class="floating-revenue-copy"><small id="floatingRevenueTodayLabel">تحصيل اليوم</small><strong id="floatingRevenueToday">0 ر.س</strong><small id="floatingRevenueMonth">الشهر: 0 ر.س</small></span>
-</button>
 </div>
 <div id="yahyaAssistantRoot" class="yahya-assistant-root hide-screen">
   <button id="yahyaAssistantBtn" class="yahya-assistant-fab" type="button" aria-haspopup="dialog" aria-controls="yahyaAssistantPanel" aria-expanded="false" aria-label="فتح المساعدة الذكية حسينة" title="اسأل المساعدة حسينة">
@@ -442,6 +438,11 @@
       <span class="completion-choice-icon" aria-hidden="true">💳</span>
       <span><strong id="paymentChoiceTitle">يوجد أمر دفع</strong><small id="paymentChoiceHelp">اختر الإجراءات والعدد، وحدد المجاني أو الخصم إن وجد</small></span>
     </label>
+    <label class="completion-choice no-payment-choice">
+      <input id="noPaymentRequiredCheck" type="checkbox">
+      <span class="completion-choice-icon" aria-hidden="true">✓</span>
+      <span><strong id="noPaymentChoiceTitle">لا توجد دفعة مطلوبة</strong><small id="noPaymentChoiceHelp">تأكيد الطبيب أن الزيارة لا تحتاج أمر دفع أو تحصيلًا من الإدارة</small></span>
+    </label>
     <label class="completion-choice plan-choice">
       <input id="planDraftCheck" type="checkbox">
       <span class="completion-choice-icon" aria-hidden="true">▤</span>
@@ -451,6 +452,11 @@
       <input id="prescriptionCheck" type="checkbox">
       <span class="completion-choice-icon" aria-hidden="true">💊</span>
       <span><strong id="prescriptionChoiceTitle">إعداد وصفة علاجية</strong><small id="prescriptionChoiceHelp">اختر نوع العلاج، ثم يعتمد الطبيب الوصفة لتصل إلى مركز الوصفات بالإدارة</small></span>
+    </label>
+    <label id="labOrderChoice" class="completion-choice lab-order-choice" hidden>
+      <input id="labOrderCheck" type="checkbox">
+      <span class="completion-choice-icon" aria-hidden="true">🦷</span>
+      <span><strong id="labOrderChoiceTitle">استكمال أمر المعمل</strong><small id="labOrderChoiceHelp">ظهر لأن أمر الدفع يحتوي على تركيبة؛ أكمل بيانات المعمل بعد حفظ الزيارة</small></span>
     </label>
   </div>
   <p id="completionFlowNote" class="completion-flow-note"><b>المسار:</b> الطبيب يُكمل المسودة ويؤكد اعتمادها، ثم تستلمها الإدارة لإكمال الإجراءات والأسعار.</p>

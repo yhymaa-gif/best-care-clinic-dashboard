@@ -57,6 +57,7 @@ const cleanPatient=p=>({
  paymentRequestedAt:Number(p?.paymentRequestedAt||0),
  paymentAcknowledgedAt:Number(p?.paymentAcknowledgedAt||0),
  paymentCompletedAt:Number(p?.paymentCompletedAt||0),
+ paymentNotRequiredAt:Number(p?.paymentNotRequiredAt||0),
  paymentReceipts:cleanPaymentReceipts(p?.paymentReceipts),
  treatmentPlanStatus:['draft','submitted','patient_accepted','approved','approved_signed','rejected','cancelled'].includes(p?.treatmentPlanStatus)?p.treatmentPlanStatus:'',
  treatmentPlanUpdatedAt:Number(p?.treatmentPlanUpdatedAt||0),
@@ -104,7 +105,7 @@ const pushEvents=(before=[],after=[],previousAlert={},nextAlert={},clinic={})=>{
  if(!events.length&&nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))events.push(decorate({type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:'تنبيه جديد من أفضل عناية',body:'يوجد تحديث جديد داخل لوحة المتابعة.',tag:`alert-${nextAlert.kind||'update'}`},after.find(patient=>String(nextAlert.message||'').includes(String(patient.name||'')))||{}));
  return events.slice(0,4);
 };
-export default async request=>{
+export default async (request, context = {})=>{
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
  if(request.method!=='GET'&&!sameOriginRequest(request))return reply({error:'Invalid request origin'},403);
  const auth=await requireUser(request);
@@ -129,7 +130,23 @@ export default async request=>{
         return [correctDirectoryPatient(lookupAliases,{name:patient.name,file:patient.file,phone:patient.phone,nationalId:patient.nationalId,phoneRelationship:patient.phoneRelationship},{actor:state.updatedBy,correctionId})];
       })
       : [];
-    const events=pushEvents(existing?.patients||[],state.patients,existing?.updateAlert||{},state.updateAlert,clinic);const backgroundResults=await Promise.allSettled([upsertPatientDirectory(state.patients,{clinicId,date,updatedAt:state.updatedAt,actor:state.updatedBy,authoritativeImport:auth.user?.role==='admin'&&Boolean(body.directoryImport)}),...identityCorrections,...events.map(event=>sendPushNotifications({...event,date:state.date,revision:state.revision,updatedAt:state.updatedAt},{excludeClientId:state.clientId}))]);const directoryUpdated=backgroundResults[0]?.status==='fulfilled'&&Boolean(backgroundResults[0]?.value?.changed)||identityCorrections.some(result=>result?.status==='fulfilled');return reply({ok:true,revision:state.revision,updatedAt:state.updatedAt,pushEvents:events.length,directoryUpdated})}
+    const events=pushEvents(existing?.patients||[],state.patients,existing?.updateAlert||{},state.updateAlert,clinic);
+    const directoryResults=await Promise.allSettled([
+      upsertPatientDirectory(state.patients,{clinicId,date,updatedAt:state.updatedAt,actor:state.updatedBy,authoritativeImport:auth.user?.role==='admin'&&Boolean(body.directoryImport)}),
+      ...identityCorrections
+    ]);
+    // The day state and patient directory are durable before responding. Push
+    // delivery is secondary and can involve many endpoints, so do not make the
+    // user's save acknowledgement wait for it. Netlify keeps this promise alive
+    // after the response via context.waitUntil (deployments after 2025-03-20).
+    const notificationWork=Promise.allSettled(events.map(event=>sendPushNotifications(
+      {...event,date:state.date,revision:state.revision,updatedAt:state.updatedAt},
+      {excludeClientId:state.clientId}
+    )));
+    if(typeof context?.waitUntil==='function')context.waitUntil(notificationWork);
+    else await notificationWork;
+    const directoryUpdated=directoryResults[0]?.status==='fulfilled'&&Boolean(directoryResults[0]?.value?.changed)||identityCorrections.some((_,index)=>directoryResults[index+1]?.status==='fulfilled');
+    return reply({ok:true,revision:state.revision,updatedAt:state.updatedAt,pushEvents:events.length,directoryUpdated})}
  return reply({error:'Method not allowed'},405);
 };
 

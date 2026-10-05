@@ -8,18 +8,26 @@ test('payment receipt ledger is sanitized and retained with integer cents', () =
   assert.deepEqual(patient.paymentReceipts,[{id:'pay_1',amountCents:12345,paidAt:1000,recordedAt:1000,updatedAt:1100,recordedBy:'الإدارة',method:'cash',note:'دفعة أولى'}]);
 });
 
-test('administration records paid amounts before completing payment and exposes revenue totals', async () => {
-  const [dashboard,html,statistics]=await Promise.all([
+test('explicit no-payment decision survives state cleaning', () => {
+  const patient=state.cleanPatient({id:'p2',name:'مريض',status:'done',paymentNotRequiredAt:123456});
+  assert.equal(patient.paymentNotRequiredAt,123456);
+});
+
+test('administration completes payment orders without amount entry or revenue UI', async () => {
+  const [dashboard,html,statisticsPage,statisticsApi]=await Promise.all([
     readFile(new URL('../dashboard.js',import.meta.url),'utf8'),
     readFile(new URL('../index.html',import.meta.url),'utf8'),
+    readFile(new URL('../statistics.html',import.meta.url),'utf8'),
     readFile(new URL('../netlify/functions/statistics.mjs',import.meta.url),'utf8'),
   ]);
-  assert.match(dashboard,/function openPaymentCollection\(id\)/);
-  assert.match(dashboard,/function savePaymentReceipt\(\)/);
-  assert.match(dashboard,/openPaymentCollection\(completeId\)/);
+  assert.doesNotMatch(dashboard,/function openPaymentCollection\(id\)/);
+  assert.doesNotMatch(dashboard,/function savePaymentReceipt\(\)/);
+  assert.doesNotMatch(dashboard,/paymentCollectionModal/);
+  assert.match(dashboard,/p\.paymentCompletedAt=Date\.now\(\)/);
   assert.match(dashboard,/paymentReceipts/);
-  assert.match(html,/id="floatingRevenueBtn"/);
-  assert.match(statistics,/revenueCents/);
+  assert.doesNotMatch(html,/id="floatingRevenueBtn"/);
+  assert.doesNotMatch(statisticsPage,/data-kpi="revenueCents"/);
+  assert.match(statisticsApi,/revenueCents/);
 });
 
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
@@ -52,6 +60,18 @@ test('completed crown payment orders expose a required laboratory-case action wi
   assert.match(styles,/\.lab-required-badge/);
   assert.match(styles,/\.lab-entry-btn\.lab-needed/);
   assert.doesNotMatch(script,/function patientNeedsLabCase[\s\S]{0,400}createLabCase\(/);
+});
+
+test('prosthetic payment procedures offer a prefilled laboratory order during completion', async () => {
+  const [html,script]=await Promise.all([read('index.html'),read('dashboard.js')]);
+  assert.match(html,/id="labOrderChoice"/);
+  assert.match(html,/id="labOrderCheck"/);
+  assert.match(script,/function syncCompletionLabOrderChoice\(patient=patientById\(pendingCompletionId\)\)/);
+  assert.match(script,/items\.some\(paymentItemRequiresLab\)/);
+  assert.match(script,/openLabCaseEditor\(p\.id,\{paymentItems:selection\.items\}\)/);
+  assert.match(script,/function labWorkTypeFromPaymentItems\(items=\[\]\)/);
+  assert.match(script,/pendingLabCompletionFollowUp=completionFollowUp/);
+  assert.match(script,/if\(completionFollowUp\)await continuePatientCompletionAction\(completionFollowUp\)/);
 });
 
 test('doctor display separates current, next, and following patients with timing details', async () => {
