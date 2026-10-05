@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.06-completion-payment-lab",
+  "version": "2026.10.06-admin-queue",
   "publishedAt": "2026-10-06",
   "summary": {
-    "ar": "تسريع المزامنة مع خيار لا توجد دفعة مطلوبة، وربط إجراءات التركيبات مباشرة باستكمال أمر المعمل.",
-    "en": "Faster synchronization with an explicit no-payment option and direct laboratory-order follow-up for prosthetic procedures."
+    "ar": "تنظيم شاشة الإدارة إلى مرضى في الانتظار ومرضى تم إنجازهم، مع تقديم من حان موعده تلقائيًا.",
+    "en": "Administration lists are grouped into waiting and completed patients, with appointments due now automatically moved to the top."
   }
 }
