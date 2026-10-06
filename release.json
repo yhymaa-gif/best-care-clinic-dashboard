@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.07-quick-plan-launcher",
+  "version": "2026.10.07-quick-plan-patient-row",
   "publishedAt": "2026-10-07",
   "summary": {
-    "ar": "الخطة السريعة أصبحت مكان أيقونة المعمل في الإدارة وتفتح مباشرة، مع بقاء المعمل متاحًا من قائمة العمليات.",
-    "en": "Quick Plan now replaces the floating Lab icon in Administration and opens directly; Lab remains available from Operations."
+    "ar": "الخطة السريعة أصبحت مكان ملاحظة اليوم في صف المريض، وتفتح مباشرة ببياناته؛ وعادت الأيقونة العائمة للمعمل.",
+    "en": "Quick Plan now replaces Today's Note in each admin patient row, opens with patient details, and the floating icon returns to Lab."
   }
 }

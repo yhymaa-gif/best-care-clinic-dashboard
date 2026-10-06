@@ -1894,13 +1894,6 @@ function openLabCasesPage(patient=null){
 }
 function renderFloatingLabButton(){
   const button=$('floatingLabBtn'),count=$('floatingLabCount');if(!button||!count)return;
-  if(VIEW_MODE==='admin'){
-    button.classList.remove('is-urgent','is-ready');button.classList.add('is-plan-launcher');
-    button.querySelector('.floating-lab-symbol').innerHTML='<span class="quick-plan-symbol" aria-hidden="true">▤<i>⚡</i></span>';
-    count.hidden=true;
-    const label=lang==='en'?'Quick plan':'الخطة السريعة';
-    button.dataset.label=label;button.setAttribute('aria-label',label);button.title=label;return;
-  }
   button.classList.remove('is-plan-launcher');
   delete button.dataset.label;
   button.querySelector('.floating-lab-symbol').innerHTML='<span class="tooth">🦷</span><span class="brush">🪥</span>';
@@ -3035,7 +3028,7 @@ function renderTable(){
              ${earliestAppointmentActionMarkup(p,displayStatus)}
              ${VIEW_MODE==='clinic'&&displayStatus==='done'?clinicIconAction('💳',lang==='en'?'Post-treatment actions':'إجراء دفع أو خطة',`data-completion-id="${escapeHtml(p.id)}"`,'clinic-row-action payment'):''}
              ${VIEW_MODE==='admin'&&paymentMissingAfterCompletion(p)?`<button class="mini payment-missing-action" type="button" data-payment-missing-id="${escapeHtml(p.id)}">${lang==='en'?'Complete remaining payment':'استكمال دفع المتبقي'}</button>`:''}
-            ${VIEW_MODE==='clinic'?clinicIconAction('📝',lang==='en'?'Add today’s note':'إضافة ملاحظة اليوم',`data-daily-note-id="${escapeHtml(p.id)}"`,'clinic-row-action note'):`<button type="button" class="mini daily-note-action" data-daily-note-id="${escapeHtml(p.id)}">📝 ${lang==='en'?'Today note':'ملاحظة اليوم'}</button>`}
+            ${VIEW_MODE==='clinic'?clinicIconAction('📝',lang==='en'?'Add today’s note':'إضافة ملاحظة اليوم',`data-daily-note-id="${escapeHtml(p.id)}"`,'clinic-row-action note'):`<button type="button" class="mini quick-plan-patient-action" data-quick-plan-id="${escapeHtml(p.id)}" title="${escapeHtml(lang==='en'?'Open Quick Plan with this patient’s details':'فتح الخطة السريعة ببيانات هذا المريض')}"><span aria-hidden="true">⚡</span>${lang==='en'?'Quick plan':'الخطة السريعة'}</button>`}
             <button type="button" class="mini" data-edit-id="${escapeHtml(p.id)}">${escapeHtml(tr('edit'))}</button>
             <button type="button" class="mini danger" data-delete-id="${escapeHtml(p.id)}">${escapeHtml(tr('delete'))}</button>
           </div>
@@ -4158,8 +4151,11 @@ function applyViewMode(){
   applyAdminLayout(adminLayoutMode);
   renderFloatingLabButton();
 }
-function openQuickPlanPage(){
-  const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,lang});
+function openQuickPlanForPatient(id){
+  const patient=patientById(id);if(!patient)return;
+  const identity=patientWithDirectoryIdentity(patient),mrn=String(identity.file||patient.file||'').trim();
+  if(!mrn||isZeroFileNumber(mrn)){toast(lang==='en'?'Patient file number required':'يلزم رقم ملف المريض',lang==='en'?'Complete the patient file number before opening Quick Plan.':'أكمل رقم ملف المريض قبل فتح الخطة السريعة.');return}
+  const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,lang,mrn,patientId:String(patient.id||''),patientName:String(identity.name||patient.name||'')});
   location.href=`./quick-plan?${params.toString()}`;
 }
 function scrollAdminTarget(id,{open=false}={}){
@@ -5612,7 +5608,7 @@ $('labCasesBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);openLa
 $('appointmentEntryPageBtn')?.addEventListener('click',()=>{setSettingsMenuOpen(false);openAppointmentEntryPage()});
 $('appointmentEntryTopLink')?.addEventListener('click',event=>{event.preventDefault();openAppointmentEntryPage()});
 $('appointmentRequestsPageBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);location.href='./appointment-requests.html'});
-$('floatingLabBtn').addEventListener('click',()=>VIEW_MODE==='admin'?openQuickPlanPage():openLabCasesPage());
+$('floatingLabBtn').addEventListener('click',()=>openLabCasesPage());
 $('clinicsBtn').addEventListener('click',openClinicDirectory);
 $('addClinicSlotBtn').addEventListener('click',addClinicSlot);
 $('saveClinicsBtn').addEventListener('click',saveClinicDirectory);
@@ -5746,7 +5742,7 @@ els.patientRows.addEventListener('click',event=>{
     openModal('patientIdentitySearchModal');
     loadPatientProfile(patientSummaryOpen.lookup,{tab:summaryProfile.dataset.summaryTab||'appointments'});return;
   }
-  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,dailyNote=event.target.closest('[data-daily-note-id]')?.dataset.dailyNoteId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,quickPlan=event.target.closest('[data-quick-plan-id]')?.dataset.quickPlanId,dailyNote=event.target.closest('[data-daily-note-id]')?.dataset.dailyNoteId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
   if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
   if(review)openReviewComposer(review);
@@ -5755,6 +5751,7 @@ els.patientRows.addEventListener('click',event=>{
   if(earliest&&VIEW_MODE==='clinic')requestEarliestAppointment(earliest,event.target.closest('[data-earliest-id]'));
   if(completion&&VIEW_MODE==='clinic')finishPatient(completion);
   if(paymentMissing&&VIEW_MODE==='admin')openMissingPaymentOrder(paymentMissing);
+  if(quickPlan&&VIEW_MODE==='admin'){openQuickPlanForPatient(quickPlan);return}
   if(dailyNote)updatePatientDailyNote(dailyNote);
   if(edit)openPatient(edit);
   if(del&&confirm(lang==='en'?'Delete this patient from today’s list?':'حذف هذا المريض من قائمة اليوم؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
