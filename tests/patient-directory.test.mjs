@@ -324,7 +324,7 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
   assert.match(html, /dashboard\.js\?v=20261006-admin-queue-patient-id/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20261007-quick-plan-cost-link/);
+  assert.match(serviceWorker, /20261007-quick-plan-launcher/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261007-quick-plan-cost-link';
+const CACHE_NAME='bestcare-dashboard-v1-20261007-quick-plan-launcher';
 const APP_SHELL=[
   './',
   './index.html',
