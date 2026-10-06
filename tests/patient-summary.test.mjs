@@ -60,6 +60,13 @@ test('summary renderer escapes patient content, keeps actions and provides Engli
   assert.match(html,/No linked treatment plans/);assert.match(html,/7 days ago/);
 });
 
+test('summary renderer includes linked quick plans without merging them into legacy records',()=>{
+  const source={patient:{name:'Patient'},appointments:[],plans:[],quickPlans:[{id:'qp1',status:'pending_review',submittedBy:'Nurse',createdAt:now,items:[{toothNumber:'09',officialName:'علاج عصب',officialNameEn:'Root canal treatment'}]}],labs:[],prescriptions:[],summary:{}};
+  const html=summary.render(source,{now,patientId:'p1',lang:'en'});
+  assert.match(html,/Quick plan/);assert.match(html,/Pending doctor review/);assert.match(html,/#09 · Root canal treatment/);
+  assert.match(html,/quick-plan-review\.html/);assert.doesNotMatch(html,/No linked treatment plans/);
+});
+
 test('profile response includes only sanitized quantities and visit timestamps without modifying storage',()=>{
   const item=visit({arrivedAt:120,paymentItems:[{name:'Filling',code:'filling',quantity:2,price:999,secret:'hidden'}]});
   const input=JSON.stringify(item);

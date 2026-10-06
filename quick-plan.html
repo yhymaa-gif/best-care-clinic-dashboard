@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#174f43">
+  <script src="./theme-boot.js"></script>
+  <title>Quick Treatment Plan | Best Care</title>
+  <link rel="icon" href="./assets/icons/icon-192.png">
+  <link rel="stylesheet" href="./quick-plan.css?v=20261006-quick-plan">
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./quick-plan-runtime.css?v=20261006-quick-plan">
+</head>
+<body class="quick-plan-page">
+  <main class="quick-shell">
+    <header class="quick-header">
+      <img src="./best-care-logo.png" alt="Best Care logo">
+      <div>
+        <p class="eyebrow">FAST CLINICAL DOCUMENTATION</p>
+        <h1 data-i18n="title">QUICK TREATMENT PLAN</h1>
+        <p data-i18n="subtitle">Enter the MRN and type the proposed procedures like a WhatsApp message.</p>
+      </div>
+      <button id="languageToggle" class="language-button" type="button">العربية</button>
+    </header>
+
+    <aside class="draft-notice" role="note">
+      <strong>DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</strong>
+      <span data-i18n="draftNotice">This nurse entry is not a final treatment plan. A dentist must review and approve it.</span>
+    </aside>
+
+    <section id="authError" class="state-card error-card" hidden>
+      <strong data-i18n="signinRequired">Sign-in required</strong>
+      <p data-i18n="signinHelp">Open the dashboard and sign in, then return to this link.</p>
+      <a href="./" data-i18n="openSignin">OPEN SIGN-IN</a>
+    </section>
+
+    <form id="quickPlanForm" class="quick-form" novalidate>
+      <section class="identity-panel">
+        <label class="field mrn-field">
+          <span data-i18n="mrn">PATIENT MRN / FILE NUMBER *</span>
+          <div class="lookup-row">
+            <input id="patientMrn" name="patientMrn" inputmode="text" autocomplete="off" maxlength="40" required placeholder="Example: 18417">
+            <button id="lookupPatient" type="button" data-i18n="find">FIND</button>
+          </div>
+          <small id="patientLookupState" aria-live="polite" data-i18n="mrnHelp">MRN is the primary patient identifier.</small>
+        </label>
+        <label class="field">
+          <span data-i18n="clinic">CLINIC *</span>
+          <select id="clinicId" name="clinicId" required></select>
+        </label>
+        <label class="field">
+          <span data-i18n="patientName">PATIENT INITIALS / NAME (OPTIONAL)</span>
+          <input id="patientName" name="patientName" autocomplete="off" maxlength="120" placeholder="Optional">
+        </label>
+        <label class="field">
+          <span data-i18n="dentist">TREATING DENTIST (OPTIONAL)</span>
+          <input id="treatingDentist" name="treatingDentist" autocomplete="off" maxlength="120" placeholder="Optional">
+        </label>
+        <label class="field numbering-field">
+          <span data-i18n="numbering">TOOTH NUMBERING</span>
+          <select id="numberingSystem" name="numberingSystem">
+            <option value="fdi">FDI (11–48)</option>
+            <option value="universal">Universal (#01–#32)</option>
+          </select>
+          <small data-i18n="numberingHelp">Numbers are stored exactly in the selected system and are never converted silently.</small>
+        </label>
+      </section>
+
+      <section class="entry-panel">
+        <label for="quickEntry" data-i18n="quickEntry">QUICK ENTRY *</label>
+        <textarea id="quickEntry" rows="7" spellcheck="false" autocomplete="off" placeholder="RCT 11&#10;Post 12&#10;Temp Crown 21&#10;Extraction 22&#10;Crown Removal 23"></textarea>
+        <div class="entry-meta">
+          <span data-i18n="separatorHelp">Use new lines, commas, or semicolons.</span>
+          <span id="parseSummary" aria-live="polite">0 items</span>
+        </div>
+        <div id="shortcutRow" class="shortcuts" aria-label="Recent and common procedures"></div>
+      </section>
+
+      <section class="preview-panel">
+        <div class="section-heading">
+          <div><p class="eyebrow" data-i18n="livePreview">LIVE PREVIEW</p><h2 data-i18n="checkMatches">Check every match</h2></div>
+          <div class="match-key"><span class="green">● <b data-i18n="matched">Matched</b></span><span class="yellow">● <b data-i18n="confirm">Confirm</b></span><span class="red">● <b data-i18n="unmatched">Not matched</b></span></div>
+        </div>
+        <div id="previewList" class="preview-list" aria-live="polite">
+          <p class="empty-preview" data-i18n="previewEmpty">Your structured plan will appear here while you type.</p>
+        </div>
+      </section>
+
+      <p id="formError" class="form-error" role="alert" hidden></p>
+      <div class="sticky-submit">
+        <div><strong id="readyState" data-i18n="notReady">Complete the required fields</strong><small data-i18n="submitHelp">All entries must have a valid tooth and confirmed procedure.</small></div>
+        <button id="submitPlan" type="submit" disabled><span aria-hidden="true">✓</span><span data-i18n="submit">SUBMIT PLAN</span></button>
+      </div>
+    </form>
+
+    <section id="successCard" class="state-card success-card" hidden>
+      <span class="success-icon">✓</span>
+      <h2 data-i18n="submitted">Treatment Plan Submitted</h2>
+      <p><span data-i18n="status">Status</span>: <strong>PENDING DOCTOR REVIEW</strong></p>
+      <button id="newPlan" type="button" data-i18n="another">ENTER ANOTHER PLAN</button>
+    </section>
+  </main>
+  <script type="module" src="./quick-plan.js?v=20261006-quick-plan"></script>
+</body>
+</html>

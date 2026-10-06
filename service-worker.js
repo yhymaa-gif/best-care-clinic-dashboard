@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261006-admin-queue-patient-id';
+const CACHE_NAME='bestcare-dashboard-v1-20261006-quick-treatment-plan';
 const APP_SHELL=[
   './',
   './index.html',
@@ -18,6 +18,15 @@ const APP_SHELL=[
   './plan-consent.js',
   './treatment-plans.html',
   './treatment-plans.js',
+  './quick-plan.html',
+  './quick-plan.css',
+  './quick-plan-runtime.css',
+  './quick-plan.js',
+  './quick-plan-core.js',
+  './quick-plan-review.html',
+  './quick-plan-review.css',
+  './quick-plan-review.js',
+  './quick-plan-center.js',
   './statistics.html',
   './statistics.js',
   './appointment-request.html',
@@ -81,7 +90,11 @@ self.addEventListener('fetch',event=>{
   }
 
   if(request.mode==='navigate'){
-    const shellPage=url.pathname.endsWith('/treatment-plans.html')
+    const shellPage=url.pathname==='/quick-plan'||url.pathname.endsWith('/quick-plan.html')
+      ?'./quick-plan.html'
+      :url.pathname.endsWith('/quick-plan-review.html')
+      ?'./quick-plan-review.html'
+      :url.pathname.endsWith('/treatment-plans.html')
       ?'./treatment-plans.html'
       :url.pathname.endsWith('/treatment-plan.html')
       ?'./treatment-plan.html'

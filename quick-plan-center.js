@@ -1,0 +1,11 @@
+(()=>{'use strict';
+const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const request=async(url)=>fetch(url,{credentials:'include',cache:'no-store'});
+const inbox=document.getElementById('quickPlanInbox'),list=document.getElementById('quickPlanInboxList'),count=document.getElementById('quickPlanInboxCount');
+let plans=[],loading=false;
+const quickPlanChannel='BroadcastChannel'in window?new BroadcastChannel('bestcare-quick-plans'):null;
+function render(){const clinic=document.getElementById('clinicFilter')?.value||'all',visible=plans.filter(plan=>plan.status==='pending_review'&&(clinic==='all'||plan.clinicId===clinic));count.textContent=String(visible.length);inbox.hidden=!visible.length;list.innerHTML=visible.slice(0,20).map(plan=>`<article class="quick-inbox-item"><div><strong>${esc(plan.patientName||`ملف ${plan.patientMrn}`)}</strong><small>ملف ${esc(plan.patientMrn)} · ${esc(plan.treatingDentist||plan.clinicId)} · ${new Date(plan.createdAt).toLocaleString('ar-SA-u-ca-gregory-nu-latn')}</small></div><a href="./quick-plan-review.html?clinic=${encodeURIComponent(plan.clinicId)}&id=${encodeURIComponent(plan.id)}">فتح ومراجعة</a></article>`).join('')}
+async function load(){if(loading)return;loading=true;try{const clinicResponse=await request('/api/clinics'),clinicData=await clinicResponse.json();if(!clinicResponse.ok)return;const active=(clinicData.clinics||[]).filter(item=>item.active!==false);const responses=await Promise.all(active.map(async clinic=>{const response=await request(`/api/quick-treatment-plans?clinic=${encodeURIComponent(clinic.id)}`);if(!response.ok)return[];const data=await response.json();return data.plans||[]}));plans=responses.flat().sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));render()}catch(error){console.warn('Quick plan inbox unavailable',error)}finally{loading=false}}
+document.getElementById('clinicFilter')?.addEventListener('change',render);document.getElementById('refreshBtn')?.addEventListener('click',load);load();
+quickPlanChannel?.addEventListener('message',event=>{if(event.data?.type==='submitted')load()});document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});window.addEventListener('focus',load);setInterval(()=>{if(!document.hidden&&navigator.onLine)load()},15000);
+})();

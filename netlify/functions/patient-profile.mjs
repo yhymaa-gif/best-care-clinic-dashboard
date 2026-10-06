@@ -156,6 +156,27 @@ function prescriptionMatches(registry, aliases, scope) {
     .filter(item => item.record && (scope.all || item.record.clinicId === scope.clinicId));
 }
 
+function quickPlanMatches(records, identity, scope) {
+  const canonical = cleanText(identity?.canonical, 180);
+  const file = normalizePatientFile(identity?.file);
+  return (Array.isArray(records) ? records : [])
+    .filter(plan => plan && clinicPattern.test(plan.clinicId) && (scope.all || plan.clinicId === scope.clinicId))
+    .filter(plan => canonical
+      ? plan.patientId === canonical
+      : !scope.all && file && normalizePatientFile(plan.patientMrn) === file)
+    .sort((left, right) => Number(right.updatedAt || 0) - Number(left.updatedAt || 0));
+}
+
+async function loadQuickPlans(scope, identity) {
+  const quickStore = store('clinic-quick-treatment-plans');
+  const clinicIds = scope.all
+    ? [...new Set([identity?.latestClinicId, ...(Array.isArray(identity?.clinicIds) ? identity.clinicIds : [])].filter(value => clinicPattern.test(value || '')))]
+    : [scope.clinicId];
+  const keys = (await Promise.all(clinicIds.map(clinicId => listKeys(quickStore, `clinics/${clinicId}/plans/`, 20)))).flat();
+  const records = await Promise.all(keys.slice(0, 1000).map(key => quickStore.get(key, { type: 'json', consistency: 'strong' }).catch(() => null)));
+  return quickPlanMatches(records, identity, scope);
+}
+
 function primaryPatient(dayMatches, plans, labs, communications = [], prescriptions = [], directoryRecord = null) {
   const latestAppointment = dayMatches.flatMap(day => day.matches.map(patient => ({ patient, date: day.date })))
     .sort((left, right) => right.date.localeCompare(left.date))[0]?.patient;
@@ -191,7 +212,7 @@ function communicationPayload(matches) {
   };
 }
 
-function profilePayload(patient, dayMatches, plans, labs, communications = [], prescriptions = [], directoryRecord = null) {
+function profilePayload(patient, dayMatches, plans, labs, communications = [], prescriptions = [], directoryRecord = null, quickPlans = []) {
   const appointments = dayMatches.flatMap(day => day.matches.map(item => ({
     id: cleanText(item.id, 100), clinicId: day.clinicId, date: day.date, start: cleanText(item.start, 8), end: cleanText(item.end, 8),
     procedure: cleanText(item.procedure, 180), status: cleanText(item.status, 30), statusLabel: statusLabel(item.status),
@@ -211,9 +232,10 @@ function profilePayload(patient, dayMatches, plans, labs, communications = [], p
   const prescriptionItems = prescriptions.map(({ canonical, record }) => ({ canonical, ...record }));
   return {
     patient,
-    summary: { appointments: appointments.length, plans: planItems.length, prescriptions: prescriptionItems.length, labs: labItems.length, openPayments, communications: communication.planWhatsappCount + communication.reviewWhatsappCount },
+    summary: { appointments: appointments.length, plans: planItems.length, quickPlans: quickPlans.length, prescriptions: prescriptionItems.length, labs: labItems.length, openPayments, communications: communication.planWhatsappCount + communication.reviewWhatsappCount },
     appointments,
     plans: planItems,
+    quickPlans,
     labs: labItems,
     prescriptions: prescriptionItems,
     communications: communication,
@@ -337,10 +359,16 @@ export default async request => {
     communications = communications.filter(({ record }) => matchesSummaryIdentity(record.patient, identity));
   }
   const patient = primaryPatient(dayMatches, plans, labs, communications, prescriptions, directoryRecord);
-  if (!patient.name && !patient.file && !patient.phone && !patient.nationalId) return reply({ found: false, patient: null, appointments: [], plans: [], labs: [] }, 404);
+  if (!patient.name && !patient.file && !patient.phone && !patient.nationalId) return reply({ found: false, patient: null, appointments: [], plans: [], quickPlans: [], labs: [] }, 404);
 
   if (request.method === 'GET') {
-    const payload = profilePayload(patient, dayMatches, plans, labs, communications, prescriptions, directoryRecord);
+    const quickPlans = await loadQuickPlans(scope, {
+      canonical: directoryCanonical,
+      file: patient.file || (type === 'file' ? normalized : ''),
+      latestClinicId: directoryRecord?.latestClinicId,
+      clinicIds: directoryRecord?.clinicIds
+    });
+    const payload = profilePayload(patient, dayMatches, plans, labs, communications, prescriptions, directoryRecord, quickPlans);
     if (compactSummary) {
       try { payload.planDetails = await loadPlanSummaries(plansStore, plans); }
       catch { payload.planDetails = []; payload.planDetailsUnavailable = true; }
@@ -471,4 +499,4 @@ export default async request => {
   return reply({ ok: true, patient: next, updated: { appointments: appointmentUpdates, plans: planUpdates, prescriptions: prescriptionUpdates, labs: labUpdates } });
 };
 
-export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel, communicationMatches, communicationPayload, prescriptionMatches, profilePayload, updateMatchedDayIdentity };
+export const __test = { normalizeLookup, parseDayKey, hasAlias, patientView, statusLabel, communicationMatches, communicationPayload, prescriptionMatches, quickPlanMatches, profilePayload, updateMatchedDayIdentity };

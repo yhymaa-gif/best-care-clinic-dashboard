@@ -1,0 +1,26 @@
+/* Loaded after the shared theme so the focused quick-plan workflow stays compact and responsive. */
+html,body{overflow-x:hidden}
+.quick-form,.identity-panel,.entry-panel,.preview-panel,.state-card{min-width:0}
+.lookup-row{grid-template-columns:minmax(0,1fr) auto}
+html[data-theme="dark"] .quick-header,
+html[data-theme="dark"] .identity-panel,
+html[data-theme="dark"] .entry-panel,
+html[data-theme="dark"] .preview-panel,
+html[data-theme="dark"] .state-card,
+html[data-theme="dark"] .review-queue,
+html[data-theme="dark"] .review-editor,
+html[data-theme="dark"] .review-empty,
+html[data-theme="dark"] .original-entry,
+html[data-theme="dark"] .structured-editor,
+html[data-theme="dark"] .clinical-fields,
+html[data-theme="dark"] .generated-output article{
+  border-color:#34483f;background:#17241f;color:#e5efe9
+}
+html[data-theme="dark"] .draft-notice{border-color:#6d5e31;background:#2a2517;color:#f0d785}
+html[data-theme="dark"] .empty-preview{border-color:#40574d;background:#13201b;color:#a6b8af}
+html[data-theme="dark"] .procedure-card.match-high{--card-line:#356d56;--card-bg:#14271f}
+html[data-theme="dark"] .procedure-card.match-possible{--card-line:#79652d;--card-bg:#2a2517}
+html[data-theme="dark"] .procedure-card.match-unmatched{--card-line:#82414d;--card-bg:#2a181c}
+html[data-theme="dark"] .sticky-submit,
+html[data-theme="dark"] .editor-actions{border-color:#34483f;background:rgba(23,36,31,.96)}
+
