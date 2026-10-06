@@ -5,7 +5,8 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const pages = [
   'index.html','appointment-request.html','appointment-requests.html','lab.html',
-  'offline.html','statistics.html','treatment-plan.html','treatment-plans.html'
+  'offline.html','statistics.html','treatment-plan.html','treatment-plans.html',
+  'quick-plan.html','quick-plan-review.html'
 ];
 
 test('every interface loads the shared theme before rendering', async () => {
