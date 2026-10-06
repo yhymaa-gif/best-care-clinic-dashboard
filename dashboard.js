@@ -1,6 +1,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
+const quickPlanTopLink=document.createElement('a');quickPlanTopLink.id='quickPlanTopLink';quickPlanTopLink.className='top-icon-link admin-only';quickPlanTopLink.href='./quick-plan';quickPlanTopLink.title='فتح إدخال الخطة العلاجية السريعة';quickPlanTopLink.innerHTML='<span aria-hidden="true">⚡</span><strong>الخطة السريعة</strong>';$('appointmentEntryTopLink')?.after(quickPlanTopLink);
 const THEME_KEY='bestcare_dashboard_theme_v1';
 const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1';
 const ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1';
@@ -5187,6 +5188,8 @@ function applyLang(){
   setText('#clinicViewLink',lang==='en'?'🩺 Doctor page':'🩺 صفحة الطبيب');
   setText('#adminViewLink',lang==='en'?'🗓️ Administration page':'🗓️ صفحة الإدارة');
   setText('#statisticsTopLink strong',lang==='en'?'Statistics':'الإحصائيات');
+  setText('#quickPlanTopLink strong',lang==='en'?'Quick plan':'الخطة السريعة');
+  $('quickPlanTopLink')?.setAttribute('title',lang==='en'?'Open Quick Treatment Plan entry':'فتح إدخال الخطة العلاجية السريعة');
   setText('#adminNotificationsTopLink strong',lang==='en'?'Admin alerts':'تنبيهات الإدارة');
   $('adminNotificationsTopLink')?.setAttribute('title',lang==='en'?'Open alerts requiring administration action':'فتح التنبيهات التي تحتاج تدخل الإدارة');
   setText('[data-modern-action="admin-alerts"] strong',lang==='en'?'Admin alerts':'تنبيهات الإدارة');

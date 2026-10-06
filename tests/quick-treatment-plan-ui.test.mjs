@@ -59,6 +59,15 @@ test('treatment-plan center surfaces nurse submissions without altering legacy p
   assert.match(worker,/url\.pathname\.startsWith\('\/api\/'\)/);
 });
 
+test('administration dashboard exposes a direct bilingual quick-plan action',async()=>{
+  const [html,dashboard]=await Promise.all([read('index.html'),read('dashboard.js')]);
+  assert.doesNotMatch(html,/id="quickPlanTopLink"/);
+  assert.match(dashboard,/quickPlanTopLink\.href='\.\/quick-plan'/);
+  assert.match(dashboard,/الخطة السريعة/);
+  assert.match(dashboard,/#quickPlanTopLink strong/);
+  assert.match(dashboard,/Quick plan/);
+});
+
 test('admin procedure catalog edits quick aliases on the existing procedure record',async()=>{
   const [dashboard,html]=await Promise.all([read('dashboard.js'),read('index.html')]);
   assert.match(html,/اختصارات الإدخال السريع/);
