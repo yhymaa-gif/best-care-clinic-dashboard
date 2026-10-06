@@ -19,15 +19,18 @@
 - Browser workflow verified with synthetic local data: MRN lookup → FDI parsing → tooth correction → deletion → duplication → continued typing → submission → pending doctor review → approval → approved snapshot locked for sharing and printing.
 - Responsive browser verification at 390×844: no horizontal overflow; the complete nurse and dentist flow produced no console errors.
 - The real Best Care Netlify site was identified as `bestcaredentalclinicsdash` (`3c4d489e-36cb-4ed2-a934-99e87e4f79e7`), repository `yhymaa-gif/best-care-clinic-dashboard`, production branch `main`, production commit `9cdc7225c8c8dba9a94813f72e4746edcd905573`.
+- GitHub PR `#96` created from `feat/quick-treatment-plan`; the Git-connected Netlify deploy preview completed all build, redirect, and header checks successfully at `https://deploy-preview-96--bestcaredentalclinicsdash.netlify.app/`.
+- Preview smoke check: `/quick-plan`, `/quick-plan-review.html`, and `/quick-plan-core.js` returned HTTP 200; unauthenticated `/api/auth?action=session` and `/api/quick-treatment-plans?clinic=clinic-1` returned protected HTTP 401 with `no-store`, proving the server functions are present rather than missing.
+- Preview browser check showed the sign-in-required state correctly and produced no console warnings or errors while signed out.
 - No production deployment or real patient mutation was performed.
 
 ## Remaining
 
 - Create focused commits after review findings are resolved.
-- A real Netlify deploy-preview test with production-equivalent auth/Blobs remains required before any production deployment.
+- A signed-in deploy-preview test with production-equivalent auth/Blobs remains required before any production deployment.
 - Cross-device behavior still requires two real signed-in sessions on the deploy preview; the code uses BroadcastChannel for same-device tabs and a visible-page 15-second network refresh for other devices.
 - Doctor approval requires the stored clinic account display name to match the configured `doctorName` for that clinic; mismatches are denied by default and must be corrected in administration.
 
 ## Next safe step
 
-Create focused branch commits and use the Best Care Git-connected deploy preview. Do not deploy production until the preview confirms authentication, Netlify Blobs, duplicate prevention, multi-device consistency, and rollback behavior.
+Sign in to the deploy preview with authorized test accounts and verify Blob persistence, duplicate prevention, two-device synchronization, reload, share, and print. Do not merge or deploy production until those checks pass.
