@@ -24,3 +24,144 @@ html[data-theme="dark"] .procedure-card.match-unmatched{--card-line:#82414d;--ca
 html[data-theme="dark"] .sticky-submit,
 html[data-theme="dark"] .editor-actions{border-color:#34483f;background:rgba(23,36,31,.96)}
 
+.card-actions button{font-size:18px;line-height:1}
+.tooth-picker-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px}.tooth-picker-head strong,.tooth-picker-head small{display:block}.tooth-picker-head strong{font-size:10px}.tooth-picker-head small{margin-top:2px;color:var(--muted);font-size:8px}.tooth-picker-head>b{min-width:62px;padding:5px 8px;border-radius:999px;background:#e8f4ee;color:var(--green);text-align:center;font-size:10px}.tooth-grid{display:grid;gap:2px;margin-bottom:8px;padding:9px 7px 6px;border:1px solid #d5e4de;border-radius:16px;background:linear-gradient(180deg,#f9fcfb,#f1f8f5)}.tooth-jaw{position:relative;padding-top:15px}.tooth-jaw>strong{position:absolute;top:0;inset-inline:0;color:var(--muted);font-size:8px;letter-spacing:.08em;text-align:center}.tooth-jaw-upper{padding-bottom:18px;border-bottom:1px dashed #bed4cc}.tooth-jaw-lower{padding-top:33px}.tooth-jaw-lower>strong{top:16px}.tooth-arch{display:grid;grid-template-columns:repeat(16,minmax(18px,1fr));gap:3px;align-items:center}.tooth-arch button{min-width:0;height:29px;padding:0;transform:translateY(var(--arch-offset));border:1px solid #bcd4cb;border-radius:50% 50% 42% 42%;background:#fff;color:var(--ink);font-size:9px;font-weight:900;cursor:pointer;box-shadow:0 2px 5px rgba(15,70,55,.08);transition:transform .15s ease,background .15s ease,border-color .15s ease}.tooth-jaw-lower .tooth-arch button{border-radius:42% 42% 50% 50%}.tooth-arch button:nth-child(8){margin-inline-end:3px}.tooth-arch button:nth-child(9){margin-inline-start:3px}.tooth-arch button.selected{border-color:#19735b;background:#19735b;color:#fff;box-shadow:0 0 0 3px rgba(25,115,91,.18);transform:translateY(var(--arch-offset)) scale(1.14)}.tooth-procedure-select{width:100%;min-height:42px;margin-bottom:10px;padding:7px 10px;border:1px solid #bfd4cd;border-radius:11px;background:#fff;color:var(--ink);font-weight:900}.tooth-procedure-select:disabled{opacity:.55}
+html[data-theme="dark"] .tooth-picker-head>b{background:#203b31;color:#bce7d4}html[data-theme="dark"] .tooth-grid{border-color:#40574d;background:linear-gradient(180deg,#15231d,#101b17)}html[data-theme="dark"] .tooth-arch button,html[data-theme="dark"] .tooth-procedure-select{border-color:#40574d;background:#13201b;color:#e5efe9}
+.tooth-grid{direction:ltr}
+.tooth-grid{position:relative;gap:0;padding:10px 8px 8px;border-radius:48%/18%;overflow:visible}.tooth-grid::after{content:"";position:absolute;z-index:0;top:18px;bottom:18px;left:50%;border-inline-start:1px dashed #a9c8bc;pointer-events:none}.tooth-jaw{height:152px;padding:0}.tooth-jaw>strong{z-index:2;top:2px;font-size:8px}.tooth-jaw-upper{padding:0;border-bottom:1px dashed #bed4cc}.tooth-jaw-lower{padding:0}.tooth-jaw-lower>strong{top:auto;bottom:2px}.tooth-arch{position:relative;z-index:1;display:block;width:100%;height:100%}.tooth-arch button{position:absolute;display:grid;place-items:center;left:var(--arch-x);top:var(--arch-y);width:38px;height:56px;padding:0;transform:translate(-50%,-50%);border:0;border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;transition:transform .16s ease,filter .16s ease}.tooth-arch button:nth-child(8),.tooth-arch button:nth-child(9){margin:0}.tooth-icon{display:block;width:30px;height:46px;filter:drop-shadow(0 2px 2px rgba(8,62,47,.16))}.tooth-icon svg{display:block;width:100%;height:100%;overflow:visible}.tooth-jaw-upper .tooth-icon svg{transform:rotate(180deg)}.tooth-crown{fill:#fffdf3;stroke:#356d5d;stroke-width:1.4;stroke-linejoin:round}.tooth-root{fill:#f5f1df;stroke:#356d5d;stroke-width:1.25;stroke-linejoin:round}.tooth-number{position:absolute;bottom:-7px;min-width:24px;padding:1px 4px;border:1px solid #a8c9bd;border-radius:999px;background:#fff;color:#174f40;font-size:8px;font-weight:900;line-height:1.35}.tooth-jaw-upper .tooth-number{top:-7px;bottom:auto}.tooth-arch button:hover,.tooth-arch button:focus-visible{z-index:4;transform:translate(-50%,-50%) scale(1.12);outline:0;filter:brightness(1.03)}.tooth-arch button.selected{z-index:5;transform:translate(-50%,-50%) scale(1.18);filter:drop-shadow(0 0 7px rgba(25,115,91,.42))}.tooth-arch button.selected .tooth-crown,.tooth-arch button.selected .tooth-root{fill:#88d2b9;stroke:#0e6049;stroke-width:2}.tooth-arch button.selected .tooth-number{border-color:#0e6049;background:#0e6049;color:#fff}.multi-procedure-hint{display:block;margin:-4px 2px 8px;color:var(--muted);font-size:8px}.selected-tooth-procedures{display:flex;flex-wrap:wrap;gap:5px;margin:-2px 0 9px}.selected-tooth-procedures[hidden]{display:none}.selected-tooth-procedures span{padding:5px 8px;border-radius:999px;background:#dff2ea;color:#145f4a;font-size:9px;font-weight:900}
+html[data-theme="dark"] .tooth-crown{fill:#f8f3df;stroke:#78b7a3}html[data-theme="dark"] .tooth-root{fill:#dcd4bb;stroke:#78b7a3}html[data-theme="dark"] .tooth-number{border-color:#486d60;background:#10231c;color:#dcece5}
+@media(max-width:620px){.tooth-grid{overflow-x:auto;overflow-y:hidden;border-radius:24px}.tooth-jaw{min-width:760px}.tooth-arch button{width:44px;height:62px}.tooth-icon{width:35px;height:52px}.tooth-number{font-size:10px;min-width:28px}}
+.procedure-counts{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}.procedure-counts[hidden]{display:none}.procedure-counts span{display:inline-flex;align-items:center;gap:7px;padding:6px 9px;border:1px solid #bcd8ce;border-radius:999px;background:#eff8f4;color:#194f40;font-size:10px}.procedure-counts strong{display:grid;place-items:center;min-width:24px;height:24px;border-radius:999px;background:#19735b;color:#fff;font-size:11px}.floating-file-summary{position:fixed;z-index:35;inset-inline-start:12px;bottom:76px;display:flex;align-items:center;gap:7px;min-height:44px;padding:8px 12px;border:0;border-radius:999px;background:#173e33;color:#fff;box-shadow:0 10px 26px rgba(14,54,43,.28);font-size:10px;cursor:pointer}.floating-file-summary>span{font-size:18px}.file-summary-panel{position:fixed;z-index:44;inset-inline-start:12px;bottom:128px;width:min(390px,calc(100vw - 24px));padding:12px;border:1px solid #bdd4cb;border-radius:18px;background:#fff;box-shadow:0 18px 50px rgba(9,45,35,.32)}.file-summary-panel header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}.file-summary-panel header button{width:34px;height:34px;padding:0;border:0;border-radius:50%;background:#edf5f2;color:#173e33;font-size:20px}.file-summary-panel textarea{width:100%;min-height:170px;padding:11px;border:1px solid #cedfd9;border-radius:12px;background:#f8fbfa;color:#173e33;font:600 12px/1.8 inherit;resize:vertical}.file-summary-panel>button{width:100%;margin-top:8px;padding:10px;border:0;border-radius:11px;background:#19735b;color:#fff;font-weight:900}.file-summary-panel[hidden]{display:none}html[data-theme="dark"] .procedure-counts span{border-color:#40574d;background:#172a22;color:#dff1e9}html[data-theme="dark"] .file-summary-panel{border-color:#40574d;background:#14231d;color:#edf5f2}html[data-theme="dark"] .file-summary-panel textarea{border-color:#40574d;background:#0e1915;color:#edf5f2}
+.clinical-note-copy{display:grid;gap:5px;margin:14px 0 8px;text-align:start}.clinical-note-copy>span{font-size:10px;font-weight:950}.clinical-note-copy textarea{width:100%;min-height:150px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#f8fbfa;color:var(--ink);font:600 12px/1.7 BCArabic,system-ui,sans-serif;resize:vertical}.success-card>#copySubmittedClinicalNote{margin-inline-end:7px;background:#315f85}
+
+@media(max-width:640px){
+  .entry-panel textarea{min-height:150px}
+  .procedure-card{grid-template-columns:54px minmax(0,1fr) auto;gap:6px;padding:8px}
+  .card-actions{display:grid;grid-column:auto;justify-content:stretch}
+  .card-actions button{width:34px;min-width:34px;height:34px;padding:0}
+  .tooth-input,.procedure-select{min-height:38px}
+}
+
+/* Clinical odontogram: four permanent-dentition quadrants with a clear midline. */
+.tooth-grid{display:block;padding:12px;border-radius:18px;overflow-x:auto;background:#fff}
+.tooth-grid::after{display:none}
+.odontogram-grid{position:relative;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:112px 112px;min-width:640px;padding:12px 18px}
+.odontogram-grid::before,.odontogram-grid::after{content:"";position:absolute;z-index:0;background:#183e34;border-radius:99px;pointer-events:none}
+.odontogram-grid::before{top:50%;left:10px;right:10px;height:3px;transform:translateY(-50%)}
+.odontogram-grid::after{top:8px;bottom:8px;left:50%;width:3px;transform:translateX(-50%)}
+.tooth-quadrant{position:relative;z-index:1;min-width:0}
+.tooth-quadrant.upper{padding-bottom:15px}
+.tooth-quadrant.lower{padding-top:15px}
+.tooth-row{display:grid;grid-template-columns:repeat(8,minmax(34px,1fr));align-items:end;height:100%;gap:3px}
+.tooth-quadrant.lower .tooth-row{align-items:start}
+.tooth-quadrant.upper-left,.tooth-quadrant.lower-left{padding-inline-end:10px}
+.tooth-quadrant.upper-right,.tooth-quadrant.lower-right{padding-inline-start:10px}
+.tooth-row button{position:relative;display:grid;place-items:center;width:100%;height:82px;padding:0;border:0;border-radius:12px;background:transparent;color:var(--ink);cursor:pointer;transition:transform .16s ease,filter .16s ease,background .16s ease}
+.tooth-row button:hover,.tooth-row button:focus-visible{z-index:3;outline:0;background:#eff8f4;transform:scale(1.08)}
+.tooth-row button.selected{z-index:4;background:#d8f2e8;transform:scale(1.09);box-shadow:inset 0 0 0 2px #19735b,0 5px 16px rgba(20,90,70,.16)}
+.tooth-row .tooth-icon{display:block;width:34px;height:57px;filter:drop-shadow(0 2px 2px rgba(8,62,47,.13))}
+.tooth-row .tooth-molar .tooth-icon{width:42px}
+.tooth-row .tooth-premolar .tooth-icon{width:37px}
+.tooth-row .tooth-canine .tooth-icon{width:35px}
+.tooth-row .tooth-icon svg{display:block;width:100%;height:100%;overflow:visible}
+.tooth-row .tooth-body{fill:url(#toothEnamel);stroke:#2b6757;stroke-width:1.15;stroke-linejoin:round;transition:fill .16s ease,stroke .16s ease}
+.tooth-row .tooth-detail{fill:none;stroke:#79a99a;stroke-width:.75;stroke-linecap:round;opacity:.82}
+.tooth-row button.selected .tooth-body{fill:#bfe9db;stroke:#0e6049;stroke-width:1.75}
+.tooth-row button.selected .tooth-detail{stroke:#237a64;opacity:1}
+.tooth-quadrant.upper .tooth-icon svg{transform:rotate(180deg)}
+.tooth-row .tooth-number{position:absolute;inset-inline:50% auto;min-width:25px;padding:1px 4px;transform:translateX(-50%);border:0;border-radius:6px;background:#fff;color:#183e34;font-size:10px;font-weight:950;line-height:1.3;text-align:center}
+.tooth-quadrant.upper .tooth-number{top:auto;bottom:-3px}
+.tooth-quadrant.lower .tooth-number{top:-3px;bottom:auto}
+.tooth-row button.selected .tooth-number{background:#19735b;color:#fff}
+.quadrant-label{position:absolute;z-index:4;color:#6b7e77;font-size:7px;font-weight:900;letter-spacing:.05em}
+.tooth-quadrant.upper .quadrant-label{top:-8px}
+.tooth-quadrant.lower .quadrant-label{bottom:-8px}
+.tooth-quadrant.upper-left .quadrant-label,.tooth-quadrant.lower-left .quadrant-label{inset-inline-start:0}
+.tooth-quadrant.upper-right .quadrant-label,.tooth-quadrant.lower-right .quadrant-label{inset-inline-end:0}
+html[data-theme="dark"] .tooth-grid{background:#101b17;border-color:#40574d}
+html[data-theme="dark"] .odontogram-grid::before,html[data-theme="dark"] .odontogram-grid::after{background:#7eaa9a}
+html[data-theme="dark"] .tooth-row button:hover,html[data-theme="dark"] .tooth-row button:focus-visible{background:#1c332a}
+html[data-theme="dark"] .tooth-row button.selected{background:#1d4738;box-shadow:inset 0 0 0 2px #78b7a3}
+html[data-theme="dark"] .tooth-row .tooth-number{background:#10231c;color:#dcece5}
+
+/* Visual procedure selector shown after a tooth is selected. */
+.procedure-palette{display:grid;gap:12px;margin:9px 0 10px;padding:12px;border:1px solid #c7dcd4;border-radius:16px;background:#f8fbfa}
+.procedure-palette.is-empty{min-height:76px;place-items:center;border-style:dashed;background:#fbfdfc}
+.procedure-palette-empty{display:flex;align-items:center;justify-content:center;gap:9px;margin:0;color:#64776f;font-size:10px;font-weight:800;text-align:center}
+.procedure-palette-empty span{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#e5f2ed;color:#17624d;font-size:16px}
+.procedure-palette-title{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:1px solid #dce9e4}
+.procedure-palette-title strong{font-size:12px;color:#163e33}.procedure-palette-title span{color:#6a7c75;font-size:9px}
+.procedure-phase{display:grid;gap:8px;padding:10px;border:1px solid #c9def0;border-radius:14px;background:#f4f9fe}.procedure-phase>header{display:flex;align-items:center;gap:7px;padding-bottom:5px;border-bottom:1px solid #d6e6f3}.procedure-phase h3{margin:0;color:#245f8c;font-size:10px}.procedure-phase header small{margin-inline-start:auto;display:grid;place-items:center;min-width:22px;height:22px;border-radius:999px;background:#dcecf9;color:#245f8c;font-size:8px;font-weight:900}
+.procedure-phase-implant{border-color:#f0cfaa;background:#fff8ef}.procedure-phase-implant>header{border-bottom-color:#f5dcc0}.procedure-phase-implant h3{color:#8b5318}.procedure-phase-implant header small{background:#fbe5cc;color:#8b5318}
+.procedure-phase-prosthetic{border-color:#d8c8ee;background:#faf7ff}.procedure-phase-prosthetic>header{border-bottom-color:#e5daf3}.procedure-phase-prosthetic h3{color:#65459a}.procedure-phase-prosthetic header small{background:#e9def7;color:#65459a}
+.procedure-phase-all{border-color:#d7dfdb;background:#f8faf9}.procedure-phase-all>header{border-bottom-color:#e2e8e5}.procedure-phase-all h3{color:#53655e}
+.phase-dot{width:9px;height:9px;border-radius:50%;background:#3b82b5}.procedure-phase-implant .phase-dot{background:#d8842c}.procedure-phase-prosthetic .phase-dot{background:#7957ac}.procedure-phase-all .phase-dot{background:#718078}
+.procedure-visual-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.procedure-phase-priority{padding:10px;border:1px solid #d2c17e;border-radius:14px;background:linear-gradient(135deg,#fff8da,#fffdf4)}.procedure-phase-priority>header{border-bottom-color:#eadfab}.procedure-phase-priority .phase-dot{background:#c89820}.procedure-phase-priority h3{color:#765912}.procedure-phase-priority header small{background:#f6eab4;color:#765912}.priority-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.procedure-visual-shell{position:relative;min-width:0}.procedure-visual-card{position:relative;display:grid;grid-template-columns:50px minmax(0,1fr);align-items:center;gap:9px;width:100%;min-height:70px;padding:8px 31px 8px 9px;border:1px solid #d3e2dc;border-radius:15px;background:#fff;color:#173f34;text-align:start;cursor:pointer;box-shadow:0 3px 10px rgba(13,61,48,.07);transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
+[dir="rtl"] .procedure-visual-card{padding:8px 9px 8px 31px}
+.procedure-phase-initial .procedure-visual-card{border-inline-start:4px solid #3b82b5}.procedure-phase-implant .procedure-visual-card{border-inline-start:4px solid #d8842c}.procedure-phase-prosthetic .procedure-visual-card{border-inline-start:4px solid #7957ac}.procedure-phase-all .procedure-visual-card{border-inline-start:4px solid #718078}.procedure-phase-priority .procedure-visual-card{border-inline-start:4px solid #c89820}
+.procedure-visual-card:hover,.procedure-visual-card:focus-visible{z-index:2;outline:0;transform:translateY(-2px);border-color:#28806a;box-shadow:0 7px 17px rgba(13,61,48,.13)}
+.procedure-visual-card:active{transform:scale(.98)}
+.procedure-visual-card.is-assigned{border-color:#1c8a68;background:#eaf8f2;box-shadow:inset 0 0 0 1px #1c8a68}
+.procedure-visual-icon{display:grid;place-items:center;width:50px;height:50px;border:1px solid rgba(40,111,155,.16);border-radius:15px;background:linear-gradient(145deg,#f8fcff,#dceeff);color:#286f9b;box-shadow:inset 0 1px 0 #fff,0 3px 8px rgba(40,111,155,.12)}
+.procedure-phase-implant .procedure-visual-icon{background:#fff0df;color:#a15c18}.procedure-phase-prosthetic .procedure-visual-icon{background:#f0eaff;color:#6b4aa0}.procedure-phase-all .procedure-visual-icon{background:#edf1ef;color:#53655e}
+.procedure-visual-icon svg{width:35px;height:35px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}.procedure-visual-icon .icon-fill{fill:currentColor;stroke:none}
+.procedure-visual-copy{display:grid;gap:3px;min-width:0}.procedure-visual-copy small{color:#71817b;font-size:7px;font-weight:800}.procedure-visual-name{font-size:10px;font-weight:950;line-height:1.35}.procedure-visual-count{position:absolute;top:4px;inset-inline-end:4px;display:grid;place-items:center;min-width:21px;height:21px;padding:0 4px;border-radius:999px;background:#19735b;color:#fff;font-size:8px}.procedure-favorite-toggle{position:absolute;z-index:3;inset-inline-end:5px;bottom:5px;display:grid;place-items:center;width:25px;height:25px;padding:0;border:0;border-radius:50%;background:#edf2f0;color:#718078;font-size:16px;line-height:1;cursor:pointer}.procedure-favorite-toggle:hover,.procedure-favorite-toggle:focus-visible{outline:2px solid #d3a72b;background:#fff8d9;color:#9a7111}.procedure-favorite-toggle.is-favorite{background:#fff2bd;color:#b07f0e}
+.phase-badge{display:inline-flex;width:max-content;margin-inline-end:5px;padding:3px 6px;border-radius:999px;background:#e7f3ff;color:#245f8c;font-size:7px;font-weight:950}.phase-implant .phase-badge{background:#fff0df;color:#8b5318}.phase-prosthetic .phase-badge{background:#efe8ff;color:#65459a}.phase-all .phase-badge{background:#edf1ef;color:#53655e}
+html[data-theme="dark"] .procedure-palette{border-color:#40574d;background:#14231d}html[data-theme="dark"] .procedure-palette.is-empty{background:#101b17}html[data-theme="dark"] .procedure-phase{background:#142531;border-color:#355367}html[data-theme="dark"] .procedure-phase-implant{background:#2a2117;border-color:#6c4e2d}html[data-theme="dark"] .procedure-phase-prosthetic{background:#241d30;border-color:#594373}html[data-theme="dark"] .procedure-phase-priority{background:#2b281a;border-color:#6f6334}html[data-theme="dark"] .procedure-visual-card{border-color:#40574d;background:#172a22;color:#e5efe9}html[data-theme="dark"] .procedure-visual-card.is-assigned{border-color:#65b99d;background:#1b3c31}
+
+@media(max-width:760px){
+  .odontogram-grid{min-width:590px;grid-template-rows:104px 104px;padding:10px 14px}
+  .tooth-row{grid-template-columns:repeat(8,minmax(31px,1fr));gap:1px}.tooth-row button{height:76px}.tooth-row .tooth-icon{width:31px;height:52px}.tooth-row .tooth-molar .tooth-icon{width:38px}
+  .procedure-visual-grid,.priority-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.procedure-visual-card{min-height:66px;grid-template-columns:46px minmax(0,1fr)}.procedure-visual-icon{width:46px;height:46px}.procedure-visual-icon svg{width:32px;height:32px}
+}
+
+/* The quick-entry station intentionally stays light and high-contrast on every device. */
+html,body.quick-plan-page{color-scheme:light;background:#fff;color:#173b35}
+body.quick-plan-page{font-family:BCArabic,"Segoe UI",Arial,sans-serif;font-size:15px;font-weight:500;background:linear-gradient(180deg,#fff 0,#f7faf9 100%)}
+html[data-theme="dark"],html[data-theme="dark"] body.quick-plan-page{color-scheme:light;background:#fff!important;color:#173b35!important;background-image:none!important}
+html[data-theme="dark"] body.quick-plan-page :where(h1,h2,h3,h4,strong){color:#173b35!important}
+html[data-theme="dark"] body.quick-plan-page :where(p,small,.muted){color:#657b75}
+html[data-theme="dark"] body.quick-plan-page .quick-header,
+html[data-theme="dark"] body.quick-plan-page .identity-panel,
+html[data-theme="dark"] body.quick-plan-page .entry-panel,
+html[data-theme="dark"] body.quick-plan-page .preview-panel,
+html[data-theme="dark"] body.quick-plan-page .state-card{border-color:#d4e3de;background:#fff;color:#173b35}
+html[data-theme="dark"] body.quick-plan-page .draft-notice{border-color:#e5c772;background:#fff8df;color:#6e520d}
+html[data-theme="dark"] body.quick-plan-page input,
+html[data-theme="dark"] body.quick-plan-page select,
+html[data-theme="dark"] body.quick-plan-page textarea{border-color:#bfd4cd;background:#fff;color:#173b35}
+html[data-theme="dark"] body.quick-plan-page :where(input,select,textarea){border-color:#bfd4cd!important;background:#fff!important;color:#173b35!important}
+html[data-theme="dark"] body.quick-plan-page option{background:#fff;color:#173b35}
+html[data-theme="dark"] body.quick-plan-page .tooth-grid{border-color:#cbded7;background:#fff}
+html[data-theme="dark"] body.quick-plan-page .odontogram-grid::before,
+html[data-theme="dark"] body.quick-plan-page .odontogram-grid::after{background:#183e34}
+html[data-theme="dark"] body.quick-plan-page .tooth-body{fill:url(#toothEnamel);stroke:#2b6757}
+html[data-theme="dark"] body.quick-plan-page .tooth-detail{stroke:#79a99a}
+html[data-theme="dark"] body.quick-plan-page .tooth-row .tooth-number{background:#fff;color:#173b35}
+html[data-theme="dark"] body.quick-plan-page .tooth-row button:hover,
+html[data-theme="dark"] body.quick-plan-page .tooth-row button:focus-visible{background:#eff8f4}
+html[data-theme="dark"] body.quick-plan-page .tooth-row button.selected{background:#d8f2e8;box-shadow:inset 0 0 0 2px #19735b,0 5px 16px rgba(20,90,70,.16)}
+html[data-theme="dark"] body.quick-plan-page .procedure-palette{border-color:#c7dcd4;background:#f8fbfa}
+html[data-theme="dark"] body.quick-plan-page .procedure-palette.is-empty{background:#fbfdfc}
+html[data-theme="dark"] body.quick-plan-page .procedure-phase{border-color:#c9def0;background:#f4f9fe}
+html[data-theme="dark"] body.quick-plan-page .procedure-phase-implant{border-color:#f0cfaa;background:#fff8ef}
+html[data-theme="dark"] body.quick-plan-page .procedure-phase-prosthetic{border-color:#d8c8ee;background:#faf7ff}
+html[data-theme="dark"] body.quick-plan-page .procedure-phase-all{border-color:#d7dfdb;background:#f8faf9}
+html[data-theme="dark"] body.quick-plan-page .procedure-phase-priority{border-color:#d2c17e;background:linear-gradient(135deg,#fff8da,#fffdf4)}
+html[data-theme="dark"] body.quick-plan-page .procedure-visual-card{border-color:#d3e2dc;background:#fff;color:#173f34}
+html[data-theme="dark"] body.quick-plan-page .procedure-visual-card.is-assigned{border-color:#1c8a68;background:#eaf8f2}
+html[data-theme="dark"] body.quick-plan-page .sticky-submit{border-color:#bcd2ca;background:rgba(255,255,255,.97)}
+html[data-theme="dark"] body.quick-plan-page .language-button{border-color:#bcd5cc;background:#fff;color:#174f43}
+html[data-theme="dark"] body.quick-plan-page .shortcuts button{border-color:#c9dbd5;background:#f2f8f6;color:#174f43}
+html[data-theme="dark"] body.quick-plan-page .empty-preview{border-color:#bfd5cd;background:#f8fbfa;color:#657b75}
+html[data-theme="dark"] body.quick-plan-page .procedure-favorite-toggle{border:0;background:#edf2f0;color:#718078}
+html[data-theme="dark"] body.quick-plan-page .procedure-favorite-toggle.is-favorite{background:#fff2bd;color:#b07f0e}
+.tooth-picker-head strong,.procedure-palette-title strong,.procedure-phase h3,.field>span,.entry-panel>label{font-weight:950;letter-spacing:0}
+.tooth-row .tooth-number{min-width:28px;font-size:12px;font-weight:950}
+.procedure-visual-name{font-size:11px;font-weight:950}.procedure-visual-copy small{font-size:8px}.procedure-phase h3{font-size:12px}.procedure-palette-title strong{font-size:14px}
+.cost-plan-ready{margin:8px 0;padding:10px 12px;border:1px solid #9dcfbd;border-radius:12px;background:#edf9f4;color:#175b48;font-weight:850}
+.open-cost-plan{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border-radius:12px;background:#176c54;color:#fff;font-weight:950;text-decoration:none;box-shadow:0 6px 16px rgba(23,108,84,.18)}
+.open-cost-plan:hover,.open-cost-plan:focus-visible{background:#0f5a45;outline:3px solid rgba(23,108,84,.2)}
+

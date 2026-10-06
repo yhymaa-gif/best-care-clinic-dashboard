@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.06-quick-treatment-plan",
-  "publishedAt": "2026-10-06",
+  "version": "2026.10.07-quick-plan-cost-link",
+  "publishedAt": "2026-10-07",
   "summary": {
-    "ar": "خطة علاجية سريعة للممرضة بمطابقة الإجراءات الحالية، ومراجعة الطبيب، وربط الخطة بملف المريض دون تكرار قائمة الإجراءات.",
-    "en": "Quick nurse plans now use the existing procedure catalog, require dentist review, and appear in the linked patient record."
+    "ar": "خطة سريعة بمخطط أسنان احترافي وإجراءات بصرية، تنقل بيانات المريض تلقائيًا وتُنشئ مسودة الخطة ذات التكلفة مع ملخص تمريضي قابل للنسخ.",
+    "en": "Quick plans now include a professional tooth chart, visual procedures, automatic patient details, a costed draft, and a nursing summary."
   }
 }

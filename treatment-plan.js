@@ -91,7 +91,7 @@
     };
     const defaultTreatmentPhases=()=>TREATMENT_PHASES.map((phase,index)=>blankPhase(index,phase.kind));
     const defaultState=planNo=>({
-      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:''},
+      meta:{planNo:planNo||nextPlanNo(),issuedAt:new Date().toISOString(),validityDays:15,copyType:'patient',revision:1,status:'draft',relation:'standalone',parentPlanNo:'',doctorApprovedAt:0,doctorApprovedBy:'',administrationPreparedAt:0,administrationPreparedBy:'',submittedAt:0,patientAcceptedAt:0,patientAcceptedBy:'',approvedAt:0,approvedBy:'',consentMethod:'',consentEvidenceId:'',consentVerifiedAt:0,consentVerifiedBy:'',consentVerificationNote:'',consentPlanRevision:0,consentVersion:0,lastPrintedAt:0,rejectedAt:0,rejectedBy:'',rejectionReason:'',cancelledAt:0,cancelledBy:'',cancellationReason:'',toothNumberingSystem:'fdi'},
       clinic:{nameAr:'عيادات أفضل عناية الاستشارية للأسنان',nameEn:'Best Care Dental Clinics',city:'أبها',address:'',phone:''},
       patient:{fullName:source.name||'',fileNo:source.file||'',nationalId:source.nationalId||'',nationality:'saudi',age:'',mobile:source.phone||''},
       doctor:{name:'',scfhsNo:'',specialty:'طب وإصلاح الأسنان',explainedBy:''},
@@ -462,7 +462,7 @@
       $('visitDate').value=state.meta.issuedAt?new Date(new Date(state.meta.issuedAt)-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16):nowLocal();
       state.clinical.diagnosis=DEFAULT_DIAGNOSIS;
       $('radiographs').value=Array.isArray(state.clinical.radiographs)?state.clinical.radiographs.join('، '):(state.clinical.radiographs||'');
-      $('vatMode').value=state.financial.vatMode==='auto'?'borne_by_state':(state.financial.vatMode||'borne_by_state');
+      $('vatMode').value=state.financial.vatMode==='auto'?'borne_by_state':(state.financial.vatMode||'unconfirmed');
       $('vatConfirmed').checked=Boolean(state.financial.vatConfirmed);
       $('vatControl').classList.toggle('confirmed',$('vatConfirmed').checked);
       $('photoConsent').checked=Boolean(state.consent.photoConsent);
@@ -539,7 +539,7 @@
       let before=0,after=0,hasBefore=false,hasAfter=false;
       state.phases.forEach(phase=>phase.items.forEach(item=>{const t=itemTotals(item);if(t.before!==null){before+=t.before;hasBefore=true}if(t.after!==null){after+=t.after;hasAfter=true}}));
       const known=hasBefore||hasAfter;
-      const mode=state.financial.vatMode==='auto'?'borne_by_state':state.financial.vatMode;
+      const mode=state.financial.vatMode==='auto'?'borne_by_state':(state.financial.vatMode||'unconfirmed');
       const vat=known&&mode==='standard_15'?Math.round(after*.15):known?0:null;
       return{known,before:hasBefore?before:null,after:hasAfter?after:null,saving:hasBefore&&hasAfter?before-after:null,vat,net:hasAfter&&vat!==null?after+vat:null,mode};
     }
@@ -550,7 +550,7 @@
       $('grandAfter').textContent=formatMoney(total.after);
       $('vatAmount').textContent=formatMoney(total.vat);
       $('netPayable').textContent=formatMoney(total.net);
-      $('vatLabel').textContent=total.mode==='standard_15'?tr('ضريبة القيمة المضافة 15%','VAT 15%'):total.mode==='exempt'?tr('ضريبة القيمة المضافة: معفى','VAT: exempt'):tr('ضريبة القيمة المضافة: تتحمّلها الدولة عن المواطن','VAT: covered by the state for eligible citizens');
+      $('vatLabel').textContent=total.mode==='standard_15'?tr('ضريبة القيمة المضافة 15%','VAT 15%'):total.mode==='exempt'?tr('ضريبة القيمة المضافة: معفى','VAT: exempt'):total.mode==='borne_by_state'?tr('ضريبة القيمة المضافة: تتحمّلها الدولة عن المواطن','VAT: covered by the state for eligible citizens'):tr('معالجة الضريبة: لم يتم تحديدها بعد','VAT treatment: not yet confirmed');
     }
     function phaseTotals(phase){
       let before=0,after=0,hasBefore=false,hasAfter=false;
@@ -753,7 +753,7 @@
           method:'PUT',credentials:'include',headers:{'content-type':'application/json'},
           body:JSON.stringify({
             patient:state.patient,status,rejectionReason,
-             planNo:state.meta.planNo,parentPlanNo:state.meta.parentPlanNo||'',relation:state.meta.relation||'standalone',sourcePatientId:patientId,sourceDate:appointmentDate,
+             planNo:state.meta.planNo,parentPlanNo:state.meta.parentPlanNo||'',relation:state.meta.relation||'standalone',sourceType:state.meta.sourceType||'',sourceQuickPlanId:state.meta.sourceQuickPlanId||'',sourcePatientId:patientId,sourceDate:appointmentDate,
              preparedByRole:Number(state.meta.administrationPreparedAt||0)>0&&!Number(state.meta.doctorApprovedAt||0)?'administration':Number(state.meta.doctorApprovedAt||0)>0?'doctor':'',
              administrationPreparedAt:state.meta.administrationPreparedAt||0,
              administrationPreparedBy:state.meta.administrationPreparedBy||'',

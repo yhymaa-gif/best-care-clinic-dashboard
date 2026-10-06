@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const quickPlanTopLink=document.createElement('a');quickPlanTopLink.id='quickPlanTopLink';quickPlanTopLink.className='top-icon-link admin-only';quickPlanTopLink.href='./quick-plan';quickPlanTopLink.title='فتح إدخال الخطة العلاجية السريعة';quickPlanTopLink.innerHTML='<span aria-hidden="true">⚡</span><strong>الخطة السريعة</strong>';$('appointmentEntryTopLink')?.after(quickPlanTopLink);
+const quickPlanChoiceModal=document.createElement('div');quickPlanChoiceModal.id='quickPlanChoiceModal';quickPlanChoiceModal.className='modal';quickPlanChoiceModal.setAttribute('aria-hidden','true');quickPlanChoiceModal.innerHTML='<div class="modal-card quick-plan-choice-card" role="dialog" aria-modal="true" aria-labelledby="quickPlanChoiceTitle"><header><div><h3 id="quickPlanChoiceTitle">الخطط العلاجية</h3><p id="quickPlanChoiceHelp">اختر المسار الأسرع للمريض.</p></div><button type="button" data-close="quickPlanChoiceModal" aria-label="إغلاق">×</button></header><div class="quick-plan-choice-grid"><a id="quickPlanChoiceQuick" class="quick-plan-choice quick" href="./quick-plan"><span aria-hidden="true">⚡</span><span><strong>خطة سريعة</strong><small>إدخال مختصر للممرضة أو التنسيق</small></span></a><a id="quickPlanChoiceRegular" class="quick-plan-choice" href="./treatment-plans.html"><span aria-hidden="true">▤</span><span><strong>خطة علاجية عادية</strong><small>فتح مركز الخطط الكامل</small></span></a></div></div>';document.body.appendChild(quickPlanChoiceModal);
 const THEME_KEY='bestcare_dashboard_theme_v1';
 const ADMIN_LAYOUT_KEY='bestcare_admin_layout_v1';
 const ADMIN_SIDEBAR_COLLAPSED_KEY='bestcare_admin_sidebar_collapsed_v1';
@@ -1895,6 +1895,16 @@ function openLabCasesPage(patient=null){
 }
 function renderFloatingLabButton(){
   const button=$('floatingLabBtn'),count=$('floatingLabCount');if(!button||!count)return;
+  if(VIEW_MODE==='admin'){
+    button.classList.remove('is-urgent','is-ready');button.classList.add('is-plan-launcher');
+    button.querySelector('.floating-lab-symbol').innerHTML='<span aria-hidden="true">⚡</span>';
+    count.hidden=true;
+    const label=lang==='en'?'Open treatment plan options':'فتح خيارات الخطط العلاجية';
+    button.setAttribute('aria-label',label);button.title=label;return;
+  }
+  button.classList.remove('is-plan-launcher');
+  button.querySelector('.floating-lab-symbol').innerHTML='<span class="tooth">🦷</span><span class="brush">🪥</span>';
+  count.hidden=false;
   const terminal=new Set(['delivered_patient','cancelled']);
   const active=labCasesState.cases.filter(item=>item&&item.clinicId===ACTIVE_CLINIC_ID&&!terminal.has(item.status));
   const urgent=active.some(item=>['needs_adjustment','returned_lab'].includes(item.status));
@@ -4146,6 +4156,13 @@ function applyViewMode(){
   $('clinicViewLink').href=viewUrl('clinic');
   $('adminViewLink').href=viewUrl('admin');
   applyAdminLayout(adminLayoutMode);
+  renderFloatingLabButton();
+}
+function openQuickPlanChoice(){
+  const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,lang});
+  $('quickPlanChoiceQuick').href=`./quick-plan?${params.toString()}`;
+  $('quickPlanChoiceRegular').href=`./treatment-plans.html?${new URLSearchParams({lang}).toString()}`;
+  openModal('quickPlanChoiceModal');
 }
 function scrollAdminTarget(id,{open=false}={}){
   const target=$(id);if(!target)return;
@@ -5188,8 +5205,12 @@ function applyLang(){
   setText('#clinicViewLink',lang==='en'?'🩺 Doctor page':'🩺 صفحة الطبيب');
   setText('#adminViewLink',lang==='en'?'🗓️ Administration page':'🗓️ صفحة الإدارة');
   setText('#statisticsTopLink strong',lang==='en'?'Statistics':'الإحصائيات');
-  setText('#quickPlanTopLink strong',lang==='en'?'Quick plan':'الخطة السريعة');
-  $('quickPlanTopLink')?.setAttribute('title',lang==='en'?'Open Quick Treatment Plan entry':'فتح إدخال الخطة العلاجية السريعة');
+  setText('#quickPlanChoiceTitle',lang==='en'?'Treatment plans':'الخطط العلاجية');
+  setText('#quickPlanChoiceHelp',lang==='en'?'Choose the fastest route for this patient.':'اختر المسار الأسرع للمريض.');
+  setText('#quickPlanChoiceQuick strong',lang==='en'?'Quick plan':'خطة سريعة');
+  setText('#quickPlanChoiceQuick small',lang==='en'?'Short entry for nurse or coordination':'إدخال مختصر للممرضة أو التنسيق');
+  setText('#quickPlanChoiceRegular strong',lang==='en'?'Regular plan':'خطة علاجية عادية');
+  setText('#quickPlanChoiceRegular small',lang==='en'?'Open the full treatment-plan center':'فتح مركز الخطط الكامل');
   setText('#adminNotificationsTopLink strong',lang==='en'?'Admin alerts':'تنبيهات الإدارة');
   $('adminNotificationsTopLink')?.setAttribute('title',lang==='en'?'Open alerts requiring administration action':'فتح التنبيهات التي تحتاج تدخل الإدارة');
   setText('[data-modern-action="admin-alerts"] strong',lang==='en'?'Admin alerts':'تنبيهات الإدارة');
@@ -5599,7 +5620,7 @@ $('labCasesBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);openLa
 $('appointmentEntryPageBtn')?.addEventListener('click',()=>{setSettingsMenuOpen(false);openAppointmentEntryPage()});
 $('appointmentEntryTopLink')?.addEventListener('click',event=>{event.preventDefault();openAppointmentEntryPage()});
 $('appointmentRequestsPageBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);location.href='./appointment-requests.html'});
-$('floatingLabBtn').addEventListener('click',()=>openLabCasesPage());
+$('floatingLabBtn').addEventListener('click',()=>VIEW_MODE==='admin'?openQuickPlanChoice():openLabCasesPage());
 $('clinicsBtn').addEventListener('click',openClinicDirectory);
 $('addClinicSlotBtn').addEventListener('click',addClinicSlot);
 $('saveClinicsBtn').addEventListener('click',saveClinicDirectory);

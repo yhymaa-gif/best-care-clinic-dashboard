@@ -9,9 +9,9 @@
   <script src="./theme-boot.js"></script>
   <title>Quick Treatment Plan | Best Care</title>
   <link rel="icon" href="./assets/icons/icon-192.png">
-  <link rel="stylesheet" href="./quick-plan.css?v=20261006-quick-plan">
+  <link rel="stylesheet" href="./quick-plan.css?v=20261007-visual-procedures">
   <link rel="stylesheet" href="./theme.css">
-  <link rel="stylesheet" href="./quick-plan-runtime.css?v=20261006-quick-plan">
+  <link rel="stylesheet" href="./quick-plan-runtime.css?v=20261007-cost-plan-link">
 </head>
 <body class="quick-plan-page">
   <main class="quick-shell">
@@ -55,6 +55,10 @@
           <input id="patientName" name="patientName" autocomplete="off" maxlength="120" placeholder="Optional">
         </label>
         <label class="field">
+          <span data-i18n="patientAge">PATIENT AGE (OPTIONAL)</span>
+          <input id="patientAge" name="patientAge" type="number" inputmode="numeric" min="0" max="120" placeholder="Optional">
+        </label>
+        <label class="field">
           <span data-i18n="dentist">TREATING DENTIST (OPTIONAL)</span>
           <input id="treatingDentist" name="treatingDentist" autocomplete="off" maxlength="120" placeholder="Optional">
         </label>
@@ -69,6 +73,13 @@
       </section>
 
       <section class="entry-panel">
+        <div class="tooth-picker-head"><div><strong data-i18n="toothPicker">SELECT TOOTH</strong><small data-i18n="toothPickerHelp">Tap a tooth, then choose its procedure.</small></div><b id="selectedToothLabel">—</b></div>
+        <div id="toothGrid" class="tooth-grid" aria-label="Tooth chart"></div>
+        <div id="procedurePalette" class="procedure-palette is-empty" aria-live="polite">
+          <p class="procedure-palette-empty">اختر سنًا من المخطط لعرض جميع الإجراءات بصريًا.</p>
+        </div>
+        <small class="multi-procedure-hint" data-i18n="multiProcedureHint">You can add more than one procedure to the selected tooth.</small>
+        <div id="selectedToothProcedures" class="selected-tooth-procedures" hidden></div>
         <label for="quickEntry" data-i18n="quickEntry">QUICK ENTRY *</label>
         <textarea id="quickEntry" rows="7" spellcheck="false" autocomplete="off" placeholder="RCT 11&#10;Post 12&#10;Temp Crown 21&#10;Extraction 22&#10;Crown Removal 23"></textarea>
         <div class="entry-meta">
@@ -83,6 +94,7 @@
           <div><p class="eyebrow" data-i18n="livePreview">LIVE PREVIEW</p><h2 data-i18n="checkMatches">Check every match</h2></div>
           <div class="match-key"><span class="green">● <b data-i18n="matched">Matched</b></span><span class="yellow">● <b data-i18n="confirm">Confirm</b></span><span class="red">● <b data-i18n="unmatched">Not matched</b></span></div>
         </div>
+        <div id="procedureCounts" class="procedure-counts" aria-live="polite"></div>
         <div id="previewList" class="preview-list" aria-live="polite">
           <p class="empty-preview" data-i18n="previewEmpty">Your structured plan will appear here while you type.</p>
         </div>
@@ -95,13 +107,24 @@
       </div>
     </form>
 
+    <button id="fileSummaryBtn" class="floating-file-summary" type="button" aria-expanded="false"><span aria-hidden="true">▤</span><b data-i18n="fileSummaryLabel">PATIENT FILE NOTE</b></button>
+    <aside id="fileSummaryPanel" class="file-summary-panel" hidden aria-label="Patient file note">
+      <header><strong data-i18n="fileSummaryLabel">PATIENT FILE NOTE</strong><button id="closeFileSummary" type="button" aria-label="Close">×</button></header>
+      <textarea id="fileSummaryText" rows="8" readonly></textarea>
+      <button id="copyFileSummary" type="button" data-i18n="copyFileSummary">COPY NOTE</button>
+    </aside>
+
     <section id="successCard" class="state-card success-card" hidden>
       <span class="success-icon">✓</span>
       <h2 data-i18n="submitted">Treatment Plan Submitted</h2>
       <p><span data-i18n="status">Status</span>: <strong>PENDING DOCTOR REVIEW</strong></p>
+      <p id="costPlanReady" class="cost-plan-ready" data-i18n="costPlanReady" hidden>A costed treatment-plan draft was created with the patient details and official catalog prices.</p>
+      <a id="openCostPlan" class="open-cost-plan" href="./treatment-plans.html" data-i18n="openCostPlan" hidden>OPEN COSTED PLAN</a>
+      <label class="clinical-note-copy"><span data-i18n="clinicalRecordText">CLINICAL RECORD SUMMARY</span><textarea id="submittedClinicalNote" rows="8" readonly></textarea></label>
+      <button id="copySubmittedClinicalNote" type="button" data-i18n="copyClinicalRecord">COPY FOR PATIENT RECORD</button>
       <button id="newPlan" type="button" data-i18n="another">ENTER ANOTHER PLAN</button>
     </section>
   </main>
-  <script type="module" src="./quick-plan.js?v=20261006-quick-plan"></script>
+  <script type="module" src="./quick-plan.js?v=20261007-cost-plan-link"></script>
 </body>
 </html>

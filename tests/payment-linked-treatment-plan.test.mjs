@@ -36,8 +36,8 @@ test('doctor payment plans are share-ready only after explicit price and VAT con
   assert.match(dashboard, /paymentPlanVatConfirmedCheck/);
   assert.match(dashboard, /sourceType:'payment_order'/);
   assert.match(dashboard, /sourcePaymentRequestedAt:Number\(requestedAt\)/);
-  assert.match(planApi, /sourceType: plan\?\.meta\?\.sourceType === 'payment_order'/);
-  assert.match(registryApi, /sourceType: body\?\.sourceType === 'payment_order'/);
+  assert.match(planApi, /\['payment_order', 'quick_plan'\]\.includes\(plan\?\.meta\?\.sourceType\)/);
+  assert.match(registryApi, /\['payment_order', 'quick_plan'\]\.includes\(body\?\.sourceType\)/);
 });
 
 test('payment and plan actions use matching icon controls and expose signature sharing', async () => {
