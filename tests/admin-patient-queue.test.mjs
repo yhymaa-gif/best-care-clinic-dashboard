@@ -29,6 +29,8 @@ test('current and due patients sort before upcoming and completed patients',()=>
 test('administration interface renders both queue sections and due-time labels',()=>{
   const dashboard=fs.readFileSync(new URL('../dashboard.js',import.meta.url),'utf8');
   assert.match(dashboard,/في الانتظار والمتابعة/);
+  assert.match(dashboard,/لا يوجد مرضى منجزون حتى الآن/);
+  assert.match(dashboard,/لا يوجد مرضى في الانتظار حاليًا/);
   assert.match(dashboard,/حان موعده الآن/);
   assert.match(dashboard,/admin-table-group-divider/);
   assert.match(dashboard,/adminHubWaitingCount/);
