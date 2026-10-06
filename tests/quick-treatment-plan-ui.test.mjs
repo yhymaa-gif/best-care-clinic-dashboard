@@ -93,14 +93,17 @@ test('treatment-plan center surfaces nurse submissions without altering legacy p
   assert.match(worker,/procedure-catalog-defaults\.js/);
 });
 
-test('administration dashboard exposes a direct bilingual quick-plan action',async()=>{
-  const [html,dashboard]=await Promise.all([read('index.html'),read('dashboard.js')]);
+test('administration replaces today-note action with patient-linked Quick Plan and keeps Lab access',async()=>{
+  const [html,dashboard,quickPlan]=await Promise.all([read('index.html'),read('dashboard.js'),read('quick-plan.js')]);
   assert.doesNotMatch(html,/id="quickPlanChoiceModal"/);
   assert.doesNotMatch(dashboard,/quickPlanChoiceModal|openQuickPlanChoice/);
-  assert.match(dashboard,/function openQuickPlanPage\(\)[\s\S]*location\.href=`\.\/quick-plan\?/);
-  assert.match(dashboard,/VIEW_MODE==='admin'\?openQuickPlanPage\(\):openLabCasesPage\(\)/);
-  assert.match(dashboard,/Quick plan|'الخطة السريعة'/);
+  assert.match(dashboard,/data-quick-plan-id=/);
+  assert.match(dashboard,/function openQuickPlanForPatient\(id\)[\s\S]*new URLSearchParams\(\{clinic:ACTIVE_CLINIC_ID,lang,mrn/);
+  assert.match(dashboard,/quickPlan&&VIEW_MODE==='admin'/);
+  assert.match(dashboard,/VIEW_MODE==='clinic'[\s\S]*data-daily-note-id[\s\S]*data-quick-plan-id/);
+  assert.match(quickPlan,/get\('mrn'\)[\s\S]*await findPatient\(\)/);
   assert.match(dashboard,/\$\('labCasesBtn'\)\.addEventListener[\s\S]*openLabCasesPage/);
+  assert.match(dashboard,/\$\('floatingLabBtn'\)\.addEventListener\('click',\(\)=>openLabCasesPage\(\)\)/);
   assert.doesNotMatch(dashboard,/quickPlanTopLink/);
 });
 
