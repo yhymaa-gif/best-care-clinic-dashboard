@@ -96,11 +96,11 @@ test('treatment-plan center surfaces nurse submissions without altering legacy p
 test('administration dashboard exposes a direct bilingual quick-plan action',async()=>{
   const [html,dashboard]=await Promise.all([read('index.html'),read('dashboard.js')]);
   assert.doesNotMatch(html,/id="quickPlanChoiceModal"/);
-  assert.match(dashboard,/quickPlanChoiceModal\.id='quickPlanChoiceModal'/);
-  assert.match(dashboard,/id="quickPlanChoiceQuick"[\s\S]*href="\.\/quick-plan"/);
-  assert.match(dashboard,/id="quickPlanChoiceRegular"[\s\S]*href="\.\/treatment-plans\.html"/);
-  assert.match(dashboard,/VIEW_MODE==='admin'\?openQuickPlanChoice\(\):openLabCasesPage\(\)/);
-  assert.match(dashboard,/Quick plan/);
+  assert.doesNotMatch(dashboard,/quickPlanChoiceModal|openQuickPlanChoice/);
+  assert.match(dashboard,/function openQuickPlanPage\(\)[\s\S]*location\.href=`\.\/quick-plan\?/);
+  assert.match(dashboard,/VIEW_MODE==='admin'\?openQuickPlanPage\(\):openLabCasesPage\(\)/);
+  assert.match(dashboard,/Quick plan|'الخطة السريعة'/);
+  assert.match(dashboard,/\$\('labCasesBtn'\)\.addEventListener[\s\S]*openLabCasesPage/);
   assert.doesNotMatch(dashboard,/quickPlanTopLink/);
 });
 

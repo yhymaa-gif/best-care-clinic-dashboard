@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.07-quick-plan-cost-link",
+  "version": "2026.10.07-quick-plan-launcher",
   "publishedAt": "2026-10-07",
   "summary": {
-    "ar": "خطة سريعة بمخطط أسنان احترافي وإجراءات بصرية، تنقل بيانات المريض تلقائيًا وتُنشئ مسودة الخطة ذات التكلفة مع ملخص تمريضي قابل للنسخ.",
-    "en": "Quick plans now include a professional tooth chart, visual procedures, automatic patient details, a costed draft, and a nursing summary."
+    "ar": "الخطة السريعة أصبحت مكان أيقونة المعمل في الإدارة وتفتح مباشرة، مع بقاء المعمل متاحًا من قائمة العمليات.",
+    "en": "Quick Plan now replaces the floating Lab icon in Administration and opens directly; Lab remains available from Operations."
   }
 }
