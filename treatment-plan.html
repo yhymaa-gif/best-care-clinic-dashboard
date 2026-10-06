@@ -220,7 +220,7 @@
       body.one-page-print .print-only{display:block!important}
       body.one-page-print .document-header{min-height:16mm;padding-bottom:.5mm;grid-template-columns:25mm 1fr 25mm;gap:2mm}body.one-page-print .doc-code{width:11mm;height:11mm;padding:1mm}body.one-page-print .doc-header-spacer{width:25mm}body.one-page-print .doc-logo{width:25mm;height:25mm;max-width:25mm;max-height:25mm}body.one-page-print .clinic-title strong{font-size:10.2pt}body.one-page-print .clinic-title span{font-size:5.6pt}body.one-page-print .teal-rule{height:1.1mm;margin-bottom:.8mm}body.one-page-print .doc-title{margin:0 0 .6mm;font-size:9.4pt}body.one-page-print .doc-meta{margin:0 0 1mm;font-size:5.7pt;gap:6px}
       body.one-page-print .section{margin-top:1.6mm}body.one-page-print .section-kicker{display:none}body.one-page-print .section-title{margin-bottom:1mm;font-size:8.2pt}body.one-page-print .info-card,body.one-page-print .financial-summary{padding:1.5mm}body.one-page-print .field-grid{gap:.7mm 1.4mm}body.one-page-print label,body.one-page-print .field-label{font-size:6.2pt}body.one-page-print .edit-field{padding:.6mm 1mm;font-size:7.2pt}
-      body.one-page-print #patientSection{grid-template-columns:1.35fr 1fr;gap:1.5mm;margin-top:0}body.one-page-print #patientSection .info-card{padding:1mm 1.4mm;border-radius:1.5mm}body.one-page-print #patientSection .section-title,body.one-page-print #patientSection .section-kicker{display:none}body.one-page-print #patientSection .field-grid{grid-template-columns:1.6fr .7fr 1fr;align-items:end;gap:1mm}body.one-page-print #patientSection .field.wide{grid-column:auto}body.one-page-print #patientSection label{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:1mm;white-space:nowrap}body.one-page-print #patientSection .clinic-general{display:flex;align-items:center;justify-content:center;min-height:7mm;padding:.6mm 1mm;border:0;background:transparent}body.one-page-print #patientSection .clinic-general span,body.one-page-print #patientSection .clinic-general small{display:none}body.one-page-print #patientSection .clinic-general strong{font-size:7pt}
+      body.one-page-print #patientSection{grid-template-columns:1.55fr 1fr;gap:1.5mm;margin-top:0}body.one-page-print #patientSection .info-card{padding:1mm 1.4mm;border-radius:1.5mm}body.one-page-print #patientSection .section-title,body.one-page-print #patientSection .section-kicker{display:none}body.one-page-print #patientSection .field-grid{grid-template-columns:1.45fr .65fr 1fr 1fr;align-items:end;gap:1mm}body.one-page-print #patientSection .field.wide{grid-column:auto}body.one-page-print #patientSection label{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:1mm;white-space:nowrap}body.one-page-print #patientSection .clinic-general{display:flex;align-items:center;justify-content:center;min-height:7mm;padding:.6mm 1mm;border:0;background:transparent}body.one-page-print #patientSection .clinic-general span,body.one-page-print #patientSection .clinic-general small{display:none}body.one-page-print #patientSection .clinic-general strong{font-size:7pt}
       body.one-page-print .fixed-diagnosis{padding:1.3mm;gap:1mm}body.one-page-print .fixed-diagnosis h3{display:none}body.one-page-print .fixed-diagnosis p{font-size:5.9pt;line-height:1.32}body.one-page-print .diagnosis-grid{gap:1.5mm;align-items:start}body.one-page-print .diagnosis-grid textarea.edit-field{min-height:4mm;height:4mm;overflow:hidden;padding:.3mm 1mm}
       body.one-page-print .phase-block{margin-top:1.2mm;border-radius:1.5mm}body.one-page-print .phase-head{padding:.8mm 1.4mm}body.one-page-print .phase-index{width:17px;height:17px;font-size:7pt}body.one-page-print .phase-head input{font-size:7.2pt}body.one-page-print th,body.one-page-print td{padding:1.8px 3px;font-size:6.2pt}body.one-page-print .qty-stepper{display:inline-flex;border:0;background:transparent;padding:0}body.one-page-print .qty-stepper button{display:none}
       body.one-page-print .phase-total{padding:.6mm 1.5mm;font-size:5.9pt}body.one-page-print .money-row{padding:.5mm 0;font-size:6.3pt}body.one-page-print .money-row.net{padding:.7mm;font-size:7.2pt}
@@ -372,6 +372,7 @@
               <div class="field-grid">
                 <label class="field wide">الاسم الكامل<input id="patientName" class="edit-field" type="text" autocomplete="name"></label>
                 <label class="field">رقم الملف<input id="patientFile" class="edit-field" type="text" inputmode="numeric"></label>
+                <label class="field">رقم الهوية<input id="patientNationalId" class="edit-field" type="text" inputmode="numeric" maxlength="10" autocomplete="off"></label>
                 <label class="field wide">رقم الجوال<input id="patientMobile" class="edit-field" type="tel" inputmode="tel" maxlength="16" placeholder="05xxxxxxxx أو 9665xxxxxxxx"></label>
               </div>
             </div>
@@ -544,7 +545,7 @@
     </div>
   </div>
 
-<script src="./treatment-plan-i18n.js?v=20261003-bilingual-plan"></script>
-<script src="./treatment-plan.js?v=20261003-bilingual-plan"></script>
+<script src="./treatment-plan-i18n.js?v=20261006-patient-id-print"></script>
+<script src="./treatment-plan.js?v=20261006-patient-id-print"></script>
 </body>
 </html>

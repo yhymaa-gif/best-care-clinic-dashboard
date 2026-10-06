@@ -9,7 +9,7 @@ test('treatment plan keeps dashboard language and independent sharing language',
     read('treatment-plan.html'), read('treatment-plan.js'), read('treatment-plan-i18n.js')
   ]);
   assert.match(html, /id="documentLanguageSelect"/);
-  assert.match(html, /treatment-plan-i18n\.js\?v=20261003-bilingual-plan/);
+  assert.match(html, /treatment-plan-i18n\.js\?v=20261006-patient-id-print/);
   assert.match(script, /params\.get\('planLang'\)/);
   assert.match(script, /url\.searchParams\.set\('planLang',uiLang\)/);
   assert.match(script, /consentUrl\.searchParams\.set\('planLang',uiLang\)/);
@@ -45,10 +45,10 @@ test('dashboard login shell and floating controls follow English mode before aut
 
 test('bilingual treatment assets are refreshed in the PWA shell', async () => {
   const [worker, release] = await Promise.all([read('service-worker.js'), read('release.json')]);
-  assert.match(worker, /bestcare-dashboard-v1-20261006-admin-queue-visible/);
+  assert.match(worker, /bestcare-dashboard-v1-20261006-admin-queue-patient-id/);
   assert.match(worker, /'\.\/treatment-plan-i18n\.js'/);
   const metadata = JSON.parse(release);
-  assert.equal(metadata.version, '2026.10.06-admin-queue-visible');
+  assert.equal(metadata.version, '2026.10.06-admin-queue-patient-id');
   assert.ok(metadata.summary.ar.length > 10);
   assert.ok(metadata.summary.en.length > 10);
 });

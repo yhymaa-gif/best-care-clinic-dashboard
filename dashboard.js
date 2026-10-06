@@ -139,8 +139,8 @@ function adminHubCadence(){
   if(cadence.workHours)return syncDisplayVisible()?10000:60000;
   return document.hidden?30*60*1000:10*60*1000;
 }
-const DASHBOARD_BUILD='7.72-admin-queue-visible';
-const RELEASE_SUMMARY_FALLBACK={ar:'تنظيم شاشة الإدارة إلى مرضى في الانتظار ومرضى تم إنجازهم، مع تقديم من حان موعده تلقائيًا.',en:'Administration lists are grouped into waiting and completed patients, with appointments due now automatically moved to the top.'};
+const DASHBOARD_BUILD='7.73-admin-queue-patient-id';
+const RELEASE_SUMMARY_FALLBACK={ar:'إظهار قسمي الانتظار والمنجز دائمًا، وإضافة رقم هوية المريض إلى النسخة المطبوعة من الخطة العلاجية.',en:'Waiting and completed sections now remain visible, and the patient national ID is included in the printed treatment plan.'};
 let pendingReleaseSummary={...RELEASE_SUMMARY_FALLBACK};
 const DEFAULT_GOOGLE_REVIEW_URL='https://bestcaredentalclinicsdash.netlify.app/review';
 const CLIENT_ID=(crypto.randomUUID?.()||('client-'+Date.now()+'-'+Math.random().toString(36).slice(2)));

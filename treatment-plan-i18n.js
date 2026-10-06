@@ -26,7 +26,7 @@
     ['مسودة','DRAFT'],['مسودة\nللاطلاع','DRAFT\nFOR REVIEW'],['عيادات أفضل عناية الاستشارية للأسنان','Best Care Dental Clinics'],
     ['خطة علاجية وعرض تكلفة تقديري — وإقرار موافقة مستنيرة','Treatment Plan, Cost Estimate, and Informed Consent'],['رقم الخطة:','Plan number:'],
     ['الإصدار:','Revision:'],['تاريخ الإصدار:','Issue date:'],['تاريخ ووقت الطباعة:','Printed at:'],['نسخة المريض','Patient copy'],
-    ['الاسم الكامل','Full name'],['رقم الملف','File number'],['رقم الجوال','Mobile number'],['بيانات العيادة والزيارة','Clinic and visit details'],
+    ['الاسم الكامل','Full name'],['رقم الملف','File number'],['رقم الهوية','National ID'],['رقم الجوال','Mobile number'],['بيانات العيادة والزيارة','Clinic and visit details'],
     ['التاريخ والوقت','Date and time'],['اسم المنشأة','Facility name'],['التشخيص والخطة العلاجية','Diagnosis and treatment plan'],
     ['توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.','The procedures listed in this plan describe the care required to achieve a stable functional and aesthetic result, including the necessary restorative, prosthetic, and conservative treatment for the patient’s condition.'],
     ['الفحوصات والصور الشعاعية','Examinations and imaging'],['الإجراءات التشخيصية','Diagnostic procedures'],
