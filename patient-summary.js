@@ -63,7 +63,7 @@ function render(profile,context={}){
   const day=value=>Number.isFinite(dateNumber(value))?new Date(`${value}T12:00:00+03:00`).toLocaleDateString(en?'en-GB':'ar-SA',{year:'numeric',month:'short',day:'numeric',calendar:'gregory'}):'—';
   const button=(attribute,label)=>`<button type="button" ${attribute}="${id}">${escape(label)}</button>`;
   const empty=label=>`<p class="patient-summary-muted">${escape(label)}</p>`;
-  const plans=profile.plans||[],labs=profile.labs||[],rx=profile.prescriptions||[],details=new Map((profile.planDetails||[]).map(item=>[item.canonical,item]));
+  const plans=profile.plans||[],quickPlans=profile.quickPlans||[],labs=profile.labs||[],rx=profile.prescriptions||[],details=new Map((profile.planDetails||[]).map(item=>[item.canonical,item]));
   const list=items=>`<ul>${items.join('')}</ul>`;
   const line=(title,value)=>`<li><span>${escape(title)}</span><strong>${escape(value)}</strong></li>`;
   const allTab=(tab,label)=>`<button type="button" data-summary-profile="${id}" data-summary-tab="${tab}">${escape(label)}</button>`;
@@ -73,11 +73,15 @@ function render(profile,context={}){
   return `<div class="patient-summary-head"><div><strong>${escape(profile.patient?.name||context.patientName||'')}</strong><small>${escape(t('ملخص السجلات المرتبطة بالمريض','Summary of linked patient records'))}</small></div><div class="patient-summary-actions">${button('data-summary-refresh',t('↻ تحديث','↻ Refresh'))}${button('data-summary-toggle',t('إغلاق','Close'))}</div></div>
     <div class="patient-summary-metrics"><div><small>${t('آخر زيارة سابقة','Previous visit')}</small><strong>${escape(lastVisit)}</strong></div><div><small>${t('زيارات مكتملة','Completed visits')}</small><strong>${fmt(model.completed.length)}</strong></div><div><small>${t('حشوات مسجلة*','Recorded fillings*')}</small><strong>${model.totalUnits?fmt(model.fillings):'—'}</strong></div><div><small>${t('وحدات إجراءات مسجلة*','Recorded procedure units*')}</small><strong>${model.totalUnits?fmt(model.totalUnits):'—'}</strong></div></div>
     <div class="patient-summary-grid"><section><h4>${t('الإجراءات والزيارات','Procedures & visits')}</h4>${procedureLines.length?list(procedureLines.slice(0,6)):empty(t('لا توجد أعداد إجراءات موثقة','No documented procedure quantities'))}${procedureLines.length>6?empty(t('بقية الإجراءات في الملف الكامل','More procedures in the full record')):''}${completedLines.length?list(completedLines):''}${allTab('appointments',t('كل الزيارات','All visits'))}</section>
-    <section><h4>${t('الخطط العلاجية','Treatment plans')} <small>${fmt(plans.length)}</small></h4>${plans.length?list(plans.slice(0,4).map(plan=>{
+    <section><h4>${t('الخطط العلاجية','Treatment plans')} <small>${fmt(plans.length+quickPlans.length)}</small></h4>${quickPlans.length?list(quickPlans.slice(0,3).map(plan=>{
+      const status={pending_review:t('بانتظار مراجعة الطبيب','Pending doctor review'),approved:t('معتمدة','Approved'),completed:t('مكتملة','Completed')}[plan.status]||plan.status||'—';
+      const items=(plan.items||[]).slice(0,4).map(item=>`#${item.toothNumber} · ${en?(item.officialNameEn||item.officialName):(item.officialName||item.officialNameEn)}`).join(t('، ', ', '));
+      return`<li class="patient-summary-plan patient-summary-quick-plan"><strong>${t('خطة سريعة','Quick plan')}</strong><span>${escape(status)}</span><small>${escape(plan.submittedBy||'')} · ${day(riyadhDay(Number(plan.createdAt)||context.now||Date.now()))}</small><p>${escape(items||t('لا توجد بنود','No items'))}${plan.items?.length>4?' …':''}</p></li>`;
+    })):''}${plans.length?list(plans.slice(0,4).map(plan=>{
       const detail=details.get(plan.canonical);
       const items=(detail?.items||[]).slice(0,4).map(item=>`${item.name}${item.quantity?` ×${fmt(item.quantity)}`:''}`).join(t('، ', ', '));
       return`<li class="patient-summary-plan"><strong>${escape(plan.planNo||t('خطة علاجية','Treatment plan'))}</strong><span>${escape(context.planStatus?.(plan.status)||plan.status||'—')}</span>${plan.relation==='addendum'?`<small>${t('خطة إلحاقية','Addendum')}</small>`:''}<p>${escape(items||t(detail?.detailsAvailable?'لا توجد بنود في هذه الخطة':'تفاصيل البنود غير متاحة في الملخص',detail?.detailsAvailable?'No items in this plan':'Item details unavailable in this summary'))}${detail?.items?.length>4?' …':''}</p></li>`;
-    })):empty(t('لا توجد خطط مرتبطة','No linked treatment plans'))}${allTab('plans',t('عرض الخطط','View plans'))}</section>
+    })):quickPlans.length?'':empty(t('لا توجد خطط مرتبطة','No linked treatment plans'))}${allTab('plans',t('عرض الخطط','View plans'))}<a class="patient-summary-quick-link" href="quick-plan-review.html">${t('مراجعة الخطط السريعة ↗','Review quick plans ↗')}</a></section>
     <section><h4>${t('حالات المعمل','Lab cases')} <small>${fmt(labs.length)}</small></h4>${labs.length?list(labs.slice(0,4).map(lab=>{
       const labName=lab.labName==='other'?lab.customLabName:lab.labName;
       const sent=Number(lab.sentAt),stop=['received_clinic','delivered_coordination','delivered_patient'].includes(lab.status);

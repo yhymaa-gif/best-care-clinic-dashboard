@@ -3,9 +3,32 @@ import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './l
 
 const headers = apiHeaders('GET,PUT,PATCH,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
-const store = getStore({ name: 'clinic-treatment-catalog', consistency: 'strong' });
+const store = () => getStore({ name: 'clinic-treatment-catalog', consistency: 'strong' });
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const cleanText = (value, max = 120) => String(value ?? '').trim().slice(0, max);
+const QUICK_ALIASES = {
+  'root-canal': ['RCT', 'Root Canal', 'Endo'],
+  'place-post': ['Post', 'Place Post'],
+  temporary: ['Temporary', 'Temp', 'Temp Crown'],
+  'implant-temporary': ['Temp Crown'],
+  extraction: ['Extraction', 'EXT', 'Extract'],
+  'remove-crown': ['Crown Removal', 'CR', 'Remove Crown']
+};
+const ENGLISH_NAMES = {
+  examination: 'Examination', 'cosmetic-filling': 'Cosmetic filling', 'post-rct-filling': 'Post-root-canal filling',
+  'root-canal': 'Root canal treatment', 'root-canal-retreatment': 'Root canal retreatment',
+  'cleaning-standard': 'Standard dental cleaning', 'cleaning-gbt': 'GBT dental cleaning',
+  'periodontal-treatment': 'Periodontal treatment and tissue preparation', 'smile-analysis': 'Smile analysis',
+  extraction: 'Tooth extraction', 'bone-graft': 'Bone graft', 'sinus-lift': 'Sinus lift', 'cbct-scan': 'CBCT scan',
+  'implant-surgery': 'Dental implant — surgical stage', 'implant-uncovering': 'Implant uncovering',
+  'healing-abutment': 'Healing abutment placement', 'remove-post': 'Post removal', 'place-post': 'Post placement',
+  'remove-crown': 'Crown removal', 'recement-crown': 'Crown recementation', 'ceramic-crown': 'Ceramic crown',
+  'ceramic-veneer': 'Ceramic veneer', 'implant-impression': 'Implant impression or digital scan',
+  'implant-temporary': 'Temporary implant restoration', 'implant-prosthetic-abutment': 'Implant prosthetic abutment',
+  'implant-crown': 'Final implant restoration', temporary: 'Temporary restoration',
+  'smile-design': 'Smile design', 'whitening-trays': 'Whitening trays', other: 'Other procedure'
+};
+const cleanAliases = value => [...new Set((Array.isArray(value) ? value : []).map(alias => cleanText(alias, 60)).filter(Boolean))].slice(0, 20);
 const inferCategory = item => {
   const code = String(item?.id || '').toLowerCase();
   const name = String(item?.name || '');
@@ -46,7 +69,8 @@ const DEFAULT_ITEMS = [
   ['smile-design', 'تصميم ابتسامة', 'initial'],
   ['whitening-trays', 'قوالب تبييض', 'prosthetic'],
   ['other', 'إجراء آخر', 'all']
-].map(([id, name, category]) => ({ id, name, category, beforePrice: '', afterPrice: '' }));
+].map(([id, name, category]) => ({ id, name, nameEn: ENGLISH_NAMES[id] || '', category, status: 'active', beforePrice: '', afterPrice: '', aliases: QUICK_ALIASES[id] || [] }));
+export const DEFAULT_CATALOG_ITEMS = DEFAULT_ITEMS;
 
 const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map((item, index) => {
   const id = cleanText(item?.id, 50).toLowerCase().replace(/[^a-z0-9_-]/g, '') || `custom-${index + 1}`;
@@ -58,9 +82,12 @@ const cleanItems = items => (Array.isArray(items) ? items : []).slice(0, 60).map
   return {
     id,
     name: cleanText(item?.name, 120),
+    nameEn: cleanText(item?.nameEn ?? ENGLISH_NAMES[id] ?? '', 120),
+    status: item?.status === 'inactive' ? 'inactive' : 'active',
     category: ['initial', 'implant', 'prosthetic', 'all'].includes(item?.category) ? item.category : inferCategory({ id, name: item?.name }),
     beforePrice,
-    afterPrice
+    afterPrice,
+    aliases: cleanAliases(item?.aliases ?? QUICK_ALIASES[id] ?? [])
   };
 }).filter(item => item.name);
 const cleanDoctorKey = value => cleanText(value, 100).toLocaleLowerCase('ar').replace(/\s+/g, ' ') || 'clinic-default';
@@ -97,7 +124,7 @@ export default async request => {
   const key = `catalog/${clinicId}`;
 
   if (request.method === 'GET') {
-    const record = await store.get(key, { type: 'json', consistency: 'strong' });
+    const record = await store().get(key, { type: 'json', consistency: 'strong' });
     const items = record?.items?.length ? cleanItems(record.items) : DEFAULT_ITEMS;
     const doctorKey = cleanDoctorKey(url.searchParams.get('doctor'));
     const validIds = new Set(items.map(item => item.id));
@@ -115,10 +142,16 @@ export default async request => {
     if (user.role !== 'admin') return reply({ error: 'Admin access required' }, 403);
     let body;
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
-    const items = cleanItems(body?.items);
+    const current = await store().get(key, { type: 'json', consistency: 'strong' });
+    const currentItems = new Map((current?.items?.length ? cleanItems(current.items) : DEFAULT_ITEMS).map(item => [item.id, item]));
+    const items = cleanItems((Array.isArray(body?.items) ? body.items : []).map(item => ({
+      ...item,
+      aliases: Array.isArray(item?.aliases) ? item.aliases : currentItems.get(String(item?.id || '').toLowerCase())?.aliases || [],
+      nameEn: item?.nameEn ?? currentItems.get(String(item?.id || '').toLowerCase())?.nameEn ?? '',
+      status: item?.status ?? currentItems.get(String(item?.id || '').toLowerCase())?.status ?? 'active'
+    })));
     if (!items.length) return reply({ error: 'At least one procedure is required' }, 400);
     if (new Set(items.map(item => item.id)).size !== items.length) return reply({ error: 'Duplicate procedure id' }, 400);
-    const current = await store.get(key, { type: 'json', consistency: 'strong' });
     const validIds = new Set(items.map(item => item.id));
     const record = {
       clinicId,
@@ -127,13 +160,13 @@ export default async request => {
       updatedAt: Date.now(),
       revision: Number(current?.revision || 0) + 1
     };
-    await store.setJSON(key, record);
+    await store().setJSON(key, record);
     return reply({ ok: true, ...record });
   }
   if (request.method === 'PATCH') {
     let body;
     try { body = await request.json(); } catch { return reply({ error: 'Invalid JSON' }, 400); }
-    const current = await store.get(key, { type: 'json', consistency: 'strong' });
+    const current = await store().get(key, { type: 'json', consistency: 'strong' });
     const items = current?.items?.length ? cleanItems(current.items) : DEFAULT_ITEMS;
     const validIds = new Set(items.map(item => item.id));
     const profiles = cleanProfiles(current?.profiles, validIds);
@@ -165,7 +198,7 @@ export default async request => {
       updatedAt: Date.now(),
       revision: Number(current?.revision || 0) + 1
     };
-    await store.setJSON(key, record);
+    await store().setJSON(key, record);
     return reply({ ok: true, clinicId, doctorKey, profile: profiles[doctorKey], updatedAt: record.updatedAt, revision: record.revision });
   }
   return reply({ error: 'Method not allowed' }, 405);
