@@ -3,8 +3,9 @@ import { createHash } from 'node:crypto';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { getPatientDirectory } from './lib/patient-directory.mjs';
 import { normalizePatientFile } from './lib/patient-identity.mjs';
+import { ensureQuickPlanCostDraft } from './lib/quick-plan-cost-bridge.mjs';
 import { normalizeToothNumber, countQuickEntries, generateTreatmentPlanText, generateClinicalNote, generateWhatsAppText, DRAFT_NOTICE } from '../../quick-plan-core.js';
-import { DEFAULT_CATALOG_ITEMS } from './treatment-catalog.mjs';
+import { DEFAULT_CATALOG_ITEMS, normalizeCatalogItems } from './treatment-catalog.mjs';
 
 const headers = apiHeaders('GET,POST,PATCH,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -38,7 +39,7 @@ async function verifyTreatingDentist(user, clinicId) {
 
 async function loadCatalog(clinicId) {
   const record = await catalogStore().get(`catalog/${clinicId}`, { type: 'json', consistency: 'strong' });
-  return Array.isArray(record?.items) && record.items.length ? record.items : DEFAULT_CATALOG_ITEMS;
+  return Array.isArray(record?.items) && record.items.length ? normalizeCatalogItems(record.items) : DEFAULT_CATALOG_ITEMS;
 }
 
 function validateItems(source, catalog, numberingSystem) {
@@ -71,6 +72,23 @@ async function resolvePatient(patientMrn, clinicId) {
   return scoped ? { canonical, patient } : null;
 }
 
+async function linkCostedTreatmentPlan({ blobStore, key, quickPlan, catalog, patientRecord, user }) {
+  const costPlan = await ensureQuickPlanCostDraft({ quickPlan, catalog, patientRecord, actor: actorName(user) });
+  if (quickPlan.costPlan?.planNo === costPlan.planNo && quickPlan.costPlan?.registryCanonical) return quickPlan;
+  const snapshot = await blobStore.getWithMetadata(key, { type: 'json', consistency: 'strong' });
+  const current = snapshot?.data;
+  if (!current || !snapshot.etag) throw new Error('Quick-plan revision token unavailable');
+  if (current.costPlan?.planNo === costPlan.planNo && current.costPlan?.registryCanonical) return current;
+  const now = Date.now();
+  const linked = {
+    ...current, costPlan, revision: Number(current.revision || 0) + 1, updatedAt: now,
+    audit: [...(current.audit || []), { action: 'cost_plan_linked', at: now, by: actorName(user), userId: actorId(user), planNo: costPlan.planNo }]
+  };
+  const write = await blobStore.setJSON(key, linked, { onlyIfMatch: snapshot.etag });
+  if (!write.modified) throw new Error('Concurrent quick-plan linkage conflict');
+  return linked;
+}
+
 const clinicianData = body => Object.fromEntries(fields.map(key => [key, clean(body?.[key], 1000)]));
 const outputLimits = { treatmentPlanText: 10000, clinicalNote: 10000, whatsappText: 4000 };
 const cleanOutputOverrides = value => Object.fromEntries(Object.entries(outputLimits)
@@ -86,7 +104,7 @@ const sourceDataChanged = (existing, nextItems, nextClinicianData) => JSON.strin
 });
 const generated = plan => ({
   treatmentPlanText: withDraftNotice(plan.outputOverrides?.treatmentPlanText || generateTreatmentPlanText(plan.items, plan.numberingSystem)),
-  clinicalNote: withDraftNotice(plan.outputOverrides?.clinicalNote || generateClinicalNote(plan.items, plan.clinicianData, plan.numberingSystem)),
+  clinicalNote: withDraftNotice(plan.outputOverrides?.clinicalNote || generateClinicalNote(plan.items, plan.clinicianData, plan.numberingSystem, { name: plan.patientName, age: plan.patientAge, mrn: plan.patientMrn })),
   whatsappText: withDraftNotice(plan.outputOverrides?.whatsappText || generateWhatsAppText(plan.items, plan.numberingSystem))
 });
 
@@ -152,13 +170,20 @@ export default async request => {
     const id = sha(`${clinicId}|${actorId(user)}|${idempotencyKey}`);
     const key = planKey(clinicId, id);
     const current = await blobStore.get(key, { type: 'json', consistency: 'strong' });
-    if (current) return current.submissionFingerprint === fingerprint
-      ? reply({ ok: true, plan: current, duplicate: true })
-      : reply({ error: 'Idempotency key already used for a different submission' }, 409);
+    if (current) {
+      if (current.submissionFingerprint !== fingerprint) return reply({ error: 'Idempotency key already used for a different submission' }, 409);
+      try {
+        const linked = await linkCostedTreatmentPlan({ blobStore, key, quickPlan: current, catalog, patientRecord: patientRef.patient, user });
+        return reply({ ok: true, plan: linked, costPlan: linked.costPlan, duplicate: true });
+      } catch (error) {
+        return reply({ error: 'Quick plan saved; costed treatment plan linkage is pending. Retry submission.', retryable: true, planId: current.id, detail: clean(error?.message, 200) }, 503);
+      }
+    }
     const now = Date.now();
     const plan = {
       id, clinicId, patientMrn, patientId: patientRef.canonical,
       patientName: clean(patientRef.patient.authoritativeFullName || patientRef.patient.fullName || body.patientName, 120),
+      patientAge: Math.max(0, Math.min(120, Math.round(Number(body.patientAge) || 0))),
       treatingDentist: clean(body.treatingDentist, 120),
       numberingSystem, originalInput, originalParsedItems: structuredClone(validated.items),
       items: validated.items, clinicianData: {}, status: 'pending_review',
@@ -169,11 +194,22 @@ export default async request => {
     };
     Object.assign(plan, generated(plan));
     const write = await blobStore.setJSON(key, plan, { onlyIfNew: true });
-    if (write.modified) return reply({ ok: true, plan }, 201);
+    if (write.modified) {
+      try {
+        const linked = await linkCostedTreatmentPlan({ blobStore, key, quickPlan: plan, catalog, patientRecord: patientRef.patient, user });
+        return reply({ ok: true, plan: linked, costPlan: linked.costPlan }, 201);
+      } catch (error) {
+        return reply({ error: 'Quick plan saved; costed treatment plan linkage is pending. Retry submission.', retryable: true, planId: plan.id, detail: clean(error?.message, 200) }, 503);
+      }
+    }
     const winner = await blobStore.get(key, { type: 'json', consistency: 'strong' });
-    return winner?.submissionFingerprint === fingerprint
-      ? reply({ ok: true, plan: winner, duplicate: true })
-      : reply({ error: 'Concurrent submission conflict' }, 409);
+    if (winner?.submissionFingerprint !== fingerprint) return reply({ error: 'Concurrent submission conflict' }, 409);
+    try {
+      const linked = await linkCostedTreatmentPlan({ blobStore, key, quickPlan: winner, catalog, patientRecord: patientRef.patient, user });
+      return reply({ ok: true, plan: linked, costPlan: linked.costPlan, duplicate: true });
+    } catch (error) {
+      return reply({ error: 'Quick plan saved; costed treatment plan linkage is pending. Retry submission.', retryable: true, planId: winner.id, detail: clean(error?.message, 200) }, 503);
+    }
   }
 
   const id = clean(body.id, 64);

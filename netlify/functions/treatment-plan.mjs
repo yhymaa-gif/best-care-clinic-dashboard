@@ -21,7 +21,15 @@ const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/$
 const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
 const versionedPlanKey = (clinicId, date, patientId, planNo) => `clinics/${clinicId}/versions/${hash(`${date}|${patientId}|${planNo}`)}`;
 
-const cleanItem = item => ({
+const cleanTooth = (value, numberingSystem) => {
+  const raw = String(value ?? '').replace(/^#/, '').trim();
+  if (numberingSystem === 'universal') {
+    const number = Number(raw);
+    return Number.isInteger(number) && number >= 1 && number <= 32 ? String(number).padStart(2, '0') : '';
+  }
+  return /^[1-4][1-8]$/.test(raw) ? raw : '';
+};
+const cleanItem = (item, numberingSystem) => ({
   code: cleanText(item?.code, 50),
   service: cleanText(item?.service, 160),
   priceSource: item?.priceSource === 'manual' ? 'manual' : item?.priceSource === 'catalog' ? 'catalog' : '',
@@ -29,7 +37,7 @@ const cleanItem = item => ({
   afterPriceSource: item?.afterPriceSource === 'manual' ? 'manual' : item?.afterPriceSource === 'catalog' ? 'catalog' : '',
   variant: ['with-prep', 'without-prep'].includes(item?.variant) ? item.variant : '',
   customService: cleanText(item?.customService, 160),
-  teeth: (Array.isArray(item?.teeth) ? item.teeth : []).map(String).filter(value => /^[1-4][1-8]$/.test(value)).slice(0, 32),
+  teeth: (Array.isArray(item?.teeth) ? item.teeth : []).map(value => cleanTooth(value, numberingSystem)).filter(Boolean).slice(0, 32),
   qty: Math.max(1, Math.min(99, Number(item?.qty || 1))),
   unitPriceBefore: cleanNumber(item?.unitPriceBefore),
   unitPriceAfter: cleanNumber(item?.unitPriceAfter),
@@ -37,20 +45,22 @@ const cleanItem = item => ({
   includedWith: cleanText(item?.includedWith, 50),
   includedLabel: cleanText(item?.includedLabel, 120)
 });
-const cleanPhase = (phase, index) => ({
+const cleanPhase = (phase, index, numberingSystem) => ({
   index,
   kind: ['initial', 'implant', 'prosthetic'].includes(phase?.kind) ? phase.kind : '',
   title: cleanText(phase?.title, 100) || `المرحلة ${index + 1}`,
   deferred: Boolean(phase?.deferred),
   estimatedVisits: cleanText(phase?.estimatedVisits, 30),
   estimatedDuration: cleanText(phase?.estimatedDuration, 80),
-  items: (Array.isArray(phase?.items) ? phase.items : []).slice(0, 30).map(cleanItem)
+  items: (Array.isArray(phase?.items) ? phase.items : []).slice(0, 30).map(item => cleanItem(item, numberingSystem))
 });
 const cleanSignature = value => {
   const signature = String(value || '');
   return signature.startsWith('data:image/png;base64,') ? signature.slice(0, 350_000) : '';
 };
-const cleanPlan = plan => ({
+const cleanPlan = plan => {
+  const numberingSystem = plan?.meta?.toothNumberingSystem === 'universal' ? 'universal' : 'fdi';
+  return ({
   meta: {
     planNo: cleanText(plan?.meta?.planNo, 40),
     issuedAt: cleanText(plan?.meta?.issuedAt, 40),
@@ -83,8 +93,10 @@ const cleanPlan = plan => ({
     cancelledAt: cleanNumber(plan?.meta?.cancelledAt, 0, Number.MAX_SAFE_INTEGER),
     cancelledBy: cleanText(plan?.meta?.cancelledBy, 120),
     cancellationReason: cleanText(plan?.meta?.cancellationReason, 500),
-    sourceType: plan?.meta?.sourceType === 'payment_order' ? 'payment_order' : '',
-    sourcePaymentRequestedAt: cleanNumber(plan?.meta?.sourcePaymentRequestedAt, 0, Number.MAX_SAFE_INTEGER)
+    sourceType: ['payment_order', 'quick_plan'].includes(plan?.meta?.sourceType) ? plan.meta.sourceType : '',
+    sourcePaymentRequestedAt: cleanNumber(plan?.meta?.sourcePaymentRequestedAt, 0, Number.MAX_SAFE_INTEGER),
+    sourceQuickPlanId: cleanText(plan?.meta?.sourceQuickPlanId, 64),
+    toothNumberingSystem: numberingSystem
   },
   clinic: {
     nameAr: cleanText(plan?.clinic?.nameAr, 100),
@@ -97,7 +109,7 @@ const cleanPlan = plan => ({
     fullName: cleanText(plan?.patient?.fullName, 120),
     fileNo: cleanText(plan?.patient?.fileNo, 40),
     nationalId: cleanText(plan?.patient?.nationalId, 10),
-    nationality: plan?.patient?.nationality === 'non-saudi' ? 'non-saudi' : 'saudi',
+    nationality: ['saudi', 'non-saudi'].includes(plan?.patient?.nationality) ? plan.patient.nationality : 'unknown',
     age: cleanNumber(plan?.patient?.age, 0, 120),
     mobile: cleanText(plan?.patient?.mobile, 20)
   },
@@ -114,14 +126,14 @@ const cleanPlan = plan => ({
       : cleanText(plan?.clinical?.radiographs, 1500),
     notes: cleanText(plan?.clinical?.notes, 2000)
   },
-  phases: (Array.isArray(plan?.phases) ? plan.phases : []).slice(0, 12).map(cleanPhase),
+  phases: (Array.isArray(plan?.phases) ? plan.phases : []).slice(0, 12).map((phase, index) => cleanPhase(phase, index, numberingSystem)),
   alternatives: Array.isArray(plan?.alternatives)
     ? plan.alternatives.slice(0, 20).map(value => ({ option: cleanText(value?.option, 180), note: cleanText(value?.note, 300) }))
     : cleanText(plan?.alternatives, 2500),
   noTreatment: cleanText(plan?.noTreatment, 1800),
   risks: Array.isArray(plan?.risks) ? plan.risks.slice(0, 30).map(value => cleanText(value, 180)) : cleanText(plan?.risks, 2500),
   financial: {
-    vatMode: ['borne_by_state', 'standard_15', 'exempt'].includes(plan?.financial?.vatMode) ? plan.financial.vatMode : 'borne_by_state',
+    vatMode: ['unconfirmed', 'borne_by_state', 'standard_15', 'exempt'].includes(plan?.financial?.vatMode) ? plan.financial.vatMode : 'unconfirmed',
     vatConfirmed: Boolean(plan?.financial?.vatConfirmed),
     paymentPlan: (Array.isArray(plan?.financial?.paymentPlan) ? plan.financial.paymentPlan : []).slice(0, 20).map(value => ({
       label: cleanText(value?.label, 160),
@@ -144,7 +156,8 @@ const cleanPlan = plan => ({
     witnessName: cleanText(plan?.signatures?.witnessName, 120),
     witnessSignedAt: cleanText(plan?.signatures?.witnessSignedAt, 80)
   }
-});
+  });
+};
 
 export default async request => {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });

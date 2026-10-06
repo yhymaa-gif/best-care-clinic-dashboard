@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeToothNumber, countQuickEntries, parseQuickEntry, reconcileQuickPlanItems, generateTreatmentPlanText, generateClinicalNote, generateWhatsAppText, DRAFT_NOTICE } from '../quick-plan-core.js';
+import { normalizeToothNumber, countQuickEntries, parseQuickEntry, procedureDisplayLabel, reconcileQuickPlanItems, generateTreatmentPlanText, generateClinicalNote, generatePatientFileSummary, generateWhatsAppText, treatmentPhase, treatmentPhaseLabel, DRAFT_NOTICE } from '../quick-plan-core.js';
 import { DEFAULT_CATALOG_ITEMS } from '../netlify/functions/treatment-catalog.mjs';
 
 test('tooth numbers normalize only within explicitly selected system', () => {
@@ -28,6 +28,19 @@ test('parser handles commas, semicolons, compact forms and conservative misspell
   assert.equal(parsed[2].procedureId, 'remove-crown');
   assert.equal(parsed[3].matchState, 'unmatched');
   assert.equal(parseQuickEntry('RCT 99', DEFAULT_CATALOG_ITEMS)[0].matchState, 'unmatched');
+});
+
+test('parser accepts tooth-first shorthand and common crown variants', () => {
+  const parsed = parseQuickEntry('RCT 2\n3 crowns\n1 post\nrecement-crown 8', DEFAULT_CATALOG_ITEMS);
+  assert.deepEqual(parsed.map(item => item.toothNumber), ['02', '03', '01', '08']);
+  assert.deepEqual(parsed.map(item => item.procedureId), ['root-canal', 'ceramic-crown', 'place-post', 'recement-crown']);
+  assert.equal(parsed.every(item => item.matchState === 'exact'), true);
+});
+
+test('English procedure labels never fall back to an Arabic official name', () => {
+  assert.equal(procedureDisplayLabel({ id: 'root-canal', name: 'علاج عصب', nameEn: 'Root canal treatment' }, 'en'), 'Root canal treatment');
+  assert.equal(procedureDisplayLabel({ id: 'custom-procedure', name: 'إجراء مخصص', nameEn: '' }, 'en'), 'Custom Procedure');
+  assert.equal(procedureDisplayLabel({ id: 'root-canal', name: 'علاج عصب', nameEn: 'Root canal treatment' }, 'ar'), 'علاج عصب');
 });
 
 test('a 61st entry is explicit and prevents silent submission of a truncated plan', () => {
@@ -65,4 +78,62 @@ test('generated documentation is source-bound and visibly draft', () => {
   assert.match(generateClinicalNote(items, {}, 'fdi'), /FDI two-digit tooth numbering/);
   assert.match(generateWhatsAppText(items, 'fdi'), /FDI two-digit tooth numbering/);
   assert.match(generateTreatmentPlanText(items, 'universal'), /Universal tooth numbering/);
+  assert.match(generateClinicalNote(items, {}, 'universal', { name: 'Test Patient', age: 42, mrn: '18417' }), /Patient: Test Patient · Age: 42 years · MRN: 18417/);
+});
+
+test('treatment-plan outputs use the dashboard three-phase clinical organization', () => {
+  const items = [
+    { toothNumber: '21', procedureId: 'ceramic-crown', procedureCode: 'ceramic-crown', officialNameEn: 'Ceramic crown', category: 'prosthetic' },
+    { toothNumber: '11', procedureId: 'root-canal', procedureCode: 'root-canal', officialNameEn: 'Root canal treatment', category: 'initial' },
+    { toothNumber: '14', procedureId: 'implant-surgery', procedureCode: 'implant-surgery', officialNameEn: 'Dental implant — surgical stage', category: 'implant' },
+    { toothNumber: '16', procedureId: 'cbct-scan', procedureCode: 'cbct-scan', officialName: 'أشعة مقطعية', officialNameEn: 'CBCT scan', category: 'implant' }
+  ];
+  const plan = generateTreatmentPlanText(items, 'fdi');
+  assert.ok(plan.indexOf('INITIAL TREATMENTS') < plan.indexOf('SURGERY & IMPLANTS'));
+  assert.ok(plan.indexOf('SURGERY & IMPLANTS') < plan.indexOf('PROSTHETICS'));
+  assert.match(generateWhatsAppText(items, 'fdi'), /INITIAL TREATMENTS[\s\S]*SURGERY & IMPLANTS[\s\S]*PROSTHETICS/);
+  assert.equal(treatmentPhase('unknown'), 'initial');
+  assert.equal(treatmentPhaseLabel('prosthetic', 'ar'), 'التركيبات');
+  const note = generateClinicalNote(items, {}, 'fdi');
+  assert.ok(note.indexOf('Diagnostic procedures') < note.indexOf('Initial treatment procedures'));
+  assert.ok(note.indexOf('Initial treatment procedures') < note.indexOf('Surgical and implant procedures'));
+  assert.ok(note.indexOf('Surgical and implant procedures') < note.indexOf('Prosthetic procedures'));
+  assert.doesNotMatch(note, /diagnosed|irreversible pulpitis/i);
+  const arabicNote = generatePatientFileSummary(items, 'fdi', {}, 'ar');
+  assert.ok(arabicNote.indexOf('إجراءات تشخيصية') < arabicNote.indexOf('المعالجات الأولية'));
+  assert.ok(arabicNote.indexOf('المعالجات الأولية') < arabicNote.indexOf('المرحلة الجراحية والزراعة'));
+  assert.ok(arabicNote.indexOf('المرحلة الجراحية والزراعة') < arabicNote.indexOf('مرحلة التركيبات'));
+});
+
+test('patient file summary groups procedure counts without inventing diagnosis', () => {
+  const items = [
+    { toothNumber: '11', procedureId: 'root-canal', officialName: 'علاج عصب', officialNameEn: 'Root canal treatment' },
+    { toothNumber: '12', procedureId: 'root-canal', officialName: 'علاج عصب', officialNameEn: 'Root canal treatment' },
+    { toothNumber: '23', procedureId: 'extraction', officialName: 'خلع الأسنان', officialNameEn: 'Tooth extraction' }
+  ];
+  const arabic = generatePatientFileSummary(items, 'fdi', { name: 'مريض تجريبي', age: 40, mrn: '18417' }, 'ar');
+  assert.match(arabic, new RegExp(DRAFT_NOTICE));
+  assert.match(arabic, /علاج عصب: الأسنان 11، 12 \(العدد 2\)/);
+  assert.match(arabic, /خلع الأسنان: الأسنان 23 \(العدد 1\)/);
+  assert.doesNotMatch(arabic, /حضر|راجَع العيادة/);
+  assert.match(arabic, /لا يتضمن هذا الملخص تشخيصًا أو نتائج فحص لم تُدخل صراحة/);
+  assert.doesNotMatch(arabic, /التهاب|تسوس|غير قابل للعكس/);
+  const english = generatePatientFileSummary(items, 'fdi', { name: 'Test Patient', mrn: '18417' }, 'en');
+  assert.match(english, new RegExp(DRAFT_NOTICE));
+  assert.doesNotMatch(english, /attended|presented for/i);
+  assert.match(english, /Root canal treatment: teeth 11, 12 \(count 2\)/);
+});
+
+test('diagnostic ordering never misclassifies implant uncovering or implant impression', () => {
+  const items = [
+    { toothNumber: '11', procedureId: 'implant-uncovering', procedureCode: 'implant-uncovering', officialNameEn: 'Implant uncovering', category: 'implant' },
+    { toothNumber: '12', procedureId: 'implant-impression', procedureCode: 'implant-impression', officialNameEn: 'Implant impression or digital scan', category: 'prosthetic' },
+    { toothNumber: '13', procedureId: 'cbct-scan', procedureCode: 'cbct-scan', officialNameEn: 'CBCT scan', category: 'implant' }
+  ];
+  const note = generateClinicalNote(items, {}, 'fdi');
+  assert.ok(note.indexOf('CBCT scan') < note.indexOf('Implant uncovering'));
+  assert.match(note, /Surgical and implant procedures recorded: Tooth #11 — Implant uncovering/);
+  assert.match(note, /Prosthetic procedures recorded: Tooth #12 — Implant impression or digital scan/);
+  const arabic = generatePatientFileSummary(items, 'fdi', {}, 'ar');
+  assert.ok(arabic.indexOf('إجراءات تشخيصية') < arabic.indexOf('المرحلة الجراحية والزراعة'));
 });
