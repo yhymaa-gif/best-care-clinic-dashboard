@@ -538,7 +538,11 @@ function normalizeTreatmentCatalog(items){
     seen.add(id);
     const before=item?.beforePrice===''?'':Number(item?.beforePrice);
     const after=(item?.afterPrice??item?.price)===''?'':Number(item?.afterPrice??item?.price);
-    return{id,name,beforePrice:Number.isFinite(before)?before:'',afterPrice:Number.isFinite(after)?after:''};
+    const nameEn=String(item?.nameEn||'').trim().slice(0,120);
+    const aliases=[...new Set((Array.isArray(item?.aliases)?item.aliases:String(item?.aliases||'').split(','))
+      .map(value=>String(value||'').trim().slice(0,80)).filter(Boolean))].slice(0,30);
+    const status=String(item?.status||'active').toLowerCase()==='inactive'?'inactive':'active';
+    return{id,name,nameEn,aliases,status,category:String(item?.category||'').trim().slice(0,80),beforePrice:Number.isFinite(before)?before:'',afterPrice:Number.isFinite(after)?after:''};
   }).filter(item=>item.name);
 }
 function localTreatmentCatalog(){
@@ -580,7 +584,7 @@ async function refreshTreatmentCatalog({force=false}={}){
 const catalogEscape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function renderTreatmentCatalog(){
   const list=$('treatmentCatalogList');
-  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" aria-label="${lang==='en'?'Procedure name':'اسم الإجراء'}"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="${lang==='en'?'Before discount':'قبل الخصم'}" aria-label="${lang==='en'?'Price before discount':'السعر قبل الخصم'}"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="${lang==='en'?'After discount':'بعد الخصم'}" aria-label="${lang==='en'?'Price after discount':'السعر بعد الخصم'}"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="${lang==='en'?'Delete':'حذف'}">×</button></div>`).join(''):`<div class="catalog-empty">${lang==='en'?'No procedures. Add the first procedure below.':'لا توجد إجراءات. أضف أول إجراء من الزر أدناه.'}</div>`;
+  list.innerHTML=treatmentCatalog.length?treatmentCatalog.map((item,index)=>`<div class="catalog-row" data-catalog-index="${index}"><input data-catalog-name maxlength="120" value="${catalogEscape(item.name)}" placeholder="${lang==='en'?'Arabic/official name':'الاسم الرسمي'}" aria-label="${lang==='en'?'Procedure name':'اسم الإجراء'}"><input data-catalog-name-en maxlength="120" value="${catalogEscape(item.nameEn||'')}" placeholder="English name" aria-label="English procedure name"><input class="catalog-aliases" data-catalog-aliases maxlength="900" value="${catalogEscape((item.aliases||[]).join(', '))}" placeholder="${lang==='en'?'Quick aliases, comma separated':'اختصارات الإدخال السريع، مفصولة بفواصل'}" aria-label="${lang==='en'?'Quick entry aliases':'اختصارات الإدخال السريع'}"><input class="catalog-price" data-catalog-before-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.beforePrice??'')}" placeholder="${lang==='en'?'Before discount':'قبل الخصم'}" aria-label="${lang==='en'?'Price before discount':'السعر قبل الخصم'}"><input class="catalog-price" data-catalog-after-price type="number" min="0" step="0.01" inputmode="decimal" value="${catalogEscape(item.afterPrice??item.price??'')}" placeholder="${lang==='en'?'After discount':'بعد الخصم'}" aria-label="${lang==='en'?'Price after discount':'السعر بعد الخصم'}"><button class="catalog-delete" type="button" data-catalog-delete="${index}" title="${lang==='en'?'Delete':'حذف'}">×</button></div>`).join(''):`<div class="catalog-empty">${lang==='en'?'No procedures. Add the first procedure below.':'لا توجد إجراءات. أضف أول إجراء من الزر أدناه.'}</div>`;
 }
 async function openTreatmentCatalog(){
   setSettingsMenuOpen(false);
@@ -598,7 +602,7 @@ async function openTreatmentCatalog(){
   }
 }
 function collectTreatmentCatalog(){
-  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);delete item.requiresLab;delete item.price});
+  document.querySelectorAll('[data-catalog-index]').forEach(row=>{const item=treatmentCatalog[Number(row.dataset.catalogIndex)];if(!item)return;item.name=row.querySelector('[data-catalog-name]').value.trim();item.nameEn=row.querySelector('[data-catalog-name-en]').value.trim();item.aliases=[...new Set(row.querySelector('[data-catalog-aliases]').value.split(',').map(value=>value.trim()).filter(Boolean))];const before=row.querySelector('[data-catalog-before-price]').value,after=row.querySelector('[data-catalog-after-price]').value;item.beforePrice=before===''?'':Number(before);item.afterPrice=after===''?'':Number(after);delete item.requiresLab;delete item.price});
 }
 async function saveTreatmentCatalog(){
   collectTreatmentCatalog();const items=treatmentCatalog.filter(item=>item.name);$('treatmentCatalogError').classList.remove('catalog-warning');$('treatmentCatalogError').textContent=lang==='en'?'Saving…':'جارٍ الحفظ…';

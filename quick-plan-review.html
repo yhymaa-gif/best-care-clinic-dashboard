@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#315f85">
+  <script src="./theme-boot.js"></script><title>Quick Plan Review | Best Care</title>
+  <link rel="icon" href="./assets/icons/icon-192.png"><link rel="stylesheet" href="./quick-plan.css?v=20261006-quick-plan"><link rel="stylesheet" href="./quick-plan-review.css?v=20261006-quick-plan"><link rel="stylesheet" href="./theme.css"><link rel="stylesheet" href="./quick-plan-runtime.css?v=20261006-quick-plan">
+</head>
+<body class="quick-plan-page review-page">
+<main class="review-shell">
+  <header class="quick-header review-header"><img src="./best-care-logo.png" alt="Best Care logo"><div><p class="eyebrow">DENTIST WORKSPACE</p><h1>QUICK PLAN REVIEW</h1><p>Review nurse submissions before clinical approval.</p></div><div class="review-head-actions"><a class="language-button" href="./treatment-plans.html">TREATMENT PLANS</a><a class="language-button" href="./quick-plan">NURSE ENTRY</a></div></header>
+  <aside class="draft-notice" role="note"><strong>DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</strong><span>Approval confirms documentation review only. It does not replace clinical assessment, diagnosis, radiographs, informed consent, or the existing patient-signature workflow.</span></aside>
+  <section class="review-layout">
+    <aside class="review-queue"><div class="queue-head"><div><p class="eyebrow">INBOX</p><h2>Pending doctor review</h2></div><button id="refreshQueue" class="language-button" type="button">REFRESH</button></div><div class="queue-filters"><select id="reviewClinic"></select><select id="reviewStatus"><option value="pending_review">Pending review</option><option value="approved">Approved</option><option value="completed">Completed</option><option value="all">All</option></select></div><p id="queueError" class="form-error" hidden></p><div id="reviewQueueList" class="queue-list"><p class="empty-preview">Loading submissions…</p></div></aside>
+    <section id="reviewEmpty" class="review-empty"><span>▤</span><h2>Select a treatment plan</h2><p>Open a pending nurse submission to review its structured items and documentation.</p></section>
+    <article id="reviewEditor" class="review-editor" hidden>
+      <header class="editor-head"><div><p class="eyebrow" id="reviewStatusLabel">PENDING REVIEW</p><h2 id="reviewPatient">Patient</h2><p id="reviewMeta"></p></div><button id="closeEditor" class="language-button" type="button">CLOSE</button></header>
+      <section class="original-entry"><h3>ORIGINAL NURSE ENTRY</h3><pre id="originalEntry"></pre></section>
+      <section class="structured-editor"><div class="section-heading"><div><p class="eyebrow">STRUCTURED PLAN</p><h3>Matched procedures</h3></div><button id="addReviewItem" class="language-button" type="button">+ ADD</button></div><div id="reviewItems" class="preview-list"></div></section>
+      <section class="clinical-fields"><h3>OPTIONAL CLINICIAN-ENTERED DATA</h3><p>Only text entered by the reviewing clinician is included. Nothing is inferred.</p><label>Chief Complaint<textarea data-clinical="chiefComplaint" rows="2"></textarea></label><label>Diagnosis<textarea data-clinical="diagnosis" rows="2"></textarea></label><label>Clinical Findings<textarea data-clinical="clinicalFindings" rows="2"></textarea></label><label>Radiographic Findings<textarea data-clinical="radiographicFindings" rows="2"></textarea></label><label>Clinical Notes<textarea data-clinical="clinicalNotes" rows="2"></textarea></label><label>Special Considerations<textarea data-clinical="specialConsiderations" rows="2"></textarea></label></section>
+      <section class="generated-output"><article><div><h3>PROPOSED TREATMENT PLAN</h3><button type="button" data-copy="plan">COPY PLAN</button></div><textarea id="generatedPlan" rows="7"></textarea></article><article><div><h3>CLINICAL NOTE</h3><button type="button" data-copy="note">COPY CLINICAL NOTE</button></div><textarea id="generatedNote" rows="7"></textarea></article><article><div><h3>WHATSAPP VERSION</h3><button type="button" data-copy="whatsapp">COPY WHATSAPP</button></div><textarea id="generatedWhatsApp" rows="7"></textarea></article></section>
+      <p id="reviewError" class="form-error" hidden></p><footer class="editor-actions"><button id="saveReview" type="button">SAVE CHANGES</button><button id="regenerateNote" type="button">REGENERATE NOTE</button><button id="approvePlan" class="approve" type="button">APPROVE TREATMENT PLAN</button><button id="sharePlan" type="button" disabled>SHARE</button><button id="printPlan" type="button" disabled>PRINT / PDF</button></footer>
+    </article>
+  </section>
+</main>
+<script type="module" src="./quick-plan-review.js?v=20261006-quick-plan"></script>
+</body>
+</html>

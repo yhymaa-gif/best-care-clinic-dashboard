@@ -94,6 +94,16 @@
   status = 200
 
 [[redirects]]
+  from = "/api/quick-treatment-plans"
+  to = "/.netlify/functions/quick-treatment-plans"
+  status = 200
+
+[[redirects]]
+  from = "/quick-plan"
+  to = "/quick-plan.html"
+  status = 200
+
+[[redirects]]
   from = "/api/treatment-plan-registry"
   to = "/.netlify/functions/treatment-plan-registry"
   status = 200
