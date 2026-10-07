@@ -4,7 +4,7 @@ import quickPlans, { __test } from '../netlify/functions/quick-treatment-plans.m
 import { DEFAULT_CATALOG_ITEMS, normalizeCatalogItems } from '../netlify/functions/treatment-catalog.mjs';
 import { DEFAULT_CATALOG_ITEMS as SHARED_DEFAULT_CATALOG_ITEMS } from '../procedure-catalog-defaults.js';
 import { DRAFT_NOTICE } from '../quick-plan-core.js';
-import { buildQuickPlanCostDraft, ensureQuickPlanCostDraft } from '../netlify/functions/lib/quick-plan-cost-bridge.mjs';
+import { buildQuickPlanCostDraft, ensureQuickPlanCostDraft, synchronizeQuickPlanCostDraft } from '../netlify/functions/lib/quick-plan-cost-bridge.mjs';
 
 const memoryStore = () => {
   const values = new Map(), etags = new Map();
@@ -78,6 +78,21 @@ test('generated clinical record text includes only supplied patient context', ()
   assert.doesNotMatch(output.clinicalNote, /diagnosed|irreversible pulpitis/i);
 });
 
+test('patient-file summaries persist only explicitly confirmed examination and discussion statements', () => {
+  const base = {
+    patientName: 'Test Patient', patientAge: 37, patientMrn: '18417', numberingSystem: 'fdi', clinicianData: {},
+    items: [{ toothNumber: '11', procedureId: 'root-canal', officialName: 'علاج عصب', officialNameEn: 'Root canal treatment', category: 'initial' }]
+  };
+  const unconfirmed = __test.generated(base);
+  assert.match(unconfirmed.patientFileSummaryAr, /يحتاج المريض إلى الإجراءات العلاجية التالية/);
+  assert.doesNotMatch(unconfirmed.patientFileSummaryAr, /تم الفحص الإكلينيكي|تمت مناقشة الخطة/);
+  assert.doesNotMatch(unconfirmed.patientFileSummaryAr, new RegExp(DRAFT_NOTICE));
+  const confirmed = __test.generated({ ...base, documentationConfirmations: { examination: true, discussion: true } });
+  assert.match(confirmed.patientFileSummaryAr, /تم إعداد هذه الخطة العلاجية بناءً على فحص إكلينيكي وتقييم شعاعي باستخدام الأشعة الذروية والأشعة البانورامية/);
+  assert.match(confirmed.patientFileSummaryAr, /تمت مناقشة هذه الخطة العلاجية مع المريض وشرح الإجراءات المقترحة له/);
+  assert.match(confirmed.patientFileSummaryEn, /prepared based on a clinical examination and radiographic assessment/);
+});
+
 test('approval requires an admin-configured treating dentist identity, never clinic role alone', () => {
   const user = { username: 'doctor12', displayName: 'Dr Synthetic', role: 'clinic', clinicId: 'clinic-12' };
   const account = { ...user };
@@ -92,7 +107,8 @@ test('approval requires an admin-configured treating dentist identity, never cli
 test('server-generated outputs carry the persisted tooth numbering system', () => {
   const plan = { items: [{ toothNumber: '11', procedureId: 'root-canal', officialNameEn: 'Root canal treatment' }], clinicianData: {}, numberingSystem: 'fdi' };
   const output = __test.generated(plan);
-  for (const value of Object.values(output)) assert.match(value, /FDI two-digit tooth numbering/);
+  for (const key of ['treatmentPlanText', 'clinicalNote', 'whatsappText']) assert.match(output[key], /FDI two-digit tooth numbering/);
+  assert.match(output.patientFileSummaryEn, /Root canal treatment: teeth 11/);
 });
 
 test('changing structured items or clinician data invalidates stale output overrides', () => {
@@ -143,6 +159,159 @@ test('cost-plan bridge preserves Universal teeth and records the numbering syste
   assert.deepEqual(draft.plan.phases[0].items[0].teeth, ['09']);
   assert.equal(draft.plan.patient.nationality, 'unknown');
   assert.equal(draft.plan.financial.vatMode, 'unconfirmed');
+});
+
+test('editing a submitted quick plan updates its linked editable cost draft without overwriting separate edits', async () => {
+  const rootCanal = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'root-canal');
+  const extraction = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'extraction');
+  const plans = memoryStore(), registry = memoryStore();
+  const patientRecord = { authoritativeFullName: 'Patient', fileNo: '18417', nationalId: '1000000000' };
+  const quickPlan = {
+    id: 'f'.repeat(64), clinicId: 'clinic-1', patientId: 'file:18417', patientMrn: '18417', patientName: 'Patient',
+    numberingSystem: 'fdi', createdAt: Date.UTC(2026, 9, 7, 9), revision: 1,
+    patientFileSummaryAr: 'المسودة الأولى', items: [{ toothNumber: '11', procedureId: 'root-canal' }]
+  };
+  const input = { quickPlan, catalog: [rootCanal, extraction], patientRecord, actor: 'Nurse' };
+  const linked = await ensureQuickPlanCostDraft(input, { planBlobStore: plans, registryBlobStore: registry });
+  const versionKey = [...plans.values.keys()].find(key => key.includes('/versions/') && plans.values.get(key)?.plan?.meta?.planNo === linked.planNo);
+  assert.ok(versionKey);
+  assert.equal(plans.values.get(versionKey).plan.meta.status, 'draft');
+  assert.ok(plans.values.get(versionKey).plan.meta.sourceQuickPlanSyncHash);
+
+  await synchronizeQuickPlanCostDraft({
+    ...input,
+    previousQuickPlan: quickPlan,
+    quickPlan: {
+      ...quickPlan, revision: 2, patientFileSummaryAr: 'المسودة المحدّثة',
+      items: [{ toothNumber: '11', procedureId: 'root-canal' }, { toothNumber: '21', procedureId: 'extraction' }]
+    }
+  }, { planBlobStore: plans });
+  const synchronized = plans.values.get(versionKey).plan;
+  assert.equal(synchronized.meta.sourceQuickPlanRevision, 2);
+  assert.equal(synchronized.clinical.notes, 'المسودة المحدّثة');
+  assert.equal(synchronized.phases.find(phase => phase.kind === 'implant').items[0].code, 'extraction');
+  const dayRecord = [...plans.values.entries()].find(([key]) => key.includes('/days/'))?.[1];
+  const permanentRecords = [...plans.values.entries()].filter(([key]) => key.includes('/patients/')).map(([, value]) => value);
+  assert.equal(dayRecord.plan.meta.sourceQuickPlanRevision, 2);
+  assert.equal(dayRecord.plan.phases.find(phase => phase.kind === 'implant').items[0].code, 'extraction');
+  assert.equal(permanentRecords.every(record => record.plan.meta.sourceQuickPlanRevision === 2), true);
+
+  const manuallyEdited = structuredClone(plans.values.get(versionKey));
+  manuallyEdited.plan.phases[0].items[0].unitPriceAfter = 999;
+  await plans.setJSON(versionKey, manuallyEdited);
+  await assert.rejects(() => synchronizeQuickPlanCostDraft({
+    ...input,
+    previousQuickPlan: { ...quickPlan, revision: 2 },
+    quickPlan: { ...quickPlan, revision: 3, items: [{ toothNumber: '12', procedureId: 'root-canal' }] }
+  }, { planBlobStore: plans }), /edited separately/);
+});
+
+test('cost synchronization protects manually edited clinical notes', async () => {
+  const rootCanal = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'root-canal');
+  const plans = memoryStore(), registry = memoryStore();
+  const quickPlan = {
+    id: '2'.repeat(64), clinicId: 'clinic-1', patientId: 'file:18417', patientMrn: '18417', numberingSystem: 'fdi',
+    createdAt: Date.UTC(2026, 9, 7, 9), revision: 1, patientFileSummaryAr: 'مسودة أصلية', items: [{ toothNumber: '11', procedureId: 'root-canal' }]
+  };
+  const input = { quickPlan, catalog: [rootCanal], patientRecord: { fileNo: '18417' }, actor: 'Nurse' };
+  const linked = await ensureQuickPlanCostDraft(input, { planBlobStore: plans, registryBlobStore: registry });
+  const versionKey = [...plans.values.keys()].find(key => key.includes('/versions/') && plans.values.get(key)?.plan?.meta?.planNo === linked.planNo);
+  const manual = structuredClone(plans.values.get(versionKey));
+  manual.plan.clinical.notes = 'ملاحظة يدوية لا يجوز استبدالها';
+  await plans.setJSON(versionKey, manual);
+  await assert.rejects(() => synchronizeQuickPlanCostDraft({
+    ...input, previousQuickPlan: quickPlan,
+    quickPlan: { ...quickPlan, revision: 2, patientFileSummaryAr: 'مسودة جديدة' }
+  }, { planBlobStore: plans }), /edited separately/);
+});
+
+test('older linked drafts can migrate only when their managed content still matches the previous Quick Plan', async () => {
+  const rootCanal = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'root-canal');
+  const extraction = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'extraction');
+  const plans = memoryStore(), registry = memoryStore();
+  const quickPlan = {
+    id: '3'.repeat(64), clinicId: 'clinic-1', patientId: 'file:18417', patientMrn: '18417', numberingSystem: 'fdi',
+    createdAt: Date.UTC(2026, 9, 7, 9), revision: 1, clinicalNote: 'Legacy clinical note', patientFileSummaryAr: 'Newer summary',
+    items: [{ toothNumber: '11', procedureId: 'root-canal' }]
+  };
+  const input = { quickPlan, catalog: [rootCanal, extraction], patientRecord: { fileNo: '18417' }, actor: 'Nurse' };
+  const linked = await ensureQuickPlanCostDraft(input, { planBlobStore: plans, registryBlobStore: registry });
+  for (const [key, value] of [...plans.values.entries()]) {
+    if (value?.plan?.meta?.planNo !== linked.planNo) continue;
+    const legacy = structuredClone(value);
+    delete legacy.plan.meta.sourceQuickPlanSyncHash;
+    legacy.plan.clinical.notes = quickPlan.clinicalNote;
+    await plans.setJSON(key, legacy);
+  }
+  await synchronizeQuickPlanCostDraft({
+    ...input, previousQuickPlan: quickPlan,
+    quickPlan: { ...quickPlan, revision: 2, patientFileSummaryAr: 'ملخص محدّث', items: [{ toothNumber: '21', procedureId: 'extraction' }] }
+  }, { planBlobStore: plans });
+  const version = [...plans.values.values()].find(value => value?.plan?.meta?.planNo === linked.planNo && value.plan.meta.sourceQuickPlanRevision === 2);
+  assert.equal(version.plan.clinical.notes, 'ملخص محدّث');
+  assert.ok(version.plan.meta.sourceQuickPlanSyncHash);
+});
+
+test('out-of-order Quick Plan revisions are rejected and an interrupted pointer write is repairable', async () => {
+  const rootCanal = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'root-canal');
+  const plans = memoryStore(), registry = memoryStore();
+  const quickPlan = {
+    id: '4'.repeat(64), clinicId: 'clinic-1', patientId: 'file:18417', patientMrn: '18417', numberingSystem: 'fdi',
+    createdAt: Date.UTC(2026, 9, 7, 9), revision: 1, items: [{ toothNumber: '11', procedureId: 'root-canal' }]
+  };
+  const input = { quickPlan, catalog: [rootCanal], patientRecord: { fileNo: '18417' }, actor: 'Nurse' };
+  await ensureQuickPlanCostDraft(input, { planBlobStore: plans, registryBlobStore: registry });
+  await assert.rejects(() => synchronizeQuickPlanCostDraft({
+    ...input,
+    previousQuickPlan: { ...quickPlan, revision: 2, items: [{ toothNumber: '21', procedureId: 'root-canal' }] },
+    quickPlan: { ...quickPlan, revision: 3 }
+  }, { planBlobStore: plans }), /out of sequence/);
+  const revisionTwo = { ...quickPlan, revision: 2, patientFileSummaryAr: 'Revision two', items: [{ toothNumber: '12', procedureId: 'root-canal' }] };
+  plans.failNextDayWrite();
+  await assert.rejects(() => synchronizeQuickPlanCostDraft({ ...input, previousQuickPlan: quickPlan, quickPlan: revisionTwo }, { planBlobStore: plans }), /synthetic interrupted write/);
+  await synchronizeQuickPlanCostDraft({ ...input, previousQuickPlan: quickPlan, quickPlan: revisionTwo }, { planBlobStore: plans });
+  const dayRecord = [...plans.values.entries()].find(([key]) => key.includes('/days/'))?.[1];
+  assert.equal(dayRecord.plan.meta.sourceQuickPlanRevision, 2);
+  assert.deepEqual(dayRecord.plan.phases[0].items[0].teeth, ['12']);
+});
+
+test('link audit revisions and no-op saves do not block the first real content edit', async () => {
+  const rootCanal = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'root-canal');
+  const extraction = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'extraction');
+  const plans = memoryStore(), registry = memoryStore();
+  const submitted = {
+    id: '5'.repeat(64), clinicId: 'clinic-1', patientId: 'file:18417', patientMrn: '18417', numberingSystem: 'fdi',
+    createdAt: Date.UTC(2026, 9, 7, 9), revision: 1, patientFileSummaryAr: 'المحتوى المرسل', items: [{ toothNumber: '11', procedureId: 'root-canal' }]
+  };
+  const input = { quickPlan: submitted, catalog: [rootCanal, extraction], patientRecord: { fileNo: '18417' }, actor: 'Nurse' };
+  const linked = await ensureQuickPlanCostDraft(input, { planBlobStore: plans, registryBlobStore: registry });
+  assert.equal(linked.sourceQuickPlanRevision, 1);
+  const afterLinkAudit = { ...submitted, revision: 2 };
+  const afterNoOpSave = { ...afterLinkAudit, revision: 3 };
+  const edited = {
+    ...afterNoOpSave, revision: 4, patientFileSummaryAr: 'المحتوى المعدّل',
+    items: [{ toothNumber: '11', procedureId: 'root-canal' }, { toothNumber: '21', procedureId: 'extraction' }]
+  };
+  await synchronizeQuickPlanCostDraft({ ...input, previousQuickPlan: afterNoOpSave, quickPlan: edited }, { planBlobStore: plans });
+  const version = [...plans.values.values()].find(value => value?.plan?.meta?.planNo === linked.planNo && value.plan.meta.sourceQuickPlanRevision === 4);
+  assert.equal(version.plan.clinical.notes, 'المحتوى المعدّل');
+  assert.equal(version.plan.phases.find(phase => phase.kind === 'implant').items[0].code, 'extraction');
+});
+
+test('quick-plan synchronization never rewrites a cost plan that entered approval', async () => {
+  const rootCanal = DEFAULT_CATALOG_ITEMS.find(item => item.id === 'root-canal');
+  const plans = memoryStore(), registry = memoryStore();
+  const quickPlan = {
+    id: '1'.repeat(64), clinicId: 'clinic-1', patientId: 'file:18417', patientMrn: '18417', patientName: 'Patient',
+    numberingSystem: 'fdi', createdAt: Date.UTC(2026, 9, 7, 9), revision: 1, items: [{ toothNumber: '11', procedureId: 'root-canal' }]
+  };
+  const input = { quickPlan, catalog: [rootCanal], patientRecord: { fileNo: '18417' }, actor: 'Nurse' };
+  const linked = await ensureQuickPlanCostDraft(input, { planBlobStore: plans, registryBlobStore: registry });
+  const versionKey = [...plans.values.keys()].find(key => key.includes('/versions/') && plans.values.get(key)?.plan?.meta?.planNo === linked.planNo);
+  const approved = structuredClone(plans.values.get(versionKey));
+  approved.plan.meta.status = 'submitted';
+  await plans.setJSON(versionKey, approved);
+  await assert.rejects(() => synchronizeQuickPlanCostDraft({ ...input, quickPlan: { ...quickPlan, revision: 2 } }, { planBlobStore: plans }), /approval workflow/);
 });
 
 test('cost-plan bridge resumes an interrupted retry and does not erase approved registry state', async () => {

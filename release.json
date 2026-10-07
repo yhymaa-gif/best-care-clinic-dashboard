@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.07-quick-plan-patient-row",
+  "version": "2026.10.07-quick-plan-editable-note-controls",
   "publishedAt": "2026-10-07",
   "summary": {
-    "ar": "الخطة السريعة أصبحت مكان ملاحظة اليوم في صف المريض، وتفتح مباشرة ببياناته؛ وعادت الأيقونة العائمة للمعمل.",
-    "en": "Quick Plan now replaces Today's Note in each admin patient row, opens with patient details, and the floating icon returns to Lab."
+    "ar": "الخطة السريعة قابلة للتعديل بعد الإرسال، بملخص علاجي موثق، مع إلغاء الإجراء بالضغط الثاني والتنقل بين الأيام وتعديل كلمة المرور.",
+    "en": "Quick Plans stay editable after submission, with treatment-focused notes, second-tap removal, day swipes, and secure password changes."
   }
 }

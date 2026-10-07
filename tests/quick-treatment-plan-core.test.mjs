@@ -100,9 +100,9 @@ test('treatment-plan outputs use the dashboard three-phase clinical organization
   assert.ok(note.indexOf('Surgical and implant procedures') < note.indexOf('Prosthetic procedures'));
   assert.doesNotMatch(note, /diagnosed|irreversible pulpitis/i);
   const arabicNote = generatePatientFileSummary(items, 'fdi', {}, 'ar');
-  assert.ok(arabicNote.indexOf('إجراءات تشخيصية') < arabicNote.indexOf('المعالجات الأولية'));
-  assert.ok(arabicNote.indexOf('المعالجات الأولية') < arabicNote.indexOf('المرحلة الجراحية والزراعة'));
-  assert.ok(arabicNote.indexOf('المرحلة الجراحية والزراعة') < arabicNote.indexOf('مرحلة التركيبات'));
+  assert.ok(arabicNote.indexOf('الإجراءات التشخيصية') < arabicNote.indexOf('المعالجات الأولية'));
+  assert.ok(arabicNote.indexOf('المعالجات الأولية') < arabicNote.indexOf('الجراحة والزراعة'));
+  assert.ok(arabicNote.indexOf('الجراحة والزراعة') < arabicNote.indexOf('التركيبات'));
 });
 
 test('patient file summary groups procedure counts without inventing diagnosis', () => {
@@ -112,16 +112,39 @@ test('patient file summary groups procedure counts without inventing diagnosis',
     { toothNumber: '23', procedureId: 'extraction', officialName: 'خلع الأسنان', officialNameEn: 'Tooth extraction' }
   ];
   const arabic = generatePatientFileSummary(items, 'fdi', { name: 'مريض تجريبي', age: 40, mrn: '18417' }, 'ar');
-  assert.match(arabic, new RegExp(DRAFT_NOTICE));
+  assert.match(arabic, /يحتاج المريض إلى الإجراءات العلاجية التالية/);
+  assert.match(arabic, /مسودة خطة علاجية مقترحة، وتبقى قيد مراجعة واعتماد الطبيب المخوّل/);
+  assert.match(arabic, /نظام ترقيم الأسنان: FDI/);
+  assert.doesNotMatch(arabic, new RegExp(DRAFT_NOTICE));
   assert.match(arabic, /علاج عصب: الأسنان 11، 12 \(العدد 2\)/);
   assert.match(arabic, /خلع الأسنان: الأسنان 23 \(العدد 1\)/);
   assert.doesNotMatch(arabic, /حضر|راجَع العيادة/);
-  assert.match(arabic, /لا يتضمن هذا الملخص تشخيصًا أو نتائج فحص لم تُدخل صراحة/);
+  assert.doesNotMatch(arabic, /تم الفحص الإكلينيكي|تمت مناقشة الخطة/);
   assert.doesNotMatch(arabic, /التهاب|تسوس|غير قابل للعكس/);
   const english = generatePatientFileSummary(items, 'fdi', { name: 'Test Patient', mrn: '18417' }, 'en');
-  assert.match(english, new RegExp(DRAFT_NOTICE));
+  assert.match(english, /The patient requires the following treatment procedures/);
+  assert.match(english, /proposed treatment-plan draft pending review and approval by the authorized dentist/);
+  assert.match(english, /Tooth numbering: FDI/);
+  assert.doesNotMatch(english, new RegExp(DRAFT_NOTICE));
   assert.doesNotMatch(english, /attended|presented for/i);
   assert.match(english, /Root canal treatment: teeth 11, 12 \(count 2\)/);
+});
+
+test('patient file summary documents examination and discussion only when explicitly confirmed',()=>{
+  const items=[{toothNumber:'11',procedureId:'root-canal',officialName:'علاج عصب',officialNameEn:'Root canal treatment',category:'initial'}];
+  for(const language of ['ar','en']){
+    const unconfirmed=generatePatientFileSummary(items,'fdi',{name:'Test'},language);
+    const confirmed=generatePatientFileSummary(items,'fdi',{name:'Test',examinationConfirmed:true,discussionConfirmed:true},language);
+    if(language==='ar'){
+      assert.doesNotMatch(unconfirmed,/تم الفحص الإكلينيكي|تمت مناقشة الخطة/);
+      assert.match(confirmed,/تم إعداد هذه الخطة العلاجية بناءً على فحص إكلينيكي وتقييم شعاعي باستخدام الأشعة الذروية والأشعة البانورامية/);
+      assert.match(confirmed,/تمت مناقشة هذه الخطة العلاجية مع المريض وشرح الإجراءات المقترحة له/);
+    }else{
+      assert.doesNotMatch(unconfirmed,/prepared based on a clinical examination|was discussed with the patient/);
+      assert.match(confirmed,/prepared based on a clinical examination and radiographic assessment using periapical and panoramic radiographs/);
+      assert.match(confirmed,/was discussed with the patient, and the proposed procedures were explained/);
+    }
+  }
 });
 
 test('diagnostic ordering never misclassifies implant uncovering or implant impression', () => {
@@ -135,5 +158,5 @@ test('diagnostic ordering never misclassifies implant uncovering or implant impr
   assert.match(note, /Surgical and implant procedures recorded: Tooth #11 — Implant uncovering/);
   assert.match(note, /Prosthetic procedures recorded: Tooth #12 — Implant impression or digital scan/);
   const arabic = generatePatientFileSummary(items, 'fdi', {}, 'ar');
-  assert.ok(arabic.indexOf('إجراءات تشخيصية') < arabic.indexOf('المرحلة الجراحية والزراعة'));
+  assert.ok(arabic.indexOf('الإجراءات التشخيصية') < arabic.indexOf('الجراحة والزراعة'));
 });

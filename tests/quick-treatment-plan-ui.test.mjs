@@ -1,8 +1,57 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { parseQuickEntry, reconcileQuickPlanItems } from '../quick-plan-core.js';
 
 const read=name=>readFile(new URL(`../${name}`,import.meta.url),'utf8');
+
+async function procedureToggleHarness(entry){
+  const script=await read('quick-plan.js');
+  const start=script.indexOf('function removeAssignedProcedure(');
+  const end=script.indexOf('async function toggleProcedureFavorite(',start);
+  assert.ok(start>=0&&end>start);
+  const source=script.slice(start,end);
+  const catalog=[{id:'rct',code:'RCT',name:'علاج عصب',nameEn:'Root canal treatment',aliases:['RCT'],active:true},{id:'post',code:'POST',name:'تركيب وتد',nameEn:'Post',aliases:['POST'],active:true}];
+  const make=new Function('entry','catalog','parseQuickEntry','reconcileQuickPlanItems',`let items=[],deletedSourceKeys=new Set(),parseTimer=0;const textarea={value:entry},$=id=>id==='quickEntry'?textarea:{value:'fdi'},clearTimeout=()=>{},render=()=>{};function parse(){const next=parseQuickEntry(textarea.value,catalog,'fdi'),reconciled=reconcileQuickPlanItems(items,next,deletedSourceKeys);items=reconciled.items;deletedSourceKeys=new Set(reconciled.deletedSourceKeys);render()}${source}parse();return{click:(procedureId,toothNumber)=>{clearTimeout(parseTimer);parse();return removeAssignedProcedure(procedureId,toothNumber)},getItems:()=>items,getEntry:()=>textarea.value,setEntry:value=>{textarea.value=value},edit:(index,values)=>Object.assign(items[index],values)}`);
+  return {state:make(entry,catalog,parseQuickEntry,reconcileQuickPlanItems),script};
+}
+
+test('visual procedure toggle removes the selected tooth/procedure and preserves other procedures',async()=>{
+  const {state,script}=await procedureToggleHarness('RCT 32\nRCT 32\nRCT 31\nPost 32');
+  assert.equal(state.click('rct','32'),true);
+  assert.deepEqual(state.getItems().map(item=>[item.toothNumber,item.procedureId]),[['31','rct'],['32','post']]);
+  assert.equal(state.getEntry(),'RCT 31\nPost 32');
+  assert.equal(state.click('rct','32'),false);
+  assert.match(script,/if\(removeAssignedProcedure\(procedure\.id,selectedTooth\)\)return;insertQuickEntry/);
+  assert.match(script,/data-palette-procedure="\$\{esc\(procedure\.id\)\}" aria-pressed="\$\{Boolean\(count\)\}"/);
+});
+
+test('toggle preserves a corrected tooth when identical source entries are renumbered',async()=>{
+  const {state}=await procedureToggleHarness('RCT 32\nRCT 32');
+  state.edit(1,{toothNumber:'31',procedureId:'post',procedureCode:'POST',officialName:'تركيب وتد',officialNameEn:'Post',userEdited:true,matchState:'manual'});
+  assert.equal(state.click('rct','32'),true);
+  assert.equal(state.getEntry(),'RCT 32');
+  assert.deepEqual(state.getItems().map(item=>[item.toothNumber,item.procedureId]),[['31','post']]);
+});
+
+test('toggle parses a freshly prepended entry before choosing which source line to remove',async()=>{
+  const {state}=await procedureToggleHarness('RCT 32');
+  state.setEntry('Post 33\nRCT 32');
+  assert.equal(state.click('rct','32'),true);
+  assert.equal(state.getEntry(),'Post 33');
+  assert.deepEqual(state.getItems().map(item=>[item.toothNumber,item.procedureId]),[['33','post']]);
+});
+
+test('toggle keeps a manual duplicate anchored after its surviving source item',async()=>{
+  const {state}=await procedureToggleHarness('RCT 32\nRCT 32');
+  const [first,second]=state.getItems();
+  state.edit(0,{toothNumber:'33',procedureId:'post',procedureCode:'POST',userEdited:true,matchState:'manual'});
+  state.getItems().push({...second,sourceKey:'',manualId:'manual-1',manualOrder:1,afterSourceKey:second.sourceKey,toothNumber:'34'});
+  assert.equal(state.click('post','33'),true);
+  assert.deepEqual(state.getItems().map(item=>item.toothNumber),['32','34']);
+  assert.equal(state.getItems()[1].afterSourceKey,state.getItems()[0].sourceKey);
+  assert.equal(state.getItems()[0].sourceKey,'rct 32::1');
+});
 
 test('nurse quick-plan page is focused, mobile-first, and visibly marked as draft',async()=>{
   const [html,css,runtimeCss,config]=await Promise.all([read('quick-plan.html'),read('quick-plan.css'),read('quick-plan-runtime.css'),read('netlify.toml')]);
@@ -12,6 +61,9 @@ test('nurse quick-plan page is focused, mobile-first, and visibly marked as draf
   assert.match(html,/id="previewList"/);
   assert.match(html,/id="submitPlan"/);
   assert.match(html,/id="submittedClinicalNote"/);
+  assert.match(html,/id="openSubmittedPlan"/);
+  assert.match(html,/id="confirmExamination" type="checkbox"/);
+  assert.match(html,/id="confirmDiscussion" type="checkbox"/);
   assert.match(html,/id="copySubmittedClinicalNote"/);
   assert.match(html,/DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
   assert.doesNotMatch(html,/dashboard\.js/);
@@ -75,6 +127,11 @@ test('nurse workflow preserves corrections, rejects stale patient lookups, and r
   assert.match(script,/treatmentPhaseLabel\(phase\.id,language\)/);
   assert.match(script,/class=\"odontogram-grid\"/);
   assert.match(script,/\$\('patientAge'\)\.value=''/);
+  assert.match(script,/examinationConfirmed:\$\('confirmExamination'\)\.checked/);
+  assert.match(script,/discussionConfirmed:\$\('confirmDiscussion'\)\.checked/);
+  assert.match(script,/patientFileSummaryAr/);
+  assert.match(script,/quick-plan-review\.html\?/);
+  assert.match(script,/function invalidatePatient\(\)[\s\S]*?\$\('confirmExamination'\)\.checked=false;\$\('confirmDiscussion'\)\.checked=false/);
   assert.match(script,/Array\.from\(\{length:8\},\(_,index\)=>String\(32-index\)/);
   assert.match(runtimeCss,/@media\(max-width:620px\)[\s\S]*width:44px/);
   assert.match(runtimeCss,/\.tooth-row \.tooth-body\{fill:url\(#toothEnamel\)/);
@@ -86,11 +143,31 @@ test('treatment-plan center surfaces nurse submissions without altering legacy p
   const [html,center,worker]=await Promise.all([read('treatment-plans.html'),read('quick-plan-center.js'),read('service-worker.js')]);
   assert.match(html,/id="quickPlanInbox"/);
   assert.match(html,/quick-plan-review\.html/);
+  assert.match(html,/إضافة خطة سريعة/);
   assert.match(center,/status===\'pending_review\'/);
   assert.match(center,/api\/quick-treatment-plans/);
   assert.match(worker,/url\.pathname===\'\/quick-plan\'/);
   assert.match(worker,/url\.pathname\.startsWith\('\/api\/'\)/);
   assert.match(worker,/procedure-catalog-defaults\.js/);
+});
+
+test('costed treatment plan keeps a prominent patient-linked Quick Plan action',async()=>{
+  const [html,script]=await Promise.all([read('treatment-plan.html'),read('treatment-plan.js')]);
+  assert.match(html,/id="quickPlanTopBtn"[\s\S]*إضافة خطة سريعة/);
+  assert.match(script,/quickPlanTopBtn[\s\S]*state\?\.patient\?\.fileNo[\s\S]*\.\/quick-plan\?/);
+});
+
+test('submitted Quick Plans remain editable in review and expose a contextual add action',async()=>{
+  const [reviewHtml,reviewScript,reviewCss,centerScript]=await Promise.all([read('quick-plan-review.html'),read('quick-plan-review.js'),read('quick-plan-review.css'),read('treatment-plans.js')]);
+  assert.match(reviewHtml,/quick-plan-add[\s\S]*ADD QUICK PLAN/);
+  assert.match(reviewHtml,/id="reviewConfirmExamination"/);
+  assert.match(reviewHtml,/id="reviewConfirmDiscussion"/);
+  assert.match(reviewScript,/status==='pending_review'/);
+  assert.match(reviewScript,/documentationConfirmations=\{examination:/);
+  assert.match(reviewScript,/function invalidateDiscussionConfirmation/);
+  assert.match(reviewScript,/quick-plan-add[\s\S]*active\?\.patientMrn/);
+  assert.match(reviewCss,/\.documentation-confirmations\{/);
+  assert.match(centerScript,/function updateQuickPlanLink\(\)[\s\S]*quick-plan-add/);
 });
 
 test('administration replaces today-note action with patient-linked Quick Plan and keeps Lab access',async()=>{

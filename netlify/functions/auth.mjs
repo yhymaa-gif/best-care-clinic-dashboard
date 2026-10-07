@@ -1,5 +1,5 @@
 import { getStore } from '@netlify/blobs';
-import { createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, scryptSync, timingSafeEqual } from 'node:crypto';
 
 const IDLE_MS = 5 * 60 * 60 * 1000;
 const SESSION_MAX_MS = 24 * 60 * 60 * 1000;
@@ -33,10 +33,33 @@ const sign = value => {
   const secret = sessionSecret();
   return secret ? createHmac('sha256', secret).update(value).digest('hex') : '';
 };
-const passwordHash = value => createHash('sha256').update(String(value)).digest();
-const passwordMatches = value => {
+const legacyPasswordHash = value => createHash('sha256').update(String(value)).digest();
+const passwordCredentialStore = () => store('clinic-dashboard-auth-settings');
+const passwordCredentialKey = 'credentials/bootstrap';
+const derivePasswordHash = (value, salt) => scryptSync(String(value), salt, 64);
+const createPasswordCredential = value => {
+  const salt = randomBytes(16);
+  return {
+    version: 1,
+    algorithm: 'scrypt',
+    salt: salt.toString('base64url'),
+    hash: derivePasswordHash(value, salt).toString('base64url'),
+    updatedAt: Date.now(),
+  };
+};
+const storedPasswordMatches = (value, credential) => {
+  if (credential?.algorithm !== 'scrypt' || !credential.salt || !credential.hash) return false;
+  try {
+    const actual = derivePasswordHash(value, Buffer.from(credential.salt, 'base64url'));
+    const expected = Buffer.from(credential.hash, 'base64url');
+    return expected.length === actual.length && timingSafeEqual(actual, expected);
+  } catch { return false; }
+};
+const passwordMatches = async value => {
+  const credential = await passwordCredentialStore().get(passwordCredentialKey, { type: 'json', consistency: 'strong' });
+  if (credential) return storedPasswordMatches(value, credential);
   const expected = String(process.env.AUTH_BOOTSTRAP_PASSWORD || '');
-  return expected.length >= 12 && timingSafeEqual(passwordHash(value), passwordHash(expected));
+  return expected.length >= 12 && timingSafeEqual(legacyPasswordHash(value), legacyPasswordHash(expected));
 };
 const token = () => randomBytes(32).toString('base64url');
 const riyadhHour = (value = Date.now()) => Number(new Intl.DateTimeFormat('en', {
@@ -157,7 +180,7 @@ export default async request => {
     const rate = await consumeRateLimit(request, 'password-v2', username || 'unknown', 8, 5 * 60 * 1000);
     if (!rate.allowed) return reply({ error: 'محاولات كثيرة. حاول لاحقًا.' }, 429, { 'retry-after': String(rate.retryAfter) });
     const user = bootstrapUser();
-    if (!user || username !== user.username || !passwordMatches(body.password)) return reply({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, 401);
+    if (!user || username !== user.username || !await passwordMatches(body.password)) return reply({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' }, 401);
     await rate.store.delete(rate.key);
     const raw = token(); const now = Date.now();
     await store('clinic-dashboard-auth-sessions').setJSON(`sessions/${hash(raw)}`, { tokenSignature: sign(raw), user, createdAt: now, lastSeenAt: now, expiresAt: now + SESSION_MAX_MS });
@@ -204,6 +227,20 @@ export default async request => {
   }
   const session = await sessionFrom(request);
   if (!session) return reply({ error: 'Authentication required' }, 401, { 'set-cookie': clearCookie });
+  if (request.method === 'POST' && action === 'change-password') {
+    if (session.user.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
+    const body = await json(request);
+    const currentPassword = String(body.currentPassword || '');
+    const newPassword = String(body.newPassword || '');
+    const rate = await consumeRateLimit(request, 'password-change', session.user.username, 5, 15 * 60 * 1000);
+    if (!rate.allowed) return reply({ error: 'محاولات كثيرة. حاول لاحقًا.' }, 429, { 'retry-after': String(rate.retryAfter) });
+    if (!await passwordMatches(currentPassword)) return reply({ error: 'كلمة المرور الحالية غير صحيحة.' }, 401);
+    if (newPassword.length < 12 || newPassword.length > 128) return reply({ error: 'يجب أن تكون كلمة المرور الجديدة 12 خانة على الأقل.' }, 400);
+    if (await passwordMatches(newPassword)) return reply({ error: 'اختر كلمة مرور جديدة مختلفة.' }, 400);
+    await passwordCredentialStore().setJSON(passwordCredentialKey, createPasswordCredential(newPassword));
+    await rate.store.delete(rate.key);
+    return reply({ ok: true, changedAt: Date.now() });
+  }
   if (request.method === 'POST' && action === 'users') {
     if (session.user.role !== 'admin') return reply({ error: 'Admin role required' }, 403);
     const body = await json(request); const username = cleanUsername(body.username); const phone = cleanPhone(body.phone); const email = cleanEmail(body.email);
@@ -217,4 +254,4 @@ export default async request => {
   return reply({ error: 'Unsupported action' }, 400);
 };
 
-export const __test = { idleProtectionPaused, riyadhHour, IDLE_MS, SESSION_MAX_MS };
+export const __test = { idleProtectionPaused, riyadhHour, IDLE_MS, SESSION_MAX_MS, createPasswordCredential, storedPasswordMatches };

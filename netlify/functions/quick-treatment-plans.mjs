@@ -3,8 +3,8 @@ import { createHash } from 'node:crypto';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { getPatientDirectory } from './lib/patient-directory.mjs';
 import { normalizePatientFile } from './lib/patient-identity.mjs';
-import { ensureQuickPlanCostDraft } from './lib/quick-plan-cost-bridge.mjs';
-import { normalizeToothNumber, countQuickEntries, generateTreatmentPlanText, generateClinicalNote, generateWhatsAppText, DRAFT_NOTICE } from '../../quick-plan-core.js';
+import { ensureQuickPlanCostDraft, synchronizeQuickPlanCostDraft } from './lib/quick-plan-cost-bridge.mjs';
+import { normalizeToothNumber, countQuickEntries, generateTreatmentPlanText, generateClinicalNote, generatePatientFileSummary, generateWhatsAppText, DRAFT_NOTICE } from '../../quick-plan-core.js';
 import { DEFAULT_CATALOG_ITEMS, normalizeCatalogItems } from './treatment-catalog.mjs';
 
 const headers = apiHeaders('GET,POST,PATCH,OPTIONS');
@@ -105,7 +105,17 @@ const sourceDataChanged = (existing, nextItems, nextClinicianData) => JSON.strin
 const generated = plan => ({
   treatmentPlanText: withDraftNotice(plan.outputOverrides?.treatmentPlanText || generateTreatmentPlanText(plan.items, plan.numberingSystem)),
   clinicalNote: withDraftNotice(plan.outputOverrides?.clinicalNote || generateClinicalNote(plan.items, plan.clinicianData, plan.numberingSystem, { name: plan.patientName, age: plan.patientAge, mrn: plan.patientMrn })),
-  whatsappText: withDraftNotice(plan.outputOverrides?.whatsappText || generateWhatsAppText(plan.items, plan.numberingSystem))
+  whatsappText: withDraftNotice(plan.outputOverrides?.whatsappText || generateWhatsAppText(plan.items, plan.numberingSystem)),
+  patientFileSummaryAr: generatePatientFileSummary(plan.items, plan.numberingSystem, {
+    name: plan.patientName, age: plan.patientAge, mrn: plan.patientMrn,
+    examinationConfirmed: plan.documentationConfirmations?.examination === true,
+    discussionConfirmed: plan.documentationConfirmations?.discussion === true
+  }, 'ar'),
+  patientFileSummaryEn: generatePatientFileSummary(plan.items, plan.numberingSystem, {
+    name: plan.patientName, age: plan.patientAge, mrn: plan.patientMrn,
+    examinationConfirmed: plan.documentationConfirmations?.examination === true,
+    discussionConfirmed: plan.documentationConfirmations?.discussion === true
+  }, 'en')
 });
 
 async function listPlans(clinicId) {
@@ -166,7 +176,10 @@ export default async request => {
     const originalInput = clean(body.originalInput, 6000);
     if (!originalInput) return reply({ error: 'Original nurse entry required' }, 400);
     if (countQuickEntries(originalInput) > 60) return reply({ error: 'Too many procedure entries (maximum 60)' }, 400);
-    const fingerprint = sha(JSON.stringify([clinicId, patientMrn, numberingSystem, originalInput, validated.items]));
+    const fingerprint = sha(JSON.stringify([
+      clinicId, patientMrn, numberingSystem, originalInput, validated.items,
+      body.examinationConfirmed === true, body.discussionConfirmed === true
+    ]));
     const id = sha(`${clinicId}|${actorId(user)}|${idempotencyKey}`);
     const key = planKey(clinicId, id);
     const current = await blobStore.get(key, { type: 'json', consistency: 'strong' });
@@ -187,10 +200,20 @@ export default async request => {
       treatingDentist: clean(body.treatingDentist, 120),
       numberingSystem, originalInput, originalParsedItems: structuredClone(validated.items),
       items: validated.items, clinicianData: {}, status: 'pending_review',
+      documentationConfirmations: {
+        examination: body.examinationConfirmed === true,
+        discussion: body.discussionConfirmed === true
+      },
       submittedBy: actorName(user), submittedByUserId: actorId(user), createdAt: now, updatedAt: now,
       modifiedBy: actorName(user), approvedBy: '', approvedAt: 0, revision: 1,
       submissionFingerprint: fingerprint,
-      audit: [{ action: 'submitted', at: now, by: actorName(user), userId: actorId(user) }]
+      audit: [{
+        action: 'submitted', at: now, by: actorName(user), userId: actorId(user),
+        documentationConfirmations: {
+          examination: body.examinationConfirmed === true,
+          discussion: body.discussionConfirmed === true
+        }
+      }]
     };
     Object.assign(plan, generated(plan));
     const write = await blobStore.setJSON(key, plan, { onlyIfNew: true });
@@ -230,6 +253,7 @@ export default async request => {
   if (action === 'approve' && existing.status !== 'pending_review') return reply({ error: 'Plan is not pending review' }, 409);
   if (action === 'complete' && existing.status !== 'approved') return reply({ error: 'Plan is not approved' }, 409);
   const now = Date.now();
+  let linkedContentChanged = false;
   const plan = { ...existing, revision: existing.revision + 1, updatedAt: now, modifiedBy: actorName(user), audit: [...(existing.audit || [])] };
   if (action === 'update') {
     const catalog = await loadCatalog(clinicId);
@@ -240,9 +264,23 @@ export default async request => {
     const after = validated.items.map(item => ({ toothNumber: item.toothNumber, procedureId: item.procedureId }));
     const nextClinicianData = body.clinicianData ? clinicianData(body.clinicianData) : (existing.clinicianData || {});
     const sourcesChanged = sourceDataChanged(existing, validated.items, nextClinicianData);
+    const requestedConfirmations = body.documentationConfirmations && typeof body.documentationConfirmations === 'object' ? body.documentationConfirmations : {};
+    const nextConfirmations = {
+      examination: Object.hasOwn(requestedConfirmations, 'examination') ? requestedConfirmations.examination === true : existing.documentationConfirmations?.examination === true,
+      discussion: Object.hasOwn(requestedConfirmations, 'discussion') ? requestedConfirmations.discussion === true : existing.documentationConfirmations?.discussion === true
+    };
+    if (sourcesChanged && !Object.hasOwn(requestedConfirmations, 'discussion')) nextConfirmations.discussion = false;
+    if (sourcesChanged && existing.documentationConfirmations?.discussion === true && nextConfirmations.discussion === false) {
+      plan.audit.push({ action: 'discussion_confirmation_invalidated_after_plan_change', at: now, by: actorName(user), userId: actorId(user), previousRevision: existing.revision });
+    }
+    if (JSON.stringify(nextConfirmations) !== JSON.stringify(existing.documentationConfirmations || {})) {
+      plan.audit.push({ action: 'documentation_confirmations_updated', at: now, by: actorName(user), userId: actorId(user), confirmations: nextConfirmations });
+    }
+    linkedContentChanged = sourcesChanged || JSON.stringify(nextConfirmations) !== JSON.stringify(existing.documentationConfirmations || {});
     if (JSON.stringify(before) !== JSON.stringify(after)) plan.audit.push({ action: 'items_corrected', at: now, by: actorName(user), userId: actorId(user), before, after });
     plan.items = validated.items;
     plan.clinicianData = nextClinicianData;
+    plan.documentationConfirmations = nextConfirmations;
     if (sourcesChanged) {
       delete plan.outputOverrides;
       plan.audit.push({ action: 'outputs_regenerated_after_source_change', at: now, by: actorName(user), userId: actorId(user) });
@@ -260,6 +298,18 @@ export default async request => {
   Object.assign(plan, generated(plan));
   const write = await blobStore.setJSON(key, plan, { onlyIfMatch: snapshot.etag });
   if (!write.modified) return reply({ error: 'Concurrent update conflict' }, 409);
+  if (action === 'update' && linkedContentChanged) {
+    try {
+      const patientRef = await resolvePatient(existing.patientMrn, clinicId);
+      if (!patientRef) throw new Error('Patient record unavailable for linked plan synchronization');
+      const catalog = await loadCatalog(clinicId);
+      await synchronizeQuickPlanCostDraft({ quickPlan: plan, previousQuickPlan: existing, catalog, patientRecord: patientRef.patient, user, actor: actorName(user) });
+    } catch (error) {
+      const latest = await blobStore.getWithMetadata(key, { type: 'json', consistency: 'strong' }).catch(() => null);
+      if (latest?.etag && latest.data?.revision === plan.revision) await blobStore.setJSON(key, existing, { onlyIfMatch: latest.etag }).catch(() => null);
+      return reply({ error: clean(error?.message || 'Linked costed plan synchronization failed', 240), costPlanConflict: true }, 409);
+    }
+  }
   return reply({ ok: true, plan });
 };
 

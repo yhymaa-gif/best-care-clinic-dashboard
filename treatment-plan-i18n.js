@@ -5,7 +5,7 @@
     ['الجلسة مطلوبة','Session required'],
     ['سجّل الدخول إلى لوحة أفضل عناية أولًا، ثم افتح الخطة العلاجية من صف المريض.','Sign in to the Best Care dashboard first, then open the treatment plan from the patient row.'],
     ['العودة إلى تسجيل الدخول','Return to sign in'],['أفضل عناية','Best Care'],['← العودة للداشبورد','← Back to dashboard'],
-    ['جارٍ تحميل الخطة…','Loading plan…'],['جارٍ تحميل حالة الخطة…','Loading plan status…'],['＋ إضافة مرحلة','＋ Add stage'],
+    ['جارٍ تحميل الخطة…','Loading plan…'],['جارٍ تحميل حالة الخطة…','Loading plan status…'],['⚡ إضافة خطة سريعة','⚡ Add Quick Plan'],['＋ إضافة مرحلة','＋ Add stage'],
     ['إدخال سريع','Quick entry'],['إظهار الوثيقة كاملة','Show full document'],['معاينة الطباعة','Print preview'],['حفظ الخطة','Save plan'],
     ['إرسال المسودة للإدارة','Send draft to administration'],['مشاركة مسودة PDF عبر واتساب','Share draft PDF via WhatsApp'],
     ['✍ توقيع المريض على هذا الجهاز','✍ Patient signature on this device'],['اعتماد نهائي للخطة الموقعة','Final approval of signed plan'],

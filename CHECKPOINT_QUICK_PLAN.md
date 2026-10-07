@@ -29,10 +29,20 @@
 - Added a success action to open the linked costed plan while retaining the one-tap nursing note copy output.
 - Fixed diagnostic ordering so implant uncovering and implant impressions cannot be mistaken for diagnostics.
 - Serialized favorite updates with clinic/doctor context guards and optimistic rollback scoped to one procedure.
+- Made a second tap on the same visual tooth/procedure card remove that assignment without disturbing corrected or duplicated entries.
+- Replaced the patient-file copy with treatment-focused wording. Examination/periapical/panoramic assessment and patient discussion are included only after explicit confirmation, and those confirmations plus Arabic/English summaries are stored with the submitted plan and audit record.
+- Kept submitted Quick Plans editable through a direct post-submit review link, while the structured record remains revision-checked and audit-trailed.
+- Added a prominent “Add Quick Plan” action to the treatment-plan center, quick-plan review header, and the opened costed plan; the latter carries clinic, language, and available MRN.
+- Added administration date swipes and an authenticated, salted password-change workflow in Settings.
+- Kept submitted Quick Plans editable while pending review and synchronized safe edits across the versioned, appointment-day, and permanent-patient copies of the linked costed draft.
+- Added revision-order guards, retryable pointer repair, and managed-content fingerprints covering both procedure phases and the generated patient-file note.
+- Protected separately edited prices, procedures, and clinical notes from Quick Plan overwrite; plans already in approval remain direct-edit only.
+- Added a safe compatibility path for earlier linked drafts only when their stored content still exactly matches the prior Quick Plan.
+- Added short Arabic/English proposed-draft wording and the recorded tooth-numbering system to the copyable patient-file summary.
 
 ## Evidence
 
-- `npm run check`: 234 tests passed, 0 failed.
+- `npm run check`: 251 tests passed, 0 failed after the final content-revision, concurrency, and cross-index hardening.
 - Local browser preview verified FDI arch order, counts, and three procedures on tooth 11 (root canal treatment, post placement, ceramic crown).
 - Local browser preview verified the generated Arabic patient-file summary and draft/review warning.
 - Browser behavior verified an ambiguous temporary implant procedure stays an exact match, Arabic/English shortcuts switch immediately, Universal lower order is `32` through `17`, and age/name are cleared after changing the MRN.
@@ -44,11 +54,14 @@
 - Pure bridge verification confirmed official IDs/prices, automatic patient details, grouped quantities and an empty diagnosis field.
 - Failure-injection tests confirmed an interrupted first write is repaired on retry and an approved/signed registry status is retained.
 - An A → B → retry A regression test confirmed patient aliases remain on the newer plan.
+- Concurrency tests confirmed stale Quick Plan revisions are rejected, interrupted day-index writes repair on retry, and older drafts migrate only when unchanged.
+- Cross-index verification confirmed the versioned, appointment-day, and permanent-patient plan copies all receive the same edited procedures and source revision.
+- Manual-note and manual-price tests confirmed Quick Plan synchronization refuses to overwrite separate cost-plan edits.
 - Independent read-only review returned GO with no remaining blocker in the cost-plan bridge scope.
 
 ## Remaining work
 
-- No production deployment has been performed.
+- The current combined update is fully tested locally; production deployment has not yet been performed.
 
 ## Next safe step
 

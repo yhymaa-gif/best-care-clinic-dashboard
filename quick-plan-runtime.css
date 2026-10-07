@@ -164,4 +164,5 @@ html[data-theme="dark"] body.quick-plan-page .procedure-favorite-toggle.is-favor
 .cost-plan-ready{margin:8px 0;padding:10px 12px;border:1px solid #9dcfbd;border-radius:12px;background:#edf9f4;color:#175b48;font-weight:850}
 .open-cost-plan{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 16px;border-radius:12px;background:#176c54;color:#fff;font-weight:950;text-decoration:none;box-shadow:0 6px 16px rgba(23,108,84,.18)}
 .open-cost-plan:hover,.open-cost-plan:focus-visible{background:#0f5a45;outline:3px solid rgba(23,108,84,.2)}
+.file-summary-confirmations{display:grid;gap:7px;margin-bottom:9px}.file-summary-confirmations label{display:flex;align-items:flex-start;gap:8px;padding:8px;border:1px solid #d5e5dd;border-radius:10px;background:#f7fbf8;color:#173e33;font-size:11px;line-height:1.55;cursor:pointer}.file-summary-confirmations input{flex:none;width:17px;height:17px;margin:1px 0 0;accent-color:#19735b}html[data-theme="dark"] .file-summary-confirmations label{border-color:#40574d;background:#172a22;color:#edf5f2}
 
