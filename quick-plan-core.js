@@ -106,6 +106,17 @@ export function parseQuickEntry(input, catalog, numberingSystem = 'universal') {
 }
 
 const sourceKeyBase = item => normalizeAlias(item?.originalInput || '') || `entry ${Number(item?.index) || 0}`;
+// Only synchronize an unsaved entry. Stored plans retain their historical snapshots.
+export function refreshDraftCatalogItems(items, catalog) {
+  const byId = new Map(catalog.filter(item => item.active !== false && item.status !== 'inactive').map(item => [item.id, item]));
+  return items.map(item => {
+    if (!item.procedureId) return { ...item };
+    const procedure = byId.get(item.procedureId);
+    if (!procedure) return { ...item, matchState: 'unmatched', userEdited: true };
+    return { ...item, procedureCode: procedure.code || procedure.id, officialName: procedure.name || '',
+      officialNameEn: procedure.nameEn || '', category: treatmentPhase(procedure.category), userEdited: true };
+  });
+}
 export function reconcileQuickPlanItems(previousItems, parsedItems, deletedSourceKeys = []) {
   const counts = new Map();
   const tagged = (Array.isArray(parsedItems) ? parsedItems : []).map(item => {

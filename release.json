@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.07-quick-plan-editable-note-controls",
+  "version": "2026.10.07-quick-plan-catalog-sync",
   "publishedAt": "2026-10-07",
   "summary": {
-    "ar": "الخطة السريعة قابلة للتعديل بعد الإرسال، بملخص علاجي موثق، مع إلغاء الإجراء بالضغط الثاني والتنقل بين الأيام وتعديل كلمة المرور.",
-    "en": "Quick Plans stay editable after submission, with treatment-focused notes, second-tap removal, day swipes, and secure password changes."
+    "ar": "تحديث إجراءات الخطة السريعة تلقائيًا من قائمة الداشبورد باللغتين، مع الحفاظ على الإدخال والمفضلة والخطط السابقة.",
+    "en": "Quick Plan procedures now refresh from the dashboard master in both languages, preserving drafts, favorites, and historical plans."
   }
 }

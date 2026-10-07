@@ -45,10 +45,10 @@ test('dashboard login shell and floating controls follow English mode before aut
 
 test('bilingual treatment assets are refreshed in the PWA shell', async () => {
   const [worker, release] = await Promise.all([read('service-worker.js'), read('release.json')]);
-  assert.match(worker, /bestcare-dashboard-v1-20261007-quick-plan-editable-note-controls/);
+  assert.match(worker, /bestcare-dashboard-v1-20261007-quick-plan-catalog-sync/);
   assert.match(worker, /'\.\/treatment-plan-i18n\.js'/);
   const metadata = JSON.parse(release);
-  assert.equal(metadata.version, '2026.10.07-quick-plan-editable-note-controls');
+  assert.equal(metadata.version, '2026.10.07-quick-plan-catalog-sync');
   assert.ok(metadata.summary.ar.length > 10);
   assert.ok(metadata.summary.en.length > 10);
 });
