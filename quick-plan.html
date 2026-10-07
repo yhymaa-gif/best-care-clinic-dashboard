@@ -101,6 +101,7 @@
       </section>
 
       <p id="formError" class="form-error" role="alert" hidden></p>
+      <button id="catalogRetry" type="button" data-i18n="retryReceipt" hidden>RETRY</button>
       <div class="sticky-submit">
         <div><strong id="readyState" data-i18n="notReady">Complete the required fields</strong><small data-i18n="submitHelp">All entries must have a valid tooth and confirmed procedure.</small></div>
         <button id="submitPlan" type="submit" disabled><span aria-hidden="true">✓</span><span data-i18n="submit">SUBMIT PLAN</span></button>
@@ -118,10 +119,14 @@
       <button id="copyFileSummary" type="button" data-i18n="copyFileSummary">COPY NOTE</button>
     </aside>
 
-    <section id="successCard" class="state-card success-card" hidden>
+    <section id="receiptRestoreError" class="state-card error-card" hidden><p id="receiptRestoreMessage" role="alert"></p><button id="retryReceipt" type="button" data-i18n="retryReceipt">RETRY</button></section>
+    <section id="successCard" class="state-card success-card" hidden aria-labelledby="receiptTitle">
       <span class="success-icon">✓</span>
-      <h2 data-i18n="submitted">Treatment Plan Submitted</h2>
-      <p><span data-i18n="status">Status</span>: <strong>PENDING DOCTOR REVIEW</strong></p>
+      <h2 id="receiptTitle" data-i18n="submitted">Plan sent to administration</h2>
+      <p class="receipt-delivery" data-i18n="deliveryHelp">Saved in the administration inbox. This does not confirm that staff have read it.</p>
+      <dl id="submissionReceipt" class="submission-receipt"></dl>
+      <p><span data-i18n="status">Status</span>: <strong id="submittedPlanStatus"></strong></p>
+      <a id="openAdminInbox" class="open-cost-plan receipt-admin-link" href="./?view=admin#adminQuickPlanInbox" data-i18n="openAdminInbox">OPEN ADMINISTRATION INBOX</a>
       <p id="costPlanReady" class="cost-plan-ready" data-i18n="costPlanReady" hidden>A costed treatment-plan draft was created with the patient details and official catalog prices.</p>
       <a id="openCostPlan" class="open-cost-plan" href="./treatment-plans.html" data-i18n="openCostPlan" hidden>OPEN COSTED PLAN</a>
       <a id="openSubmittedPlan" class="open-cost-plan open-submitted-plan" href="./quick-plan-review.html" data-i18n="openSubmittedPlan" hidden>OPEN AND EDIT QUICK PLAN</a>

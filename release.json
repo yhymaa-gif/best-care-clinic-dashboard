@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.07-quick-plan-catalog-sync",
+  "version": "2026.10.07-quick-plan-admin-receipt",
   "publishedAt": "2026-10-07",
   "summary": {
-    "ar": "تحديث إجراءات الخطة السريعة تلقائيًا من قائمة الداشبورد باللغتين، مع الحفاظ على الإدخال والمفضلة والخطط السابقة.",
-    "en": "Quick Plan procedures now refresh from the dashboard master in both languages, preserving drafts, favorites, and historical plans."
+    "ar": "تأكيد إرسال الخطة السريعة للإدارة، مع بطاقة إرسال محفوظة وقسم مستقل للخطط المنتظرة والمعتمدة في شاشة الإدارة.",
+    "en": "Confirm Quick Plan delivery to administration, with a reloadable receipt and separate pending and reviewed plans in the dashboard inbox."
   }
 }
