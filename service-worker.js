@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261007-quick-plan-editable-note-controls';
+const CACHE_NAME='bestcare-dashboard-v1-20261007-quick-plan-catalog-sync';
 const APP_SHELL=[
   './',
   './index.html',

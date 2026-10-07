@@ -1,4 +1,4 @@
-import { parseQuickEntry, matchProcedure, normalizeToothNumber, procedureDisplayLabel, reconcileQuickPlanItems, generatePatientFileSummary, TREATMENT_PHASES, treatmentPhase, treatmentPhaseLabel } from './quick-plan-core.js';
+import { parseQuickEntry, matchProcedure, normalizeToothNumber, procedureDisplayLabel, reconcileQuickPlanItems, refreshDraftCatalogItems, generatePatientFileSummary, TREATMENT_PHASES, treatmentPhase, treatmentPhaseLabel } from './quick-plan-core.js';
 import { DEFAULT_CATALOG_ITEMS } from './procedure-catalog-defaults.js';
 
 const $=id=>document.getElementById(id);
@@ -16,6 +16,19 @@ let language=requestedLanguage==='ar'?'ar':requestedLanguage==='en'?'en':localSt
 const t=key=>text[language][key]||text.en[key]||key;
 const currentPatientKey=()=>`${$('clinicId').value}|${normalizeMrn($('patientMrn').value)}`;
 const quickPlanChannel='BroadcastChannel'in window?new BroadcastChannel('bestcare-quick-plans'):null;
+let catalogFingerprint='',catalogContext='',catalogRefreshBusy=false,catalogLastChecked=0,submitting=false,catalogSelectionContext='',catalogSelectionGeneration=0,favoriteRevision=0;
+async function refreshCatalogIfVisible(force=false){
+  if(previewMode||document.hidden||navigator.onLine===false||catalogRefreshBusy||submitting||!catalogContext||$('quickPlanForm').hidden)return;
+  if(!force&&Date.now()-catalogLastChecked<5000)return;
+  catalogRefreshBusy=true;
+  try{await loadCatalog()}catch{ /* Preserve the draft; submission retries a fresh server read. */ }
+  finally{catalogRefreshBusy=false}
+}
+quickPlanChannel?.addEventListener('message',event=>{if(event.data?.type==='catalog-updated'&&event.data.clinicId===$('clinicId').value)refreshCatalogIfVisible(true)});
+window.addEventListener('focus',()=>refreshCatalogIfVisible());
+window.addEventListener('online',()=>refreshCatalogIfVisible(true));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCatalogIfVisible()});
+setInterval(()=>refreshCatalogIfVisible(),30000);
 
 function applyLanguage(){
   document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.body.dir=document.documentElement.dir;
@@ -147,29 +160,30 @@ function removeAssignedProcedure(procedureId,toothNumber){
   return true;
 }
 async function toggleProcedureFavorite(procedureId){
+  favoriteRevision+=1;
   const previousFavorite=(catalogProfile.favorites||[]).includes(procedureId),favorites=new Set(catalogProfile.favorites||[]),favorite=!previousFavorite;
   if(favorite)favorites.add(procedureId);else favorites.delete(procedureId);
   catalogProfile={...catalogProfile,favorites:[...favorites]};renderProcedurePalette();renderShortcuts();
   if(previewMode)return;
-  const context={generation:catalogGeneration,clinicId:$('clinicId').value,doctorKey:$('treatingDentist').value.trim(),procedureId,favorite,previousFavorite};
+  const context={generation:catalogSelectionGeneration,clinicId:$('clinicId').value,doctorKey:$('treatingDentist').value.trim(),procedureId,favorite,previousFavorite};
   favoriteUpdateQueue=favoriteUpdateQueue.catch(()=>{}).then(async()=>{
-    if(context.generation!==catalogGeneration||context.clinicId!==$('clinicId').value||context.doctorKey!==$('treatingDentist').value.trim())return;
+    if(context.generation!==catalogSelectionGeneration||context.clinicId!==$('clinicId').value||context.doctorKey!==$('treatingDentist').value.trim())return;
     try{
       const response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(context.clinicId)}&doctor=${encodeURIComponent(context.doctorKey)}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({action:'favorite',doctorKey:context.doctorKey,procedureId:context.procedureId,favorite:context.favorite})}),data=await response.json();
       if(!response.ok)throw new Error(data.error||'Could not update favorite');
-      if(context.generation===catalogGeneration&&data.profile?.usage)catalogProfile={...catalogProfile,usage:{...catalogProfile.usage,...data.profile.usage}};
+      if(context.generation===catalogSelectionGeneration&&data.profile?.usage)catalogProfile={...catalogProfile,usage:{...catalogProfile.usage,...data.profile.usage}};
     }catch(error){
-      if(context.generation===catalogGeneration){const current=new Set(catalogProfile.favorites||[]),stillDesired=current.has(context.procedureId)===context.favorite;if(stillDesired){if(context.previousFavorite)current.add(context.procedureId);else current.delete(context.procedureId);catalogProfile={...catalogProfile,favorites:[...current]};renderProcedurePalette();renderShortcuts()}setError(error.message)}
+      if(context.generation===catalogSelectionGeneration){const current=new Set(catalogProfile.favorites||[]),stillDesired=current.has(context.procedureId)===context.favorite;if(stillDesired){if(context.previousFavorite)current.add(context.procedureId);else current.delete(context.procedureId);catalogProfile={...catalogProfile,favorites:[...current]};renderProcedurePalette();renderShortcuts()}setError(error.message)}
     }
   });
 }
 function clinicLabel(clinic){return `${clinic.name||clinic.id}${clinic.roomNumber?` · ${language==='ar'?'غرفة':'Room'} ${clinic.roomNumber}`:''}${clinic.doctorName?` · ${clinic.doctorName}`:''}`}
 function setError(message=''){ $('formError').hidden=!message;$('formError').textContent=message }
 function setLookup(message,state=''){const node=$('patientLookupState');node.textContent=message;node.className=state?`lookup-state-${state}`:''}
-function itemReady(item){return Boolean(normalizeToothNumber(item.toothNumber,$('numberingSystem').value)&&item.procedureId&&['exact','manual'].includes(item.matchState))}
+function itemReady(item){return Boolean(normalizeToothNumber(item.toothNumber,$('numberingSystem').value)&&catalog.some(procedure=>procedure.id===item.procedureId)&&['exact','manual'].includes(item.matchState))}
 function updateReady(){
   const ready=Boolean(patient&&patientLookupKey===currentPatientKey()&&$('patientMrn').value.trim()&&items.length&&items.every(itemReady));
-  $('submitPlan').disabled=!ready;$('readyState').textContent=ready?(language==='ar'?'جاهزة للإرسال':'Ready to submit'):t('notReady');
+  $('submitPlan').disabled=submitting||!ready;$('readyState').textContent=ready?(language==='ar'?'جاهزة للإرسال':'Ready to submit'):t('notReady');
   $('parseSummary').textContent=language==='ar'?`${items.length} إجراء · ${items.filter(itemReady).length} جاهز`:`${items.length} item${items.length===1?'':'s'} · ${items.filter(itemReady).length} ready`;
 }
 function procedureOptions(item){
@@ -191,13 +205,25 @@ function scheduleParse(){clearTimeout(parseTimer);parseTimer=setTimeout(parse,10
 function invalidatePatient(){lookupGeneration+=1;patient=null;patientLookupKey='';$('patientName').value='';$('patientAge').value='';$('confirmExamination').checked=false;$('confirmDiscussion').checked=false;setLookup(t('mrnHelp'));updateFileSummary();updateReady()}
 async function loadCatalog(){
   const clinicId=$('clinicId').value;if(!clinicId)return;const generation=++catalogGeneration;
-  const doctor=$('treatingDentist').value.trim(),response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(clinicId)}&doctor=${encodeURIComponent(doctor)}`),data=await response.json();
+  const doctor=$('treatingDentist').value.trim(),selectionContext=`${clinicId}|${doctor}`;
+  if(selectionContext!==catalogSelectionContext){catalogSelectionContext=selectionContext;catalogSelectionGeneration+=1}
+  await favoriteUpdateQueue;
+  const profileRevision=favoriteRevision,response=await request(`/api/treatment-catalog?clinic=${encodeURIComponent(clinicId)}&doctor=${encodeURIComponent(doctor)}`),data=await response.json();
   if(!response.ok)throw Object.assign(new Error(data.error||'Could not load procedures'),{status:response.status});
   if(generation!==catalogGeneration||clinicId!==$('clinicId').value||doctor!==$('treatingDentist').value.trim())return;
-  catalogProfile=data.profile&&typeof data.profile==='object'?data.profile:{favorites:[],usage:{}};catalog=Array.isArray(data.items)?data.items.filter(item=>item.active!==false&&item.status!=='inactive'):[];
+  const nextCatalog=Array.isArray(data.items)?data.items.filter(item=>item.active!==false&&item.status!=='inactive'):[],fingerprint=JSON.stringify(nextCatalog),context=`${clinicId}|${doctor}`;
+  catalogLastChecked=Date.now();
+  const profile=data.profile&&typeof data.profile==='object'?data.profile:{favorites:[],usage:{}};
+  const profileChanged=profileRevision===favoriteRevision&&JSON.stringify(profile)!==JSON.stringify(catalogProfile);
+  if(profileChanged)catalogProfile=profile;
+  if(fingerprint===catalogFingerprint&&context===catalogContext){if(profileChanged){renderShortcuts();renderProcedurePalette()}return}
+  // Capture any pending keystrokes against the old catalog before updating labels/aliases.
+  clearTimeout(parseTimer);parse();
+  catalog=nextCatalog;
+  items=refreshDraftCatalogItems(items,catalog);catalogFingerprint=fingerprint;catalogContext=context;
   renderShortcuts();
   renderToothPicker();
-  scheduleParse();
+  parse();
 }
 async function loadClinics(){
   if(previewMode){
@@ -224,6 +250,13 @@ async function findPatient(){
   try{const response=await request(`/api/patient-lookup?type=file&value=${encodeURIComponent(mrn)}&clinic=${encodeURIComponent(clinicId)}`),data=await response.json();if(generation!==lookupGeneration||key!==currentPatientKey())return;if(!response.ok)throw new Error(data.error||'Lookup failed');const exact=(data.matches||[]).find(match=>normalizeMrn(match.patient?.file)===normalizeMrn(mrn));if(!exact)throw new Error(language==='ar'?'رقم الملف غير موجود في هذه العيادة':'MRN was not found in this clinic');patient=exact.patient;patientLookupKey=key;$('patientName').value=patient.name||'';if(patient.age!==undefined&&patient.age!==null&&patient.age!=='')$('patientAge').value=String(patient.age);setLookup(language==='ar'?`تم العثور على ${patient.name||'المريض'}`:`Patient found${patient.name?`: ${patient.name}`:''}`,'ok');updateFileSummary();updateReady()}catch(error){if(generation===lookupGeneration)setLookup(error.message,'error')}
 }
 function resolvedItems(){return items.map(item=>{const procedure=catalog.find(option=>option.id===item.procedureId);return{toothNumber:normalizeToothNumber(item.toothNumber,$('numberingSystem').value),procedureId:item.procedureId,procedureCode:procedure?.code||procedure?.id||item.procedureId,officialName:procedure?.name||'',officialNameEn:procedure?.nameEn||'',category:treatmentPhase(procedure?.category),originalInput:item.originalInput,matchState:item.matchState}})}
+async function submitWithCatalogRefresh(event){
+  event.preventDefault();if(submitting)return;
+  submitting=true;updateReady();
+  try{if(!previewMode)await loadCatalog();clearTimeout(parseTimer);parse();await submit(event)}
+  catch(error){setError(error.message)}
+  finally{submitting=false;updateReady()}
+}
 async function submit(event){
   event.preventDefault();setError();if(!patient||!items.length||!items.every(itemReady)){setError(language==='ar'?'أكمل جميع المطابقات قبل الإرسال.':'Resolve every entry before submission.');return}
   if(previewMode){setError(language==='ar'?'هذه معاينة محلية فقط ولا تحفظ بيانات المرضى.':'This local preview does not save patient data.');return}
@@ -233,7 +266,7 @@ async function submit(event){
 
 $('languageToggle').addEventListener('click',()=>{language=language==='en'?'ar':'en';localStorage.setItem('bestcare_lang',language);applyLanguage();render()});
 $('clinicId').addEventListener('change',async()=>{invalidatePatient();const selected=$('clinicId').selectedOptions[0]?.textContent||'';if(selected)$('treatingDentist').value='';try{await loadCatalog()}catch(error){setError(error.message)}updateReady()});
-$('numberingSystem').addEventListener('change',()=>{selectedTooth='';renderToothPicker();parse()});$('quickEntry').addEventListener('input',scheduleParse);$('lookupPatient').addEventListener('click',findPatient);$('patientMrn').addEventListener('change',findPatient);$('quickPlanForm').addEventListener('submit',submit);
+$('numberingSystem').addEventListener('change',()=>{selectedTooth='';renderToothPicker();parse()});$('quickEntry').addEventListener('input',scheduleParse);$('lookupPatient').addEventListener('click',findPatient);$('patientMrn').addEventListener('change',findPatient);$('quickPlanForm').addEventListener('submit',submitWithCatalogRefresh);
 $('patientMrn').addEventListener('input',()=>{if(patientLookupKey&&patientLookupKey!==currentPatientKey())invalidatePatient()});
 $('toothGrid').addEventListener('click',event=>{const button=event.target.closest('[data-tooth-pick]');if(!button)return;selectedTooth=button.dataset.toothPick||'';renderToothPicker();$('procedurePalette').querySelector('[data-palette-procedure]')?.focus()});
 $('procedurePalette').addEventListener('click',event=>{const favoriteButton=event.target.closest('[data-palette-favorite]');if(favoriteButton){toggleProcedureFavorite(favoriteButton.dataset.paletteFavorite);return}const button=event.target.closest('[data-palette-procedure]');if(!button||!selectedTooth)return;const procedure=catalog.find(item=>item.id===button.dataset.paletteProcedure);if(!procedure)return;clearTimeout(parseTimer);parse();if(removeAssignedProcedure(procedure.id,selectedTooth))return;insertQuickEntry(`${uniqueQuickToken(procedure)} ${selectedTooth}`,{focus:false});clearTimeout(parseTimer);parse()});
