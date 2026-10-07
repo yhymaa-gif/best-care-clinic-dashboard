@@ -1318,6 +1318,7 @@
       });
       document.querySelectorAll('[data-scroll]').forEach(button=>button.addEventListener('click',()=>$(button.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})));
       $('backBtn').addEventListener('click',()=>location.href=source.returnUrl||`./?view=admin${appointmentDate?`&date=${encodeURIComponent(appointmentDate)}`:''}`);
+      $('quickPlanTopBtn').addEventListener('click',()=>{const params=new URLSearchParams({clinic:clinicId,lang:uiLang});const mrn=String(state?.patient?.fileNo||'').trim();if(mrn)params.set('mrn',mrn);location.href=`./quick-plan?${params.toString()}`});
       $('addPhaseBtn').addEventListener('click',addPhase);$('saveBtn').addEventListener('click',saveDraftPlan);$('previewBtn').addEventListener('click',togglePreview);
       $('compactEntryBtn').addEventListener('click',toggleCompactEntry);
       $('sidePreviewBtn').addEventListener('click',togglePreview);

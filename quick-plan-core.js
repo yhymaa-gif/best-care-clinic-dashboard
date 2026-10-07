@@ -204,25 +204,36 @@ export function generatePatientFileSummary(items, numberingSystem = 'fdi', patie
   const name = String(patient?.name || '').trim();
   const age = Number(patient?.age) > 0 ? Number(patient.age) : 0;
   const mrn = String(patient?.mrn || '').trim();
-  const total = validItems.length;
+  const examinationConfirmed = patient?.examinationConfirmed === true;
+  const discussionConfirmed = patient?.discussionConfirmed === true;
   if (language === 'ar') {
     const identity = [name ? `المريض/ة ${name}` : 'المريض/ة', age ? `العمر ${age} سنة` : '', mrn ? `رقم الملف ${mrn}` : ''].filter(Boolean).join('، ');
-    const sentences = [];
-    if (stages.diagnostic.length) sentences.push(`يحتاج المريض/ة، وفق الإجراءات المسجلة، إلى استكمال إجراءات تشخيصية تشمل: ${rowText(stages.diagnostic)}`);
-    if (stages.initial.length) sentences.push(`ثم بدء المعالجات الأولية المسجلة وتشمل: ${rowText(stages.initial)}`);
-    if (stages.implant.length) sentences.push(`وتتضمن المرحلة الجراحية والزراعة: ${rowText(stages.implant)}`);
-    if (stages.prosthetic.length) sentences.push(`وتتضمن مرحلة التركيبات: ${rowText(stages.prosthetic)}`);
-    if (stages.other.length) sentences.push(`كما سُجلت الإجراءات الأخرى الآتية: ${rowText(stages.other)}`);
-    return `${DRAFT_NOTICE}\nمسودة للتوثيق فقط — يلزم اعتماد طبيب مخوّل.\n\n${identity}. ${sentences.length?sentences.join('. '):'لم تُسجّل إجراءات بعد'}. إجمالي الإجراءات المسجلة: ${total}. تم تنظيم الإجراءات حسب أرقام الأسنان باستخدام نظام ${numberingSystem === 'fdi' ? 'FDI' : 'Universal'}. يلزم أن يراجع الطبيب المعالج هذه المسودة، ويتحقق من ملاءمة الإجراءات وتسلسلها بالاستناد إلى المعلومات السريرية والشعاعية الموثقة، ثم يعدّلها أو يعتمدها قبل بدء العلاج. لا يتضمن هذا الملخص تشخيصًا أو نتائج فحص لم تُدخل صراحة، ولا يُعد خطة نهائية أو موافقة علاجية حتى اعتماد الطبيب المعالج.`;
+    const sentences = [`${identity}.`, `هذه مسودة خطة علاجية مقترحة، وتبقى قيد مراجعة واعتماد الطبيب المخوّل. نظام ترقيم الأسنان: ${numberingLabel(numberingSystem)}.`];
+    if (examinationConfirmed) sentences.push('تم إعداد هذه الخطة العلاجية بناءً على فحص إكلينيكي وتقييم شعاعي باستخدام الأشعة الذروية والأشعة البانورامية.');
+    if (stages.diagnostic.length) sentences.push(`الإجراءات التشخيصية المطلوبة: ${rowText(stages.diagnostic)}.`);
+    const treatment = [];
+    if (stages.initial.length) treatment.push(`المعالجات الأولية: ${rowText(stages.initial)}`);
+    if (stages.implant.length) treatment.push(`الجراحة والزراعة: ${rowText(stages.implant)}`);
+    if (stages.prosthetic.length) treatment.push(`التركيبات: ${rowText(stages.prosthetic)}`);
+    if (stages.other.length) treatment.push(`إجراءات أخرى: ${rowText(stages.other)}`);
+    if (treatment.length) sentences.push(`يحتاج المريض إلى الإجراءات العلاجية التالية: ${treatment.join('؛ ')}.`);
+    if (!validItems.length) sentences.push('لم تُسجّل إجراءات بعد.');
+    if (discussionConfirmed) sentences.push('تمت مناقشة هذه الخطة العلاجية مع المريض وشرح الإجراءات المقترحة له.');
+    return sentences.join(' ');
   }
   const identity = [name ? `Patient ${name}` : 'The patient', age ? `age ${age}` : '', mrn ? `MRN ${mrn}` : ''].filter(Boolean).join(', ');
-  const sentences = [];
-  if (stages.diagnostic.length) sentences.push(`Based on the recorded entries, the patient requires completion of the following diagnostic procedures: ${rowText(stages.diagnostic)}`);
-  if (stages.initial.length) sentences.push(`The recorded initial treatment procedures are: ${rowText(stages.initial)}`);
-  if (stages.implant.length) sentences.push(`The recorded surgical and implant procedures are: ${rowText(stages.implant)}`);
-  if (stages.prosthetic.length) sentences.push(`The recorded prosthetic procedures are: ${rowText(stages.prosthetic)}`);
-  if (stages.other.length) sentences.push(`Other recorded procedures are: ${rowText(stages.other)}`);
-  return `${DRAFT_NOTICE}\n\n${identity}. ${sentences.length?sentences.join('. '):'No procedures have been recorded yet'}. Total recorded procedures: ${total}. Procedures are organized by tooth using the ${numberingSystem === 'fdi' ? 'FDI' : 'Universal'} numbering system. The treating dentist must review the draft, verify the appropriateness and sequence of the listed procedures against the documented clinical and radiographic information, and amend or approve it before treatment begins. This summary does not add any diagnosis or clinical finding that was not explicitly entered, and it is not a final treatment plan or treatment consent until approved by the treating dentist.`;
+  const sentences = [`${identity}.`, `This is a proposed treatment-plan draft pending review and approval by the authorized dentist. Tooth numbering: ${numberingLabel(numberingSystem)}.`];
+  if (examinationConfirmed) sentences.push('This treatment plan was prepared based on a clinical examination and radiographic assessment using periapical and panoramic radiographs.');
+  if (stages.diagnostic.length) sentences.push(`Required diagnostic procedures: ${rowText(stages.diagnostic)}.`);
+  const treatment = [];
+  if (stages.initial.length) treatment.push(`initial treatment: ${rowText(stages.initial)}`);
+  if (stages.implant.length) treatment.push(`surgical and implant treatment: ${rowText(stages.implant)}`);
+  if (stages.prosthetic.length) treatment.push(`prosthetic treatment: ${rowText(stages.prosthetic)}`);
+  if (stages.other.length) treatment.push(`other procedures: ${rowText(stages.other)}`);
+  if (treatment.length) sentences.push(`The patient requires the following treatment procedures: ${treatment.join('; ')}.`);
+  if (!validItems.length) sentences.push('No procedures have been recorded yet.');
+  if (discussionConfirmed) sentences.push('This treatment plan was discussed with the patient, and the proposed procedures were explained.');
+  return sentences.join(' ');
 }
 export function generateWhatsAppText(items, numberingSystem = 'universal') {
   const ordered = orderTreatmentItems(items);

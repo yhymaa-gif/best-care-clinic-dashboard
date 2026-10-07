@@ -208,7 +208,7 @@ let currentClinic={...clinicDirectory[clinicNumber(ACTIVE_CLINIC_ID)-1]};
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email'; let localStateHydrated=false; let authUser=null;
 function setupEmailAuth(){const step=$('authRequestStep'),phone=$('authPhone');if(!step||!phone||$('authEmail'))return;const methods=document.createElement('div');methods.className='auth-methods';methods.innerHTML='<label><input type="radio" name="authMethod" value="email" checked> البريد الإلكتروني</label><label><input type="radio" name="authMethod" value="phone"> الجوال</label>';const emailLabel=document.createElement('label');emailLabel.id='authEmailLabel';emailLabel.innerHTML='البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">';step.insertBefore(methods,phone.parentElement);step.insertBefore(emailLabel,phone.parentElement);phone.parentElement.id='authPhoneLabel';phone.parentElement.hidden=true;methods.querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{authMethod=input.value;emailLabel.hidden=authMethod!=='email';phone.parentElement.hidden=authMethod!=='phone'}));}
-const localizeAuthError=message=>{const text=String(message||'');if(lang!=='en')return text;const map={'اسم المستخدم أو كلمة المرور غير صحيحة':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة.':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.':'Incorrect username or password. Enter the current password manually.','محاولات كثيرة. حاول لاحقًا.':'Too many attempts. Try again later.','طلبات كثيرة لرمز التحقق. حاول لاحقًا.':'Too many verification-code requests. Try again later.','تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.':'Could not reach the sign-in service. Check the connection and try again.','خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.':'The sign-in service is unavailable in this deployment. Redeploy the project with its server functions.','تعذر الاتصال بخدمة الدخول':'Could not connect to the sign-in service','استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.':'The sign-in response is incomplete. Reload after deployment finishes.'};return map[text]||text};
+const localizeAuthError=message=>{const text=String(message||'');if(lang!=='en')return text;const map={'اسم المستخدم أو كلمة المرور غير صحيحة':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة.':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.':'Incorrect username or password. Enter the current password manually.','كلمة المرور الحالية غير صحيحة.':'The current password is incorrect.','يجب أن تكون كلمة المرور الجديدة 12 خانة على الأقل.':'The new password must contain at least 12 characters.','اختر كلمة مرور جديدة مختلفة.':'Choose a different new password.','محاولات كثيرة. حاول لاحقًا.':'Too many attempts. Try again later.','طلبات كثيرة لرمز التحقق. حاول لاحقًا.':'Too many verification-code requests. Try again later.','تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.':'Could not reach the sign-in service. Check the connection and try again.','خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.':'The sign-in service is unavailable in this deployment. Redeploy the project with its server functions.','تعذر الاتصال بخدمة الدخول':'Could not connect to the sign-in service','استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.':'The sign-in response is incomplete. Reload after deployment finishes.'};return map[text]||text};
 const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=localizeAuthError(message)};
 async function authRequest(path,options={}){
   let response;
@@ -307,6 +307,7 @@ function lockApp(message='انتهت الجلسة بسبب الخمول. سجّ�
   if($('authCode'))$('authCode').value='';
   // Never keep or reuse a password filled by an old browser/PWA session.
   if($('authPassword'))$('authPassword').value='';
+  document.querySelectorAll('#changePasswordModal input[type="password"]').forEach(input=>{input.value=''});
   authErrorMessage(message);
   requestAnimationFrame(()=>$('authUsername')?.focus());
 }
@@ -314,6 +315,59 @@ async function initAuth(){document.body.classList.add('auth-checking');document.
 async function requestAuthOtp(){prepareAudio();const username=$('authUsername').value.trim(),password=$('authPassword').value;if(!username||!password){authErrorMessage(lang==='en'?'Enter the username and password.':'أدخل اسم المستخدم وكلمة المرور.');return}authErrorMessage(lang==='en'?'Signing in…':'جارٍ تسجيل الدخول…');try{const {data}=await authRequest('?action=password-login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({username,password})});if(!data.ok){if($('authPassword'))$('authPassword').value='';authErrorMessage(data.error||(lang==='en'?'Incorrect username or password. Enter the current password manually.':'اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.'));return}if($('authPassword'))$('authPassword').value='';unlockApp(data.user)}catch(error){if($('authPassword'))$('authPassword').value='';authErrorMessage(error.message)}}
 async function verifyAuthOtp(){const code=$('authCode').value.trim();if(!/^\d{4}$/.test(code)){authErrorMessage('أدخل رمز التحقق المكوّن من 4 أرقام.');return}authErrorMessage('جارٍ التحقق…');try{const {data}=await authRequest('?action=verify-otp',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({challengeId:authChallenge,code})});if(!data.ok){authErrorMessage(data.error||'الرمز غير صحيح أو منتهي.');return}unlockApp(data.user)}catch(error){authErrorMessage(error.message)}}
 function openUsersModal(){openModal('usersModal');$('usersError').textContent=''}
+function ensureChangePasswordButton(){
+  if($('changePasswordBtn'))return $('changePasswordBtn');
+  const button=document.createElement('button');button.id='changePasswordBtn';button.className='admin-only';button.type='button';
+  $('usersBtn')?.insertAdjacentElement('afterend',button);
+  return button;
+}
+function renderChangePasswordCopy(){
+  if(!$('changePasswordModal'))return;
+  setText('#changePasswordTitle',lang==='en'?'🔐 Change password':'🔐 تعديل كلمة المرور');
+  setText('#changePasswordHelp',lang==='en'?'Enter the current administration password, then choose a new password containing at least 12 characters. It will apply to the next sign-in and will not close sessions already open.':'أدخل كلمة مرور الإدارة الحالية، ثم اختر كلمة جديدة مكونة من 12 خانة على الأقل. تطبق عند الدخول القادم ولا تغلق الجلسات المفتوحة.');
+  setText('#currentPasswordLabel',lang==='en'?'Current password':'كلمة المرور الحالية');
+  setText('#newPasswordLabel',lang==='en'?'New password':'كلمة المرور الجديدة');
+  setText('#confirmPasswordLabel',lang==='en'?'Confirm new password':'تأكيد كلمة المرور');
+  setText('#changePasswordCancelBtn',lang==='en'?'Cancel':'إلغاء');
+  setText('#savePasswordBtn',lang==='en'?'Save password':'حفظ كلمة المرور');
+}
+function ensureChangePasswordModal(){
+  if($('changePasswordModal'))return $('changePasswordModal');
+  const modal=document.createElement('div');modal.id='changePasswordModal';modal.className='modal';modal.innerHTML=`<div class="modal-card password-change-card" role="dialog" aria-modal="true" aria-labelledby="changePasswordTitle"><h3 id="changePasswordTitle"></h3><p id="changePasswordHelp"></p><div class="grid password-change-grid"><label class="full"><span id="currentPasswordLabel"></span><input id="currentPasswordInput" type="password" autocomplete="current-password" maxlength="128"></label><label><span id="newPasswordLabel"></span><input id="newPasswordInput" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label><label><span id="confirmPasswordLabel"></span><input id="confirmPasswordInput" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label></div><p id="changePasswordError" class="auth-error" aria-live="polite"></p><div class="modal-actions"><button id="changePasswordCancelBtn" type="button"></button><button id="savePasswordBtn" type="button" class="primary"></button></div></div>`;
+  document.body.appendChild(modal);
+  $('changePasswordCancelBtn').addEventListener('click',()=>closeModal('changePasswordModal'));
+  $('savePasswordBtn').addEventListener('click',saveChangedPassword);
+  $('confirmPasswordInput').addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();saveChangedPassword()}});
+  renderChangePasswordCopy();
+  return modal;
+}
+function openChangePasswordModal(){
+  setSettingsMenuOpen(false);
+  ensureChangePasswordModal();
+  ['currentPasswordInput','newPasswordInput','confirmPasswordInput'].forEach(id=>{if($(id))$(id).value=''});
+  $('changePasswordError').textContent='';
+  openModal('changePasswordModal');
+  requestAnimationFrame(()=>$('currentPasswordInput')?.focus());
+}
+async function saveChangedPassword(){
+  const currentPassword=$('currentPasswordInput').value;
+  const newPassword=$('newPasswordInput').value;
+  const confirmation=$('confirmPasswordInput').value;
+  const error=$('changePasswordError'),button=$('savePasswordBtn');
+  error.textContent='';
+  if(!currentPassword||!newPassword||!confirmation){error.textContent=lang==='en'?'Complete all password fields.':'أكمل جميع حقول كلمة المرور.';return}
+  if(newPassword.length<12){error.textContent=lang==='en'?'The new password must contain at least 12 characters.':'يجب أن تكون كلمة المرور الجديدة 12 خانة على الأقل.';return}
+  if(newPassword!==confirmation){error.textContent=lang==='en'?'The new password and confirmation do not match.':'كلمة المرور الجديدة وتأكيدها غير متطابقين.';return}
+  button.disabled=true;error.textContent=lang==='en'?'Saving securely…':'جارٍ الحفظ الآمن…';
+  try{
+    const {data}=await authRequest('?action=change-password',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({currentPassword,newPassword})});
+    if(!data.ok){error.textContent=localizeAuthError(data.error||(lang==='en'?'Could not change the password.':'تعذر تعديل كلمة المرور.'));return}
+    ['currentPasswordInput','newPasswordInput','confirmPasswordInput'].forEach(id=>{if($(id))$(id).value=''});
+    closeModal('changePasswordModal');
+    toast(lang==='en'?'Password updated':'تم تعديل كلمة المرور',lang==='en'?'Use the new password the next time you sign in.':'استخدم كلمة المرور الجديدة عند تسجيل الدخول القادم.');
+  }catch(saveError){error.textContent=localizeAuthError(saveError.message)}
+  finally{button.disabled=false}
+}
 function normalizeClinicDirectory(items){
   const source=new Map((Array.isArray(items)?items:[]).map(item=>[String(item?.id||''),item]));
   return Array.from({length:15},(_,offset)=>{
@@ -763,6 +817,7 @@ function openModal(id){
 }
 function closeModal(id){
   const modal=$(id);if(!modal)return;
+  if(id==='changePasswordModal')modal.querySelectorAll('input[type="password"]').forEach(input=>{input.value=''});
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden','true');
   const returnTarget=modalReturnFocus.get(id);
@@ -4926,6 +4981,43 @@ async function setDate(date){
   await refreshTreatmentPlanRegistry(true);
   if(VIEW_MODE==='admin')await refreshAdminPatientHub({force:true});
 }
+function offsetIsoDate(value,days){
+  const match=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!match)return today();
+  const shifted=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3])+Number(days||0)));
+  return shifted.toISOString().slice(0,10);
+}
+let adminDateSwipeBusy=false;
+async function moveAdminDate(days){
+  if(VIEW_MODE!=='admin'||adminDateSwipeBusy)return;
+  adminDateSwipeBusy=true;
+  const nextDate=offsetIsoDate(selectedDate,days);
+  els.datePicker.value=nextDate;
+  const url=new URL(location.href);url.searchParams.set('date',nextDate);history.replaceState({},'',url);
+  try{
+    await setDate(nextDate);
+    const direction=days<0?(lang==='en'?'Previous day':'اليوم السابق'):(lang==='en'?'Next day':'اليوم التالي');
+    toast(direction,nextDate);
+  }catch(error){
+    toast(lang==='en'?'Could not change the date':'تعذر تغيير التاريخ',localizedSystemError(error,lang==='en'?'Please try again.':'حاول مرة أخرى.'));
+  }finally{adminDateSwipeBusy=false}
+}
+function setupAdminDateSwipe(){
+  if(VIEW_MODE!=='admin'||window.__adminDateSwipeStarted)return;window.__adminDateSwipeStarted=true;
+  const surface=document.querySelector('.app');if(!surface)return;
+  let start=null;
+  const blocked=target=>Boolean(target?.closest?.('input,textarea,select,button,a,[contenteditable="true"],.modal,.settings-menu,.table-wrap,.timeline-wrap,.horizontal-scroll'));
+  surface.addEventListener('touchstart',event=>{
+    if(event.touches.length!==1||blocked(event.target)||document.querySelector('.modal.open')){start=null;return}
+    const touch=event.touches[0];start={x:touch.clientX,y:touch.clientY,at:Date.now()};
+  },{passive:true});
+  surface.addEventListener('touchend',event=>{
+    if(!start||event.changedTouches.length!==1){start=null;return}
+    const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y,elapsed=Date.now()-start.at;start=null;
+    if(elapsed>1200||Math.abs(dx)<72||Math.abs(dx)<Math.abs(dy)*1.35)return;
+    moveAdminDate(dx>0?-1:1);
+  },{passive:true});
+  surface.addEventListener('touchcancel',()=>{start=null},{passive:true});
+}
 function enterScreen(){
   document.body.classList.add('screen-mode');
   renderDoctorWorkspace();
@@ -5295,6 +5387,8 @@ function applyLang(){
   updateSoundButton();
   setText('#importBtn',lang==='en'?'📥 Import CSV / Excel':'📥 استيراد CSV / Excel');
   setText('#exportBtn',tr('exportCsv'));
+  setText('#changePasswordBtn',lang==='en'?'🔐 Change password':'🔐 تعديل كلمة المرور');
+  renderChangePasswordCopy();
   setText('#syncTestBtn',tr('testSync'));
   setText('#clearBtn',tr('clearToday'));
   setText('#alertBtn strong',tr('alertTitle'));
@@ -5652,6 +5746,7 @@ $('authRequestBtn')?.addEventListener('click',()=>requestAuthOtp());
 $('authVerifyBtn')?.addEventListener('click',verifyAuthOtp);
 $('authBackBtn')?.addEventListener('click',()=>{$('authRequestStep').hidden=false;$('authVerifyStep').hidden=true;authErrorMessage('')});
 $('usersBtn').addEventListener('click',()=>{setSettingsMenuOpen(false);openUsersModal()});
+ensureChangePasswordButton()?.addEventListener('click',openChangePasswordModal);
 if(!$('newEmail')){const base=$('newPhone')?.parentElement;if(base){const label=document.createElement('label');label.innerHTML='البريد الإلكتروني (للدخول بالرمز)<input id="newEmail" type="email" autocomplete="email" placeholder="name@example.com">';base.parentElement.insertBefore(label,base.nextSibling)}}
 saveUser=async function(){const body={username:$('newUsername').value.trim(),displayName:$('newDisplayName').value.trim(),phone:$('newPhone').value.trim(),email:($('newEmail')?.value||'').trim(),role:$('newRole').value,clinicId:$('newClinicId').value.trim()};$('usersError').textContent='جارٍ الحفظ…';try{const {data}=await authRequest('?action=users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});if(!data.ok){$('usersError').textContent=data.error||'تعذر حفظ المستخدم';return}closeModal('usersModal');toast('تم حفظ المستخدم','سيتمكن من الدخول بالبريد الإلكتروني أو الجوال حسب الخيار المتاح.')}catch(error){$('usersError').textContent=error.message}};
 $('saveUserBtn').addEventListener('click',saveUser);
@@ -6037,6 +6132,7 @@ applyViewMode();
 setupModernAdminMetrics();
 setupModernSidebarScroll();
 applyLang();
+setupAdminDateSwipe();
 initYahyaAssistant();
 initAuth();
 if(isIosDevice()&&!isStandalone())$('installBtn').hidden=false;

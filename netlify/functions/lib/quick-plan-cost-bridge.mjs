@@ -9,6 +9,22 @@ const legacyPlanKey = (clinicId, date, patientId) => `clinics/${clinicId}/days/$
 const permanentPlanKey = (clinicId, identity) => `clinics/${clinicId}/patients/${hash(identity)}`;
 const versionedPlanKey = (clinicId, date, patientId, planNo) => `clinics/${clinicId}/versions/${hash(`${date}|${patientId}|${planNo}`)}`;
 const clean = (value, max = 120) => String(value ?? '').trim().slice(0, max);
+const managedSyncValue = plan => ({
+  phases: (plan?.phases || []).map(phase => ({
+    kind: phase?.kind || '', title: phase?.title || '', deferred: Boolean(phase?.deferred),
+    estimatedVisits: phase?.estimatedVisits || '', estimatedDuration: phase?.estimatedDuration || '',
+    items: (phase?.items || []).map(item => ({
+      code: item?.code || '', service: item?.service || '', variant: item?.variant || '', customService: item?.customService || '',
+      teeth: item?.teeth || [], qty: Number(item?.qty || 0), unitPriceBefore: item?.unitPriceBefore ?? '', unitPriceAfter: item?.unitPriceAfter ?? '',
+      beforePriceSource: item?.beforePriceSource || '', afterPriceSource: item?.afterPriceSource || '', priceSource: item?.priceSource || '',
+      type: item?.type || '', includedWith: item?.includedWith || '', includedLabel: item?.includedLabel || ''
+    }))
+  })),
+  clinicalNotes: clean(plan?.clinical?.notes, 2000)
+});
+const phaseSyncHash = plan => hash(JSON.stringify(managedSyncValue(plan)));
+const fullPlanHash = plan => hash(JSON.stringify(plan || {}));
+const quickPlanNote = quickPlan => clean(quickPlan?.patientFileSummaryAr || quickPlan?.clinicalNote, 2000);
 
 const riyadhDate = value => {
   const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Riyadh', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(value));
@@ -84,19 +100,105 @@ export function buildQuickPlanCostDraft({ quickPlan, catalog, patientRecord = {}
       patientAcceptedAt: 0, patientAcceptedBy: '', approvedAt: 0, approvedBy: '', consentMethod: '', consentEvidenceId: '', consentVerifiedAt: 0,
       consentVerifiedBy: '', consentVerificationNote: '', consentPlanRevision: 0, consentVersion: 0, lastPrintedAt: 0,
       rejectedAt: 0, rejectedBy: '', rejectionReason: '', cancelledAt: 0, cancelledBy: '', cancellationReason: '',
-      sourceType: 'quick_plan', sourceQuickPlanId: clean(quickPlan.id, 64),
+      sourceType: 'quick_plan', sourceQuickPlanId: clean(quickPlan.id, 64), sourceQuickPlanRevision: Number(quickPlan.revision || 1),
       toothNumberingSystem: quickPlan.numberingSystem === 'universal' ? 'universal' : 'fdi'
     },
     clinic: { nameAr: 'عيادات أفضل عناية الاستشارية للأسنان', nameEn: 'Best Care Dental Clinics', city: 'أبها', address: '', phone: '' },
     patient,
     doctor: { name: doctor, scfhsNo: '', specialty: 'طب وإصلاح الأسنان', explainedBy: doctor },
-    clinical: { diagnosis: '', radiographs: '', notes: clean(quickPlan.clinicalNote, 2000) },
+    clinical: { diagnosis: '', radiographs: '', notes: quickPlanNote(quickPlan) },
     phases, alternatives: '', noTreatment: '', risks: '',
     financial: { vatMode: 'unconfirmed', vatConfirmed: false, paymentPlan: [] },
     consent: { photoConsent: true, photoConsentRecorded: false, photoConsentDefaultVersion: 2, photoConsentAcceptedAt: 0, termsVersion: 0 },
     signatures: { patientSignature: '', signerName: patient.fullName, guardianRelation: '', doctorName: doctor, doctorSignedAt: '', witnessName: '', witnessSignedAt: '' }
   };
+  plan.meta.sourceQuickPlanSyncHash = phaseSyncHash(plan);
   return { clinicId: quickPlan.clinicId, patientId, date, plan, actor: clean(actor, 120) };
+}
+
+export async function synchronizeQuickPlanCostDraft(input, dependencies = {}) {
+  const draft = buildQuickPlanCostDraft(input), targetStore = dependencies.planBlobStore || planStore();
+  const key = versionedPlanKey(draft.clinicId, draft.date, draft.patientId, draft.plan.meta.planNo);
+  const snapshot = await targetStore.getWithMetadata(key, { type: 'json', consistency: 'strong' });
+  const current = snapshot?.data;
+  if (!current?.plan || !snapshot?.etag) throw new Error('Linked costed treatment plan is unavailable');
+  if (current.plan.meta?.sourceQuickPlanId !== draft.plan.meta.sourceQuickPlanId) throw new Error('Linked costed treatment plan identity conflict');
+  if (current.plan.meta?.status !== 'draft') throw new Error('The linked costed plan has already entered its approval workflow; edit it directly');
+  const requestedRevision = Math.max(1, Number(input.quickPlan?.revision || 1));
+  const currentSourceRevision = Math.max(1, Number(current.plan.meta?.sourceQuickPlanRevision || 1));
+  if (requestedRevision < currentSourceRevision) throw new Error('A newer Quick Plan revision is already linked; reload before editing');
+  const desiredManagedHash = phaseSyncHash(draft.plan);
+  if (requestedRevision === currentSourceRevision) {
+    if (phaseSyncHash(current.plan) !== desiredManagedHash) throw new Error('Quick Plan revision conflict; reload before editing');
+    await synchronizeLinkedPointers(targetStore, draft, current, current);
+    return {
+      planNo: current.plan.meta.planNo, patientId: draft.patientId, date: draft.date, clinicId: draft.clinicId,
+      status: current.plan.meta.status, sourceQuickPlanId: current.plan.meta.sourceQuickPlanId
+    };
+  }
+  const previousQuickPlan = input.previousQuickPlan;
+  const storedHash = String(current.plan.meta?.sourceQuickPlanSyncHash || '');
+  const currentManagedHash = phaseSyncHash(current.plan);
+  if (storedHash && currentManagedHash !== storedHash) throw new Error('The linked costed plan was edited separately; open it directly to continue');
+  let previousManagedHashes = null;
+  if (previousQuickPlan) {
+    const previousDraft = buildQuickPlanCostDraft({ ...input, quickPlan: previousQuickPlan });
+    previousManagedHashes = new Set([phaseSyncHash(previousDraft.plan)]);
+    const legacyClinicalDraft = structuredClone(previousDraft.plan);
+    legacyClinicalDraft.clinical.notes = clean(previousQuickPlan.clinicalNote, 2000);
+    previousManagedHashes.add(phaseSyncHash(legacyClinicalDraft));
+    if (!previousManagedHashes.has(currentManagedHash)) throw new Error('Quick Plan and costed-plan content are out of sequence; reload before editing');
+  }
+  if (!storedHash) {
+    if (!previousManagedHashes) throw new Error('This earlier linked plan must be opened directly before it can be updated');
+  }
+  const nextPlan = {
+    ...current.plan,
+    phases: draft.plan.phases,
+    clinical: { ...(current.plan.clinical || {}), notes: quickPlanNote(input.quickPlan) },
+    meta: {
+      ...(current.plan.meta || {}),
+      revision: Math.max(1, Number(current.plan.meta?.revision || 1) + 1),
+      sourceQuickPlanRevision: requestedRevision,
+      sourceQuickPlanPreviousPlanHash: fullPlanHash(current.plan),
+      lastPrintedAt: 0
+    }
+  };
+  nextPlan.meta.sourceQuickPlanSyncHash = phaseSyncHash(nextPlan);
+  const nextRecord = { ...current, plan: nextPlan, revision: Number(current.revision || 0) + 1, updatedAt: Date.now(), updatedBy: draft.actor };
+  const write = await targetStore.setJSON(key, nextRecord, { onlyIfMatch: snapshot.etag });
+  if (!write.modified) throw new Error('Concurrent costed treatment-plan update conflict');
+  await synchronizeLinkedPointers(targetStore, draft, current, nextRecord);
+  return {
+    planNo: nextPlan.meta.planNo, patientId: draft.patientId, date: draft.date, clinicId: draft.clinicId,
+    status: nextPlan.meta.status, sourceQuickPlanId: nextPlan.meta.sourceQuickPlanId
+  };
+}
+
+async function synchronizePointer(store, key, previousRecord, nextRecord) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const snapshot = await store.getWithMetadata(key, { type: 'json', consistency: 'strong' });
+    const pointer = snapshot?.data;
+    if (!pointer) {
+      const write = await store.setJSON(key, nextRecord, { onlyIfNew: true });
+      if (write.modified) return;
+      continue;
+    }
+    if (pointer.plan?.meta?.planNo !== nextRecord.plan.meta.planNo) return;
+    if (fullPlanHash(pointer.plan) === fullPlanHash(nextRecord.plan)) return;
+    const allowedPreviousHash = String(nextRecord.plan.meta?.sourceQuickPlanPreviousPlanHash || fullPlanHash(previousRecord.plan));
+    if (fullPlanHash(pointer.plan) !== allowedPreviousHash) throw new Error('A linked treatment-plan index was edited separately; open the costed plan directly');
+    const write = await store.setJSON(key, nextRecord, { onlyIfMatch: snapshot.etag });
+    if (write.modified) return;
+  }
+  throw new Error('Concurrent linked treatment-plan index update conflict');
+}
+
+async function synchronizeLinkedPointers(store, draft, previousRecord, nextRecord) {
+  await synchronizePointer(store, legacyPlanKey(draft.clinicId, draft.date, draft.patientId), previousRecord, nextRecord);
+  for (const identity of patientIdentityKeys(nextRecord.plan.patient)) {
+    await synchronizePointer(store, permanentPlanKey(draft.clinicId, identity), previousRecord, nextRecord);
+  }
 }
 
 async function ensureCurrentRecord(store, key, authoritative, draft) {
@@ -204,8 +306,9 @@ export async function ensureQuickPlanCostDraft(input, dependencies = {}) {
   const registryRecord = await indexPlan(draft, record, dependencies.registryBlobStore || registryStore());
   return {
     planNo: record.plan.meta.planNo, patientId: draft.patientId, date: draft.date, clinicId: draft.clinicId,
-    status: registryRecord.status || record.plan.meta.status || 'draft', sourceQuickPlanId: record.plan.meta.sourceQuickPlanId, registryCanonical: registryRecord.canonical
+    status: registryRecord.status || record.plan.meta.status || 'draft', sourceQuickPlanId: record.plan.meta.sourceQuickPlanId,
+    sourceQuickPlanRevision: Number(record.plan.meta.sourceQuickPlanRevision || 1), registryCanonical: registryRecord.canonical
   };
 }
 
-export const __test = { riyadhDate, groupedPlanItems, normalizedTooth, saveCurrentPlan, indexPlan };
+export const __test = { riyadhDate, groupedPlanItems, normalizedTooth, phaseSyncHash, saveCurrentPlan, indexPlan };

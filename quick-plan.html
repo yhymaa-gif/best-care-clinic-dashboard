@@ -110,6 +110,10 @@
     <button id="fileSummaryBtn" class="floating-file-summary" type="button" aria-expanded="false"><span aria-hidden="true">▤</span><b data-i18n="fileSummaryLabel">PATIENT FILE NOTE</b></button>
     <aside id="fileSummaryPanel" class="file-summary-panel" hidden aria-label="Patient file note">
       <header><strong data-i18n="fileSummaryLabel">PATIENT FILE NOTE</strong><button id="closeFileSummary" type="button" aria-label="Close">×</button></header>
+      <div class="file-summary-confirmations">
+        <label><input id="confirmExamination" type="checkbox"><span data-i18n="confirmExamination">The plan is based on a clinical examination and assessment using periapical and panoramic radiographs.</span></label>
+        <label><input id="confirmDiscussion" type="checkbox"><span data-i18n="confirmDiscussion">The treatment plan was discussed with the patient and the proposed procedures were explained.</span></label>
+      </div>
       <textarea id="fileSummaryText" rows="8" readonly></textarea>
       <button id="copyFileSummary" type="button" data-i18n="copyFileSummary">COPY NOTE</button>
     </aside>
@@ -120,6 +124,7 @@
       <p><span data-i18n="status">Status</span>: <strong>PENDING DOCTOR REVIEW</strong></p>
       <p id="costPlanReady" class="cost-plan-ready" data-i18n="costPlanReady" hidden>A costed treatment-plan draft was created with the patient details and official catalog prices.</p>
       <a id="openCostPlan" class="open-cost-plan" href="./treatment-plans.html" data-i18n="openCostPlan" hidden>OPEN COSTED PLAN</a>
+      <a id="openSubmittedPlan" class="open-cost-plan open-submitted-plan" href="./quick-plan-review.html" data-i18n="openSubmittedPlan" hidden>OPEN AND EDIT QUICK PLAN</a>
       <label class="clinical-note-copy"><span data-i18n="clinicalRecordText">CLINICAL RECORD SUMMARY</span><textarea id="submittedClinicalNote" rows="8" readonly></textarea></label>
       <button id="copySubmittedClinicalNote" type="button" data-i18n="copyClinicalRecord">COPY FOR PATIENT RECORD</button>
       <button id="newPlan" type="button" data-i18n="another">ENTER ANOTHER PLAN</button>
