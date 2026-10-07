@@ -207,6 +207,7 @@ let clinicDirectory=Array.from({length:15},(_,index)=>defaultClinic(index+1));
 let currentClinic={...clinicDirectory[clinicNumber(ACTIVE_CLINIC_ID)-1]};
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email'; let localStateHydrated=false; let authUser=null;
+let adminQuickPlans={plans:[],loading:false,refreshAgain:false,error:'',loaded:false,suspended:false,timer:null,generation:0,renderedKey:''};
 function setupEmailAuth(){const step=$('authRequestStep'),phone=$('authPhone');if(!step||!phone||$('authEmail'))return;const methods=document.createElement('div');methods.className='auth-methods';methods.innerHTML='<label><input type="radio" name="authMethod" value="email" checked> البريد الإلكتروني</label><label><input type="radio" name="authMethod" value="phone"> الجوال</label>';const emailLabel=document.createElement('label');emailLabel.id='authEmailLabel';emailLabel.innerHTML='البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">';step.insertBefore(methods,phone.parentElement);step.insertBefore(emailLabel,phone.parentElement);phone.parentElement.id='authPhoneLabel';phone.parentElement.hidden=true;methods.querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{authMethod=input.value;emailLabel.hidden=authMethod!=='email';phone.parentElement.hidden=authMethod!=='phone'}));}
 const localizeAuthError=message=>{const text=String(message||'');if(lang!=='en')return text;const map={'اسم المستخدم أو كلمة المرور غير صحيحة':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة.':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.':'Incorrect username or password. Enter the current password manually.','كلمة المرور الحالية غير صحيحة.':'The current password is incorrect.','يجب أن تكون كلمة المرور الجديدة 12 خانة على الأقل.':'The new password must contain at least 12 characters.','اختر كلمة مرور جديدة مختلفة.':'Choose a different new password.','محاولات كثيرة. حاول لاحقًا.':'Too many attempts. Try again later.','طلبات كثيرة لرمز التحقق. حاول لاحقًا.':'Too many verification-code requests. Try again later.','تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.':'Could not reach the sign-in service. Check the connection and try again.','خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.':'The sign-in service is unavailable in this deployment. Redeploy the project with its server functions.','تعذر الاتصال بخدمة الدخول':'Could not connect to the sign-in service','استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.':'The sign-in response is incomplete. Reload after deployment finishes.'};return map[text]||text};
 const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=localizeAuthError(message)};
@@ -275,12 +276,13 @@ function unlockApp(user=null){
   startPresence();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
-    if(VIEW_MODE==='admin'){startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
+    if(VIEW_MODE==='admin'){startAdminQuickPlanInbox();startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
     if(NEED_ROLE_CHOICE&&authUser?.role==='admin')requestAnimationFrame(()=>openRoleChoice());
   });
 }
 function lockApp(message='انتهت الجلسة بسبب الخمول. سجّل الدخول مرة أخرى.'){
   stopPresence(false);
+  stopAdminQuickPlanInbox();
   stopAdminPatientHub();
   stopAppointmentRequests();
   stopOperationsPrescriptionPolling();
@@ -4295,6 +4297,59 @@ function renderPaymentPanel(){
     return `<article class="payment-item ${stage}"><div><strong>💳 ${escapeHtml(firstName(p.name))} — ${escapeHtml(p.file||(lang==='en'?'No file number':'بدون رقم ملف'))}</strong>${details}${discount}<small>${p.paymentRequestedAt?new Date(Number(p.paymentRequestedAt)).toLocaleString(lang==='en'?'en-GB':'ar-SA'):''}</small></div>${controls}</article>`;
   }).join(''):`<div class="payment-empty">${lang==='en'?'No pending payment actions.':'لا توجد إجراءات دفع معلقة.'}</div>`;
 }
+function mountAdminQuickPlanInbox(){
+  const panel=$('adminQuickPlanInbox');if(!panel||panel.firstElementChild)return;
+  panel.className='card admin-quick-plan-inbox admin-only';panel.setAttribute('aria-labelledby','adminQuickPlanInboxTitle');
+  panel.innerHTML='<div class="admin-quick-plan-head"><div><span id="adminQuickPlanKicker"></span><h2 id="adminQuickPlanInboxTitle"></h2><p id="adminQuickPlanScope"></p></div><button id="adminQuickPlanRefresh" type="button"></button></div><div class="admin-quick-plan-summary"><span><b id="adminQuickPlanPendingCount">0</b><small id="adminQuickPlanPendingLabel"></small></span><span><b id="adminQuickPlanReviewedCount">0</b><small id="adminQuickPlanReviewedLabel"></small></span></div><p id="adminQuickPlanMessage" class="admin-quick-plan-message" role="status"></p><div id="adminQuickPlanLists" class="admin-quick-plan-lists"></div>';
+}
+function adminQuickPlanActive(){const urlClinic=new URLSearchParams(location.search).get('clinic')||'clinic-1';return authReady&&authUser?.role==='admin'&&VIEW_MODE==='admin'&&!document.body.classList.contains('auth-locked')&&urlClinic===ACTIVE_CLINIC_ID}
+function adminQuickPlanCopy(){return lang==='en'?{kicker:'Administration inbox · separate plans',title:'Quick plans sent to administration',scope:`${currentClinic?.name||ACTIVE_CLINIC_ID} · All dates. Awaiting review is separate from approved and completed.`,refresh:'↻ Refresh',pending:'Awaiting review',reviewed:'Approved or completed',loading:'Loading quick plans…',empty:'No quick plans have been sent for this clinic.',pendingEmpty:'No plans awaiting review.',reviewedEmpty:'No approved or completed plans.',error:'Could not load quick plans. Refresh to retry.',open:'Open and review',note:'Copy clinical note',copied:'Clinical note copied',copyFailed:'Could not copy the clinical note',file:'MRN',approved:'Approved',completed:'Completed',unknown:'Other status'}:{kicker:'وارد الإدارة · خطط مستقلة',title:'الخطط السريعة المرسلة للإدارة',scope:`${currentClinic?.name||ACTIVE_CLINIC_ID} · كل التواريخ. المرسلة بانتظار المراجعة منفصلة عن المعتمدة والمكتملة.`,refresh:'↻ تحديث',pending:'بانتظار المراجعة',reviewed:'معتمدة أو مكتملة',loading:'جارٍ تحميل الخطط السريعة…',empty:'لا توجد خطط سريعة مرسلة لهذه العيادة.',pendingEmpty:'لا توجد خطط بانتظار المراجعة.',reviewedEmpty:'لا توجد خطط معتمدة أو مكتملة.',error:'تعذر تحميل الخطط السريعة. اضغط تحديث لإعادة المحاولة.',open:'فتح ومراجعة',note:'نسخ الملاحظة السريرية',copied:'تم نسخ الملاحظة السريرية',copyFailed:'تعذر نسخ الملاحظة السريرية',file:'ملف',approved:'معتمدة',completed:'مكتملة',unknown:'حالة أخرى'}}
+function adminQuickPlanRow(plan,copy){
+  const params=new URLSearchParams({clinic:ACTIVE_CLINIC_ID,id:String(plan.id),lang});
+  const note=String((lang==='en'?plan.patientFileSummaryEn:plan.patientFileSummaryAr)||plan.outputOverrides?.clinicalNote||plan.clinicalNote||'').trim();
+  const timestamp=Number(plan.createdAt||plan.updatedAt||0),date=Number.isFinite(timestamp)&&timestamp>0?new Intl.DateTimeFormat(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{timeZone:'Asia/Riyadh',dateStyle:'medium',timeStyle:'short'}).format(new Date(timestamp)):'—';
+  const status=plan.status==='pending_review'?copy.pending:plan.status==='approved'?copy.approved:plan.status==='completed'?copy.completed:copy.unknown;
+  return `<article class="admin-quick-plan-row"><div class="admin-quick-plan-identity"><strong>${escapeHtml(plan.patientName||'—')}</strong><small>${escapeHtml(copy.file)} <bdi>${escapeHtml(plan.patientMrn||'—')}</bdi> · <time>${escapeHtml(date)}</time></small></div><span class="admin-quick-plan-status ${plan.status==='pending_review'?'pending':'reviewed'}">${escapeHtml(status)}</span><div class="admin-quick-plan-actions"><a href="./quick-plan-review.html?${escapeHtml(params.toString())}">${escapeHtml(copy.open)}</a>${note?`<button type="button" data-admin-quick-note="${escapeHtml(plan.id)}">${escapeHtml(copy.note)}</button>`:''}</div></article>`;
+}
+function renderAdminQuickPlanInbox(){
+  const panel=$('adminQuickPlanInbox');if(!panel)return;
+  const copy=adminQuickPlanCopy();
+  $('adminQuickPlanKicker').textContent=copy.kicker;$('adminQuickPlanInboxTitle').textContent=copy.title;$('adminQuickPlanScope').textContent=copy.scope;$('adminQuickPlanRefresh').textContent=copy.refresh;
+  $('adminQuickPlanPendingLabel').textContent=copy.pending;$('adminQuickPlanReviewedLabel').textContent=copy.reviewed;
+  const plans=adminQuickPlanActive()?adminQuickPlans.plans:[];
+  const pending=plans.filter(plan=>plan?.status==='pending_review');
+  const reviewed=plans.filter(plan=>plan&&plan.status!=='pending_review');
+  $('adminQuickPlanPendingCount').textContent=String(pending.length);$('adminQuickPlanReviewedCount').textContent=String(reviewed.length);
+  $('adminQuickPlanRefresh').disabled=adminQuickPlans.loading||adminQuickPlans.suspended;
+  const message=$('adminQuickPlanMessage');message.hidden=false;message.classList.toggle('is-error',Boolean(adminQuickPlans.error));
+  message.textContent=adminQuickPlans.suspended?(lang==='en'?'Quick plan access requires a valid administration session.':'يتطلب عرض الخطط السريعة جلسة إدارة مصرحًا بها.'):adminQuickPlans.error?copy.error:adminQuickPlans.loading&&!adminQuickPlans.loaded?copy.loading:!plans.length?copy.empty:'';
+  if(!message.textContent)message.hidden=true;
+  const renderKey=JSON.stringify([adminQuickPlans.generation,lang,plans.map(plan=>[plan.id,plan.updatedAt,plan.status,plan.patientName,plan.patientMrn,plan.patientFileSummaryAr,plan.patientFileSummaryEn,plan.clinicalNote,plan.outputOverrides?.clinicalNote])]);
+  if(renderKey!==adminQuickPlans.renderedKey){
+    const group=(items,label,empty,className)=>`<section class="admin-quick-plan-group ${className}"><h3>${escapeHtml(label)} <b>${items.length}</b></h3>${items.length?items.map(plan=>adminQuickPlanRow(plan,copy)).join(''):`<p class="admin-quick-plan-empty">${escapeHtml(empty)}</p>`}</section>`;
+    $('adminQuickPlanLists').innerHTML=group(pending,copy.pending,copy.pendingEmpty,'pending')+group(reviewed,copy.reviewed,copy.reviewedEmpty,'reviewed');
+    adminQuickPlans.renderedKey=renderKey;
+  }
+}
+function scheduleAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;adminQuickPlans.timer=setTimeout(()=>refreshAdminQuickPlanInbox(),20000)}
+async function refreshAdminQuickPlanInbox(){
+  if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;
+  if(adminQuickPlans.loading){adminQuickPlans.refreshAgain=true;return}
+  const generation=adminQuickPlans.generation,clinicId=ACTIVE_CLINIC_ID;
+  adminQuickPlans.loading=true;renderAdminQuickPlanInbox();
+  try{
+    const response=await request(`/api/quick-treatment-plans?clinic=${encodeURIComponent(clinicId)}`,{},12000);
+    const data=await response.json().catch(()=>({}));
+    if(!adminQuickPlanActive()||generation!==adminQuickPlans.generation||clinicId!==ACTIVE_CLINIC_ID)return;
+    if(response.status===401||response.status===403){adminQuickPlans.suspended=true;adminQuickPlans.plans=[]}
+    if(!response.ok)throw new Error(data.error||'Quick plans unavailable');
+    adminQuickPlans.plans=(Array.isArray(data.plans)?data.plans:[]).filter(plan=>plan?.clinicId===clinicId).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+    adminQuickPlans.error='';adminQuickPlans.loaded=true;
+  }catch(error){if(adminQuickPlanActive()&&generation===adminQuickPlans.generation){adminQuickPlans.error=String(error?.message||error);adminQuickPlans.loaded=true}}
+  finally{if(generation===adminQuickPlans.generation){adminQuickPlans.loading=false;renderAdminQuickPlanInbox();if(adminQuickPlans.refreshAgain){adminQuickPlans.refreshAgain=false;refreshAdminQuickPlanInbox()}else scheduleAdminQuickPlanInbox()}}
+}
+function startAdminQuickPlanInbox(){if(!adminQuickPlanActive())return;renderAdminQuickPlanInbox();refreshAdminQuickPlanInbox()}
+function stopAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);adminQuickPlans={plans:[],loading:false,refreshAgain:false,error:'',loaded:false,suspended:false,timer:null,generation:adminQuickPlans.generation+1,renderedKey:''};renderAdminQuickPlanInbox()}
 function suggestedTimes(){
   const sorted=patients.filter(p=>p.end).slice().sort((a,b)=>a.end.localeCompare(b.end));
   if(sorted.length){
@@ -5286,6 +5341,7 @@ function applyLang(){
   document.documentElement.lang=lang;
   document.documentElement.dir=lang==='en'?'ltr':'rtl';
   document.body.classList.toggle('lang-en',lang==='en');
+  renderAdminQuickPlanInbox();
   const authCopy=lang==='en'?['Sign in','Best Care Dental Clinics internal communication app','Treatment-plan and internal-operations management','Username','Password','Enter username','Enter the current password manually','Sign in','Extended session; idle sign-out is paused during working hours from 2:00 PM to 11:00 PM Riyadh time.']:['تسجيل الدخول','تطبيق التواصل الداخلي بعيادات أفضل عناية الاستشارية','إدارة الخطط العلاجية والعمليات الداخلية','اسم المستخدم','كلمة المرور','أدخل اسم المستخدم','اكتب كلمة المرور الحالية يدويًا','دخول','جلسة ممتدة؛ يتوقف الخروج التلقائي بسبب الخمول خلال وقت العمل من ٢:٠٠ ظهرًا حتى ١١:٠٠ مساءً بتوقيت الرياض.'];
   setText('.auth-brand h2',authCopy[0]);setText('.auth-subtitle',authCopy[1]);setText('.auth-purpose',authCopy[2]);const authLabels=document.querySelectorAll('#authRequestStep label');authLabels[0]?.childNodes[0]&&(authLabels[0].childNodes[0].nodeValue=authCopy[3]);authLabels[1]?.childNodes[0]&&(authLabels[1].childNodes[0].nodeValue=authCopy[4]);$('authUsername')?.setAttribute('placeholder',authCopy[5]);$('authPassword')?.setAttribute('placeholder',authCopy[6]);setText('#authRequestBtn',authCopy[7]);setText('.auth-session-note',authCopy[8]);
   document.querySelector('.auth-brand-mark img')?.setAttribute('alt',lang==='en'?'Best Care Dental Clinics logo':'شعار عيادات أفضل عناية');applyTheme(currentTheme);yahyaAssistantLabels();
@@ -6131,6 +6187,21 @@ function initYahyaAssistant(){
 }
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;if(!isStandalone())$('installBtn').hidden=false});
 window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true;toast('تم التثبيت','أصبح Best Care Flow متاحًا كتطبيق على الجهاز')});
+mountAdminQuickPlanInbox();
+$('adminQuickPlanRefresh')?.addEventListener('click',()=>refreshAdminQuickPlanInbox());
+$('adminQuickPlanLists')?.addEventListener('click',async event=>{
+  const button=event.target.closest('[data-admin-quick-note]');if(!button||!adminQuickPlanActive())return;
+  const plan=adminQuickPlans.plans.find(item=>String(item.id)===button.dataset.adminQuickNote);
+  const note=String((lang==='en'?plan?.patientFileSummaryEn:plan?.patientFileSummaryAr)||plan?.outputOverrides?.clinicalNote||plan?.clinicalNote||'').trim();if(!note)return;
+  const copy=adminQuickPlanCopy();try{await navigator.clipboard.writeText(note);toast(copy.copied,'')}catch{toast(copy.copyFailed,'')}
+});
+if('BroadcastChannel' in window){
+  const quickPlanInboxChannel=new BroadcastChannel('bestcare-quick-plans');
+  quickPlanInboxChannel.addEventListener('message',event=>{if(event.data?.type==='submitted'&&event.data.clinicId===ACTIVE_CLINIC_ID)refreshAdminQuickPlanInbox()});
+}
+window.addEventListener('focus',()=>{if(adminQuickPlanActive())refreshAdminQuickPlanInbox()});
+window.addEventListener('online',()=>{if(adminQuickPlanActive())refreshAdminQuickPlanInbox()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(adminQuickPlans.timer);else if(adminQuickPlanActive())refreshAdminQuickPlanInbox()});
 selectedDate=new URLSearchParams(location.search).get('date')||today();
 els.datePicker.value=selectedDate;
 applyViewMode();

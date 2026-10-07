@@ -12,6 +12,9 @@ const text={
   ar:{title:'الخطة العلاجية السريعة',subtitle:'أدخل رقم الملف ثم اكتب الإجراءات المقترحة مثل رسالة واتساب.',draftNotice:'إدخال الممرضة ليس خطة نهائية، ويجب أن يراجعه ويعتمده طبيب مخوّل.',signinRequired:'يلزم تسجيل الدخول',signinHelp:'افتح الداشبورد وسجل الدخول ثم ارجع إلى هذا الرابط.',openSignin:'فتح تسجيل الدخول',mrn:'رقم ملف المريض *',find:'بحث',mrnHelp:'رقم الملف هو المعرّف الأساسي للمريض.',clinic:'العيادة *',patientName:'اسم أو أحرف المريض (اختياري)',patientAge:'عمر المريض (اختياري)',dentist:'الطبيب المعالج (اختياري)',numbering:'نظام ترقيم الأسنان',numberingHelp:'يُحفظ الرقم وفق النظام المختار دون أي تحويل صامت.',toothPicker:'اختر السن',toothPickerHelp:'اضغط السن لتظهر جميع الإجراءات بصريًا.',multiProcedureHint:'أبقِ السن محددًا واضغط كل الإجراءات المطلوبة له.',quickEntry:'الإدخال السريع *',separatorHelp:'استخدم سطرًا جديدًا أو فاصلة أو فاصلة منقوطة.',livePreview:'المعاينة المباشرة',checkMatches:'راجع كل تطابق',matched:'مطابق',confirm:'يحتاج تأكيدًا',unmatched:'غير مطابق',previewEmpty:'ستظهر الخطة المنظمة هنا أثناء الكتابة.',notReady:'أكمل الحقول المطلوبة',submitHelp:'يجب تأكيد الإجراء ورقم السن لكل بند.',submit:'إرسال الخطة',submitted:'تم إرسال الخطة العلاجية',status:'الحالة',costPlanReady:'تم إنشاء مسودة الخطة ذات التكلفة ببيانات المريض وأسعار قائمة الإجراءات الرسمية.',openCostPlan:'فتح خطة التكلفة',openSubmittedPlan:'فتح وتعديل الخطة السريعة',fileSummaryLabel:'ملخص ملف المريض',confirmExamination:'تم إعداد الخطة بناءً على فحص إكلينيكي وتقييم شعاعي باستخدام الأشعة الذروية والبانورامية.',confirmDiscussion:'تمت مناقشة الخطة مع المريض وشرح الإجراءات المقترحة له.',copyFileSummary:'نسخ الملخص',clinicalRecordText:'ملخص سريري للملف',copyClinicalRecord:'نسخ الملخص إلى ملف المريض',another:'إدخال خطة أخرى'}
 };
 const requestedLanguage=new URLSearchParams(location.search).get('lang');
+Object.assign(text.ar,{submit:'تأكيد الإرسال للإدارة',submitted:'تم حفظ الخطة وإرسالها إلى الإدارة',deliveryHelp:'الخطة متاحة في قسم مستقل لدى الإدارة. هذا تأكيد حفظ وإرسال، وليس تأكيدًا بأن الموظف قرأها.',openAdminInbox:'فتح الخطط المرسلة في الإدارة',receiptPatient:'المريض',receiptMrn:'رقم الملف',receiptTime:'وقت الإرسال',receiptReference:'مرجع الإرسال',pendingReview:'بانتظار المراجعة والاعتماد',approvedStatus:'معتمدة',completedStatus:'مكتملة',retryReceipt:'إعادة المحاولة'});
+Object.assign(text.en,{submit:'CONFIRM SEND TO ADMINISTRATION',submitted:'Plan saved and sent to administration',deliveryHelp:'Available in a separate administration inbox. This confirms saving and sending, not that staff have read it.',openAdminInbox:'OPEN ADMINISTRATION INBOX',receiptPatient:'Patient',receiptMrn:'MRN / File number',receiptTime:'Submitted at',receiptReference:'Submission reference',pendingReview:'PENDING REVIEW AND APPROVAL',approvedStatus:'APPROVED',completedStatus:'COMPLETED',retryReceipt:'RETRY'});
+let submittedPlan=null;
 let language=requestedLanguage==='ar'?'ar':requestedLanguage==='en'?'en':localStorage.getItem('bestcare_lang')==='ar'?'ar':'en',catalog=[],catalogProfile={favorites:[],usage:{}},items=[],patient=null,patientLookupKey='',lookupGeneration=0,idempotencyKey=crypto.randomUUID(),parseTimer=0,deletedSourceKeys=new Set(),manualOrder=0,selectedTooth='',catalogGeneration=0,favoriteUpdateQueue=Promise.resolve();
 const t=key=>text[language][key]||text.en[key]||key;
 const currentPatientKey=()=>`${$('clinicId').value}|${normalizeMrn($('patientMrn').value)}`;
@@ -36,6 +39,34 @@ function applyLanguage(){
   $('languageToggle').textContent=language==='en'?'العربية':'English';
   renderToothPicker();
   renderShortcuts();
+  if(submittedPlan)renderSubmissionReceipt();
+}
+function renderSubmissionReceipt(){
+  if(!submittedPlan)return;
+  const plan=submittedPlan,fields=[[t('receiptPatient'),plan.patientName||'—'],[t('receiptMrn'),plan.patientMrn||'—'],[t('receiptTime'),Number(plan.createdAt)>0?new Date(Number(plan.createdAt)).toLocaleString(language==='ar'?'ar-SA-u-ca-gregory-nu-latn':'en-GB',{timeZone:'Asia/Riyadh'}):'—'],[t('receiptReference'),String(plan.id).slice(0,12).toUpperCase()]];
+  $('submissionReceipt').innerHTML=fields.map(([label,value])=>`<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>`).join('');
+  $('submittedPlanStatus').textContent=plan.status==='approved'?t('approvedStatus'):plan.status==='completed'?t('completedStatus'):t('pendingReview');
+  $('submittedClinicalNote').value=language==='ar'?(plan.patientFileSummaryAr||''):(plan.patientFileSummaryEn||'');
+  $('openAdminInbox').href=`./?${new URLSearchParams({view:'admin',clinic:plan.clinicId,lang:language})}#adminQuickPlanInbox`;
+  $('openSubmittedPlan').href=`./quick-plan-review.html?${new URLSearchParams({clinic:plan.clinicId,id:plan.id,lang:language})}`;
+  $('openSubmittedPlan').hidden=false;
+  const costPlan=plan.costPlan;$('costPlanReady').hidden=!costPlan;$('openCostPlan').hidden=!costPlan;
+  if(costPlan)$('openCostPlan').href=`./treatment-plan.html?${new URLSearchParams({patientId:costPlan.patientId,date:costPlan.date,planNo:costPlan.planNo,clinic:costPlan.clinicId,view:'admin',lang:language})}`;
+}
+function showSubmissionReceipt(plan,costPlan){
+  if(!plan?.id||!plan.clinicId)throw new Error(language==='ar'?'تعذر تأكيد الحفظ. أعد المحاولة بنفس الخطة.':'Saving could not be confirmed. Retry the same plan.');
+  submittedPlan={...plan,costPlan:costPlan||plan.costPlan};renderSubmissionReceipt();
+  $('quickPlanForm').hidden=true;$('successCard').hidden=false;$('receiptRestoreError').hidden=true;$('fileSummaryBtn').hidden=true;$('fileSummaryPanel').hidden=true;
+  const url=new URL(location.href);url.searchParams.set('sentPlan',plan.id);url.searchParams.set('clinic',plan.clinicId);url.searchParams.delete('mrn');history.replaceState(null,'',url);
+  $('successCard').scrollIntoView({block:'start'});
+}
+async function restoreSubmissionReceipt(id){
+  $('quickPlanForm').hidden=true;$('fileSummaryBtn').hidden=true;
+  try{
+    const response=await request(`/api/quick-treatment-plans?${new URLSearchParams({clinic:$('clinicId').value,id})}`),data=await response.json();
+    if(!response.ok||!data.plan)throw new Error(language==='ar'?'تعذر تحميل تأكيد الخطة المحفوظة. أعد المحاولة أو افتح قسم الخطط لدى الإدارة.':'Could not load the saved plan receipt. Retry or open the administration inbox.');
+    showSubmissionReceipt(data.plan);
+  }catch(error){$('receiptRestoreError').hidden=false;$('receiptRestoreMessage').textContent=error.message}
 }
 function toothNumbers(){return $('numberingSystem').value==='fdi'?[['18','17','16','15','14','13','12','11'],['21','22','23','24','25','26','27','28'],['48','47','46','45','44','43','42','41'],['31','32','33','34','35','36','37','38']]:[Array.from({length:8},(_,index)=>String(index+1).padStart(2,'0')),Array.from({length:8},(_,index)=>String(index+9).padStart(2,'0')),Array.from({length:8},(_,index)=>String(32-index).padStart(2,'0')),Array.from({length:8},(_,index)=>String(24-index).padStart(2,'0'))]}
 function toothShape(number){if($('numberingSystem').value!=='fdi')return'tooth-generic';const position=Number(String(number).slice(-1));return position<=2?'tooth-incisor':position===3?'tooth-canine':position<=5?'tooth-premolar':'tooth-molar'}
@@ -226,6 +257,8 @@ async function loadCatalog(){
   parse();
 }
 async function loadClinics(){
+  const sentPlanId=new URLSearchParams(location.search).get('sentPlan');
+  if(sentPlanId){$('quickPlanForm').hidden=true;$('fileSummaryBtn').hidden=true}
   if(previewMode){
     $('clinicId').innerHTML='<option value="clinic-1">Preview Clinic</option>';catalog=previewCatalog;
     $('treatingDentist').value='Preview Dentist';$('patientMrn').value='18417';patient={name:'Preview Patient',file:'18417'};patientLookupKey=currentPatientKey();$('patientName').value=patient.name;
@@ -239,6 +272,10 @@ async function loadClinics(){
   const active=(data.clinics||[]).filter(item=>item.active!==false);$('clinicId').innerHTML=active.map(item=>`<option value="${esc(item.id)}">${esc(clinicLabel(item))}</option>`).join('');
   const requested=new URLSearchParams(location.search).get('clinic');if(active.some(item=>item.id===requested))$('clinicId').value=requested;
   const clinic=active.find(item=>item.id===$('clinicId').value);if(clinic?.doctorName)$('treatingDentist').value=clinic.doctorName;
+  if(sentPlanId){
+    if(!active.some(item=>item.id===requested))throw new Error(language==='ar'?'تعذر الوصول لعيادة الخطة المحفوظة.':'The saved plan clinic is not accessible.');
+    await restoreSubmissionReceipt(sentPlanId);return;
+  }
   await loadCatalog();
   const requestedMrn=new URLSearchParams(location.search).get('mrn');
   if(requestedMrn){$('patientMrn').value=normalizeMrn(requestedMrn);await findPatient()}
@@ -260,10 +297,20 @@ async function submitWithCatalogRefresh(event){
 async function submit(event){
   event.preventDefault();setError();if(!patient||!items.length||!items.every(itemReady)){setError(language==='ar'?'أكمل جميع المطابقات قبل الإرسال.':'Resolve every entry before submission.');return}
   if(previewMode){setError(language==='ar'?'هذه معاينة محلية فقط ولا تحفظ بيانات المرضى.':'This local preview does not save patient data.');return}
+  if(!window.confirm(language==='ar'?`إرسال خطة ${$('patientName').value||'المريض'}، ملف ${$('patientMrn').value} إلى الإدارة؟\nعدد الإجراءات: ${items.length}. ستظهر كمسودة مستقلة بانتظار المراجعة.`:`Send the plan for ${$('patientName').value||'this patient'}, MRN ${$('patientMrn').value}, to administration?\n${items.length} procedure(s). It will appear as a separate draft pending review.`))return;
   $('submitPlan').disabled=true;
-  try{if(patientLookupKey!==currentPatientKey())throw new Error(language==='ar'?'أعد التحقق من رقم الملف قبل الإرسال.':'Verify the current MRN before submission.');const body={clinicId:$('clinicId').value,patientMrn:$('patientMrn').value.trim(),patientName:$('patientName').value.trim(),patientAge:$('patientAge').value,treatingDentist:$('treatingDentist').value.trim(),numberingSystem:$('numberingSystem').value,originalInput:$('quickEntry').value.trim(),items:resolvedItems(),examinationConfirmed:$('confirmExamination').checked,discussionConfirmed:$('confirmDiscussion').checked,idempotencyKey};const response=await request('/api/quick-treatment-plans',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}),data=await response.json();if(!response.ok)throw new Error(data.error||'Could not submit plan');const quantities=Object.entries(body.items.reduce((result,item)=>(result[item.procedureId]=(result[item.procedureId]||0)+1,result),{})).map(([code,quantity])=>({code,quantity}));request(`/api/treatment-catalog?clinic=${encodeURIComponent(body.clinicId)}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({action:'usage',doctorKey:body.treatingDentist,items:quantities})}).catch(()=>{});$('submittedClinicalNote').value=language==='ar'?(data.plan?.patientFileSummaryAr||''):(data.plan?.patientFileSummaryEn||'');const costPlan=data.costPlan||data.plan?.costPlan;$('costPlanReady').hidden=!costPlan;if(costPlan){const params=new URLSearchParams({patientId:costPlan.patientId,date:costPlan.date,planNo:costPlan.planNo,clinic:costPlan.clinicId,view:'admin',lang:language});$('openCostPlan').href=`./treatment-plan.html?${params.toString()}`}$('openCostPlan').hidden=!costPlan;const submittedId=data.plan?.id||'';$('openSubmittedPlan').hidden=!submittedId;if(submittedId){const reviewParams=new URLSearchParams({clinic:body.clinicId,id:submittedId,lang:language});$('openSubmittedPlan').href=`./quick-plan-review.html?${reviewParams.toString()}`}quickPlanChannel?.postMessage({type:'submitted',clinicId:body.clinicId,id:submittedId,costPlanNo:costPlan?.planNo||'',at:Date.now()});$('quickPlanForm').hidden=true;$('successCard').hidden=false}catch(error){setError(error.message);$('submitPlan').disabled=false}
+  try{if(patientLookupKey!==currentPatientKey())throw new Error(language==='ar'?'أعد التحقق من رقم الملف قبل الإرسال.':'Verify the current MRN before submission.');const body={clinicId:$('clinicId').value,patientMrn:$('patientMrn').value.trim(),patientName:$('patientName').value.trim(),patientAge:$('patientAge').value,treatingDentist:$('treatingDentist').value.trim(),numberingSystem:$('numberingSystem').value,originalInput:$('quickEntry').value.trim(),items:resolvedItems(),examinationConfirmed:$('confirmExamination').checked,discussionConfirmed:$('confirmDiscussion').checked,idempotencyKey};const response=await request('/api/quick-treatment-plans',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}),data=await response.json();if(!response.ok)throw new Error(data.error||'Could not submit plan');const quantities=Object.entries(body.items.reduce((result,item)=>(result[item.procedureId]=(result[item.procedureId]||0)+1,result),{})).map(([code,quantity])=>({code,quantity}));request(`/api/treatment-catalog?clinic=${encodeURIComponent(body.clinicId)}`,{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({action:'usage',doctorKey:body.treatingDentist,items:quantities})}).catch(()=>{});showSubmissionReceipt(data.plan,data.costPlan);quickPlanChannel?.postMessage({type:'submitted',clinicId:body.clinicId,id:data.plan.id,costPlanNo:submittedPlan.costPlan?.planNo||'',at:Date.now()});}catch(error){setError(error.message);$('submitPlan').disabled=false}
 }
 
+$('retryReceipt').addEventListener('click',startQuickPlanPage);
+$('newPlan').addEventListener('click',async()=>{submittedPlan=null;const url=new URL(location.href);url.searchParams.delete('sentPlan');history.replaceState(null,'',url);$('fileSummaryBtn').hidden=false;await loadEntryCatalog()});
+$('catalogRetry').addEventListener('click',loadEntryCatalog);
+async function loadEntryCatalog(){
+  $('catalogRetry').disabled=true;setError();
+  try{await loadCatalog();$('catalogRetry').hidden=true}
+  catch(error){setError(error.message);$('catalogRetry').hidden=false}
+  finally{$('catalogRetry').disabled=false}
+}
 $('languageToggle').addEventListener('click',()=>{language=language==='en'?'ar':'en';localStorage.setItem('bestcare_lang',language);applyLanguage();render()});
 $('clinicId').addEventListener('change',async()=>{invalidatePatient();const selected=$('clinicId').selectedOptions[0]?.textContent||'';if(selected)$('treatingDentist').value='';try{await loadCatalog()}catch(error){setError(error.message)}updateReady()});
 $('numberingSystem').addEventListener('change',()=>{selectedTooth='';renderToothPicker();parse()});$('quickEntry').addEventListener('input',scheduleParse);$('lookupPatient').addEventListener('click',findPatient);$('patientMrn').addEventListener('change',findPatient);$('quickPlanForm').addEventListener('submit',submitWithCatalogRefresh);
@@ -282,4 +329,14 @@ $('patientName').addEventListener('input',updateFileSummary);$('patientAge').add
 $('confirmExamination').addEventListener('change',updateFileSummary);$('confirmDiscussion').addEventListener('change',updateFileSummary);
 $('newPlan').addEventListener('click',()=>{lookupGeneration+=1;patient=null;patientLookupKey='';items=[];selectedTooth='';deletedSourceKeys=new Set();manualOrder=0;idempotencyKey=crypto.randomUUID();$('patientMrn').value='';$('patientName').value='';$('patientAge').value='';$('quickEntry').value='';$('confirmExamination').checked=false;$('confirmDiscussion').checked=false;$('openSubmittedPlan').hidden=true;$('successCard').hidden=true;$('quickPlanForm').hidden=false;setLookup(t('mrnHelp'));renderToothPicker();render()});
 
-applyLanguage();loadClinics().catch(error=>{if(error.status!==401){setError(error.message);$('quickPlanForm').hidden=false}});
+async function startQuickPlanPage(){
+  const receiptMode=Boolean(new URLSearchParams(location.search).get('sentPlan'));
+  if(receiptMode){$('quickPlanForm').hidden=true;$('fileSummaryBtn').hidden=true}
+  $('retryReceipt').disabled=true;
+  try{await loadClinics()}
+  catch(error){
+    if(receiptMode){$('quickPlanForm').hidden=true;$('receiptRestoreError').hidden=false;$('receiptRestoreMessage').textContent=language==='ar'?'تعذر تحميل الخطة المحفوظة. تحقق من الاتصال وتسجيل الدخول ثم أعد المحاولة؛ لا يلزم إرسال خطة جديدة.':'Could not load the saved plan. Check your connection and sign-in, then retry. Do not submit a new plan.'}
+    else if(error.status!==401){setError(error.message);$('quickPlanForm').hidden=false}
+  }finally{$('retryReceipt').disabled=false}
+}
+applyLanguage();startQuickPlanPage();
