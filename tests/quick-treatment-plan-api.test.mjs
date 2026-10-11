@@ -11,6 +11,7 @@ const memoryStore = () => {
   let failDayWriteOnce = false;
   const api = {
     values,
+    async list({ prefix }) { return { blobs: [...values.keys()].filter(key => key.startsWith(prefix)).map(key => ({ key })) }; },
     failNextDayWrite() { failDayWriteOnce = true; },
     async get(key) { return structuredClone(values.get(key) ?? null); },
     async getWithMetadata(key) {
@@ -27,6 +28,73 @@ const memoryStore = () => {
   };
   return api;
 };
+
+test('admin-only soft deletion preserves clinical content and linked records while hiding the inbox item', async () => {
+  const plans = memoryStore();
+  const id = 'a'.repeat(64), key = `clinics/clinic-1/plans/${id}`;
+  const original = {
+    id, clinicId: 'clinic-1', revision: 3, status: 'approved', originalInput: 'Original nurse note',
+    items: [{ toothNumber: '11', procedureId: 'root-canal' }],
+    patientId: 'file:18417', patientMrn: '18417', costPlan: { planNo: 'CP-01', registryCanonical: 'record-1' },
+    patientSignature: 'unchanged', audit: [{ action: 'submitted' }]
+  };
+  await plans.setJSON(key, original);
+  const admin = { role: 'admin', username: 'admin1', displayName: 'Admin One' };
+  assert.equal(__test.canDeletePlan(admin, 'clinic-1'), true);
+  assert.equal(__test.canDeletePlan({ role: 'clinic', clinicId: 'clinic-1' }, 'clinic-1'), false);
+  assert.equal(__test.canDeletePlan(admin, 'clinic-16'), false);
+  const before = await plans.getWithMetadata(key);
+  const input = { blobStore: plans, key, snapshot: before, clinicId: 'clinic-1', expectedRevision: 3 };
+  assert.equal((await __test.deletePlan({ ...input, user: { role: 'clinic', clinicId: 'clinic-1' } })).status, 403);
+  assert.equal((await __test.deletePlan({ ...input, user: admin, expectedRevision: 2 })).status, 409);
+  assert.equal((await plans.get(key)).deletedAt, undefined);
+  const response = await __test.deletePlan({ ...input, user: admin });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await __test.listPlans('clinic-1', plans), []);
+  const saved = await plans.get(key);
+  assert.ok(saved.deletedAt > 0);
+  assert.equal(saved.deletedBy, 'Admin One');
+  assert.equal(saved.deletedByUserId, 'admin1');
+  assert.equal(saved.revision, 4);
+  assert.equal(saved.audit.at(-1).action, 'delete');
+  assert.equal(saved.audit.at(-1).revision, 4);
+  for (const field of ['originalInput', 'items', 'patientId', 'patientMrn', 'costPlan', 'patientSignature', 'status']) {
+    assert.deepEqual(saved[field], original[field], `${field} must survive deletion`);
+  }
+  assert.equal(plans.values.size, 1, 'soft deletion must not remove or rewrite linked records');
+  assert.equal((await plans.setJSON(key, original, { onlyIfMatch: before.etag })).modified, false, 'stale revision cannot revive the plan');
+  assert.equal((await __test.deletePlan({ ...input, user: admin })).status, 409, 'stale delete is a conflict');
+  assert.equal((await __test.deletePlan({ ...input, user: admin, snapshot: await plans.getWithMetadata(key), expectedRevision: 4 })).status, 404, 'tombstone cannot be deleted again');
+});
+
+test('cost-plan linkage cannot revive a tombstoned Quick Plan during an in-flight retry', async () => {
+  const plans = memoryStore();
+  const id = 'b'.repeat(64), key = `clinics/clinic-1/plans/${id}`;
+  const quickPlan = { id, clinicId: 'clinic-1', revision: 1, audit: [], originalInput: 'Nurse note' };
+  const admin = { role: 'admin', username: 'admin1', displayName: 'Admin One' };
+  await plans.setJSON(key, quickPlan);
+  const linked = await __test.linkCostedTreatmentPlan({
+    blobStore: plans, key, quickPlan, catalog: [], patientRecord: {}, user: admin,
+    ensureCostDraft: async () => {
+      const before = await plans.getWithMetadata(key);
+      await plans.setJSON(key, __test.tombstonePlan(before.data, admin, 900), { onlyIfMatch: before.etag });
+      return { planNo: 'CP-01', registryCanonical: 'record-1' };
+    }
+  });
+  assert.equal(linked, null);
+  const saved = await plans.get(key);
+  assert.equal(saved.deletedAt, 900);
+  assert.equal(saved.costPlan, undefined);
+  assert.equal(saved.audit.at(-1).action, 'delete');
+});
+
+test('PATCH deletion rejects foreign origins before authentication or storage access', async () => {
+  const request = new Request('https://bestcaredentalclinicsdash.netlify.app/api/quick-treatment-plans', {
+    method: 'PATCH', headers: { origin: 'https://attacker.example', 'content-type': 'application/json' },
+    body: JSON.stringify({ action: 'delete', clinicId: 'clinic-1', id: 'a'.repeat(64), expectedRevision: 1 })
+  });
+  assert.equal((await quickPlans(request)).status, 403);
+});
 
 test('server validates against the current catalog ID, not client labels', () => {
   const input = [{ toothNumber: '#09', procedureId: 'root-canal', officialName: 'Client-forged name', matchState: 'exact' }];

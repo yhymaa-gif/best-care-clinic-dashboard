@@ -72,12 +72,15 @@ async function resolvePatient(patientMrn, clinicId) {
   return scoped ? { canonical, patient } : null;
 }
 
-async function linkCostedTreatmentPlan({ blobStore, key, quickPlan, catalog, patientRecord, user }) {
-  const costPlan = await ensureQuickPlanCostDraft({ quickPlan, catalog, patientRecord, actor: actorName(user) });
-  if (quickPlan.costPlan?.planNo === costPlan.planNo && quickPlan.costPlan?.registryCanonical) return quickPlan;
+async function linkCostedTreatmentPlan({ blobStore, key, quickPlan, catalog, patientRecord, user, ensureCostDraft = ensureQuickPlanCostDraft }) {
+  // A retry may have read this submission before an admin hid it.
+  const before = await blobStore.get(key, { type: 'json', consistency: 'strong' });
+  if (!before || before.deletedAt) return null;
+  const costPlan = await ensureCostDraft({ quickPlan: before, catalog, patientRecord, actor: actorName(user) });
   const snapshot = await blobStore.getWithMetadata(key, { type: 'json', consistency: 'strong' });
   const current = snapshot?.data;
   if (!current || !snapshot.etag) throw new Error('Quick-plan revision token unavailable');
+  if (current.deletedAt) return null;
   if (current.costPlan?.planNo === costPlan.planNo && current.costPlan?.registryCanonical) return current;
   const now = Date.now();
   const linked = {
@@ -118,8 +121,7 @@ const generated = plan => ({
   }, 'en')
 });
 
-async function listPlans(clinicId) {
-  const blobStore = store();
+async function listPlans(clinicId, blobStore = store()) {
   const keys = [];
   let cursor;
   for (let pageNo = 0; pageNo < 20; pageNo++) {
@@ -131,7 +133,31 @@ async function listPlans(clinicId) {
     cursor = next;
   }
   const records = await Promise.all(keys.slice(0, 1000).map(key => blobStore.get(key, { type: 'json', consistency: 'strong' }).catch(() => null)));
-  return records.filter(Boolean).sort((a, b) => b.updatedAt - a.updatedAt);
+  return records.filter(record => record && !record.deletedAt).sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+const canDeletePlan = (user, clinicId) => user?.role === 'admin' && canAccessClinic(user, clinicId);
+const tombstonePlan = (existing, user, now) => ({
+  ...existing,
+  deletedAt: now,
+  deletedBy: actorName(user),
+  deletedByUserId: actorId(user),
+  updatedAt: now,
+  modifiedBy: actorName(user),
+  revision: existing.revision + 1,
+  audit: [...(existing.audit || []), {
+    action: 'delete', at: now, by: actorName(user), userId: actorId(user), revision: existing.revision + 1
+  }]
+});
+async function deletePlan({ blobStore, key, snapshot, user, clinicId, expectedRevision }) {
+  if (!canDeletePlan(user, clinicId)) return reply({ error: 'Admin access required to delete' }, 403);
+  const existing = snapshot?.data;
+  if (!existing || existing.deletedAt) return reply({ error: 'Plan not found' }, 404);
+  if (!snapshot.etag) return reply({ error: 'Revision token unavailable' }, 503);
+  if (Number(expectedRevision) !== existing.revision) return reply({ error: 'Revision conflict', revision: existing.revision }, 409);
+  const plan = tombstonePlan(existing, user, Date.now());
+  const write = await blobStore.setJSON(key, plan, { onlyIfMatch: snapshot.etag });
+  return write.modified ? reply({ ok: true, plan }) : reply({ error: 'Concurrent update conflict' }, 409);
 }
 
 export default async request => {
@@ -156,7 +182,7 @@ export default async request => {
     if (id) {
       if (!/^[a-f0-9]{64}$/.test(id)) return reply({ error: 'Invalid plan ID' }, 400);
       const plan = await blobStore.get(planKey(clinicId, id), { type: 'json', consistency: 'strong' });
-      return plan ? reply({ ok: true, plan }) : reply({ error: 'Plan not found' }, 404);
+      return plan && !plan.deletedAt ? reply({ ok: true, plan }) : reply({ error: 'Plan not found' }, 404);
     }
     return reply({ ok: true, plans: await listPlans(clinicId) });
   }
@@ -184,9 +210,11 @@ export default async request => {
     const key = planKey(clinicId, id);
     const current = await blobStore.get(key, { type: 'json', consistency: 'strong' });
     if (current) {
+      if (current.deletedAt) return reply({ error: 'Submission was deleted; idempotency key cannot be reused' }, 409);
       if (current.submissionFingerprint !== fingerprint) return reply({ error: 'Idempotency key already used for a different submission' }, 409);
       try {
         const linked = await linkCostedTreatmentPlan({ blobStore, key, quickPlan: current, catalog, patientRecord: patientRef.patient, user });
+        if (!linked) return reply({ error: 'Submission was deleted; idempotency key cannot be reused' }, 409);
         return reply({ ok: true, plan: linked, costPlan: linked.costPlan, duplicate: true });
       } catch (error) {
         return reply({ error: 'Quick plan saved; costed treatment plan linkage is pending. Retry submission.', retryable: true, planId: current.id, detail: clean(error?.message, 200) }, 503);
@@ -220,15 +248,18 @@ export default async request => {
     if (write.modified) {
       try {
         const linked = await linkCostedTreatmentPlan({ blobStore, key, quickPlan: plan, catalog, patientRecord: patientRef.patient, user });
+        if (!linked) return reply({ error: 'Submission was deleted; idempotency key cannot be reused' }, 409);
         return reply({ ok: true, plan: linked, costPlan: linked.costPlan }, 201);
       } catch (error) {
         return reply({ error: 'Quick plan saved; costed treatment plan linkage is pending. Retry submission.', retryable: true, planId: plan.id, detail: clean(error?.message, 200) }, 503);
       }
     }
     const winner = await blobStore.get(key, { type: 'json', consistency: 'strong' });
+    if (winner?.deletedAt) return reply({ error: 'Submission was deleted; idempotency key cannot be reused' }, 409);
     if (winner?.submissionFingerprint !== fingerprint) return reply({ error: 'Concurrent submission conflict' }, 409);
     try {
       const linked = await linkCostedTreatmentPlan({ blobStore, key, quickPlan: winner, catalog, patientRecord: patientRef.patient, user });
+      if (!linked) return reply({ error: 'Submission was deleted; idempotency key cannot be reused' }, 409);
       return reply({ ok: true, plan: linked, costPlan: linked.costPlan, duplicate: true });
     } catch (error) {
       return reply({ error: 'Quick plan saved; costed treatment plan linkage is pending. Retry submission.', retryable: true, planId: winner.id, detail: clean(error?.message, 200) }, 503);
@@ -240,11 +271,12 @@ export default async request => {
   const key = planKey(clinicId, id);
   const snapshot = await blobStore.getWithMetadata(key, { type: 'json', consistency: 'strong' });
   const existing = snapshot?.data;
-  if (!existing) return reply({ error: 'Plan not found' }, 404);
+  if (!existing || existing.deletedAt) return reply({ error: 'Plan not found' }, 404);
+  const action = body.action;
+  if (!['update', 'approve', 'complete', 'delete'].includes(action)) return reply({ error: 'Invalid action' }, 400);
+  if (action === 'delete') return deletePlan({ blobStore, key, snapshot, user, clinicId, expectedRevision: body.expectedRevision });
   if (!snapshot.etag) return reply({ error: 'Revision token unavailable' }, 503);
   if (Number(body.expectedRevision) !== existing.revision) return reply({ error: 'Revision conflict', revision: existing.revision }, 409);
-  const action = body.action;
-  if (!['update', 'approve', 'complete'].includes(action)) return reply({ error: 'Invalid action' }, 400);
   if (action === 'approve' && !await verifyTreatingDentist(user, clinicId)) return reply({ error: 'Verified treating dentist account required for approval' }, 403);
   if (action === 'complete' && user.role !== 'admin') return reply({ error: 'Admin access required to complete' }, 403);
   if (action === 'update' && existing.status !== 'pending_review') return reply({ error: 'Approved plans cannot be silently edited' }, 409);
@@ -313,4 +345,4 @@ export default async request => {
   return reply({ ok: true, plan });
 };
 
-export const __test = { validateItems, clinicianData, generated, cleanOutputOverrides, sourceDataChanged, isVerifiedTreatingDentist };
+export const __test = { validateItems, clinicianData, generated, cleanOutputOverrides, sourceDataChanged, isVerifiedTreatingDentist, canDeletePlan, tombstonePlan, deletePlan, listPlans, linkCostedTreatmentPlan };

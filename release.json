@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.07-quick-plan-admin-receipt",
-  "publishedAt": "2026-10-07",
+  "version": "2026.10.11-quick-plan-delete",
+  "publishedAt": "2026-10-11",
   "summary": {
-    "ar": "تأكيد إرسال الخطة السريعة للإدارة، مع بطاقة إرسال محفوظة وقسم مستقل للخطط المنتظرة والمعتمدة في شاشة الإدارة.",
-    "en": "Confirm Quick Plan delivery to administration, with a reloadable receipt and separate pending and reviewed plans in the dashboard inbox."
+    "ar": "إضافة حذف آمن للخطط السريعة من وارد الإدارة بعد التأكيد، مع حفظ الأرشيف وعدم حذف ملف المريض أو خطة التكلفة والتوقيعات.",
+    "en": "Administrators can confirm removal of Quick Plans from the inbox, preserving audit history, patient records, costed plans and signatures."
   }
 }
