@@ -24,7 +24,7 @@ test('inbox reads server plans across all dates with guarded visible-only refres
   assert.match(js, /document\.hidden\|\|navigator\.onLine===false\|\|adminQuickPlans\.suspended/);
   assert.match(js, /navigator\.onLine===false/);
   assert.match(js, /renderKey!==adminQuickPlans\.renderedKey/);
-  assert.match(js, /event\.data\?\.type==='submitted'/);
+  assert.match(js, /\['submitted','deleted'\]\.includes\(event\.data\?\.type\)/);
   assert.match(js, /stopAdminQuickPlanInbox\(\)/);
 });
 
@@ -38,6 +38,26 @@ test('inbox row escapes identity, builds scoped review link, and only offers exi
   assert.match(output, /&lt;Patient&gt;/);
   assert.match(output, /clinic=clinic-3&amp;id=plan\+%26\+1/);
   assert.match(output, /data-admin-quick-note="plan &amp; 1"/);
+  assert.match(output, /data-admin-quick-delete="plan &amp; 1"/);
+  assert.match(output, />Delete<\/button>/);
+  assert.match(row({id:'x',patientName:'A',_deleting:true},copy), /disabled aria-busy="true"/);
   assert.match(output, /Awaiting review/);
   assert.doesNotMatch(row({id:'x',patientName:'A',patientMrn:'B',status:'approved'},copy), /data-admin-quick-note/);
+});
+
+test('deletion confirms the exact submission and only removes it after a successful server response', async () => {
+  const source=js.match(/async function deleteAdminQuickPlan\(id\)\{[\s\S]*?\r?\n\}(?=\r?\nfunction suggestedTimes)/)?.[0];
+  assert.ok(source);
+  const plan={id:'a'.repeat(64),revision:3,patientName:'Demo',patientMrn:'TEST',createdAt:1700000000000};
+  let allowed=true,confirm=false,status=200,calls=0,confirmation='',refreshes=0;
+  const state={plans:[plan],deleting:[],removed:[],generation:0,suspended:false};
+  const request=async(_url,options)=>{calls++;assert.deepEqual(JSON.parse(options.body),{clinicId:'clinic-1',id:plan.id,action:'delete',expectedRevision:3});assert.equal(state.plans.length,1);return{ok:status===200,status,json:async()=>({ok:status===200})}};
+  const remove=new Function('adminQuickPlanActive','adminQuickPlans','lang','window','ACTIVE_CLINIC_ID','renderAdminQuickPlanInbox','request','refreshAdminQuickPlanInbox',`${source};return deleteAdminQuickPlan`)(()=>allowed,state,'en',{confirm:text=>{confirmation=text;return confirm}},'clinic-1',()=>{},request,()=>{refreshes++});
+  await remove(plan.id);assert.equal(calls,0);assert.equal(state.plans.length,1);
+  assert.match(confirmation,/Demo · TEST/);assert.match(confirmation,/signatures will NOT be deleted/);
+  allowed=false;confirm=true;await remove(plan.id);assert.equal(calls,0);
+  allowed=true;status=500;await remove(plan.id);assert.equal(calls,1);assert.equal(state.plans.length,1);assert.equal(state.deleteFailed,true);assert.deepEqual(state.deleting,[]);
+  status=409;await remove(plan.id);assert.equal(state.plans.length,1);assert.match(state.deleteNotice,/changed/);assert.equal(refreshes,1);
+  status=200;await remove(plan.id);assert.equal(state.plans.length,0);assert.deepEqual(state.removed,[plan.id]);assert.equal(state.deleteFailed,false);assert.deepEqual(state.deleting,[]);
+  await remove(plan.id);assert.equal(calls,3);
 });

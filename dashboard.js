@@ -207,7 +207,7 @@ let clinicDirectory=Array.from({length:15},(_,index)=>defaultClinic(index+1));
 let currentClinic={...clinicDirectory[clinicNumber(ACTIVE_CLINIC_ID)-1]};
 const tr=key=>I18N[lang]?.[key]??I18N.ar[key]??key;
 let authChallenge=''; let authLastActivity=0; let authKeepAliveAt=0; let authReady=false; let authMethod='email'; let localStateHydrated=false; let authUser=null;
-let adminQuickPlans={plans:[],loading:false,refreshAgain:false,error:'',loaded:false,suspended:false,timer:null,generation:0,renderedKey:''};
+let adminQuickPlans={plans:[],loading:false,refreshAgain:false,error:'',loaded:false,suspended:false,timer:null,generation:0,renderedKey:'',deleting:[],removed:[],deleteNotice:'',deleteFailed:false};
 function setupEmailAuth(){const step=$('authRequestStep'),phone=$('authPhone');if(!step||!phone||$('authEmail'))return;const methods=document.createElement('div');methods.className='auth-methods';methods.innerHTML='<label><input type="radio" name="authMethod" value="email" checked> البريد الإلكتروني</label><label><input type="radio" name="authMethod" value="phone"> الجوال</label>';const emailLabel=document.createElement('label');emailLabel.id='authEmailLabel';emailLabel.innerHTML='البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">';step.insertBefore(methods,phone.parentElement);step.insertBefore(emailLabel,phone.parentElement);phone.parentElement.id='authPhoneLabel';phone.parentElement.hidden=true;methods.querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{authMethod=input.value;emailLabel.hidden=authMethod!=='email';phone.parentElement.hidden=authMethod!=='phone'}));}
 const localizeAuthError=message=>{const text=String(message||'');if(lang!=='en')return text;const map={'اسم المستخدم أو كلمة المرور غير صحيحة':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة.':'Incorrect username or password.','اسم المستخدم أو كلمة المرور غير صحيحة. أعد كتابة كلمة المرور الجديدة يدويًا.':'Incorrect username or password. Enter the current password manually.','كلمة المرور الحالية غير صحيحة.':'The current password is incorrect.','يجب أن تكون كلمة المرور الجديدة 12 خانة على الأقل.':'The new password must contain at least 12 characters.','اختر كلمة مرور جديدة مختلفة.':'Choose a different new password.','محاولات كثيرة. حاول لاحقًا.':'Too many attempts. Try again later.','طلبات كثيرة لرمز التحقق. حاول لاحقًا.':'Too many verification-code requests. Try again later.','تعذر الوصول إلى خدمة الدخول. تحقق من الاتصال ثم أعد المحاولة.':'Could not reach the sign-in service. Check the connection and try again.','خدمة الدخول غير متاحة في النسخة المنشورة. يلزم إعادة نشر المشروع من GitHub مع وظائف Netlify.':'The sign-in service is unavailable in this deployment. Redeploy the project with its server functions.','تعذر الاتصال بخدمة الدخول':'Could not connect to the sign-in service','استجابة خدمة الدخول غير مكتملة. أعد تحميل التطبيق بعد اكتمال النشر.':'The sign-in response is incomplete. Reload after deployment finishes.'};return map[text]||text};
 const authErrorMessage=message=>{const node=$('authError');if(node)node.textContent=localizeAuthError(message)};
@@ -4309,24 +4309,26 @@ function adminQuickPlanRow(plan,copy){
   const note=String((lang==='en'?plan.patientFileSummaryEn:plan.patientFileSummaryAr)||plan.outputOverrides?.clinicalNote||plan.clinicalNote||'').trim();
   const timestamp=Number(plan.createdAt||plan.updatedAt||0),date=Number.isFinite(timestamp)&&timestamp>0?new Intl.DateTimeFormat(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{timeZone:'Asia/Riyadh',dateStyle:'medium',timeStyle:'short'}).format(new Date(timestamp)):'—';
   const status=plan.status==='pending_review'?copy.pending:plan.status==='approved'?copy.approved:plan.status==='completed'?copy.completed:copy.unknown;
-  return `<article class="admin-quick-plan-row"><div class="admin-quick-plan-identity"><strong>${escapeHtml(plan.patientName||'—')}</strong><small>${escapeHtml(copy.file)} <bdi>${escapeHtml(plan.patientMrn||'—')}</bdi> · <time>${escapeHtml(date)}</time></small></div><span class="admin-quick-plan-status ${plan.status==='pending_review'?'pending':'reviewed'}">${escapeHtml(status)}</span><div class="admin-quick-plan-actions"><a href="./quick-plan-review.html?${escapeHtml(params.toString())}">${escapeHtml(copy.open)}</a>${note?`<button type="button" data-admin-quick-note="${escapeHtml(plan.id)}">${escapeHtml(copy.note)}</button>`:''}</div></article>`;
+  const deleteLabel=plan._deleting?(lang==='en'?'Deleting…':'جارٍ الحذف…'):(lang==='en'?'Delete':'حذف');
+  return `<article class="admin-quick-plan-row"><div class="admin-quick-plan-identity"><strong>${escapeHtml(plan.patientName||'—')}</strong><small>${escapeHtml(copy.file)} <bdi>${escapeHtml(plan.patientMrn||'—')}</bdi> · <time>${escapeHtml(date)}</time></small></div><span class="admin-quick-plan-status ${plan.status==='pending_review'?'pending':'reviewed'}">${escapeHtml(status)}</span><div class="admin-quick-plan-actions"><a href="./quick-plan-review.html?${escapeHtml(params.toString())}">${escapeHtml(copy.open)}</a>${note?`<button type="button" data-admin-quick-note="${escapeHtml(plan.id)}">${escapeHtml(copy.note)}</button>`:''}<button type="button" class="admin-quick-plan-delete" data-admin-quick-delete="${escapeHtml(plan.id)}" aria-label="${escapeHtml(deleteLabel+' · '+(plan.patientName||plan.patientMrn||''))}" ${plan._deleting?'disabled aria-busy="true"':''}>${escapeHtml(deleteLabel)}</button></div></article>`;
 }
 function renderAdminQuickPlanInbox(){
   const panel=$('adminQuickPlanInbox');if(!panel)return;
   const copy=adminQuickPlanCopy();
   $('adminQuickPlanKicker').textContent=copy.kicker;$('adminQuickPlanInboxTitle').textContent=copy.title;$('adminQuickPlanScope').textContent=copy.scope;$('adminQuickPlanRefresh').textContent=copy.refresh;
   $('adminQuickPlanPendingLabel').textContent=copy.pending;$('adminQuickPlanReviewedLabel').textContent=copy.reviewed;
-  const plans=adminQuickPlanActive()?adminQuickPlans.plans:[];
+  const plans=adminQuickPlanActive()?adminQuickPlans.plans.filter(plan=>!plan.deletedAt&&!adminQuickPlans.removed.includes(plan.id)):[];
   const pending=plans.filter(plan=>plan?.status==='pending_review');
   const reviewed=plans.filter(plan=>plan&&plan.status!=='pending_review');
   $('adminQuickPlanPendingCount').textContent=String(pending.length);$('adminQuickPlanReviewedCount').textContent=String(reviewed.length);
   $('adminQuickPlanRefresh').disabled=adminQuickPlans.loading||adminQuickPlans.suspended;
-  const message=$('adminQuickPlanMessage');message.hidden=false;message.classList.toggle('is-error',Boolean(adminQuickPlans.error));
+  const message=$('adminQuickPlanMessage');message.hidden=false;message.classList.toggle('is-error',Boolean(adminQuickPlans.error||adminQuickPlans.deleteFailed));
   message.textContent=adminQuickPlans.suspended?(lang==='en'?'Quick plan access requires a valid administration session.':'يتطلب عرض الخطط السريعة جلسة إدارة مصرحًا بها.'):adminQuickPlans.error?copy.error:adminQuickPlans.loading&&!adminQuickPlans.loaded?copy.loading:!plans.length?copy.empty:'';
+  if(adminQuickPlans.deleteNotice&&!adminQuickPlans.suspended)message.textContent=adminQuickPlans.deleteNotice;
   if(!message.textContent)message.hidden=true;
-  const renderKey=JSON.stringify([adminQuickPlans.generation,lang,plans.map(plan=>[plan.id,plan.updatedAt,plan.status,plan.patientName,plan.patientMrn,plan.patientFileSummaryAr,plan.patientFileSummaryEn,plan.clinicalNote,plan.outputOverrides?.clinicalNote])]);
+  const renderKey=JSON.stringify([adminQuickPlans.generation,lang,adminQuickPlans.deleting,plans.map(plan=>[plan.id,plan.updatedAt,plan.status,plan.patientName,plan.patientMrn,plan.patientFileSummaryAr,plan.patientFileSummaryEn,plan.clinicalNote,plan.outputOverrides?.clinicalNote])]);
   if(renderKey!==adminQuickPlans.renderedKey){
-    const group=(items,label,empty,className)=>`<section class="admin-quick-plan-group ${className}"><h3>${escapeHtml(label)} <b>${items.length}</b></h3>${items.length?items.map(plan=>adminQuickPlanRow(plan,copy)).join(''):`<p class="admin-quick-plan-empty">${escapeHtml(empty)}</p>`}</section>`;
+    const group=(items,label,empty,className)=>`<section class="admin-quick-plan-group ${className}"><h3>${escapeHtml(label)} <b>${items.length}</b></h3>${items.length?items.map(plan=>adminQuickPlanRow({...plan,_deleting:adminQuickPlans.deleting.includes(plan.id)},copy)).join(''):`<p class="admin-quick-plan-empty">${escapeHtml(empty)}</p>`}</section>`;
     $('adminQuickPlanLists').innerHTML=group(pending,copy.pending,copy.pendingEmpty,'pending')+group(reviewed,copy.reviewed,copy.reviewedEmpty,'reviewed');
     adminQuickPlans.renderedKey=renderKey;
   }
@@ -4349,7 +4351,32 @@ async function refreshAdminQuickPlanInbox(){
   finally{if(generation===adminQuickPlans.generation){adminQuickPlans.loading=false;renderAdminQuickPlanInbox();if(adminQuickPlans.refreshAgain){adminQuickPlans.refreshAgain=false;refreshAdminQuickPlanInbox()}else scheduleAdminQuickPlanInbox()}}
 }
 function startAdminQuickPlanInbox(){if(!adminQuickPlanActive())return;renderAdminQuickPlanInbox();refreshAdminQuickPlanInbox()}
-function stopAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);adminQuickPlans={plans:[],loading:false,refreshAgain:false,error:'',loaded:false,suspended:false,timer:null,generation:adminQuickPlans.generation+1,renderedKey:''};renderAdminQuickPlanInbox()}
+function stopAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);adminQuickPlans={plans:[],loading:false,refreshAgain:false,error:'',loaded:false,suspended:false,timer:null,generation:adminQuickPlans.generation+1,renderedKey:'',deleting:[],removed:[],deleteNotice:'',deleteFailed:false};renderAdminQuickPlanInbox()}
+async function deleteAdminQuickPlan(id){
+  if(!adminQuickPlanActive()||adminQuickPlans.suspended||adminQuickPlans.deleting.includes(id))return;
+  const plan=adminQuickPlans.plans.find(item=>item.id===id);if(!plan||adminQuickPlans.removed.includes(id))return;
+  const timestamp=Number(plan.createdAt||0),date=timestamp?new Intl.DateTimeFormat(lang==='en'?'en-GB':'ar-SA-u-ca-gregory-nu-latn',{timeZone:'Asia/Riyadh',dateStyle:'medium',timeStyle:'short'}).format(new Date(timestamp)):'—';
+  const identity=`${plan.patientName||'—'} · ${plan.patientMrn||'—'}\n${date} · ${String(id).slice(0,12)}`;
+  const warning=lang==='en'?`Delete this quick-plan submission from the lists?\n${identity}\n\nIts audit record will be retained. The patient record, linked costed plan and signatures will NOT be deleted.`:`حذف هذه الخطة السريعة من القوائم؟\n${identity}\n\nسيُحفظ سجلها للأرشفة. لن يُحذف ملف المريض أو خطة التكلفة المرتبطة أو التوقيعات.`;
+  if(!window.confirm(warning))return;
+  const generation=adminQuickPlans.generation,clinicId=ACTIVE_CLINIC_ID;
+  adminQuickPlans.deleting.push(id);adminQuickPlans.deleteNotice='';adminQuickPlans.deleteFailed=false;renderAdminQuickPlanInbox();
+  try{
+    const response=await request('/api/quick-treatment-plans',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({clinicId,id,action:'delete',expectedRevision:plan.revision})},12000);
+    const data=await response.json().catch(()=>({}));
+    if(generation!==adminQuickPlans.generation||clinicId!==ACTIVE_CLINIC_ID||!adminQuickPlanActive())return;
+    if(response.status===401||response.status===403){adminQuickPlans.suspended=true;adminQuickPlans.plans=[]}
+    if(!response.ok||!data.ok){
+      if(response.status===409){refreshAdminQuickPlanInbox();throw new Error(lang==='en'?'This plan changed. Review the refreshed list before deleting.':'تم تعديل الخطة. راجع القائمة المحدثة ثم أعد الحذف.')}
+      throw new Error(lang==='en'?'Deletion was not confirmed. Refresh the list and retry.':'لم يتم تأكيد الحذف. حدّث القائمة وأعد المحاولة.');
+    }
+    adminQuickPlans.removed.push(id);adminQuickPlans.plans=adminQuickPlans.plans.filter(item=>item.id!==id);
+    adminQuickPlans.deleteNotice=lang==='en'?'Quick plan removed. The patient record and linked costed plan are unchanged.':'تم حذف الخطة السريعة من القائمة مع الاحتفاظ بملف المريض وخطة التكلفة.';
+    if('BroadcastChannel' in window){const channel=new BroadcastChannel('bestcare-quick-plans');channel.postMessage({type:'deleted',clinicId,id});channel.close()}
+    refreshAdminQuickPlanInbox();
+  }catch(error){if(generation===adminQuickPlans.generation&&adminQuickPlanActive()){adminQuickPlans.deleteFailed=true;adminQuickPlans.deleteNotice=error?.name==='AbortError'?(lang==='en'?'Could not confirm deletion. Refresh the list before retrying.':'تعذر تأكيد الحذف. حدّث القائمة قبل إعادة المحاولة.'):String(error?.message||error)}}
+  finally{if(generation===adminQuickPlans.generation){adminQuickPlans.deleting=adminQuickPlans.deleting.filter(item=>item!==id);renderAdminQuickPlanInbox()}}
+}
 function suggestedTimes(){
   const sorted=patients.filter(p=>p.end).slice().sort((a,b)=>a.end.localeCompare(b.end));
   if(sorted.length){
@@ -6190,6 +6217,7 @@ window.addEventListener('appinstalled',()=>{$('installBtn').hidden=true;toast('�
 mountAdminQuickPlanInbox();
 $('adminQuickPlanRefresh')?.addEventListener('click',()=>refreshAdminQuickPlanInbox());
 $('adminQuickPlanLists')?.addEventListener('click',async event=>{
+  const deleteButton=event.target.closest('[data-admin-quick-delete]');if(deleteButton){await deleteAdminQuickPlan(deleteButton.dataset.adminQuickDelete);return}
   const button=event.target.closest('[data-admin-quick-note]');if(!button||!adminQuickPlanActive())return;
   const plan=adminQuickPlans.plans.find(item=>String(item.id)===button.dataset.adminQuickNote);
   const note=String((lang==='en'?plan?.patientFileSummaryEn:plan?.patientFileSummaryAr)||plan?.outputOverrides?.clinicalNote||plan?.clinicalNote||'').trim();if(!note)return;
@@ -6197,7 +6225,7 @@ $('adminQuickPlanLists')?.addEventListener('click',async event=>{
 });
 if('BroadcastChannel' in window){
   const quickPlanInboxChannel=new BroadcastChannel('bestcare-quick-plans');
-  quickPlanInboxChannel.addEventListener('message',event=>{if(event.data?.type==='submitted'&&event.data.clinicId===ACTIVE_CLINIC_ID)refreshAdminQuickPlanInbox()});
+  quickPlanInboxChannel.addEventListener('message',event=>{if(['submitted','deleted'].includes(event.data?.type)&&event.data.clinicId===ACTIVE_CLINIC_ID)refreshAdminQuickPlanInbox()});
 }
 window.addEventListener('focus',()=>{if(adminQuickPlanActive())refreshAdminQuickPlanInbox()});
 window.addEventListener('online',()=>{if(adminQuickPlanActive())refreshAdminQuickPlanInbox()});

@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261007-quick-plan-admin-receipt';
+const CACHE_NAME='bestcare-dashboard-v1-20261011-quick-plan-delete';
 const APP_SHELL=[
   './',
   './index.html',
