@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.11-quick-plan-delete",
-  "publishedAt": "2026-10-11",
+  "version": "2026.10.12-patient-status-watermarks",
+  "publishedAt": "2026-10-12",
   "summary": {
-    "ar": "إضافة حذف آمن للخطط السريعة من وارد الإدارة بعد التأكيد، مع حفظ الأرشيف وعدم حذف ملف المريض أو خطة التكلفة والتوقيعات.",
-    "en": "Administrators can confirm removal of Quick Plans from the inbox, preserving audit history, patient records, costed plans and signatures."
+    "ar": "إضافة علامات مائية كبيرة وشفافة لحالة المريض: مكتمل، وصل، متأخر وملغي موعده، مع إبقاء الألوان والأزرار واضحة.",
+    "en": "Large translucent patient-status watermarks for completed, arrived, late and cancelled appointments, preserving existing colors and controls."
   }
 }
