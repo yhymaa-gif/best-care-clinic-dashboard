@@ -1465,6 +1465,7 @@ function renderAdminPatientHub(){
     const hasEarliest=item.reasons.some(reason=>reason.type==='earliest');
     const timing=adminQueueTiming(patient,queueClock),firstWaiting=queueGroup==='waiting'&&index===0;
     return `<article class="admin-patient-item priority-${tone} queue-state-${escapeHtml(timing.state)}${firstWaiting?' queue-first':''}">
+      ${patientStatusWatermarkMarkup(status)}
       <div class="admin-patient-main">
         <strong>${escapeHtml(String(patient.name||'').trim()||'—')}</strong>
         <small>${lang==='en'?'File':'ملف'} ${escapeHtml(patient.file||'—')}${patient.phone?` · ${escapeHtml(patient.phone)}`:''}</small>${isZeroFileNumber(patient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update file number on arrival':'تحديث رقم الملف عند الوصول'}</span>`:''}
@@ -3046,6 +3047,12 @@ function togglePatientSummary(id){
   renderTable();loadPatientSummary();
   els.patientRows.querySelector(`[data-summary-toggle="${CSS.escape(String(id))}"]`)?.focus();
 }
+function patientStatusWatermarkMarkup(status){
+  if(VIEW_MODE!=='admin')return '';
+  const labels={done:['مكتمل','Completed'],arrived:['وصل','Arrived'],early_arrival:['وصل مبكرًا','Arrived early'],late:['متأخر','Late'],cancel:['ملغي موعده','Cancelled']};
+  const label=labels[status];
+  return label?`<span class="patient-status-watermark watermark-${escapeHtml(status)}" lang="${lang==='en'?'en':'ar'}" dir="${lang==='en'?'ltr':'rtl'}" aria-hidden="true">${escapeHtml(label[lang==='en'?1:0])}</span>`:'';
+}
 function renderTable(){
   const activeStatusSelect=document.activeElement?.matches?.('.status-select,.plan-status-select,.lab-status-inline-select');
   if(activeStatusSelect)return;
@@ -3071,7 +3078,7 @@ function renderTable(){
   let previousAdminGroup='';
   let patientRowsMarkup=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000,queueGroup=VIEW_MODE==='admin'?adminQueueGroup(p):'',queueTiming=VIEW_MODE==='admin'?adminQueueTiming(p,queueClock):null;let groupHeading='';if(VIEW_MODE==='admin'&&queueGroup!==previousAdminGroup){previousAdminGroup=queueGroup;groupHeading=`<tr class="admin-table-group-divider ${queueGroup}"><td colspan="8"><span><strong>${queueGroup==='completed'?(lang==='en'?'Completed':'تم إنجازه'):(lang==='en'?'Waiting and in progress':'في الانتظار والمتابعة')}</strong><small>${queueGroup==='completed'?(lang==='en'?'Completed patients':'المرضى المنجزون'):(lang==='en'?'Due appointments are shown first':'من حان موعده يظهر أولًا')}</small></span></td></tr>`;}return`${groupHeading}<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}${VIEW_MODE==='admin'&&queueTiming?` admin-queue-row queue-state-${escapeHtml(queueTiming.state)}`:''}">
-        <td>${i+1}</td>
+        <td>${patientStatusWatermarkMarkup(displayStatus)}<span class="patient-row-index">${i+1}</span></td>
         <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}${p.dailyNote?`<small class="daily-patient-note" title="${escapeHtml(p.dailyNote)}"><span aria-hidden="true">📝</span>${escapeHtml(p.dailyNote)}</small>`:''}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${treatmentPlanComplianceBadgeMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${patientNeedsLabCase(p)?`<span class="lab-required-badge"><span aria-hidden="true">!</span>${lang==='en'?'Laboratory case required':'يلزم إضافة حالة معمل'}</span>`:''}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}${VIEW_MODE==='admin'?`<span class="admin-table-timing">${escapeHtml(adminQueueTimingCopy(p,queueTiming))}</span>`:''}</td>

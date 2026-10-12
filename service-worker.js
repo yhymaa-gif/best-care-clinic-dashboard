@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261011-quick-plan-delete';
+const CACHE_NAME='bestcare-dashboard-v1-20261012-patient-status-watermarks';
 const APP_SHELL=[
   './',
   './index.html',
