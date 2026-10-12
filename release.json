@@ -3,6 +3,6 @@
   "publishedAt": "2026-10-12",
   "summary": {
     "ar": "إضافة علامات مائية كبيرة وشفافة لحالة المريض: مكتمل، وصل، متأخر وملغي موعده، مع إبقاء الألوان والأزرار واضحة.",
-    "en": "Large translucent patient-status watermarks for completed, arrived, late and cancelled appointments, preserving existing colors and controls."
+    "en": "Large translucent status labels: completed, arrived, late and cancelled, keeping patient details and controls clear."
   }
 }
