@@ -3051,7 +3051,7 @@ function patientStatusWatermarkMarkup(status){
   if(VIEW_MODE!=='admin')return '';
   const labels={done:['مكتمل','Completed'],arrived:['وصل','Arrived'],early_arrival:['وصل مبكرًا','Arrived early'],late:['متأخر','Late'],cancel:['ملغي موعده','Cancelled']};
   const label=labels[status];
-  return label?`<span class="patient-status-watermark watermark-${escapeHtml(status)}" aria-hidden="true">${escapeHtml(label[lang==='en'?1:0])}</span>`:'';
+  return label?`<span class="patient-status-watermark watermark-${escapeHtml(status)}" lang="${lang==='en'?'en':'ar'}" dir="${lang==='en'?'ltr':'rtl'}" aria-hidden="true">${escapeHtml(label[lang==='en'?1:0])}</span>`:'';
 }
 function renderTable(){
   const activeStatusSelect=document.activeElement?.matches?.('.status-select,.plan-status-select,.lab-status-inline-select');

@@ -6,10 +6,12 @@ const css=await readFile(new URL('../dashboard.css',import.meta.url),'utf8');
 const source=js.slice(js.indexOf('function patientStatusWatermarkMarkup('),js.indexOf('function renderTable(){'));
 const renderer=(language='ar',view='admin')=>new Function('lang','VIEW_MODE','escapeHtml',`${source};return patientStatusWatermarkMarkup`)(language,view,value=>String(value));
 
-test('watermarks follow explicit display statuses in both languages without guessing from row colors',()=>{
+test('watermarks follow interface language and explicit status without guessing from row colors',()=>{
   const ar=renderer(),en=renderer('en');
   for(const [status,arabic,english] of [['done','مكتمل','Completed'],['arrived','وصل','Arrived'],['early_arrival','وصل مبكرًا','Arrived early'],['late','متأخر','Late'],['cancel','ملغي موعده','Cancelled']]){
     assert.ok(ar(status).includes(`>${arabic}</span>`));assert.ok(en(status).includes(`>${english}</span>`));
+    assert.ok(!ar(status).includes(english));assert.ok(!en(status).includes(arabic));
+    assert.match(ar(status),/lang="ar" dir="rtl"/);assert.match(en(status),/lang="en" dir="ltr"/);
     assert.match(ar(status),/aria-hidden="true"/);
   }
   for(const status of ['waiting','active','left','asks_delay','unknown'])assert.equal(ar(status),'');
