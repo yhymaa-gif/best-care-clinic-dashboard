@@ -47,8 +47,42 @@ const namesCompatible = (left, right) => {
   const a = normalizedName(left), b = normalizedName(right);
   if (!a || !b) return false;
   if (a === b) return true;
-  const shorter = a.length <= b.length ? a : b;
-  return shorter.split(/\s+/).length >= 2 && (a.includes(b) || b.includes(a));
+  const [shorter, longer] = a.split(/\s+/).length <= b.split(/\s+/).length ? [a.split(/\s+/), b.split(/\s+/)] : [b.split(/\s+/), a.split(/\s+/)];
+  return shorter.every((part, index) => part === longer[index]);
+};
+const correctionAllowsName = (record, incoming, suppliedAliases = []) => Array.isArray(record?.nameCorrections) && record.nameCorrections.some(correction =>
+  namesCompatible(correction.from, incoming) && namesCompatible(correction.to, record.authoritativeFullName || record.fullName) &&
+  suppliedAliases.some(alias => [...(correction.fromAliases || []), ...(correction.toAliases || [])].includes(alias)));
+const safeNameLink = (record, incoming, suppliedAliases = []) => !literalPatientName(incoming) ||
+  [record?.fullName, record?.authoritativeFullName].filter(Boolean).every(name => namesCompatible(name, incoming) || correctionAllowsName(record, incoming, suppliedAliases));
+const ownerCache = new WeakMap();
+const aliasOwners = records => {
+  if (ownerCache.has(records)) return ownerCache.get(records);
+  const owners = new Map();
+  Object.entries(records).forEach(([canonical, record]) => {
+    for (const alias of [...new Set([...aliasesFor(record), ...(record.aliases || [])])]) {
+      if (!/^(file|national):/.test(alias)) continue;
+      const linked = owners.get(alias) || new Set(); linked.add(canonical); owners.set(alias, linked);
+    }
+  });
+  ownerCache.set(records, owners);
+  return owners;
+};
+const phoneOwners = records => {
+  const owners = new Map();
+  Object.entries(records).forEach(([canonical, record]) => { const alias = phoneAliasFor(record); if (alias && !owners.has(alias)) owners.set(alias, canonical); });
+  return owners;
+};
+export const validateDirectoryCorrection = (registry = {}, lookupAliases = [], value = {}) => {
+  const records = registry.records || {}, aliases = registry.aliases || {};
+  const requested = [...new Set([...(lookupAliases || []).filter(alias => /^(file|national):/.test(alias)), ...strongAliasesFor(directoryPatient(value))])];
+  const owners = aliasOwners(records);
+  const linked = new Set(requested.flatMap(alias => [...(owners.get(alias) || []), ...(aliases[alias] && records[aliases[alias]] ? [aliases[alias]] : [])]));
+  if (linked.size > 1 || requested.some(alias => (owners.get(alias)?.size || 0) > 1)) return { valid: false, reason: 'identity_conflict' };
+  const canonical = [...linked][0] || hash(requested[0] || 'manual:pending');
+  const existing = records[canonical] || {};
+  if ([...(existing.aliases || []), ...aliasesFor(directoryPatient(value)), ...requested].some(alias => /^(file|national):/.test(alias) && aliases[alias] && aliases[alias] !== canonical)) return { valid: false, reason: 'identity_conflict' };
+  return { valid: true, canonical };
 };
 const reviewFlagsFor = (value = {}, options = {}) => {
   const patient = directoryPatient(value);
@@ -61,16 +95,17 @@ const reviewFlagsFor = (value = {}, options = {}) => {
   return [...new Set(flags)];
 };
 
-const resolveCanonical = (records, aliases, patient) => {
+const resolveCanonical = (records, aliases, patient, owners = aliasOwners(records), phones = phoneOwners(records)) => {
   const strongAliases = strongAliasesFor(patient);
   const phoneAlias = phoneAliasFor(patient);
-  const sharedPhone = patient.mobile ? Object.entries(records).find(([,record]) => normalizePatientPhone(record.mobile) === patient.mobile)?.[0] || '' : '';
-  const strongLinked = [...new Set(strongAliases.map(alias => aliases[alias]).filter(Boolean))];
+  const sharedPhone = phoneAlias ? phones.get(phoneAlias) || aliases[phoneAlias] || '' : '';
+  if (strongAliases.some(alias => (owners.get(alias)?.size || 0) > 1)) return { conflict: true, canonical: '', sharedPhoneCanonical: '' };
+  const strongLinked = [...new Set(strongAliases.flatMap(alias => [...(owners.get(alias) || []), ...(aliases[alias] && records[aliases[alias]] ? [aliases[alias]] : [])]))];
   if (strongLinked.length > 1) return { conflict: true, canonical: '', sharedPhoneCanonical: '' };
   if (strongLinked.length === 1) {
     const canonical = strongLinked[0];
     const phoneCanonical = sharedPhone || (phoneAlias ? aliases[phoneAlias] : '');
-    if (identityConflict(records[canonical], patient)) return { conflict: true, canonical: '', sharedPhoneCanonical: '' };
+    if (identityConflict(records[canonical], patient) || !safeNameLink(records[canonical], patient.fullName, strongAliases)) return { conflict: true, nameConflict: !safeNameLink(records[canonical], patient.fullName, strongAliases), canonical: '', sharedPhoneCanonical: '' };
     return { conflict: false, canonical, sharedPhoneCanonical: phoneCanonical && phoneCanonical !== canonical ? phoneCanonical : '' };
   }
   const phoneCanonical = sharedPhone || (phoneAlias ? aliases[phoneAlias] : '');
@@ -83,14 +118,12 @@ const nameScore = value => {
   return name ? name.split(/\s+/).filter(Boolean).length * 1000 + name.length : 0;
 };
 
-// A CSV row with an existing file number is an explicit master-record update.
-// It may correct a different name (not only a longer one), while blank or
-// obviously incomplete imported values can never erase verified data.
+// Imports are not explicit corrections. A file number cannot authorize a rename.
 const authoritativeImportName = (current, incoming, { matchedByFile = false, locked = false } = {}) => {
   const oldValue = cleanText(current, 120);
   const nextValue = cleanText(incoming, 120);
   const completeIncoming = nextValue.split(/\s+/).filter(Boolean).length >= 2;
-  if (matchedByFile && completeIncoming) return nextValue;
+  if (!locked && matchedByFile && completeIncoming && namesCompatible(oldValue, nextValue) && nameScore(nextValue) >= nameScore(oldValue)) return nextValue;
   return preferValue(oldValue, nextValue, { name: true, locked });
 };
 const authoritativeImportField = (current, incoming, { matchedByFile = false, valid = true } = {}) => {
@@ -108,6 +141,7 @@ export function resolveDirectoryPatient(registry = {}, value = {}) {
   const records = registry?.records && typeof registry.records === 'object' ? registry.records : {};
   const aliases = registry?.aliases && typeof registry.aliases === 'object' ? registry.aliases : {};
   const patient = directoryPatient(value);
+  const owners = aliasOwners(records);
   const identityAliases = aliasesFor(patient);
   const strongCanonicals = [...new Set(identityAliases
     .filter(alias => alias.startsWith('file:') || alias.startsWith('national:'))
@@ -118,9 +152,17 @@ export function resolveDirectoryPatient(registry = {}, value = {}) {
   // must be corrected by administration instead of guessing a patient.
   if (strongCanonicals.length === 1) {
     const record=records[strongCanonicals[0]];
-    // Preserve explicit historical file aliases, but reject a conflicting ID.
+    if (record.dataQualityFlags?.some(flag => flag === 'name_conflict' || flag === 'identity_conflict')) return null;
+    if (identityAliases.filter(alias => /^(file|national):/.test(alias)).some(alias =>
+      (owners.get(alias)?.size || 0) > 1 || (owners.get(alias)?.size === 1 && !owners.get(alias).has(strongCanonicals[0])))) return null;
+    if (identityAliases.filter(alias => /^(file|national):/.test(alias)).some(alias => {
+      const current = strongAliasesFor(record).includes(alias);
+      const corrected = record.nameCorrections?.some(correction => correction.fromAliases?.includes(alias) || correction.toAliases?.includes(alias));
+      return aliases[alias] === strongCanonicals[0] && !current && !corrected;
+    })) return null;
     if (patient.nationalId && record.nationalId && patient.nationalId !== record.nationalId) return null;
     if (patient.fileNo && record.fileNo && patient.fileNo !== normalizePatientFile(record.fileNo) && aliases[`file:${patient.fileNo}`] !== strongCanonicals[0]) return null;
+    if (!safeNameLink(record, patient.fullName, strongAliasesFor(patient))) return null;
     return record;
   }
   if (strongCanonicals.length > 1) return null;
@@ -130,7 +172,7 @@ export function resolveDirectoryPatient(registry = {}, value = {}) {
 
 export const enrichPatientFromDirectory = (registry = {}, value = {}) => {
   const match = resolveDirectoryPatient(registry, value);
-  if (!match) return { ...value };
+  if (!match || !safeNameLink(match, value?.name || value?.fullName, strongAliasesFor(value))) return { ...value };
   const resolvedName = literalPatientName(match.authoritativeFullName || match.fullName);
   return {
     ...value,
@@ -152,7 +194,7 @@ const preferValue = (current, incoming, { force = false, locked = false, name = 
   if (force) return nextValue;
   if (locked && oldValue) return oldValue;
   if (!oldValue) return nextValue;
-  if (name && nameScore(nextValue) > nameScore(oldValue)) return nextValue;
+  if (name && namesCompatible(oldValue, nextValue) && nameScore(nextValue) > nameScore(oldValue)) return nextValue;
   return oldValue;
 };
 
@@ -227,10 +269,15 @@ export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
   groups.forEach((entries, fileNo) => {
     filesReviewed += 1;
     const nationalIds=new Set(entries.map(entry=>normalizePatientNationalId(entry.record?.nationalId)).filter(Boolean));
-    if(nationalIds.size>1){
+    const nameConflict = entries.some((entry, index) => entries.slice(index + 1).some(other =>
+      !namesCompatible(entry.record?.fullName, other.record?.fullName) &&
+      !correctionAllowsName(entry.record, other.record?.fullName, strongAliasesFor(other.record)) && !correctionAllowsName(other.record, entry.record?.fullName, strongAliasesFor(entry.record)))) ||
+      entries.some(entry => entry.record?.authoritativeFullName && !safeNameLink({ ...entry.record, fullName: entry.record.authoritativeFullName }, entry.record.fullName, strongAliasesFor(entry.record)));
+    if(nationalIds.size>1 || nameConflict){
       entries.forEach(({canonical,record})=>{
-        if(!record.dataQualityFlags?.includes('identity_conflict'))trustedMetadataChanged=true;
-        records[canonical]={...record,reviewRequired:true,dataQualityFlags:[...new Set([...(record.dataQualityFlags||[]),'identity_conflict'])]};
+        const conflictFlags = [...(nationalIds.size > 1 ? ['identity_conflict'] : []), ...(nameConflict ? ['name_conflict'] : [])];
+        if(conflictFlags.some(flag=>!record.dataQualityFlags?.includes(flag)))trustedMetadataChanged=true;
+        records[canonical]={...record,reviewRequired:true,dataQualityFlags:[...new Set([...(record.dataQualityFlags||[]),...conflictFlags])]};
       });
       return;
     }
@@ -314,6 +361,7 @@ export async function upsertPatientDirectory(patients, meta = {}) {
   const registry = await getPatientDirectory();
   const records = { ...(registry.records || {}) };
   const aliases = { ...(registry.aliases || {}) };
+  const owners = aliasOwners(records), phones = phoneOwners(records);
   const batchUpdatedAt = Number(meta.updatedAt || Date.now());
   let changed = false;
 
@@ -321,7 +369,7 @@ export async function upsertPatientDirectory(patients, meta = {}) {
     const patient = directoryPatient(source);
     const incomingAliases = aliasesFor(patient);
     if (!incomingAliases.length) continue;
-    const resolution = resolveCanonical(records, aliases, patient);
+    const resolution = resolveCanonical(records, aliases, patient, owners, phones);
     if (resolution.conflict || !resolution.canonical) continue;
     const canonical = resolution.canonical;
     const existing = records[canonical] || {};
@@ -367,6 +415,8 @@ export async function upsertPatientDirectory(patients, meta = {}) {
     next.reviewRequired = next.dataQualityFlags.length > 0;
     if (JSON.stringify(existing) !== JSON.stringify(next)) changed = true;
     records[canonical] = next;
+    for (const alias of strongAliasesFor(next)) { const linked = owners.get(alias) || new Set(); linked.add(canonical); owners.set(alias, linked); }
+    if (phoneAliasFor(next) && !phones.has(phoneAliasFor(next))) phones.set(phoneAliasFor(next), canonical);
     next.aliases.forEach(alias => {
       if (alias.startsWith('phone:') && aliases[alias] && aliases[alias] !== canonical) return;
       aliases[alias] = canonical;
@@ -400,13 +450,19 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
   const normalizedAliases = [...new Set((lookupAliases || []).filter(alias => /^(file|national):/.test(alias)))];
   const patient = directoryPatient(value);
   const nextAliases = aliasesFor(patient);
-  const canonical = normalizedAliases.map(alias => aliases[alias]).find(Boolean) || nextAliases.map(alias => aliases[alias]).find(Boolean) || hash((nextAliases[0] || normalizedAliases[0] || `manual:${Date.now()}`));
+  const validation = validateDirectoryCorrection(registry, normalizedAliases, patient);
+  if (!validation.valid) throw new Error(validation.reason);
+  const canonical = validation.canonical;
   const existing = records[canonical] || {};
   const correctionId = cleanText(meta.correctionId, 120);
   if (correctionId && existing.lastCorrectionId === correctionId) {
     return { canonical, record: existing, revision: Number(registry.revision || 0), duplicate: true };
   }
   const now = Date.now();
+  const fromAliases = strongAliasesFor(existing);
+  const nameChanged = Boolean(existing.fullName && patient.fullName && !namesCompatible(existing.fullName, patient.fullName));
+  const identityChanged = fromAliases.some(alias => !strongAliasesFor(patient).includes(alias)) || strongAliasesFor(patient).some(alias => !fromAliases.includes(alias));
+  if ([...(existing.aliases || []), ...nextAliases, ...normalizedAliases].some(alias => /^(file|national):/.test(alias) && aliases[alias] && aliases[alias] !== canonical)) throw new Error('identity_conflict');
   const next = {
     ...existing,
     canonical,
@@ -425,6 +481,7 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
     correctedAt: now,
     nameVerifiedAt: now,
     nameVerificationSource: 'admin_correction',
+    nameCorrections: nameChanged || identityChanged ? [...(existing.nameCorrections || []), { from: literalPatientName(existing.fullName), to: patient.fullName, fromAliases, toAliases: strongAliasesFor(patient), at: now, correctionId }].slice(-20) : (existing.nameCorrections || []),
     lastCorrectionId: correctionId || existing.lastCorrectionId || '',
     updatedBy: cleanText(meta.actor, 120)
   };
@@ -442,38 +499,64 @@ export async function importPatientDirectory(values, meta = {}) {
   const registry = await getPatientDirectory();
   const aliases = { ...(registry.aliases || {}) };
   const records = { ...(registry.records || {}) };
+  const owners = aliasOwners(records), phones = phoneOwners(records);
   const now = Date.now();
   const result = { received: input.length, created: 0, updated: 0, correctedNames: 0, correctedFields: 0, completedFields: 0, skipped: 0, conflicts: 0, reviewRequired: 0, sharedPhones: 0, errors: [] };
+  const normalizedInput = input.map(directoryPatient);
+  const grouped = new Map(), blocked = new Set(), parents = input.map((_, index) => index);
+  const root = index => { while (parents[index] !== index) index = parents[index] = parents[parents[index]]; return index; };
+  normalizedInput.forEach((patient, index) => strongAliasesFor(patient).forEach(alias => {
+    const prior = grouped.get(alias); if (prior !== undefined) parents[root(index)] = root(prior); else grouped.set(alias, index);
+  }));
+  const components = new Map(); normalizedInput.forEach((_, index) => {
+    const key = root(index), indices = components.get(key) || []; indices.push(index); components.set(key, indices);
+  });
+  components.forEach(indices => {
+    if (indices.some((index, offset) => indices.slice(offset + 1).some(other => !namesCompatible(normalizedInput[index].fullName, normalizedInput[other].fullName)))) indices.forEach(index => blocked.add(index));
+  });
 
   for (let index = 0; index < input.length; index += 1) {
-    const patient = directoryPatient(input[index]);
+    const patient = normalizedInput[index];
     const identityAliases = aliasesFor(patient);
     if (!patient.fullName || !identityAliases.length) {
       result.skipped += 1;
       if (result.errors.length < 80) result.errors.push({ row: index + 2, reason: !patient.fullName ? 'name_required' : 'identity_required' });
       continue;
     }
-    const resolution = resolveCanonical(records, aliases, patient);
+    if (blocked.has(index)) {
+      result.conflicts += 1;
+      if (result.errors.length < 80) result.errors.push({ row: index + 2, reason: 'name_conflict' });
+      continue;
+    }
+    const resolution = resolveCanonical(records, aliases, patient, owners, phones);
     if (resolution.conflict || !resolution.canonical) {
       result.conflicts += 1;
-      if (result.errors.length < 80) result.errors.push({ row: index + 2, reason: 'identity_conflict' });
+      if (result.errors.length < 80) result.errors.push({ row: index + 2, reason: resolution.nameConflict ? 'name_conflict' : 'identity_conflict' });
       continue;
     }
     const canonical = resolution.canonical;
     const existing = records[canonical] || {};
     const fileAlias = identityAliases.find(alias => alias.startsWith('file:')) || '';
+    // Historical correction provenance permits reading old appointments, not
+    // rolling back a verified identity or its contact details through import.
+    if ([existing.fullName, existing.authoritativeFullName].filter(Boolean).some(name => !namesCompatible(name, patient.fullName))) {
+      result.conflicts += 1;
+      if (result.errors.length < 80) result.errors.push({ row: index + 2, reason: 'name_conflict' });
+      continue;
+    }
     const matchedByFile = Boolean(fileAlias && aliases[fileAlias] === canonical && Object.keys(existing).length);
     const clinicId = cleanText(input[index]?.clinicId || meta.clinicId, 20);
     const nextName = authoritativeImportName(existing.fullName, patient.fullName, { matchedByFile, locked: Boolean(existing.correctedAt) && existing.lockedFields?.includes('fullName') });
-    const importedNameIsAuthoritative = Boolean(patient.fileNo && patient.fullName.split(/\s+/).filter(Boolean).length >= 2);
-    const nextMobile = authoritativeImportField(existing.mobile, patient.mobile, { matchedByFile: matchedByFile && !resolution.sharedPhoneCanonical, valid: /^05\d{8}$/.test(patient.mobile) });
-    const nextNationalId = authoritativeImportField(existing.nationalId, patient.nationalId, { matchedByFile, valid: /^\d{10}$/.test(patient.nationalId) });
+    const correctedLock = field => Boolean(existing.correctedAt && existing.lockedFields?.includes(field));
+    const importedNameIsAuthoritative = Boolean(!correctedLock('fullName') && patient.fileNo && nextName.split(/\s+/).filter(Boolean).length >= 2);
+    const nextMobile = correctedLock('mobile') ? (existing.mobile || '') : authoritativeImportField(existing.mobile, patient.mobile, { matchedByFile: matchedByFile && !resolution.sharedPhoneCanonical, valid: /^05\d{8}$/.test(patient.mobile) });
+    const nextNationalId = correctedLock('nationalId') ? (existing.nationalId || '') : authoritativeImportField(existing.nationalId, patient.nationalId, { matchedByFile, valid: /^\d{10}$/.test(patient.nationalId) });
     const next = {
       ...existing,
       canonical,
       id: existing.id || patient.id,
       fullName: nextName,
-      authoritativeFullName: importedNameIsAuthoritative ? literalPatientName(patient.fullName) : (existing.authoritativeFullName || ''),
+      authoritativeFullName: importedNameIsAuthoritative ? literalPatientName(nextName) : (existing.authoritativeFullName || ''),
       fileNo: existing.fileNo || patient.fileNo,
       mobile: nextMobile,
       nationalId: nextNationalId,
@@ -500,6 +583,8 @@ export async function importPatientDirectory(values, meta = {}) {
     next.dataQualityFlags = reviewFlagsFor({ ...next, notesReviewed: Boolean(next.notesReviewedAt) }, { sharedPhone: Boolean(resolution.sharedPhoneCanonical) });
     next.reviewRequired = next.dataQualityFlags.length > 0;
     records[canonical] = next;
+    for (const alias of strongAliasesFor(next)) { const linked = owners.get(alias) || new Set(); linked.add(canonical); owners.set(alias, linked); }
+    if (phoneAliasFor(next) && !phones.has(phoneAliasFor(next))) phones.set(phoneAliasFor(next), canonical);
     next.aliases.forEach(alias => {
       if (alias.startsWith('phone:') && aliases[alias] && aliases[alias] !== canonical) return;
       aliases[alias] = canonical;

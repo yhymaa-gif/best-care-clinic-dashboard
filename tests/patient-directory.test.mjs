@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { runInNewContext } from 'node:vm';
+import { validateDirectoryCorrection } from '../netlify/functions/lib/patient-directory.mjs';
 import { __test as directory } from '../netlify/functions/lib/patient-directory.mjs';
 import { __test as patients } from '../netlify/functions/patients.mjs';
 import { normalizePatientFile } from '../netlify/functions/lib/patient-identity.mjs';
@@ -33,15 +35,15 @@ test('central patient directory prefers the more complete name and keeps correct
   assert.equal(directory.preferValue('7041', '9999', { force: true, locked: true }), '9999');
 });
 
-test('CSV import uses an existing file number to correct the name without blank-data regression', () => {
-  assert.equal(directory.authoritativeImportName('دعاء الحسن العطوي', 'ملاك الحسن الحفظي', { matchedByFile: true, locked: true }), 'ملاك الحسن الحفظي');
+test('CSV import refuses unrelated renames without blank-data regression', () => {
+  assert.equal(directory.authoritativeImportName('دعاء الحسن العطوي', 'ملاك الحسن الحفظي', { matchedByFile: true, locked: true }), 'دعاء الحسن العطوي');
   assert.equal(directory.authoritativeImportName('ملاك الحسن الحفظي', 'ملاك', { matchedByFile: true, locked: true }), 'ملاك الحسن الحفظي');
   assert.equal(directory.authoritativeImportField('0551112233', '', { matchedByFile: true }), '0551112233');
   assert.equal(directory.authoritativeImportField('0551112233', '0559998877', { matchedByFile: true, valid: true }), '0559998877');
   assert.equal(directory.authoritativeImportField('0551112233', '123', { matchedByFile: true, valid: false }), '0551112233');
 });
 
-test('literal name audit restores the exact imported name and removes hidden formatting', () => {
+test('literal name audit quarantines an unrelated imported name', () => {
   const registry = {
     records: {
       patient: {
@@ -60,17 +62,15 @@ test('literal name audit restores the exact imported name and removes hidden for
     updatedAt: 20
   };
   const result = directory.reconcileDirectorySnapshot(registry, { now: 100, actor: 'literal-audit' });
-  assert.equal(directory.enrichPatientFromDirectory(registry, { name: 'دعاء', file: '12206' }).name, 'ملاك الحسن الحفظي');
+  assert.equal(directory.enrichPatientFromDirectory(registry, { name: 'دعاء', file: '12206' }).name, 'دعاء');
   assert.equal(result.changed, true);
-  assert.equal(result.correctedNames, 1);
-  assert.equal(result.registry.records.patient.fullName, 'ملاك الحسن الحفظي');
-  assert.equal(result.registry.records.patient.authoritativeFullName, 'ملاك الحسن الحفظي');
-  assert.equal(result.registry.records.patient.fileNo, '12206');
-  assert.ok(result.registry.records.patient.lockedFields.includes('fullName'));
+  assert.equal(result.correctedNames, 0);
+  assert.equal(result.registry.records.patient.fullName, 'دعاء الحسن العطوي');
+  assert.ok(result.registry.records.patient.dataQualityFlags.includes('name_conflict'));
   assert.equal(normalizePatientFile('١٢٬٢٠٦.0'), '12206');
 });
 
-test('an exact imported name remains authoritative over an older appointment spelling', () => {
+test('an imported name cannot overwrite an unrelated appointment name', () => {
   const registry = {
     records: {
       patient: {
@@ -86,7 +86,7 @@ test('an exact imported name remains authoritative over an older appointment spe
     aliases: { 'file:12206': 'patient' }
   };
   const enriched = directory.enrichPatientFromDirectory(registry, { name: 'دعاء الحسن العطوي', file: '12206' });
-  assert.equal(enriched.name, 'ملاك الحسن الحفظي');
+  assert.equal(enriched.name, 'دعاء الحسن العطوي');
   assert.equal(directory.nameForRoutineUpdate(registry.records.patient, 'دعاء الحسن العطوي'), 'ملاك الحسن الحفظي');
 });
 
@@ -163,7 +163,7 @@ test('legacy appointments resolve to the complete central patient identity', () 
       'national:1234567890': 'patient-7041'
     }
   };
-  assert.equal(directory.resolveDirectoryPatient(registry, { name: 'دعاء', file: 'OLD-7041' }), record);
+  assert.equal(directory.resolveDirectoryPatient(registry, { name: 'دعاء', file: 'OLD-7041' }), null);
   assert.deepEqual(directory.enrichPatientFromDirectory(registry, { id: 'appointment-1', name: 'دعاء', file: '7041' }), {
     id: 'appointment-1',
     name: 'دعاء الحسن العطوي',
@@ -183,6 +183,84 @@ test('mobile fallback refuses to guess when a number is shared', () => {
     second: { canonical: 'second', fullName: 'المريض الثاني', mobile: '0551112233', aliases: ['phone:0551112233'] }
   }, aliases: { 'phone:0551112233': 'first' } };
   assert.equal(directory.resolveDirectoryPatient(registry, { name: 'مريض', phone: '0551112233' }), null);
+});
+
+test('strong identifiers do not link unrelated, substring, or stale-alias names', () => {
+  const record = { canonical: 'one', fullName: 'خيرية محمد علي', fileNo: 'TEST18252', nationalId: '1234567890', aliases: ['file:TEST18252', 'file:OLD18252'] };
+  const registry = { records: { one: record }, aliases: { 'file:TEST18252': 'one', 'national:1234567890': 'one', 'file:OLD18252': 'one' } };
+  assert.equal(directory.enrichPatientFromDirectory(registry, { name: 'سارة محمد علي', file: 'TEST18252' }).name, 'سارة محمد علي');
+  assert.equal(directory.resolveDirectoryPatient(registry, { name: 'خيرية', file: 'OLD18252' }), null);
+  assert.equal(directory.resolveDirectoryPatient(registry, { name: 'خيرية', file: 'TEST18252' }), record);
+  assert.equal(directory.namesCompatible('خيرية محمد', 'خيرية محمد علي'), true);
+  assert.equal(directory.namesCompatible('خيرية محمد', 'خيرية محمدان علي'), false);
+  assert.equal(directory.namesCompatible('خيرية محمد', 'أم خيرية محمد'), false);
+});
+
+test('an ambiguous file alias fails even when national ID points to one record', () => {
+  const first = { canonical: 'first', fullName: 'خيرية محمد', fileNo: '1', nationalId: '1234567890', aliases: ['file:1', 'national:1234567890'] };
+  const second = { canonical: 'second', fullName: 'خيرية محمد', fileNo: '2', aliases: ['file:1'] };
+  const registry = { records: { first, second }, aliases: { 'file:1': 'first', 'national:1234567890': 'first' } };
+  assert.equal(directory.resolveDirectoryPatient(registry, { name: 'خيرية', file: '1', nationalId: '1234567890' }), null);
+  assert.equal(validateDirectoryCorrection(registry, ['file:1'], first).valid, false);
+});
+
+test('explicit correction provenance permits only its bound old alias and rejects alias stealing', () => {
+  const corrected = { canonical: 'first', fullName: 'ملاك الحسن', authoritativeFullName: 'ملاك الحسن', fileNo: 'NEW1', aliases: ['file:OLD1', 'file:NEW1'], nameCorrections: [{ from: 'دعاء الحسن', to: 'ملاك الحسن', fromAliases: ['file:OLD1'], toAliases: ['file:NEW1'] }] };
+  const registry = { records: { first: corrected, second: { canonical: 'second', fullName: 'سارة علي', fileNo: 'OTHER' } }, aliases: { 'file:OLD1': 'first', 'file:NEW1': 'first', 'file:OTHER': 'second' } };
+  assert.equal(directory.enrichPatientFromDirectory(registry, { name: 'دعاء الحسن', file: 'OLD1' }).name, 'ملاك الحسن');
+  assert.equal(directory.enrichPatientFromDirectory(registry, { name: 'دعاء الحسن', file: 'NEW1' }).name, 'ملاك الحسن');
+  assert.equal(validateDirectoryCorrection(registry, ['file:NEW1'], { name: 'ملاك الحسن', file: 'OTHER' }).valid, false);
+  const unproven = { ...registry, records: { ...registry.records, first: { ...corrected, nameCorrections: [] } } };
+  assert.equal(directory.resolveDirectoryPatient(unproven, { name: 'دعاء الحسن', file: 'OLD1' }), null);
+});
+
+test('reconciliation quarantines incompatible names and is idempotent', () => {
+  const registry = { records: {
+    one: { canonical: 'one', fullName: 'خيرية محمد علي', fileNo: '9', aliases: ['file:9'] },
+    two: { canonical: 'two', fullName: 'خيرية محمد يوسف', fileNo: '9', aliases: ['file:9'] },
+    short: { canonical: 'short', fullName: 'خيرية محمد', fileNo: '9', aliases: ['file:9'] }
+  }, aliases: { 'file:9': 'one' }, revision: 1 };
+  const first = directory.reconcileDirectorySnapshot(registry, { now: 100 });
+  assert.equal(first.duplicateRecordsMerged, 0);
+  assert.equal(Object.keys(first.registry.records).length, 3);
+  assert.ok(first.registry.records.one.dataQualityFlags.includes('name_conflict'));
+  const second = directory.reconcileDirectorySnapshot(first.registry, { now: 200 });
+  assert.equal(second.changed, false);
+});
+
+test('client and server use the same whole-token name comparison', async () => {
+  const source = await read('dashboard.js');
+  const line = source.match(/  const namesCompatible=([^\n]+);/)[0];
+  const client = runInNewContext(`const nameKey=value=>String(value||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');${line};namesCompatible`, {});
+  for (const [a, b] of [['خيرية محمد', 'خيرية محمد علي'], ['خيرية محمد', 'خيرية محمدان'], ['دعاء', 'ملاك الحسن'], ['خيرية', 'خيرية محمد']]) {
+    assert.equal(client(a, b), directory.namesCompatible(a, b));
+  }
+});
+
+test('CSV preview quarantines both conflicting rows regardless of order', async () => {
+  const source = await read('dashboard.js');
+  const functionSource = source.slice(source.indexOf('function mergePatientDirectoryImportRows('), source.indexOf('function parsePatientDirectoryCsv('));
+  const merge = runInNewContext(`const cleanDirectoryName=value=>String(value||'').trim();const patientDirectoryAliases=row=>[row.fileNo&&'file:'+row.fileNo,row.nationalId&&'national:'+row.nationalId].filter(Boolean);${functionSource};mergePatientDirectoryImportRows`, {});
+  const a = { sourceRow: 2, fullName: 'خيرية محمد علي', fileNo: 'TEST18252', mobile: '0551112233', issue: '' };
+  const b = { sourceRow: 3, fullName: 'سارة محمد علي', fileNo: 'TEST18252', mobile: '0551112233', issue: '' };
+  for (const rows of [[a, b], [b, a]]) {
+    const result = merge(rows);
+    assert.equal(result.validRows.length, 0);
+    assert.deepEqual(Array.from(result.invalidRows, row => row.issue), ['name_conflict', 'name_conflict']);
+  }
+  const separate = merge([a, { ...b, fileNo: 'OTHER' }]);
+  assert.equal(separate.validRows.length, 2);
+  assert.ok(separate.validRows.every(row => row.reviewFlags.includes('shared_phone')));
+  const bridge = [
+    { ...a, fullName: 'نور أحمد', fileNo: '1', nationalId: '' },
+    { ...a, sourceRow: 3, fullName: 'نور', fileNo: '1', nationalId: '1234567890' },
+    { ...a, sourceRow: 4, fullName: 'نور خالد', fileNo: '', nationalId: '1234567890' }
+  ];
+  for (const rows of [bridge, [...bridge].reverse()]) {
+    const result = merge(rows);
+    assert.equal(result.validRows.length, 0);
+    assert.equal(result.invalidRows.length, 3);
+  }
 });
 
 test('central patient directory keeps recent appointment context for future visits', () => {
@@ -293,7 +371,7 @@ test('central patient list import preserves full names and updates matched ident
   assert.match(endpoint, /request\.method === 'POST'/);
   assert.match(endpoint, /importPatientDirectory/);
   assert.match(directorySource, /fullName: preferValue\(existing\.fullName, patient\.fullName/);
-  assert.match(directorySource, /resolveCanonical\(records, aliases, patient\)/);
+  assert.match(directorySource, /resolveCanonical\(records, aliases, patient, owners, phones\)/);
   assert.match(directorySource, /result\.updated \+= 1/);
 });
 
@@ -324,7 +402,7 @@ test('patient import deployment cannot mix a fresh page with stale cached contro
   assert.match(dashboard, /patientDirectoryFileInput'\)\?\.addEventListener/);
   assert.match(html, /dashboard\.js\?v=20261006-admin-queue-patient-id/);
   assert.match(serviceWorker, /request\.destination==='script'\|\|request\.destination==='style'/);
-  assert.match(serviceWorker, /20261012-patient-status-watermarks/);
+  assert.match(serviceWorker, /20261013-patient-name-link-safety/);
 });
 
 test('administration endpoints enrich names without exposing full names to the clinic response', async () => {

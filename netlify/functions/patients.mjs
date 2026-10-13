@@ -7,6 +7,9 @@ const headers = apiHeaders('GET,POST,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
 const validClinic = value => /^clinic-([1-9]|1[0-5])$/.test(value || '');
 const store = name => getStore({ name, consistency: 'strong' });
+// Keep the literal source name: hiding a disagreement with the authority field
+// would prevent clients from rejecting a conflicting identity.
+const directoryDisplayName = record => String(record.fullName || record.authoritativeFullName || '').trim();
 
 const parseDayKey = key => {
   const legacy = /^days\/(\d{4}-\d{2}-\d{2})$/.exec(key);
@@ -157,7 +160,7 @@ export default async request => {
       return [canonical, {
         ...record,
         canonical,
-        fullName: String(record.authoritativeFullName || record.fullName || '').trim(),
+        fullName: directoryDisplayName(record),
         planCount: plans.length,
         prescriptionCount: prescriptions.length,
         labCount: labs.length,
@@ -169,4 +172,4 @@ export default async request => {
   return reply({ ok: true, records, revision: Number(registry.revision || 0), updatedAt: Number(registry.updatedAt || 0), total: Object.keys(records).length });
 };
 
-export const __test = { parseDayKey, summaryIndex, countMatches };
+export const __test = { parseDayKey, summaryIndex, countMatches, directoryDisplayName };

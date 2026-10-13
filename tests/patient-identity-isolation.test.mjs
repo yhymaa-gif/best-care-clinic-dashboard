@@ -37,6 +37,7 @@ test('automatic cleanup retains conflicting identities instead of merging them b
   assert.equal(Object.keys(result.registry.records).length,2);
   assert.equal(result.duplicateRecordsMerged,0);
   assert.ok(result.registry.records.one.dataQualityFlags.includes('identity_conflict'));
+  assert.ok(result.registry.records.one.dataQualityFlags.includes('name_conflict'));
   assert.equal(records.one.fullName,'أحمد محمد');
 });
 const source=readFileSync(new URL('../dashboard.js',import.meta.url),'utf8');

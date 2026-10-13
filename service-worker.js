@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261012-patient-status-watermarks';
+const CACHE_NAME='bestcare-dashboard-v1-20261013-patient-name-link-safety';
 const APP_SHELL=[
   './',
   './index.html',

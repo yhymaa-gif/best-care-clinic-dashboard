@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { normalizePatientFile, normalizePatientNationalId, normalizePatientPhone, patientIdentityKeys } from './lib/patient-identity.mjs';
-import { correctDirectoryPatient, getPatientDirectory } from './lib/patient-directory.mjs';
+import { correctDirectoryPatient, getPatientDirectory, validateDirectoryCorrection } from './lib/patient-directory.mjs';
 import { hydrateTreatmentPlanRegistry } from './lib/treatment-plan-history.mjs';
 import { matchesSummaryIdentity, loadPlanSummaries } from './lib/patient-summary.mjs';
 
@@ -395,6 +395,8 @@ export default async request => {
   if (conflicting) return reply({ error: 'The new identity is already linked to another patient' }, 409);
   const directoryConflict = nextAliases.filter(alias => !alias.startsWith('phone:')).map(alias => directoryRegistry.aliases?.[alias]).find(canonical => canonical && canonical !== directoryCanonical);
   if (directoryConflict) return reply({ error: 'The new identity is already linked to another patient' }, 409);
+  const directoryValidation = validateDirectoryCorrection(directoryRegistry, [...lookupAliases], next);
+  if (!directoryValidation.valid) return reply({ error: 'The identity is linked to conflicting directory records' }, 409);
 
   const sourceClinicId = clinicPattern.test(String(body?.source?.clinicId || '')) ? String(body.source.clinicId) : '';
   const sourceDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body?.source?.date || '')) ? String(body.source.date) : '';
