@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.12-patient-status-watermarks",
-  "publishedAt": "2026-10-12",
+  "version": "2026.10.13-patient-name-link-safety",
+  "publishedAt": "2026-10-13",
   "summary": {
-    "ar": "علامات مائية شفافة لحالة المريض تتبع لغة الواجهة: مكتمل، وصل، متأخر وملغي موعده، مع الحفاظ على وضوح البيانات والأزرار.",
-    "en": "Patient-status watermarks follow the interface language: completed, arrived, late and cancelled, keeping controls clear."
+    "ar": "حماية ربط المرضى: منع استبدال الأسماء المختلفة تلقائيًا، كشف تعارضات الاستيراد، والحفاظ على التصحيحات اليدوية المعتمدة.",
+    "en": "Safer patient matching: block unrelated name replacement, flag conflicting imports and preserve verified manual corrections."
   }
 }

@@ -2606,21 +2606,40 @@ function schedulePatientIdentityRemoteSearch(){
   renderPatientIdentitySearch();
 }
 function rebuildPatientIdentityAliasIndex(){
-  const next=new Map();
+  const next=new Map(),owners=new Map();
   const add=(alias,record)=>{
     if(!alias)return;
     if(!next.has(alias)){next.set(alias,record);return}
     if(next.get(alias)!==record)next.set(alias,null);
   };
   Object.values(patientIdentityDirectory.records||{}).forEach(record=>{
+    const correctionAliases=(Array.isArray(record.nameCorrections)?record.nameCorrections:[]).flatMap(correction=>[...(correction.fromAliases||[]),...(correction.toAliases||[])]).filter(alias=>/^(file|national):/.test(alias));
     const aliases=[
-      ...(Array.isArray(record.aliases)?record.aliases.filter(alias=>/^(file|national):/.test(alias)):[]),
+      ...correctionAliases,
       fileAlias(record.fileNo),
       record.nationalId?`national:${normalizeDirectoryNationalId(record.nationalId)}`:''
     ];
+    // Unverified aliases cannot resolve a patient, but their competing claims
+    // must still block an ambiguous identity rather than disappear silently.
+    [...new Set([...aliases,...(Array.isArray(record.aliases)?record.aliases:[])])].filter(alias=>/^(file|national):/.test(alias)).forEach(alias=>{
+      const claimants=owners.get(alias)||new Set();claimants.add(record);owners.set(alias,claimants);
+    });
     [...new Set(aliases.filter(Boolean))].forEach(alias=>add(alias,record));
   });
+  owners.forEach((claimants,alias)=>{if(claimants.size>1)next.set(alias,null)});
   patientIdentityAliasIndex=next;
+}
+function directoryNamesCompatible(left,right){
+  const key=value=>cleanDirectoryName(value).normalize('NFC').replace(/[\u200b-\u200f\u202a-\u202e\u2060\ufeff]/g,'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ًٌٍَُِّْـ]/g,'');
+  const a=key(left).split(/\s+/).filter(Boolean),b=key(right).split(/\s+/).filter(Boolean);
+  if(!a.length||!b.length)return false;
+  const shorter=a.length<=b.length?a:b,longer=a.length<=b.length?b:a;
+  return shorter.every((part,index)=>part===longer[index]);
+}
+function directoryCorrectionAllowsName(record,incoming,aliases){
+  return(Array.isArray(record?.nameCorrections)?record.nameCorrections:[]).some(correction=>
+    directoryNamesCompatible(correction.from,incoming)&&directoryNamesCompatible(correction.to,record.authoritativeFullName||record.fullName)&&
+    aliases.some(alias=>[...(correction.fromAliases||[]),...(correction.toAliases||[])].includes(alias)));
 }
 function directoryPatientFor(patient){
   if(!patient)return null;
@@ -2628,11 +2647,16 @@ function directoryPatientFor(patient){
     fileAlias(patient.file??patient.fileNo),
     normalizeDirectoryNationalId(patient.nationalId)?`national:${normalizeDirectoryNationalId(patient.nationalId)}`:''
   ].filter(Boolean);
+  if(aliases.some(alias=>patientIdentityAliasIndex.has(alias)&&patientIdentityAliasIndex.get(alias)===null))return null;
   const matches=[...new Set(aliases.map(alias=>patientIdentityAliasIndex.get(alias)).filter(Boolean))];
   if(matches.length!==1)return null;
   const match=matches[0],file=fileAlias(patient.file??patient.fileNo),national=normalizeDirectoryNationalId(patient.nationalId);
+  if(match.dataQualityFlags?.some(flag=>flag==='name_conflict'||flag==='identity_conflict'))return null;
   if(national&&match.nationalId&&national!==normalizeDirectoryNationalId(match.nationalId))return null;
   if(file&&fileAlias(match.fileNo)&&file!==fileAlias(match.fileNo)&&patientIdentityAliasIndex.get(file)!==match)return null;
+  const suppliedName=cleanDirectoryName(patient.name||patient.fullName);
+  if(suppliedName&&[match.fullName,match.authoritativeFullName].filter(Boolean).some(name=>
+    !directoryNamesCompatible(name,suppliedName)&&!directoryCorrectionAllowsName(match,suppliedName,aliases)))return null;
   return match;
 }
 function patientWithDirectoryIdentity(patient){
@@ -4790,14 +4814,21 @@ function mergePatientDirectoryImportRows(rows){
   const strongAliases=row=>patientDirectoryAliases(row).filter(alias=>alias.startsWith('file:')||alias.startsWith('national:'));
   const incompatible=(left,right)=>Boolean((left.fileNo&&right.fileNo&&left.fileNo!==right.fileNo)||(left.nationalId&&right.nationalId&&left.nationalId!==right.nationalId));
   const nameKey=value=>cleanDirectoryName(value).toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ًٌٍَُِّْـ]/g,'');
-  const namesCompatible=(left,right)=>{const a=nameKey(left),b=nameKey(right);if(!a||!b)return false;if(a===b)return true;const shorter=a.length<=b.length?a:b;return shorter.split(/\s+/).length>=2&&(a.includes(b)||b.includes(a))};
+  const namesCompatible=(left,right)=>{const a=nameKey(left).split(/\s+/).filter(Boolean),b=nameKey(right).split(/\s+/).filter(Boolean);if(!a.length||!b.length)return false;const shorter=a.length<=b.length?a:b,longer=a.length<=b.length?b:a;return shorter.every((part,index)=>part===longer[index])};
+  const grouped=new Map(),blocked=new Set(),parents=rows.map((_,index)=>index);
+  const root=index=>{while(parents[index]!==index)index=parents[index]=parents[parents[index]];return index};
+  rows.forEach((row,index)=>strongAliases(row).forEach(alias=>{const prior=grouped.get(alias);if(prior!==undefined)parents[root(index)]=root(prior);else grouped.set(alias,index)}));
+  const components=new Map();rows.forEach((_,index)=>{const key=root(index),items=components.get(key)||[];items.push(index);components.set(key,items)});
+  components.forEach(indices=>{if(indices.some((index,offset)=>indices.slice(offset+1).some(other=>!namesCompatible(rows[index].fullName,rows[other].fullName))))indices.forEach(index=>blocked.add(index))});
   const indexRow=(row,index)=>{strongAliases(row).forEach(alias=>strongIndex.set(alias,index));const phone=row.mobile?`phone:${row.mobile}`:'';if(phone&&!phoneIndex.has(phone))phoneIndex.set(phone,index)};
-  rows.forEach(row=>{
+  rows.forEach((row,index)=>{
     if(row.issue){invalid.push(row);return}
+    if(blocked.has(index)){invalid.push({...row,issue:'name_conflict'});return}
     const strong=strongAliases(row),linked=[...new Set(strong.map(alias=>strongIndex.get(alias)).filter(index=>index!==undefined))],phone=row.mobile?`phone:${row.mobile}`:'',phoneMatch=phone?phoneIndex.get(phone):undefined;
     if(linked.length>1){invalid.push({...row,issue:'identity_conflict'});return}
     let targetIndex=linked[0];
     if(targetIndex!==undefined&&incompatible(merged[targetIndex],row)){invalid.push({...row,issue:'identity_conflict'});return}
+    if(targetIndex!==undefined&&!namesCompatible(merged[targetIndex].fullName,row.fullName)){invalid.push({...row,issue:'name_conflict'});return}
     if(targetIndex!==undefined){
       const target=merged[targetIndex];
       if(directoryNameScore(row.fullName)>directoryNameScore(target.fullName))target.fullName=row.fullName;
@@ -4808,9 +4839,9 @@ function mergePatientDirectoryImportRows(rows){
       indexRow(target,targetIndex);
       return;
     }
-    const index=merged.length,next={...row,sourceRows:[row.sourceRow]};
+    const mergedIndex=merged.length,next={...row,sourceRows:[row.sourceRow]};
     if(phoneMatch!==undefined){next.reviewFlags=[...new Set([...(next.reviewFlags||[]),'shared_phone'])];merged[phoneMatch].reviewFlags=[...new Set([...(merged[phoneMatch].reviewFlags||[]),'shared_phone'])]}
-    merged.push(next);indexRow(next,index);
+    merged.push(next);indexRow(next,mergedIndex);
   });
   return{validRows:merged,invalidRows:invalid};
 }
@@ -4833,7 +4864,7 @@ function parsePatientDirectoryCsv(text){
   const merged=mergePatientDirectoryImportRows(rows);
   return{rows,validRows:merged.validRows,invalidRows:merged.invalidRows,reason:rows.length?'':'empty'};
 }
-function patientDirectoryIssueLabel(issue){return({name_required:'الاسم مفقود',full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة',identity_required:'لا يوجد ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين'})[issue]||'يحتاج مراجعة'}
+function patientDirectoryIssueLabel(issue){return({name_required:'الاسم مفقود',full_name_required:'الاسم غير مكتمل',missing_file:'رقم الملف ناقص',missing_phone:'الجوال ناقص',shared_phone:'جوال مشترك',note_review:'ملاحظة تحتاج مراجعة',identity_required:'لا يوجد ملف أو جوال أو هوية',invalid_phone:'رقم الجوال غير صحيح',invalid_national_id:'رقم الهوية غير صحيح',identity_conflict:'تعارض بين هويتين',name_conflict:'تعارض أسماء المرضى'})[issue]||'يحتاج مراجعة'}
 function renderPatientDirectoryImportPreview(){
   const draft=patientDirectoryImportDraft,summary=$('patientDirectoryImportSummary'),preview=$('patientDirectoryImportPreview'),save=$('patientDirectoryImportSave');
   $('patientDirectoryImportFileName').textContent=draft.fileName||'—';
