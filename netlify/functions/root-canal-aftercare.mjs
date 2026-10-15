@@ -10,6 +10,7 @@ const text=(value,max=240)=>String(value??'').replace(/\s+/g,' ').trim().slice(0
 const validToken=value=>/^[a-zA-Z0-9_-]{40,120}$/.test(String(value||''));
 const validDocumentId=value=>/^[a-zA-Z0-9_-]{24,60}$/.test(String(value||''));
 const medicationTypes=new Set(['ibuprofen','paracetamol']);
+const allowedDoses={ibuprofen:new Set(['400 mg','600 mg']),paracetamol:new Set(['500 mg'])};
 const rootCanalCodes=new Set(['root-canal','root-canal-retreatment']);
 const linkLifetimeMs=90*24*60*60*1000;
 const tokenKey=value=>`tokens/${hash(value)}`;
@@ -25,7 +26,13 @@ const currentDocument=(record,day,secret)=>{
   const patient=(day?.patients||[]).find(item=>String(item.id)===source.patientId);
   return matchesCurrentOrder(patient,source)&&sameFingerprint(record.identityFingerprint,identityFingerprint(patient,source,secret))?patient:null;
 };
-const activeDocument=(patient,record)=>Boolean(patient&&record?.documentId&&String(patient.rootCanalAftercareDocumentId||'')===record.documentId&&Number(patient.rootCanalAftercareDocumentOrderAt||0)===Number(record.document?.source?.paymentRequestedAt||0));
+const activeDocument=(patient,record)=>{
+  if(!patient||!record?.documentId)return false;
+  const orderAt=Number(record.document?.source?.paymentRequestedAt||0),general=record.document?.deliveryMode==='admin-general';
+  const id=general?patient.rootCanalAftercareGeneralDocumentId:(patient.rootCanalAftercareClinicDocumentId||patient.rootCanalAftercareDocumentId);
+  const savedOrder=general?patient.rootCanalAftercareGeneralDocumentOrderAt:(patient.rootCanalAftercareClinicDocumentId?patient.rootCanalAftercareClinicDocumentOrderAt:patient.rootCanalAftercareDocumentOrderAt);
+  return orderAt>0&&String(id||'')===record.documentId&&Number(savedOrder||0)===orderAt;
+};
 
 const cleanMedication=value=>({
   type:medicationTypes.has(value?.type)?value.type:'',
@@ -37,20 +44,22 @@ const cleanMedication=value=>({
 });
 
 const cleanDocument=value=>({
+  deliveryMode:value?.deliveryMode==='admin-general'?'admin-general':value?.deliveryMode==='clinic'?'clinic':'',
   patient:{name:text(value?.patient?.name,120),file:text(value?.patient?.file,40)},
   clinic:{name:text(value?.clinic?.name,120),doctorName:text(value?.clinic?.doctorName,120),phone:text(value?.clinic?.phone,30)},
   source:{clinicId:text(value?.source?.clinicId,20),patientId:text(value?.source?.patientId,80),date:text(value?.source?.date,10),paymentRequestedAt:Number(value?.source?.paymentRequestedAt||0)},
   medications:(Array.isArray(value?.medications)?value.medications:[]).slice(0,3).map(cleanMedication),
-  doctorConfirmed:Boolean(value?.doctorConfirmed),
   notice:'DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED'
 });
 
-function validateDocument(document){
+function validateDocument(document,role){
   if(!document.patient.name||!document.source.clinicId||!/^clinic-([1-9]|1[0-5])$/.test(document.source.clinicId)||!/^\d{4}-\d{2}-\d{2}$/.test(document.source.date))return'Patient context is incomplete';
-  if(!document.doctorConfirmed)return'Clinician confirmation is required';
+  if((role==='admin'&&document.deliveryMode!=='admin-general')||(role==='clinic'&&document.deliveryMode!=='clinic')||!['admin','clinic'].includes(role))return'Delivery mode is not authorized for this role';
+  if(document.deliveryMode==='admin-general'&&document.medications.length)return'Administration instructions must not include medications';
   if(document.medications.length>2||new Set(document.medications.map(item=>item.type)).size!==document.medications.length)return'Duplicate or excessive analgesics';
   if(document.medications.some(item=>!item.name||!item.dose||!item.frequency||!item.duration))return'Medication instructions are incomplete';
   if(document.medications.some(item=>!medicationTypes.has(item.type)))return'Only clinician-selected analgesics may be attached';
+  if(document.medications.some(item=>!allowedDoses[item.type]?.has(item.dose)))return'Medication strength is not permitted';
   return'';
 }
 
@@ -65,10 +74,11 @@ export default async request=>{
     if(validDocumentId(documentId)){
       const auth=await requireUser(request);if(!auth.ok)return reply({error:auth.error},auth.status);
       const index=await aftercareStore().get(documentKey(documentId),{type:'json',consistency:'strong'});
-      if(!index||!canAccessClinic(auth.user,index.source?.clinicId)||auth.user?.role!=='clinic')return reply({error:'Aftercare document unavailable'},404);
+      if(!index||!canAccessClinic(auth.user,index.source?.clinicId))return reply({error:'Aftercare document unavailable'},404);
       shareToken=text(index.token,120);
       record=await aftercareStore().get(tokenKey(shareToken),{type:'json',consistency:'strong'});
       if(record?.documentId!==documentId)return reply({error:'Aftercare document unavailable'},404);
+      if(auth.user?.role==='admin'&&record.document?.deliveryMode!=='admin-general')return reply({error:'Clinician-issued instructions must be opened by clinic staff'},403);
     }else record=await aftercareStore().get(tokenKey(token),{type:'json',consistency:'strong'});
     if(!record)return reply({error:'Aftercare link not found'},404);
     if(Date.now()>Number(record.issuedAt||0)+linkLifetimeMs)return reply({error:'Aftercare link expired'},410);
@@ -84,9 +94,9 @@ export default async request=>{
   if(request.method!=='POST')return reply({error:'Method not allowed'},405);
   if(!sameOriginRequest(request))return reply({error:'Invalid request origin'},403);
   const auth=await requireUser(request);if(!auth.ok)return reply({error:auth.error},auth.status);
-  const body=await request.json().catch(()=>null),document=cleanDocument(body?.document),error=validateDocument(document);
+  const body=await request.json().catch(()=>null),document=cleanDocument(body?.document),error=validateDocument(document,auth.user?.role);
   if(error)return reply({error},400);
-  if(!canAccessClinic(auth.user,document.source.clinicId)||auth.user?.role!=='clinic')return reply({error:'Clinician access required'},403);
+  if(!canAccessClinic(auth.user,document.source.clinicId))return reply({error:'Clinic access required'},403);
   const day=await dayStore().get(dayKeyFor(document.source),{type:'json',consistency:'strong'});
   const patient=(day?.patients||[]).find(item=>String(item.id)===document.source.patientId);
   if(!matchesCurrentOrder(patient,document.source))return reply({error:'A matching root-canal payment order is required'},409);

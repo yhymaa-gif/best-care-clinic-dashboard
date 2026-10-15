@@ -170,7 +170,7 @@ const IOS_INSTALL_COPY={
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
-let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let pendingAftercareId=null; let aftercareLink=null; let aftercareLinkOrderAt=0; let aftercareLinkDocumentId=''; let aftercareLoadGeneration=0; let aftercareWhatsappOpened=false; let adminQueueMinuteKey=''; const requestedLang=new URLSearchParams(location.search).get('lang');let lang=requestedLang==='en'?'en':requestedLang==='ar'?'ar':localStorage.getItem('bestcare_lang')||'ar';
+let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let pendingAftercareId=null; let aftercareLink=null; let aftercareLinkOrderAt=0; let aftercareLinkDocumentId=''; let aftercareLoadGeneration=0; let aftercareWhatsappOpened=false; let pendingAftercareCompletionAction=null; let adminQueueMinuteKey=''; const requestedLang=new URLSearchParams(location.search).get('lang');let lang=requestedLang==='en'?'en':requestedLang==='ar'?'ar':localStorage.getItem('bestcare_lang')||'ar';
 let manualAlertFetchedAt=0;
 let audioContext=null;
 let presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
@@ -836,6 +836,7 @@ function closeModal(id){
     const followUp=pendingLabCompletionFollowUp;pendingLabCompletionFollowUp=null;
     queueMicrotask(()=>continuePatientCompletionAction(followUp));
   }
+  if(id==='rootCanalAftercareModal'&&pendingAftercareCompletionAction){const followUp=pendingAftercareCompletionAction;pendingAftercareCompletionAction=null;queueMicrotask(()=>followUp().catch(error=>console.warn('Completion follow-up could not open',error)))}
 }
 function setBadge(mode,text,detail=''){
   els.syncBadge.className='sync-badge '+mode;
@@ -1891,19 +1892,26 @@ function paymentOrderExists(p){
 }
 function rootCanalAftercareRequired(items){return Array.isArray(items)&&items.some(item=>['root-canal','root-canal-retreatment'].includes(String(item?.code||'')))}
 function rootCanalAftercarePending(patient){return rootCanalAftercareRequired(patient?.paymentItems)&&Number(patient?.rootCanalAftercareRequiredAt||0)>0&&(Number(patient?.rootCanalAftercareSentOrderAt||0)!==Number(patient?.paymentRequestedAt||0)||Number(patient?.rootCanalAftercareRequiredAt||0)>Number(patient?.rootCanalAftercareSentAt||0))}
+function rootCanalAftercareMode(){return authUser?.role==='admin'&&VIEW_MODE==='admin'?'admin-general':'clinic'}
+function rootCanalAftercareDocumentFields(mode){const prefix=mode==='admin-general'?'rootCanalAftercareGeneralDocument':'rootCanalAftercareClinicDocument';return{id:`${prefix}Id`,orderAt:`${prefix}OrderAt`,issuedAt:`${prefix}IssuedAt`}}
+function rootCanalAftercareReference(patient,mode){const fields=rootCanalAftercareDocumentFields(mode);if(mode==='clinic'&&!patient?.[fields.id])return{id:String(patient?.rootCanalAftercareDocumentId||''),orderAt:Number(patient?.rootCanalAftercareDocumentOrderAt||0),issuedAt:Number(patient?.rootCanalAftercareDocumentIssuedAt||0)};return{id:String(patient?.[fields.id]||''),orderAt:Number(patient?.[fields.orderAt]||0),issuedAt:Number(patient?.[fields.issuedAt]||0)}}
 function rootCanalAftercareButtonMarkup(patient){
   if(!rootCanalAftercareRequired(patient?.paymentItems))return'';
-  const pending=rootCanalAftercarePending(patient),label=pending?(lang==='en'?'Send root-canal aftercare':'إرسال تعليمات العصب'):(lang==='en'?'Open root-canal aftercare':'تعليمات العصب');
-  return `<button type="button" class="mini aftercare-row-btn${pending?' aftercare-pending':''}" data-aftercare-id="${escapeHtml(patient.id)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span class="aftercare-pain-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="30" cy="18" r="11"/><path d="M18 55c1-15 4-23 12-24 8 1 12 9 13 24M20 35c-7 6-8 13-5 19M38 34c7 4 9 10 9 18"/><path class="aftercare-hand" d="M17 39c6-3 10-7 13-13"/><path class="aftercare-bolt" d="M49 8 41 23h8l-5 15 15-20h-9l5-10z"/></svg></span><span>${escapeHtml(label)}</span></button>`;
+  const pending=rootCanalAftercarePending(patient),orderAt=Number(patient?.paymentRequestedAt||0),reference=rootCanalAftercareReference(patient,rootCanalAftercareMode()),hasCurrentDocument=Boolean(reference.id&&reference.orderAt===orderAt),sentCurrent=Boolean(Number(patient?.rootCanalAftercareSentAt||0)>0&&Number(patient?.rootCanalAftercareSentOrderAt||0)===orderAt);
+  if(!pending&&!hasCurrentDocument&&!sentCurrent)return'';
+  const label=pending?(lang==='en'?'Share root-canal instructions':'مشاركة تعليمات العصب'):(lang==='en'?'Instructions sent':'تم إرسال التعليمات');
+  return `<button type="button" class="mini aftercare-row-btn ${pending?'aftercare-pending':'aftercare-sent'}" data-aftercare-id="${escapeHtml(patient.id)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span class="aftercare-pain-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="30" cy="18" r="11"/><path d="M18 55c1-15 4-23 12-24 8 1 12 9 13 24M20 35c-7 6-8 13-5 19M38 34c7 4 9 10 9 18"/><path class="aftercare-hand" d="M17 39c6-3 10-7 13-13"/><path class="aftercare-bolt" d="M49 8 41 23h8l-5 15 15-20h-9l5-10z"/></svg></span><span>${escapeHtml(label)}</span></button>`;
 }
 function installRootCanalAftercareUI(){
   const icon=`<span class="aftercare-pain-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="30" cy="18" r="11"/><path d="M18 55c1-15 4-23 12-24 8 1 12 9 13 24M20 35c-7 6-8 13-5 19M38 34c7 4 9 10 9 18"/><path class="aftercare-hand" d="M17 39c6-3 10-7 13-13"/><path class="aftercare-bolt" d="M49 8 41 23h8l-5 15 15-20h-9l5-10z"/></svg></span>`;
   const requirement=document.createElement('section');requirement.id='rootCanalAftercareRequirement';requirement.className='root-canal-aftercare-requirement';requirement.hidden=true;requirement.setAttribute('aria-live','polite');
   requirement.innerHTML=`${icon}<span><strong id="rootCanalAftercareRequirementTitle">يلزم إرسال تعليمات ما بعد علاج العصب</strong><small id="rootCanalAftercareRequirementHelp">سيظهر تذكير تفاعلي بجانب اسم المريض بعد حفظ أمر الدفع، ويبقى حتى مشاركة التعليمات.</small></span>`;
   $('paymentActionField').before(requirement);
-  const medication=type=>`<article data-aftercare-medication="${type.toLowerCase()}"><label><input id="aftercare${type}" type="checkbox"><strong>${type==='Ibuprofen'?'إيبوبروفين':'باراسيتامول'}</strong></label>${['Dose','Frequency','Duration','Notes'].map(field=>`<input id="aftercare${type}${field}" maxlength="${field==='Notes'?240:field==='Frequency'?100:80}" placeholder="${{Dose:'الجرعة',Frequency:'التكرار',Duration:'المدة',Notes:'ملاحظات الطبيب (اختياري)'}[field]}">`).join('')}</article>`;
+  const choice=document.createElement('label');choice.id='rootCanalAftercareChoice';choice.className='completion-choice aftercare-recommendation-choice';choice.hidden=true;choice.innerHTML=`<input id="rootCanalAftercareRecommendationCheck" type="checkbox"><span><strong id="rootCanalAftercareChoiceTitle">إضافة توصية مسكنات مع التعليمات</strong><small id="rootCanalAftercareChoiceHelp">اختياري؛ بعد حفظ أمر الدفع تُفتح التعليمات لتحديد توصية الطبيب، ويمكن تخطيه.</small></span>`;$('labOrderChoice').after(choice);
+  const medication=type=>`<article data-aftercare-medication="${type.toLowerCase()}"><label><input id="aftercare${type}" type="checkbox"><strong>${type==='Ibuprofen'?'إيبوبروفين':'باراسيتامول'}</strong></label>${['Dose','Frequency','Duration','Notes'].map(field=>field==='Dose'?`<select id="aftercare${type}Dose" aria-label="${type} concentration"><option value="">اختر التركيز</option>${(type==='Ibuprofen'?['400 mg','600 mg']:['500 mg']).map(dose=>`<option value="${dose}">${dose}</option>`).join('')}</select>`:`<input id="aftercare${type}${field}" maxlength="${field==='Notes'?240:field==='Frequency'?100:80}" placeholder="${{Frequency:'التكرار',Duration:'المدة',Notes:'ملاحظات الطبيب (اختياري)'}[field]}">`).join('')}</article>`;
   const modal=document.createElement('div');modal.id='rootCanalAftercareModal';modal.className='modal';
-  modal.innerHTML=`<div class="modal-card root-canal-aftercare-modal-card" role="dialog" aria-modal="true" aria-labelledby="rootCanalAftercareModalTitle"><header class="aftercare-modal-head">${icon}<div><h3 id="rootCanalAftercareModalTitle">تعليمات ما بعد علاج العصب</h3><p id="rootCanalAftercarePatientText">بيانات المريض ستُملأ تلقائيًا.</p></div><button type="button" data-close="rootCanalAftercareModal" aria-label="إغلاق">×</button></header><p class="aftercare-intro-preview">عزيزنا المراجع، أُجري لك اليوم إجراء لعلاج العصب وجذور الأسنان، مما يستدعي توعيتك بأهمية اتباع التعليمات التالية.</p><p class="aftercare-draft-notice">DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</p><label class="aftercare-phone"><span id="rootCanalAftercarePhoneLabel">رقم واتساب المريض</span><input id="rootCanalAftercarePhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="9665XXXXXXXX"></label><section class="aftercare-medication-picker" aria-labelledby="aftercareMedicationTitle"><div><h4 id="aftercareMedicationTitle">المسكنات التي يختارها الطبيب</h4><p id="aftercareMedicationHelp">اختر المسكن ثم أكمل الجرعة والتكرار والمدة. لا يتم تحديد أي علاج تلقائيًا.</p></div>${medication('Ibuprofen')}${medication('Paracetamol')}</section><p id="aftercareAntibioticSeparate" class="aftercare-antibiotic-separate">المضاد الحيوي قرار منفصل للطبيب، ويصدر عند الحاجة عبر الوصفة العلاجية المستقلة؛ لا يُرفق تلقائيًا مع هذه التعليمات.</p><label class="aftercare-confirm"><input id="rootCanalAftercareDoctorConfirm" type="checkbox"><span><strong id="rootCanalAftercareConfirmTitle">اعتماد الطبيب قبل المشاركة</strong><small id="rootCanalAftercareConfirmHelp">راجعت حالة المريض والحساسيات والسجل الدوائي، واخترت الأدوية والتعليمات المناسبة له.</small></span></label><p id="rootCanalAftercareError" class="auth-error" aria-live="polite"></p><div class="modal-actions"><button type="button" data-close="rootCanalAftercareModal">إغلاق</button><button id="copyRootCanalAftercareBtn" type="button">نسخ الرابط</button><button id="printRootCanalAftercareBtn" type="button">طباعة / PDF</button><button id="sendRootCanalAftercareBtn" type="button" class="review-send">فتح واتساب للمشاركة</button><button id="confirmRootCanalAftercareSentBtn" type="button" hidden>تأكيد إرسال التعليمات</button></div></div>`;
+  modal.innerHTML=`<div class="modal-card root-canal-aftercare-modal-card" role="dialog" aria-modal="true" aria-labelledby="rootCanalAftercareModalTitle"><header class="aftercare-modal-head">${icon}<div><h3 id="rootCanalAftercareModalTitle">تعليمات ما بعد علاج العصب</h3><p id="rootCanalAftercarePatientText">بيانات المريض ستُملأ تلقائيًا.</p></div><button type="button" data-close="rootCanalAftercareModal" aria-label="إغلاق">×</button></header><p class="aftercare-intro-preview">عزيزنا المراجع، أُجري لك اليوم إجراء لعلاج العصب وجذور الأسنان، مما يستدعي توعيتك بأهمية اتباع التعليمات التالية.</p><p class="aftercare-draft-notice">DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</p><label class="aftercare-phone"><span id="rootCanalAftercarePhoneLabel">رقم واتساب المريض</span><input id="rootCanalAftercarePhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="9665XXXXXXXX"></label><section class="aftercare-medication-picker" aria-labelledby="aftercareMedicationTitle"><div><h4 id="aftercareMedicationTitle">توصية المسكنات التي يحددها الطبيب</h4><p id="aftercareMedicationHelp">اختر المسكن وتركيزه والتكرار والمدة. لا يتم تحديد أي علاج تلقائيًا.</p></div>${medication('Ibuprofen')}${medication('Paracetamol')}</section><p id="aftercareAntibioticSeparate" class="aftercare-antibiotic-separate">المضاد الحيوي قرار منفصل للطبيب، ويصدر عند الحاجة عبر الوصفة العلاجية المستقلة؛ لا يُرفق تلقائيًا مع هذه التعليمات.</p><p id="rootCanalAftercareError" class="auth-error" aria-live="polite"></p><div class="modal-actions"><button type="button" data-close="rootCanalAftercareModal">إغلاق</button><button id="copyRootCanalAftercareBtn" type="button">نسخ الرابط</button><button id="printRootCanalAftercareBtn" type="button">طباعة / PDF</button><button id="sendRootCanalAftercareBtn" type="button" class="review-send">فتح واتساب للمشاركة</button><button id="confirmRootCanalAftercareSentBtn" type="button" hidden>تأكيد إرسال التعليمات</button></div></div>`;
+  const generalNotice=document.createElement('p');generalNotice.id='rootCanalAftercareGeneralNotice';generalNotice.className='aftercare-antibiotic-separate';generalNotice.hidden=true;modal.querySelector('.aftercare-medication-picker').before(generalNotice);
   const issueNew=document.createElement('button');issueNew.id='issueNewRootCanalAftercareBtn';issueNew.type='button';issueNew.textContent='إصدار تعليمات جديدة';modal.querySelector('#copyRootCanalAftercareBtn').before(issueNew);
   const existingStatus=document.createElement('p');existingStatus.id='rootCanalAftercareExistingStatus';existingStatus.className='aftercare-existing-status';existingStatus.setAttribute('role','status');existingStatus.hidden=true;modal.querySelector('.aftercare-intro-preview').before(existingStatus);
   $('reviewModal').after(modal);
@@ -2041,9 +2049,9 @@ function patientMatchesSearch(patient,rawQuery){
   return name.includes(query)||Boolean(compact&&file.includes(compact))||Boolean(digits&&phone.includes(digits));
 }
 function paymentReceiptStamp(patient){return Math.max(0,...(Array.isArray(patient?.paymentReceipts)?patient.paymentReceipts:[]).map(item=>Number(item?.updatedAt||item?.recordedAt||0)))}
-function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.paymentNotRequiredAt||0),paymentReceiptStamp(patient),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.rootCanalAftercareRequiredAt||0),Number(patient?.rootCanalAftercareSentAt||0),Number(patient?.rootCanalAftercareDocumentIssuedAt||0),Number(patient?.earliestAppointmentRequestedAt||0),Number(patient?.dailyNoteUpdatedAt||0))}
+function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.paymentNotRequiredAt||0),paymentReceiptStamp(patient),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.rootCanalAftercareRequiredAt||0),Number(patient?.rootCanalAftercareSentAt||0),Number(patient?.rootCanalAftercareDocumentIssuedAt||0),Number(patient?.rootCanalAftercareGeneralDocumentIssuedAt||0),Number(patient?.rootCanalAftercareClinicDocumentIssuedAt||0),Number(patient?.earliestAppointmentRequestedAt||0),Number(patient?.dailyNoteUpdatedAt||0))}
 function copyPatientGroup(target,source,fields){fields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(source||{},field))target[field]=source[field]})}
-function aftercareStateStamp(value){return Math.max(Number(value?.rootCanalAftercareRequiredAt||0),Number(value?.rootCanalAftercareSentAt||0),Number(value?.rootCanalAftercareDocumentIssuedAt||0))}
+function aftercareStateStamp(value){return Math.max(Number(value?.rootCanalAftercareRequiredAt||0),Number(value?.rootCanalAftercareSentAt||0))}
 function mergePatientVersions(remote={},local={}){
   const remoteStamp=patientVersionStamp(remote),localStamp=patientVersionStamp(local);
   const merged=localStamp>=remoteStamp?{...remote,...local}:{...local,...remote};
@@ -2062,13 +2070,19 @@ function mergePatientVersions(remote={},local={}){
   if(remotePaymentOrder>0&&localPaymentOrder>0&&remotePaymentOrder!==localPaymentOrder){
     copyPatientGroup(merged,localPaymentOrder>remotePaymentOrder?local:remote,['paymentRequired','paymentAction','paymentItems','paymentDiscount','paymentRequestedAt','paymentAcknowledgedAt','paymentCompletedAt','paymentNotRequiredAt','paymentReceipts']);
   }
-  const aftercareFields=['rootCanalAftercareRequiredAt','rootCanalAftercareSentAt','rootCanalAftercareSentOrderAt','rootCanalAftercareCount','rootCanalAftercareLastEventId','rootCanalAftercareDocumentId','rootCanalAftercareDocumentOrderAt','rootCanalAftercareDocumentIssuedAt'];
+  const aftercareFields=['rootCanalAftercareRequiredAt','rootCanalAftercareSentAt','rootCanalAftercareSentOrderAt','rootCanalAftercareCount','rootCanalAftercareLastEventId'];
   const aftercareOwner=localPaymentOrder!==remotePaymentOrder?(localPaymentOrder>remotePaymentOrder?local:remote):(aftercareStateStamp(local)>=aftercareStateStamp(remote)?local:remote);
   copyPatientGroup(merged,aftercareOwner,aftercareFields);
+  for(const prefix of ['rootCanalAftercareDocument','rootCanalAftercareGeneralDocument','rootCanalAftercareClinicDocument']){
+    const fields=[`${prefix}Id`,`${prefix}OrderAt`,`${prefix}IssuedAt`];
+    const owner=localPaymentOrder!==remotePaymentOrder?(localPaymentOrder>remotePaymentOrder?local:remote):(Number(local[`${prefix}IssuedAt`]||0)>=Number(remote[`${prefix}IssuedAt`]||0)?local:remote);
+    copyPatientGroup(merged,owner,fields);
+  }
   const activePaymentOrder=Number(merged.paymentRequestedAt||0);
   if(rootCanalAftercareRequired(merged.paymentItems)&&activePaymentOrder>0&&Number(merged.rootCanalAftercareRequiredAt||0)===activePaymentOrder){
     if(Number(merged.rootCanalAftercareSentOrderAt||0)!==activePaymentOrder)merged.rootCanalAftercareSentAt=0;
     if(Number(merged.rootCanalAftercareDocumentOrderAt||0)!==activePaymentOrder){merged.rootCanalAftercareDocumentId='';merged.rootCanalAftercareDocumentIssuedAt=0}
+    for(const prefix of ['rootCanalAftercareGeneralDocument','rootCanalAftercareClinicDocument'])if(Number(merged[`${prefix}OrderAt`]||0)!==activePaymentOrder){merged[`${prefix}Id`]='';merged[`${prefix}IssuedAt`]=0}
   }
   const addedAtValues=[Number(remote.addedAt||0),Number(local.addedAt||0)].filter(value=>value>0);
   merged.addedAt=addedAtValues.length?Math.min(...addedAtValues):0;
@@ -2170,12 +2184,11 @@ async function copyReviewMessage(){
 }
 function setRootCanalAftercareFieldsLocked(locked){
   $('rootCanalAftercareModal').querySelectorAll('[data-aftercare-medication] input').forEach(input=>{input.disabled=locked});
-  $('rootCanalAftercareDoctorConfirm').disabled=locked;
+  $('rootCanalAftercareModal').querySelectorAll('[data-aftercare-medication] select').forEach(input=>{input.disabled=locked});
 }
 function clearRootCanalAftercareDraft(){
   aftercareLink=null;aftercareLinkDocumentId='';aftercareWhatsappOpened=false;
   $('confirmRootCanalAftercareSentBtn').hidden=true;
-  $('rootCanalAftercareDoctorConfirm').checked=false;
   for(const type of ['Ibuprofen','Paracetamol']){
     $(`aftercare${type}`).checked=false;
     for(const field of ['Dose','Frequency','Duration','Notes'])$(`aftercare${type}${field}`).value='';
@@ -2183,13 +2196,13 @@ function clearRootCanalAftercareDraft(){
   setRootCanalAftercareFieldsLocked(false);
   $('rootCanalAftercareExistingStatus').hidden=true;
 }
-async function loadExistingRootCanalAftercareDocument(id,orderAt,documentId,generation){
+async function loadExistingRootCanalAftercareDocument(id,orderAt,documentId,generation,mode){
   if(!documentId||!orderAt)return;
   const response=await request(`/api/root-canal-aftercare?documentId=${encodeURIComponent(documentId)}`,{cache:'no-store'},15000);
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.ok)throw new Error(data.error||(lang==='en'?'Could not reopen the saved instructions.':'تعذر فتح التعليمات المحفوظة.'));
   const patient=patientById(id);
-  if(generation!==aftercareLoadGeneration||pendingAftercareId!==id||Number(patient?.paymentRequestedAt||0)!==orderAt||String(patient?.rootCanalAftercareDocumentId||'')!==documentId)return;
+  if(generation!==aftercareLoadGeneration||pendingAftercareId!==id||rootCanalAftercareMode()!==mode||Number(patient?.paymentRequestedAt||0)!==orderAt||rootCanalAftercareReference(patient,mode).id!==documentId)return;
   const url=new URL(data.url,location.origin);
   if(url.origin!==location.origin||url.pathname!=='/root-canal-aftercare.html')throw new Error(lang==='en'?'Unexpected aftercare link.':'رابط التعليمات غير متوقع.');
   clearRootCanalAftercareDraft();
@@ -2205,20 +2218,22 @@ async function loadExistingRootCanalAftercareDocument(id,orderAt,documentId,gene
 }
 function openRootCanalAftercare(id){
   const patient=patientById(id);if(!patient||!rootCanalAftercareRequired(patient.paymentItems))return;
-  if(authUser?.role!=='clinic'||VIEW_MODE!=='clinic'){
-    toast(lang==='en'?'Clinician review required':'يلزم مراجعة الطبيب',lang==='en'?'Open the clinic screen so the treating clinician can select analgesics and issue the instructions.':'افتح شاشة الطبيب ليحدد المسكنات ويصدر التعليمات.');return;
-  }
+  const mode=rootCanalAftercareMode(),adminGeneral=mode==='admin-general';
+  if(!adminGeneral&&!(authUser?.role==='clinic'&&VIEW_MODE==='clinic'))return;
   pendingAftercareId=String(patient.id);aftercareLinkOrderAt=Number(patient.paymentRequestedAt||0);const loadGeneration=++aftercareLoadGeneration;clearRootCanalAftercareDraft();
+  $('rootCanalAftercareModal').querySelector('.aftercare-medication-picker').hidden=adminGeneral;
+  $('rootCanalAftercareGeneralNotice').hidden=!adminGeneral;
+  $('rootCanalAftercareGeneralNotice').textContent=lang==='en'?'General aftercare instructions only. Administration cannot add analgesics or doses; any medication, including antibiotics, requires a separate clinician decision.':'هذه تعليمات عامة فقط. لا تضيف الإدارة مسكنات أو جرعات؛ أي دواء، بما فيه المضاد الحيوي، يُحدده الطبيب بشكل مستقل.';
   $('rootCanalAftercarePatientText').textContent=(lang==='en'?`${patient.name} · MRN ${patient.file||'—'}`:`${patient.name} · ملف ${patient.file||'—'}`);
   $('rootCanalAftercarePhone').value=patientWhatsappNumber(patient);
   $('rootCanalAftercareError').textContent='';
   openModal('rootCanalAftercareModal');
-  const documentId=String(patient.rootCanalAftercareDocumentId||''),orderAt=Number(patient.rootCanalAftercareDocumentOrderAt||0);
+  const reference=rootCanalAftercareReference(patient,mode),documentId=reference.id,orderAt=reference.orderAt;
   if(documentId&&orderAt===aftercareLinkOrderAt){
     setRootCanalAftercareFieldsLocked(true);
     $('rootCanalAftercareExistingStatus').hidden=false;
     $('rootCanalAftercareExistingStatus').textContent=lang==='en'?'Loading saved instructions…':'جارٍ فتح التعليمات المحفوظة…';
-    loadExistingRootCanalAftercareDocument(String(patient.id),orderAt,documentId,loadGeneration).catch(error=>{
+    loadExistingRootCanalAftercareDocument(String(patient.id),orderAt,documentId,loadGeneration,mode).catch(error=>{
       if(loadGeneration===aftercareLoadGeneration&&pendingAftercareId===String(patient.id)){clearRootCanalAftercareDraft();$('rootCanalAftercareError').textContent=error.message}
     });
   }
@@ -2231,25 +2246,26 @@ function selectedRootCanalAnalgesics(){
 }
 function rootCanalAftercareContextCurrent(){
   const patient=patientById(pendingAftercareId);
-  return Boolean(patient&&rootCanalAftercareRequired(patient.paymentItems)&&Number(patient.paymentRequestedAt||0)>0&&Number(patient.paymentRequestedAt||0)===aftercareLinkOrderAt&&(!aftercareLinkDocumentId||(String(patient.rootCanalAftercareDocumentId||'')===aftercareLinkDocumentId&&Number(patient.rootCanalAftercareDocumentOrderAt||0)===aftercareLinkOrderAt)));
+  const reference=rootCanalAftercareReference(patient,rootCanalAftercareMode());
+  return Boolean(patient&&rootCanalAftercareRequired(patient.paymentItems)&&Number(patient.paymentRequestedAt||0)>0&&Number(patient.paymentRequestedAt||0)===aftercareLinkOrderAt&&(!aftercareLinkDocumentId||(reference.id===aftercareLinkDocumentId&&reference.orderAt===aftercareLinkOrderAt)));
 }
 async function ensureRootCanalAftercareLink(){
   const patient=patientById(pendingAftercareId);
   if(!rootCanalAftercareContextCurrent())throw new Error(lang==='en'?'The payment order changed. Reopen the patient’s instructions.':'تغيّر أمر الدفع؛ أعد فتح تعليمات المريض.');
   if(aftercareLink)return aftercareLink;
-  if(!$('rootCanalAftercareDoctorConfirm').checked)throw new Error(lang==='en'?'Clinician confirmation is required.':'يلزم تأكيد الطبيب بعد مراجعة التعليمات.');
-  const medications=selectedRootCanalAnalgesics();
+  const deliveryMode=rootCanalAftercareMode();
+  const medications=deliveryMode==='admin-general'?[]:selectedRootCanalAnalgesics();
   if(medications.some(item=>!item.dose||!item.frequency||!item.duration))throw new Error(lang==='en'?'Complete dose, frequency and duration for each selected analgesic.':'أكمل الجرعة والتكرار والمدة لكل مسكن محدد.');
-  const document={patient:{name:patient.name,file:patient.file},clinic:{name:currentClinic?.name,doctorName:currentClinic?.doctorName,phone:''},source:{clinicId:ACTIVE_CLINIC_ID,patientId:String(patient.id),date:selectedDate,paymentRequestedAt:Number(patient.paymentRequestedAt||0)},medications,doctorConfirmed:true};
+  const document={deliveryMode,patient:{name:patient.name,file:patient.file},clinic:{name:currentClinic?.name,doctorName:currentClinic?.doctorName,phone:''},source:{clinicId:ACTIVE_CLINIC_ID,patientId:String(patient.id),date:selectedDate,paymentRequestedAt:Number(patient.paymentRequestedAt||0)},medications};
   const response=await request('/api/root-canal-aftercare',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({document})},20000);
   const data=await response.json().catch(()=>({}));if(!response.ok||!data.ok)throw new Error(data.error||(lang==='en'?'Could not create the aftercare link.':'تعذر إنشاء رابط التعليمات.'));
   const url=new URL(data.url,location.origin);
   if(url.origin!==location.origin||url.pathname!=='/root-canal-aftercare.html'||!/^[a-zA-Z0-9_-]{24,60}$/.test(String(data.documentId||'')))throw new Error(lang==='en'?'Unexpected aftercare link.':'رابط التعليمات غير متوقع.');
   if(!rootCanalAftercareContextCurrent())throw new Error(lang==='en'?'The payment order changed while issuing the instructions.':'تغيّر أمر الدفع أثناء إصدار التعليمات.');
-  const current=patientById(pendingAftercareId),previous={id:current.rootCanalAftercareDocumentId||'',orderAt:Number(current.rootCanalAftercareDocumentOrderAt||0),issuedAt:Number(current.rootCanalAftercareDocumentIssuedAt||0)};
-  mutate(()=>{current.rootCanalAftercareDocumentId=data.documentId;current.rootCanalAftercareDocumentOrderAt=aftercareLinkOrderAt;current.rootCanalAftercareDocumentIssuedAt=Number(data.issuedAt||Date.now())});
+  const fields=rootCanalAftercareDocumentFields(deliveryMode),current=patientById(pendingAftercareId),previous=rootCanalAftercareReference(current,deliveryMode);
+  mutate(()=>{current[fields.id]=data.documentId;current[fields.orderAt]=aftercareLinkOrderAt;current[fields.issuedAt]=Number(data.issuedAt||Date.now())});
   const saved=await pushState();
-  if(saved===false){mutate(()=>{const latest=patientById(pendingAftercareId);if(latest&&Number(latest.paymentRequestedAt||0)===aftercareLinkOrderAt&&String(latest.rootCanalAftercareDocumentId||'')===data.documentId&&Number(latest.rootCanalAftercareDocumentOrderAt||0)===aftercareLinkOrderAt){latest.rootCanalAftercareDocumentId=previous.id;latest.rootCanalAftercareDocumentOrderAt=previous.orderAt;latest.rootCanalAftercareDocumentIssuedAt=previous.issuedAt}});throw new Error(lang==='en'?'Could not synchronize the document reference. Retry shortly.':'تعذرت مزامنة مرجع التعليمات. أعد المحاولة بعد قليل.')}
+  if(saved===false){mutate(()=>{const latest=patientById(pendingAftercareId);if(latest&&Number(latest.paymentRequestedAt||0)===aftercareLinkOrderAt&&String(latest[fields.id]||'')===data.documentId&&Number(latest[fields.orderAt]||0)===aftercareLinkOrderAt){latest[fields.id]=previous.id;latest[fields.orderAt]=previous.orderAt;latest[fields.issuedAt]=previous.issuedAt}});throw new Error(lang==='en'?'Could not synchronize the document reference. Retry shortly.':'تعذرت مزامنة مرجع التعليمات. أعد المحاولة بعد قليل.')}
   aftercareLink=url.href;aftercareLinkDocumentId=data.documentId;setRootCanalAftercareFieldsLocked(true);
   $('rootCanalAftercareExistingStatus').hidden=false;$('rootCanalAftercareExistingStatus').textContent=lang==='en'?'Saved instructions are ready. Use “Issue new instructions” to change them.':'حُفظت التعليمات وهي جاهزة للمشاركة. استخدم «إصدار تعليمات جديدة» لتعديلها.';
   return aftercareLink;
@@ -2272,7 +2288,7 @@ async function runRootCanalAftercareAction(action){
     }else{
       if(!popup)throw new Error(lang==='en'?'Allow pop-ups to open WhatsApp.':'اسمح بالنوافذ المنبثقة لفتح واتساب.');
       const patient=patientById(pendingAftercareId),phone=normalizeWhatsappNumber($('rootCanalAftercarePhone').value)||patientWhatsappNumber(patient);
-      const message=lang==='en'?`Your root-canal aftercare instructions from Best Care Dental Clinics: ${url}`:`تعليمات ما بعد علاج العصب من عيادات أفضل عناية: ${url}`;
+      const message=lang==='en'?`Dear patient, please open your root-canal aftercare instructions at ${url}, read and understand them, and follow the guidance. If you have any questions, please contact Best Care Dental Clinics.`:`عزيزنا المراجع، يرجى فتح تعليمات ما بعد علاج العصب عبر الرابط ${url}، وقراءتها وفهمها واتباع الإرشادات الواردة فيها. إذا كان لديك أي استفسار، تواصل مع عيادات أفضل عناية.`;
       popup.location.href=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;
       aftercareWhatsappOpened=true;
       $('confirmRootCanalAftercareSentBtn').hidden=false;
@@ -2287,7 +2303,7 @@ async function confirmRootCanalAftercareSent(){
   if(!rootCanalAftercareContextCurrent()){$('rootCanalAftercareError').textContent=lang==='en'?'The payment order or document changed. Reopen instructions; the reminder is still active.':'تغيّر أمر الدفع أو المستند. أعد فتح التعليمات؛ التذكير لا يزال ظاهرًا.';return}
   button.disabled=true;
   const sentAt=Date.now(),eventId=crypto.randomUUID?.()||`root-canal-aftercare-${sentAt}`;
-  const sentOrderAt=Number(patient.paymentRequestedAt||0),sentDocumentId=String(patient.rootCanalAftercareDocumentId||'');
+  const sentOrderAt=Number(patient.paymentRequestedAt||0),sentMode=rootCanalAftercareMode(),sentDocumentId=rootCanalAftercareReference(patient,sentMode).id;
   const previous={sentAt:Number(patient.rootCanalAftercareSentAt||0),sentOrderAt:Number(patient.rootCanalAftercareSentOrderAt||0),count:Number(patient.rootCanalAftercareCount||0),eventId:String(patient.rootCanalAftercareLastEventId||'')};
   mutate(()=>{patient.rootCanalAftercareSentAt=sentAt;patient.rootCanalAftercareSentOrderAt=sentOrderAt;patient.rootCanalAftercareCount=Math.min(9999,Number(patient.rootCanalAftercareCount||0)+1);patient.rootCanalAftercareLastEventId=eventId});
   try{
@@ -2296,7 +2312,7 @@ async function confirmRootCanalAftercareSent(){
     closeModal('rootCanalAftercareModal');renderTable();
     toast(lang==='en'?'Aftercare sharing recorded':'تم تسجيل مشاركة التعليمات',lang==='en'?'The reminder is cleared for this payment order.':'توقف التذكير لأمر الدفع هذا.');
   }catch{
-    mutate(()=>{const current=patientById(pendingAftercareId);if(current&&Number(current.paymentRequestedAt||0)===sentOrderAt&&String(current.rootCanalAftercareDocumentId||'')===sentDocumentId&&String(current.rootCanalAftercareLastEventId||'')===eventId){current.rootCanalAftercareSentAt=previous.sentAt;current.rootCanalAftercareSentOrderAt=previous.sentOrderAt;current.rootCanalAftercareCount=previous.count;current.rootCanalAftercareLastEventId=previous.eventId}});
+    mutate(()=>{const current=patientById(pendingAftercareId);if(current&&Number(current.paymentRequestedAt||0)===sentOrderAt&&rootCanalAftercareReference(current,sentMode).id===sentDocumentId&&String(current.rootCanalAftercareLastEventId||'')===eventId){current.rootCanalAftercareSentAt=previous.sentAt;current.rootCanalAftercareSentOrderAt=previous.sentOrderAt;current.rootCanalAftercareCount=previous.count;current.rootCanalAftercareLastEventId=previous.eventId}});
     $('rootCanalAftercareError').textContent=lang==='en'?'The record is awaiting synchronization. Keep this page open and retry.':'السجل بانتظار المزامنة. أبقِ الصفحة مفتوحة وأعد المحاولة.';
   }finally{button.disabled=false}
 }
@@ -3327,6 +3343,7 @@ function renderTable(){
     if(!hasCompleted)patientRowsMarkup+=emptySection('completed');
   }
   els.patientRows.innerHTML=patientRowsMarkup;
+  els.patientRows.querySelectorAll('.patient-name-stack').forEach(stack=>{const button=stack.closest('td')?.querySelector('.aftercare-row-btn');if(button)stack.append(button)});
   renderPatientSummaryPanel();
   els.patientRows.querySelectorAll('[data-summary-toggle]').forEach(button=>{
     if(button.dataset.summaryToggle===patientSummaryOpen?.id)button.setAttribute('aria-controls','patientSummaryPanel');
@@ -3901,7 +3918,10 @@ function syncCompletionLabOrderChoice(patient=patientById(pendingCompletionId)){
 function syncRootCanalAftercareRequirement(){
   const panel=$('rootCanalAftercareRequirement');if(!panel)return;
   const selection=collectPaymentItems();
-  panel.hidden=!$('paymentRequiredCheck')?.checked||!rootCanalAftercareRequired(selection.items);
+  const required=Boolean($('paymentRequiredCheck')?.checked&&rootCanalAftercareRequired(selection.items));
+  panel.hidden=!required;
+  const choice=$('rootCanalAftercareChoice'),input=$('rootCanalAftercareRecommendationCheck');
+  if(choice&&input){choice.hidden=!required||VIEW_MODE!=='clinic'||authUser?.role!=='clinic';if(choice.hidden)input.checked=false}
 }
 function renderCompletionLabOptions(patient){
   const field=$('completionLabField'),list=$('completionLabList');
@@ -3954,6 +3974,8 @@ function finishPatient(id){
   $('paymentRequiredCheck').checked=false;
   $('noPaymentRequiredCheck').checked=false;
   $('labOrderCheck').checked=false;
+  $('rootCanalAftercareRecommendationCheck').checked=false;
+  $('rootCanalAftercareRecommendationCheck').checked=false;
   $('labOrderChoice').hidden=true;
   $('planDraftCheck').checked=false;
   if($('paymentPlanVatConfirmedCheck'))$('paymentPlanVatConfirmedCheck').checked=false;
@@ -3977,6 +3999,7 @@ function openMissingPaymentOrder(id){
   $('paymentRequiredCheck').checked=true;
   $('noPaymentRequiredCheck').checked=false;
   $('labOrderCheck').checked=false;
+  $('rootCanalAftercareRecommendationCheck').checked=false;
   $('labOrderChoice').hidden=true;
   $('planDraftCheck').checked=false;
   if($('paymentPlanVatConfirmedCheck'))$('paymentPlanVatConfirmedCheck').checked=false;
@@ -4000,6 +4023,7 @@ async function confirmPatientCompletion(){
   const manualPlanDraft=createPlanDraft&&!autoPaymentPlan;
   const createPrescription=$('prescriptionCheck').checked;
   const selection=collectPaymentItems();
+  let openRecommendation=Boolean(paymentRequired&&VIEW_MODE==='clinic'&&authUser?.role==='clinic'&&$('rootCanalAftercareRecommendationCheck').checked&&rootCanalAftercareRequired(selection.items));
   if(paymentRequired&&selection.error){toast(lang==='en'?'Payment action required':'بيانات الإجراء ناقصة',selection.error);$('paymentOtherInput').focus();return}
   if(paymentRequired&&!selection.items.length){toast(lang==='en'?'Payment action required':'اختر إجراء الدفع',lang==='en'?'Select at least one procedure.':'اختر إجراءً واحدًا على الأقل لإرساله إلى الإدارة.');return}
   if(createPrescription&&manualPlanDraft){toast(lang==='en'?'Choose one document to open first':'اختر مستندًا واحدًا لفتحه أولًا',lang==='en'?'Complete the prescription or the additional treatment plan first, then open the other from the patient row. Both cannot open on the same screen.':'اختر الوصفة أو الخطة العلاجية الإضافية أولًا، ثم افتح الأخرى من صف المريض؛ لا يمكن فتح المستندين في الشاشة نفسها.');return}
@@ -4030,6 +4054,7 @@ async function confirmPatientCompletion(){
       p.rootCanalAftercareDocumentId='';
       p.rootCanalAftercareDocumentOrderAt=0;
       p.rootCanalAftercareDocumentIssuedAt=0;
+      for(const prefix of ['rootCanalAftercareGeneralDocument','rootCanalAftercareClinicDocument']){p[`${prefix}Id`]='';p[`${prefix}OrderAt`]=0;p[`${prefix}IssuedAt`]=0}
     }
     p.paymentAcknowledgedAt=0;
     p.paymentCompletedAt=0;
@@ -4053,7 +4078,7 @@ async function confirmPatientCompletion(){
     // Persist the completion and the administration alert immediately. Do not
     // wait for the normal background cadence, otherwise the administration
     // screen may not see the missing-payment action until a later refresh.
-    if(sync.dirty)await pushState();
+    if(sync.dirty){const saved=await pushState();if(saved===false&&openRecommendation){openRecommendation=false;toast(lang==='en'?'Instructions not opened yet':'لم تُفتح التعليمات بعد',lang==='en'?'Wait for the payment order to synchronize, then use the patient-row reminder.':'انتظر مزامنة أمر الدفع، ثم افتح تذكير التعليمات من صف المريض.')}}
     let paymentPlanResult=null,paymentPlanError=null;
     if(paymentRequired){
       try{
@@ -4080,15 +4105,14 @@ async function confirmPatientCompletion(){
     closeModal('paymentModal');
     pendingCompletionId=null;
     const completionFollowUp={patientId:p.id,createPrescription,manualPlanDraft,hadExistingPlan,paymentPlanResult,paymentPlanError};
-    if(createLabOrder){
-      pendingLabCompletionFollowUp=completionFollowUp;
-      toast(lang==='en'?'Payment order saved — complete the laboratory order':'حُفظ أمر الدفع — أكمل أمر المعمل',lang==='en'?'The prosthetic procedure was transferred to the laboratory form without creating a duplicate case.':'نُقلت بيانات التركيبة إلى نموذج المعمل دون إنشاء حالة مكررة.');
-      openLabCaseEditor(p.id,{paymentItems:selection.items});
-      return;
-    }
-    if(await continuePatientCompletionAction(completionFollowUp))return;
-    const upcoming=flowLeadPatient();
-    toast(lang==='en'?(paymentRequired?'Payment action sent to administration':noPaymentRequired?'Treatment completed — no payment required':'Treatment completed'):(paymentRequired?'تم إرسال إجراء الدفع للإدارة':noPaymentRequired?'اكتمل العلاج — لا توجد دفعة مطلوبة':'اكتمل العلاج'),paymentRequired?(lang==='en'?selection.items.map(item=>`${procedureDisplayName(item.name,item.code)} ×${item.quantity}`).join(', '):paymentAction):(upcoming?(lang==='en'?`${firstName(upcoming.name)} is now first in the waiting list`:`أصبح ${firstName(upcoming.name)} في مقدمة الانتظار`):(lang==='en'?'No next patient':'لا يوجد مريض تالٍ')));
+    const finishFollowUp=async()=>{
+      if(createLabOrder){pendingLabCompletionFollowUp=completionFollowUp;toast(lang==='en'?'Payment order saved — complete the laboratory order':'حُفظ أمر الدفع — أكمل أمر المعمل',lang==='en'?'The prosthetic procedure was transferred to the laboratory form without creating a duplicate case.':'نُقلت بيانات التركيبة إلى نموذج المعمل دون إنشاء حالة مكررة.');openLabCaseEditor(p.id,{paymentItems:selection.items});return}
+      if(await continuePatientCompletionAction(completionFollowUp))return;
+      const upcoming=flowLeadPatient();
+      toast(lang==='en'?(paymentRequired?'Payment action sent to administration':noPaymentRequired?'Treatment completed — no payment required':'Treatment completed'):(paymentRequired?'تم إرسال إجراء الدفع للإدارة':noPaymentRequired?'اكتمل العلاج — لا توجد دفعة مطلوبة':'اكتمل العلاج'),paymentRequired?(lang==='en'?selection.items.map(item=>`${procedureDisplayName(item.name,item.code)} ×${item.quantity}`).join(', '):paymentAction):(upcoming?(lang==='en'?`${firstName(upcoming.name)} is now first in the waiting list`:`أصبح ${firstName(upcoming.name)} في مقدمة الانتظار`):(lang==='en'?'No next patient':'لا يوجد مريض تالٍ')));
+    };
+    if(openRecommendation){pendingAftercareCompletionAction=finishFollowUp;openRootCanalAftercare(p.id);return}
+    await finishFollowUp();
   }catch(error){
     console.error('Patient completion failed',error);
     toast(lang==='en'?'Could not complete the visit':'تعذر إكمال الطلب',lang==='en'?'The patient status did not change. Check the connection and try again.':'لم تتغير حالة المريض. تحقق من الاتصال ثم حاول مرة أخرى.');
@@ -5812,11 +5836,11 @@ function applyLang(){
   setTexts('#reviewModal .modal-actions button',[lang==='en'?'Cancel':'إلغاء',lang==='en'?'Copy message':'نسخ الرسالة',lang==='en'?'Send via WhatsApp':'إرسال عبر واتساب']);
   setText('#rootCanalAftercareModalTitle',lang==='en'?'Root-canal aftercare instructions':'تعليمات ما بعد علاج العصب');
   setText('#rootCanalAftercarePhoneLabel',lang==='en'?'Patient WhatsApp number':'رقم واتساب المريض');
-  setText('#aftercareMedicationTitle',lang==='en'?'Clinician-selected analgesics':'المسكنات التي يختارها الطبيب');
-  setText('#aftercareMedicationHelp',lang==='en'?'Select an analgesic and enter dose, frequency and duration. Nothing is selected automatically.':'اختر المسكن ثم أكمل الجرعة والتكرار والمدة. لا يتم تحديد أي علاج تلقائيًا.');
+  setText('#aftercareMedicationTitle',lang==='en'?'Clinician-selected analgesic recommendation':'توصية المسكنات التي يحددها الطبيب');
+  setText('#aftercareMedicationHelp',lang==='en'?'Select the analgesic strength, frequency and duration. Nothing is selected automatically.':'اختر المسكن وتركيزه والتكرار والمدة. لا يتم تحديد أي علاج تلقائيًا.');
+  setText('#rootCanalAftercareChoiceTitle',lang==='en'?'Add an analgesic recommendation with the instructions':'إضافة توصية مسكنات مع التعليمات');
+  setText('#rootCanalAftercareChoiceHelp',lang==='en'?'Optional: after saving the payment order, choose the clinician recommendation. You can skip this.':'اختياري؛ بعد حفظ أمر الدفع تُفتح التعليمات لتحديد توصية الطبيب، ويمكن تخطيه.');
   setText('#aftercareAntibioticSeparate',lang==='en'?'Antibiotics are a separate clinician decision and, if needed, must be issued through the existing prescription workflow.':'المضاد الحيوي قرار منفصل للطبيب، ويصدر عند الحاجة عبر الوصفة العلاجية المستقلة؛ لا يُرفق تلقائيًا مع هذه التعليمات.');
-  setText('#rootCanalAftercareConfirmTitle',lang==='en'?'Clinician sign-off before sharing':'اعتماد الطبيب قبل المشاركة');
-  setText('#rootCanalAftercareConfirmHelp',lang==='en'?'I reviewed the patient record and entered only medications and directions I selected.':'راجعت سجل المريض وأدخلت فقط الأدوية وتعليماتها التي حددتها بنفسي.');
   setText('#copyRootCanalAftercareBtn',lang==='en'?'Copy link':'نسخ الرابط');
   setText('#printRootCanalAftercareBtn',lang==='en'?'Print / PDF':'طباعة / PDF');
   setText('#sendRootCanalAftercareBtn',lang==='en'?'Open WhatsApp to share':'فتح واتساب للمشاركة');
@@ -6322,8 +6346,8 @@ $('reviewUrlInput').addEventListener('input',()=>{$('reviewLinkPreview').href=$(
 $('copyReviewBtn').addEventListener('click',copyReviewMessage);
 $('sendReviewWhatsappBtn').addEventListener('click',sendReviewWhatsapp);
 $('rootCanalAftercareModal').addEventListener('input',event=>{if(event.target.id==='rootCanalAftercarePhone')return;aftercareLink=null;aftercareWhatsappOpened=false;$('confirmRootCanalAftercareSentBtn').hidden=true});
-$('rootCanalAftercareModal').addEventListener('change',event=>{if(event.target.id==='rootCanalAftercareDoctorConfirm'&&event.target.checked)return;aftercareLink=null;aftercareWhatsappOpened=false;$('confirmRootCanalAftercareSentBtn').hidden=true});
-$('issueNewRootCanalAftercareBtn').addEventListener('click',()=>{aftercareLoadGeneration++;clearRootCanalAftercareDraft();$('rootCanalAftercareError').textContent='';$('rootCanalAftercareExistingStatus').hidden=false;$('rootCanalAftercareExistingStatus').textContent=lang==='en'?'Enter the new clinician-selected analgesics, then sign off before issuing.':'أدخل المسكنات التي يحددها الطبيب من جديد، ثم أكد المراجعة قبل الإصدار.';$('aftercareIbuprofen').focus()});
+$('rootCanalAftercareModal').addEventListener('change',()=>{aftercareLink=null;aftercareWhatsappOpened=false;$('confirmRootCanalAftercareSentBtn').hidden=true});
+$('issueNewRootCanalAftercareBtn').addEventListener('click',()=>{aftercareLoadGeneration++;clearRootCanalAftercareDraft();$('rootCanalAftercareError').textContent='';$('rootCanalAftercareExistingStatus').hidden=false;const adminGeneral=authUser?.role==='admin'&&VIEW_MODE==='admin';$('rootCanalAftercareExistingStatus').textContent=adminGeneral?(lang==='en'?'Ready to issue new general instructions.':'جاهز لإصدار تعليمات عامة جديدة.'):(lang==='en'?'Select any clinician-recommended analgesic strength before issuing.':'حدد تركيز المسكن الذي يوصي به الطبيب عند الحاجة قبل الإصدار.');(adminGeneral?$('rootCanalAftercarePhone'):$('aftercareIbuprofen')).focus()});
 $('copyRootCanalAftercareBtn').addEventListener('click',()=>runRootCanalAftercareAction('copy'));
 $('printRootCanalAftercareBtn').addEventListener('click',()=>runRootCanalAftercareAction('print'));
 $('sendRootCanalAftercareBtn').addEventListener('click',()=>runRootCanalAftercareAction('send'));
