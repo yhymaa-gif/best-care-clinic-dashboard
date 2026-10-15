@@ -8,8 +8,8 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <title>تعليمات ما بعد علاج العصب | أفضل عناية</title>
   <link rel="icon" href="./assets/icons/icon-192.png">
-  <link rel="stylesheet" href="./root-canal-aftercare.css?v=20261015-1">
-  <link rel="stylesheet" href="./root-canal-aftercare-print.css?v=20261015-2">
+  <link rel="stylesheet" href="./root-canal-aftercare.css?v=20261016-1">
+  <link rel="stylesheet" href="./root-canal-aftercare-print.css?v=20261016-1">
 </head>
 <body>
   <main id="aftercarePage" class="aftercare-page" hidden>
@@ -20,7 +20,7 @@
     <section class="title-block">
       <p>ENDO AFTERCARE</p>
       <h1>تعليمات ما بعد علاج العصب وجذور الأسنان</h1>
-      <span>راحة أفضل وتعافٍ أسرع باتباع إرشادات الطبيب</span>
+      <span id="aftercareSubtitle">تعليمات العناية بعد الإجراء</span>
     </section>
     <section class="patient-grid" aria-label="بيانات المريض">
       <div><small>اسم المريض</small><strong id="patientName">—</strong></div>
@@ -29,9 +29,10 @@
     </section>
     <p id="patientIntro" class="patient-intro"></p>
     <p class="draft-notice">DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</p>
+    <p id="generalModeNotice" class="general-mode-notice" hidden>هذه تعليمات عامة أرسلتها الإدارة، وليست مراجعة دوائية أو وصفة من الطبيب. أي توصية بمسكن أو مضاد حيوي تصدر منفصلة بعد قرار الطبيب.</p>
     <section class="instructions" aria-label="تعليمات العناية">
       <article><b>1</b><div><strong>الألم المتوقع</strong><p>قد يظهر ألم أو حساسية خفيفة إلى متوسطة خلال الأيام الأولى ويُفترض أن تبدأ بالتحسن. عند وجود ألم متوسط إلى شديد، ألم متزايد، أو ألم لا يتحسن؛ تواصل مع العيادة لتقييمه.</p></div></article>
-      <article><b>2</b><div><strong>استخدام العلاج</strong><p>استخدم فقط الأدوية التي اختارها الطبيب والمذكورة في هذه الورقة، وبالجرعة والتكرار والمدة المحددة. لا تجمع أدوية أو تغيّر الجرعات من نفسك.</p></div></article>
+      <article><b>2</b><div><strong>استخدام العلاج</strong><p id="medicationInstruction">استخدم فقط المسكنات التي أوصى بها الطبيب والمذكورة في هذه الورقة، بالتركيز والتكرار والمدة المحددة. لا تضف أو تغيّر دواءً من نفسك.</p></div></article>
       <article><b>3</b><div><strong>الكمادات الباردة</strong><p>يمكن وضع كمادة باردة ملفوفة بقماش على الخد لمدة 10–15 دقيقة ثم إزالتها، وتكرارها على فترات عند وجود تورم أو انزعاج. لا تضع الثلج مباشرة على الجلد.</p></div></article>
       <article><b>4</b><div><strong>الطعام والمضغ</strong><p>تناول أطعمة لينة وابتعد مؤقتًا عن الأطعمة القاسية أو اللزجة. تجنب المضغ القوي على السن المعالج حتى اكتمال الترميم النهائي أو سماح الطبيب.</p></div></article>
       <article><b>5</b><div><strong>النظافة والراحة</strong><p>نظف أسنانك بالفرشاة والخيط بلطف حول المنطقة المعالجة، وخذ قسطًا كافيًا من الراحة في اليوم الأول، ما لم يوجّهك الطبيب بخلاف ذلك.</p></div></article>
@@ -42,16 +43,16 @@
       <div><strong>تواصل مع العيادة عند ظهور أي من التالي</strong><p>ألم متوسط إلى شديد أو متزايد لا يتحسن، ضغط مستمر، تورم ظاهر في اللثة أو الوجه، ارتفاع في الحرارة، خروج صديد أو طعم غير طبيعي، تفاعل تحسسي للدواء، سقوط أو كسر الحشوة أو التاج المؤقت، أو عودة الأعراض السابقة.</p><p class="bite-warning">الألم عند العض أو الشعور بأن الحشوة مرتفعة يستدعي زيارة العيادة لفحص العضة وضبط ارتفاع الحشوة عند الحاجة لتخفيف الألم. لا تحاول تعديلها بنفسك.</p></div>
     </section>
     <section class="medication-section">
-      <div class="section-heading"><span>Rx</span><div><h2>المسكنات التي حددها الطبيب</h2><p>استخدم فقط المسكنات الظاهرة أدناه وفق التعليمات المكتوبة.</p></div></div>
+      <div class="section-heading"><span>＋</span><div><h2 id="medicationHeading">توصية الطبيب بالمسكنات</h2><p id="medicationHelp">تُعرض التوصية فقط إذا حددها الطبيب لهذا المريض.</p></div></div>
       <div id="medicationList" class="medication-list"></div>
-      <p id="noMedication" class="no-medication" hidden>لم يحدد الطبيب دواءً في هذه الورقة. اتبع التعليمات المباشرة التي تلقيتها من العيادة.</p>
+      <p id="noMedication" class="no-medication" hidden>لا توجد توصية بمسكن في هذه الورقة. اتبع فقط توجيهات الطبيب الخاصة بك إن وُجدت.</p>
       <p class="antibiotic-note">المضاد الحيوي قرار مستقل للطبيب، ويُصدر عند الحاجة بوصفة علاجية منفصلة؛ ليس جزءًا من هذه التعليمات.</p>
     </section>
-    <footer><div><small>الطبيب المعالج</small><strong id="doctorName">—</strong></div><div><small>تاريخ إصدار التعليمات</small><strong id="issuedAt">—</strong></div><p>هذه التعليمات أُصدرت من العيادة بعد مراجعة الطبيب. عند اختلاف أي توجيه شفهي أو مكتوب، تواصل مع العيادة للتوضيح.</p></footer>
+    <footer><div><small id="issuerLabel">الطبيب المعالج</small><strong id="doctorName">—</strong></div><div><small>تاريخ إصدار التعليمات</small><strong id="issuedAt">—</strong></div><p id="issuerNote">هذه التعليمات أُصدرت من العيادة بعد مراجعة الطبيب. عند اختلاف أي توجيه شفهي أو مكتوب، تواصل مع العيادة للتوضيح.</p></footer>
   </main>
   <section id="loadingState" class="state-card"><span class="loader"></span><h2>جارٍ تحميل تعليماتك…</h2><p>يرجى الانتظار لحظات.</p></section>
   <section id="errorState" class="state-card error" hidden><span>!</span><h2>تعذر فتح التعليمات</h2><p id="errorMessage">الرابط غير صالح أو غير متاح.</p></section>
   <nav id="pageActions" class="page-actions" hidden><button id="shareBtn" type="button">مشاركة</button><button id="printBtn" type="button">طباعة / حفظ PDF</button></nav>
-  <script src="./root-canal-aftercare.js?v=20261015-1"></script>
+  <script src="./root-canal-aftercare.js?v=20261016-1"></script>
 </body>
 </html>

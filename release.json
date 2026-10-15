@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.15-root-canal-aftercare",
-  "publishedAt": "2026-10-15",
+  "version": "2026.10.16-root-canal-aftercare-direct",
+  "publishedAt": "2026-10-16",
   "summary": {
-    "ar": "تعليمات ما بعد علاج العصب: تذكير للطبيب، اختيار المسكنات، مشاركة واتساب وطباعة؛ المضاد الحيوي بوصفة مستقلة، وتحسين مزامنة المواعيد.",
-    "en": "Root-canal aftercare: clinician reminder, analgesics, WhatsApp share/print, separate antibiotic prescription, and safer appointment sync."
+    "ar": "تعليمات العصب مباشرة من الإدارة دون أدوية؛ وتوصية مسكنات اختيارية من شاشة الطبيب، مع مشاركة واتساب وطباعة وتذكير بجوار اسم المريض.",
+    "en": "General aftercare from administration; optional clinician analgesic recommendation, WhatsApp share/print, and reminder by patient name."
   }
 }
