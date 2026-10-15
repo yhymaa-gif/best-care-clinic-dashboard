@@ -207,8 +207,13 @@ test('both share surfaces send PDF files without a URL and provide attachment fa
     assert.doesNotMatch(source,/navigator\.share\(\{[^}]*url:/);
     assert.match(source,/anchor\.download=(?:filename|'root-canal-aftercare\.pdf')/);
   }
-  assert.match(dashboard,/أرفق الملف الذي نُزّل للمريض المقصود/);
-  assert.match(publicPage,/أرفقه يدويًا في واتساب/);
+  for(const source of [dashboard,publicPage]){
+    assert.match(source,/عزيزنا المراجع، هذه تعليمات تخص التعامل مع الإزعاج الذي يرتبط عادةً بعلاج العصب وجذور الأسنان/);
+    assert.match(source,/navigator\.clipboard\?\.writeText/);
+    assert.match(source,/إذا لم (?:يُظهرها واتساب|يظهر النص في واتساب)/);
+  }
+  assert.match(dashboard,/الصق المقدمة وأرفق الملف/);
+  assert.match(publicPage,/الصقها في واتساب ثم أرفق الملف/);
 });
 
 test('general and clinic instructions retain independent active links in either issuance order',async()=>{
@@ -259,10 +264,13 @@ test('dashboard and public aftercare page expose the complete share/print workfl
   assert.match(dashboard,/choice\.hidden=!required\|\|VIEW_MODE!=='clinic'\|\|authUser\?\.role!=='clinic'/);
   assert.match(dashboard,/if\(saved===false&&openRecommendation\)\{openRecommendation=false/);
   assert.match(dashboard,/if\(openRecommendation\)\{pendingAftercareCompletionAction=finishFollowUp;openRootCanalAftercare\(p\.id\);return\}/);
-  assert.match(dashboard,/please read and follow the attached root-canal aftercare PDF/);
-  assert.match(dashboard,/يرجى قراءة ملف PDF المرفق لتعليمات ما بعد علاج العصب/);
-  assert.match(dashboard,/Contact Best Care Dental Clinics if you have any questions/);
-  assert.match(dashboard,/تواصل مع عيادات أفضل عناية إذا كان لديك أي استفسار/);
+  assert.match(dashboard,/these instructions explain how to manage the discomfort commonly associated with root-canal treatment/);
+  assert.match(dashboard,/هذه تعليمات تخص التعامل مع الإزعاج الذي يرتبط عادةً بعلاج العصب وجذور الأسنان/);
+  assert.match(dashboard,/Your safety is our priority/);
+  assert.match(dashboard,/سلامتك غايتنا/);
+  assert.match(dashboard,/id="copyRootCanalAftercareMessageBtn"/);
+  assert.match(dashboard,/setRootCanalAftercareFieldsLocked\(mode!==\'admin-general\'\)/);
+  assert.match(dashboard,/setRootCanalAftercareFieldsLocked\(deliveryMode!==\'admin-general\'\)/);
   assert.match(dashboard,/Share root-canal instructions':'مشاركة تعليمات العصب/);
   assert.match(dashboard,/querySelectorAll\('\.patient-name-stack'\)\.forEach\(stack=>\{const button=stack\.closest\('td'\)\?\.querySelector\('\.aftercare-row-btn'\);if\(button\)stack\.append\(button\)\}/);
   assert.doesNotMatch(dashboard,/\$\('rootCanalAftercareDoctorConfirm'\)\.checked/);

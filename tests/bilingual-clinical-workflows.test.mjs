@@ -48,7 +48,7 @@ test('bilingual treatment assets are refreshed in the PWA shell', async () => {
   assert.match(worker, /bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare/);
   assert.match(worker, /'\.\/treatment-plan-i18n\.js'/);
   const metadata = JSON.parse(release);
-  assert.equal(metadata.version, '2026.10.16-root-canal-aftercare-pdf-file');
+  assert.equal(metadata.version, '2026.10.16-aftercare-whatsapp-message');
   assert.ok(metadata.summary.ar.length > 10);
   assert.ok(metadata.summary.en.length > 10);
 });
