@@ -25,7 +25,7 @@ const copy={
 }[lang];
 
 let clinics=[];
-let dayState={patients:[],notes:'',updateAlert:{active:false,message:'',createdAt:0},revision:0,updatedAt:0};
+let dayState={patients:[],deletedPatientIds:[],notes:'',updateAlert:{active:false,message:'',createdAt:0},revision:0,updatedAt:0};
 let selectedPatient=null;
 let editing=null;
 let duration=30;
@@ -176,11 +176,11 @@ async function mutateDay(mutator,{verify}={}){
   for(let attempt=0;attempt<3;attempt+=1){
     const latest=await fetchDay();if(verify&&!verify(latest))return{conflicted:true,state:latest};
     const outcome=mutator(latest);if(outcome?.done)return{state:latest,...outcome};
-    const clinic=activeClinic(),query=new URLSearchParams({date:$('entryDate').value,clinic:clinic.id}),payload={date:$('entryDate').value,clinic:{id:clinic.id,name:clinic.name||'',doctorName:clinic.doctorName||'',roomNumber:clinic.roomNumber||''},patients:outcome.patients,notes:latest.notes,updateAlert:latest.updateAlert,clientId:CLIENT_ID,expectedRevision:latest.revision};
+    const clinic=activeClinic(),query=new URLSearchParams({date:$('entryDate').value,clinic:clinic.id}),deletedPatientIds=[...new Set([...(latest.deletedPatientIds||[]),...(outcome.deletedPatientIds||[])].map(value=>String(value||'')).filter(Boolean))],payload={date:$('entryDate').value,clinic:{id:clinic.id,name:clinic.name||'',doctorName:clinic.doctorName||'',roomNumber:clinic.roomNumber||''},patients:outcome.patients,deletedPatientIds,notes:latest.notes,updateAlert:latest.updateAlert,clientId:CLIENT_ID,expectedRevision:latest.revision};
     let response,data;
     try{({response,data}=await request(`${API.state}?${query}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(payload)},20000))}catch(error){if(attempt<2)continue;throw error}
-    if(response.status===409)continue;if(response.status===401)throw new Error(copy.session);if(!response.ok)throw new Error(data.error||copy.saveFailed);
-    const state={patients:Array.isArray(data.patients)?data.patients:outcome.patients,notes:String(data.notes??latest.notes),updateAlert:data.updateAlert||latest.updateAlert,revision:Number(data.revision||latest.revision+1),updatedAt:Number(data.updatedAt||Date.now()),clinic:data.clinic||clinic};broadcast(state.revision);return{state,...outcome};
+    if(response.status===409){if(data.code==='DUPLICATE_PATIENT')throw new Error(copy.duplicate);continue}if(response.status===401)throw new Error(copy.session);if(!response.ok)throw new Error(data.error||copy.saveFailed);
+    const state={patients:Array.isArray(data.patients)?data.patients:outcome.patients,deletedPatientIds:Array.isArray(data.deletedPatientIds)?data.deletedPatientIds:deletedPatientIds,notes:String(data.notes??latest.notes),updateAlert:data.updateAlert||latest.updateAlert,revision:Number(data.revision||latest.revision+1),updatedAt:Number(data.updatedAt||Date.now()),clinic:data.clinic||clinic};broadcast(state.revision);return{state,...outcome};
   }
   throw new Error(lang==='en'?'The list changed repeatedly on another device. Refresh and retry.':'تغيرت القائمة عدة مرات من جهاز آخر. حدّث ثم أعد المحاولة.');
 }
@@ -224,7 +224,7 @@ async function deleteAppointment(id,{undo=false}={}){
   const current=dayState.patients.find(item=>String(item.id)===String(id));if(!current)return;if(!undo&&!confirm(copy.deleteConfirm))return;
   const baseline=patientStamp(current);
   try{
-    const result=await mutateDay(latest=>{const target=latest.patients.find(item=>String(item.id)===String(id));if(!target)return{done:true,alreadyDeleted:true};if(patientStamp(target)!==baseline)return{done:true,conflicted:true};return{patients:latest.patients.filter(item=>String(item.id)!==String(id))}});
+    const result=await mutateDay(latest=>{const target=latest.patients.find(item=>String(item.id)===String(id));if(!target)return{done:true,alreadyDeleted:true};if(patientStamp(target)!==baseline)return{done:true,conflicted:true};return{patients:latest.patients.filter(item=>String(item.id)!==String(id)),deletedPatientIds:[...(latest.deletedPatientIds||[]),String(id)]}});
     dayState=result.state;if(result.conflicted){renderDay();toast(copy.undoFailed);return}recent=recent.filter(item=>item.id!==id);renderDay();toast(copy.deleted);
   }catch(error){toast(copy.saveFailed,errorMessage(error,copy.saveFailed))}
 }

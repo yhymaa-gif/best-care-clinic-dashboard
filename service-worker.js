@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261013-patient-name-link-safety';
+const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare';
 const APP_SHELL=[
   './',
   './index.html',
@@ -48,6 +48,10 @@ const APP_SHELL=[
   './prescription.css',
   './prescription-overrides.css',
   './prescription.js',
+  './root-canal-aftercare.html',
+  './root-canal-aftercare.css',
+  './root-canal-aftercare-print.css',
+  './root-canal-aftercare.js',
   './manifest.webmanifest',
   './release.json',
   './best-care-logo.png',
@@ -93,6 +97,8 @@ self.addEventListener('fetch',event=>{
   if(request.mode==='navigate'){
     const shellPage=url.pathname==='/quick-plan'||url.pathname.endsWith('/quick-plan.html')
       ?'./quick-plan.html'
+      :url.pathname.endsWith('/root-canal-aftercare.html')
+      ?'./root-canal-aftercare.html'
       :url.pathname.endsWith('/quick-plan-review.html')
       ?'./quick-plan-review.html'
       :url.pathname.endsWith('/treatment-plans.html')

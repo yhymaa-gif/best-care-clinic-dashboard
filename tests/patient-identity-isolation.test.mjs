@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {__test as directory} from '../netlify/functions/lib/patient-directory.mjs';
-import {patientIdentityKeys,normalizePatientFile,normalizePatientNationalId} from '../netlify/functions/lib/patient-identity.mjs';
+import {cleanDeletedPatientIds,newlyIntroducedDuplicateIdentity,patientIdentityKeys,normalizePatientFile,normalizePatientNationalId} from '../netlify/functions/lib/patient-identity.mjs';
 import {validatePatient,samePatient} from '../appointment-entry-core.js';
 
 test('ID-only registration needs neither a mobile nor a file, but keeps invalid mobiles invalid',()=>{
@@ -30,6 +30,20 @@ test('relationship metadata survives normalization without becoming an identity'
   assert.deepEqual(patientIdentityKeys(patient),['national:1234567890']);
   assert.deepEqual(directory.reviewFlagsFor({fullName:'طفل مريض',nationalId:'1234567890'}),[]);
   assert.equal(directory.directoryPatient({phoneRelationship:'injected'}).phoneRelationship,'');
+});
+test('same-day duplicate protection uses file or national ID but never the shared phone',()=>{
+  const first={id:'one',name:'خيرية',file:'17161',nationalId:'1234567890',phone:'0501112233'};
+  assert.match(newlyIntroducedDuplicateIdentity([first],[first,{id:'two',name:'اسم آخر',file:'17161',phone:'0509999999'}]),/^file:17161\|/);
+  assert.match(newlyIntroducedDuplicateIdentity([first],[first,{id:'three',name:'اسم آخر',nationalId:'1234567890'}]),/^national:1234567890\|/);
+  assert.equal(newlyIntroducedDuplicateIdentity([first],[first,{id:'four',name:'قريب المريض',file:'18313',nationalId:'2234567890',phone:'0501112233'}]),'');
+});
+test('legacy duplicates remain readable regardless of order while deletion tombstones never expire silently',()=>{
+  const duplicated=[{id:'one',file:'17161'},{id:'two',file:'17161'},{id:'three',file:'17161'}];
+  assert.equal(newlyIntroducedDuplicateIdentity(duplicated,duplicated),'');
+  assert.equal(newlyIntroducedDuplicateIdentity(duplicated,[duplicated[2],duplicated[1],duplicated[0]]),'');
+  assert.equal(newlyIntroducedDuplicateIdentity(duplicated,duplicated.slice(1)),'');
+  const ids=cleanDeletedPatientIds(['a','a','',...Array.from({length:105},(_,index)=>`id-${index}`)]);
+  assert.equal(ids.length,106);assert.equal(ids[0],'a');assert.equal(ids.at(-1),'id-104');assert.equal(new Set(ids).size,106);
 });
 test('automatic cleanup retains conflicting identities instead of merging them by file',()=>{
   const records={one:{canonical:'one',fileNo:'12',nationalId:'1234567890',fullName:'أحمد محمد'},two:{canonical:'two',fileNo:'12',nationalId:'2234567890',fullName:'أحمد علي'}};

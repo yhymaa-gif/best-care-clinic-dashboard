@@ -24,6 +24,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/root-canal-aftercare"
+  to = "/.netlify/functions/root-canal-aftercare"
+  status = 200
+
+[[redirects]]
   from = "/api/admin-patients"
   to = "/.netlify/functions/admin-patients"
   status = 200

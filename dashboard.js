@@ -170,7 +170,7 @@ const IOS_INSTALL_COPY={
   en:{menu:'📱 Install on iPhone',title:'Install the app on iPhone',help:'Four simple steps in Safari — no App Store required.',steps:[['Open the link in Safari','If you are using Chrome, copy the link and open it in Safari first.'],['Tap the Share button','Tap the square-with-up-arrow icon at the bottom of Safari.'],['Choose “Add to Home Screen”','Scroll down in the Share sheet if the option is not immediately visible.'],['Tap “Add”','The Best Care icon will appear on your Home Screen and open as a standalone app.']],note:'Important: use Safari to install. Then open the new icon; live sync continues through the same clinic link.',shareTitle:'Share the app with another device',shareText:'Copy the link and send it to the iPhone user, then follow the steps above.',copy:'Copy app link',close:'Done, I understand',copiedTitle:'Link copied',copiedText:'Send it to the iPhone user to open and install the app.',alreadyTitle:'App installed',alreadyText:'You are already using the standalone app.'}
 };
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
-let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let adminQueueMinuteKey=''; const requestedLang=new URLSearchParams(location.search).get('lang');let lang=requestedLang==='en'?'en':requestedLang==='ar'?'ar':localStorage.getItem('bestcare_lang')||'ar';
+let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let pendingAftercareId=null; let aftercareLink=null; let aftercareLinkOrderAt=0; let aftercareLinkDocumentId=''; let aftercareLoadGeneration=0; let aftercareWhatsappOpened=false; let adminQueueMinuteKey=''; const requestedLang=new URLSearchParams(location.search).get('lang');let lang=requestedLang==='en'?'en':requestedLang==='ar'?'ar':localStorage.getItem('bestcare_lang')||'ar';
 let manualAlertFetchedAt=0;
 let audioContext=null;
 let presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
@@ -706,6 +706,8 @@ let sync={
   lastSync:0,
   localVersion:0,
   localUpdatedAt:0,
+  deletedPatientIds:[],
+  blockedCode:'',
   directoryImport:false,
   directoryCorrections:[],
   directoryCorrectionTimer:null,
@@ -1009,7 +1011,8 @@ function detectRemoteNotification(previousPatients,previousAlert,data){
   if(nextAlert?.active&&Number(nextAlert.updatedAt||0)>Number(previousAlert?.updatedAt||0))return {type:String(nextAlert.kind||'').startsWith('payment')?'payment':'patient',title:lang==='en'?'Best Care update':'تنبيه جديد من أفضل عناية',body:String(nextAlert.message||tr('defaultAlert')),tag:`alert-${nextAlert.kind||'update'}`};
   return null;
 }
- function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined,directoryImport:Boolean(sync.directoryImport),directoryCorrections:sync.directoryCorrections.map(correction=>({...correction,lookup:{...correction.lookup},patient:{...correction.patient}}))}}
+ function mergeDeletedPatientIds(...groups){return[...new Set(groups.flat().map(value=>String(value||'').trim()).filter(Boolean))]}
+ function serialize(){return {date:selectedDate,clinic:{id:currentClinic.id,name:currentClinic.name,doctorName:currentClinic.doctorName,roomNumber:currentClinic.roomNumber},patients:patients.map(p=>({...p})),deletedPatientIds:mergeDeletedPatientIds(sync.deletedPatientIds),notes,updateAlert:{...updateAlert},clientId:CLIENT_ID,clientUpdatedAt:Date.now(),expectedRevision:sync.ready?sync.revision:undefined,directoryImport:Boolean(sync.directoryImport),directoryCorrections:sync.directoryCorrections.map(correction=>({...correction,lookup:{...correction.lookup},patient:{...correction.patient}}))}}
 async function flushPatientDirectoryCorrections(corrections=[]){
   const applied=[],failed=[];
   if(authUser?.role!=='admin')return{applied,failed};
@@ -1073,6 +1076,8 @@ function loadLocal(date){
     updateAlert=freshPending&&v?.updateAlert&&typeof v.updateAlert==='object'?{...v.updateAlert}:{active:false,message:'',updatedAt:0,kind:''};
     sync.dirty=freshPending;
     sync.localUpdatedAt=freshPending?Number(v?.localUpdatedAt||0):0;
+    sync.deletedPatientIds=freshPending&&Array.isArray(v?.deletedPatientIds)?mergeDeletedPatientIds(v.deletedPatientIds):[];
+    sync.blockedCode='';
     sync.directoryImport=freshPending&&Boolean(v?.directoryImport);
     const pendingCorrections=freshPending&&Array.isArray(v?.directoryCorrections)?v.directoryCorrections:[];
     const corrections=new Map([...storedPatientDirectoryCorrections(),...pendingCorrections].map(correction=>[String(correction.patientId||correction.id||''),correction]));
@@ -1084,6 +1089,8 @@ function loadLocal(date){
     updateAlert={active:false,message:'',updatedAt:0,kind:''};
     sync.dirty=false;
     sync.localUpdatedAt=0;
+    sync.deletedPatientIds=[];
+    sync.blockedCode='';
     sync.directoryImport=false;
     sync.directoryCorrections=storedPatientDirectoryCorrections();
     if(sync.directoryCorrections.length)schedulePatientDirectoryCorrectionRetry();
@@ -1552,12 +1559,14 @@ async function reconcileRevisionConflict(date,snapshot){
   if(!latestResponse.ok)throw new Error(`HTTP ${latestResponse.status}`);
   const latest=await latestResponse.json();
   if(selectedDate!==date)return false;
-  const merged=new Map((Array.isArray(latest.patients)?latest.patients:[]).map(patient=>[String(patient.id),{...patient}]));
+  const deletedPatientIds=mergeDeletedPatientIds(latest.deletedPatientIds||[],snapshot.deletedPatientIds||[],sync.deletedPatientIds),deletedPatientSet=new Set(deletedPatientIds);
+  const merged=new Map((Array.isArray(latest.patients)?latest.patients:[]).filter(patient=>!deletedPatientSet.has(String(patient.id))).map(patient=>[String(patient.id),{...patient}]));
   snapshot.patients.forEach(patient=>{
-    const id=String(patient.id),remote=merged.get(id);
+    const id=String(patient.id);if(deletedPatientSet.has(id))return;const remote=merged.get(id);
     merged.set(id,remote?mergePatientVersions(remote,patient):{...patient});
   });
   patients=[...merged.values()].sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')));
+  sync.deletedPatientIds=deletedPatientIds;
   if(!notes&&latest.notes)notes=String(latest.notes);
   if(Number(latest.updateAlert?.updatedAt||0)>Number(updateAlert?.updatedAt||0))updateAlert={...latest.updateAlert};
   sync.revision=Number(latest.revision||0);
@@ -1572,7 +1581,7 @@ async function reconcileRevisionConflict(date,snapshot){
   return true;
 }
 async function pushState(){
-  if(sync.pushing||!sync.dirty)return false;
+  if(sync.pushing||!sync.dirty||sync.blockedCode)return false;
   if(sync.pulling){scheduleAutomaticSync(250);return false}
   sync.pushing=true;
   const sentVersion=sync.localVersion;
@@ -1582,6 +1591,15 @@ async function pushState(){
   try{
     const res=await request(stateUrl(sentDate),{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(snapshot)});
     if(res.status===409){
+      const conflict=await res.clone().json().catch(()=>({}));
+      if(conflict.code==='DUPLICATE_PATIENT'){
+        sync.blockedCode='DUPLICATE_PATIENT';
+        sync.error=lang==='en'?'Duplicate patient: review the file number or national ID.':'المريض مكرر: راجع رقم الملف أو الهوية في السجل المكرر.';
+        setBadge('error',lang==='en'?'Duplicate appointment needs review':'يوجد موعد مكرر يحتاج مراجعة',sync.error);
+        toast(lang==='en'?'Duplicate appointment blocked':'تم منع موعد مكرر',sync.error);
+        persistLocal(true);
+        return false;
+      }
       await reconcileRevisionConflict(sentDate,snapshot);
       return false;
     }
@@ -1590,6 +1608,11 @@ async function pushState(){
     if(selectedDate!==sentDate)return false;
     sync.revision=Number(data.revision||sync.revision);
     sync.updatedAt=Number(data.updatedAt||Date.now());
+    sync.deletedPatientIds=mergeDeletedPatientIds(data.deletedPatientIds||[],snapshot.deletedPatientIds||[],sync.deletedPatientIds);
+    const acceptedDeletedPatientIds=new Set(sync.deletedPatientIds),beforeAcceptedPatients=JSON.stringify(patients);
+    if(Array.isArray(data.patients)&&sentVersion===sync.localVersion)patients=data.patients.map(patient=>({...patient,name:String(patient.name||'').trim()}));
+    else patients=patients.filter(patient=>!acceptedDeletedPatientIds.has(String(patient.id)));
+    if(JSON.stringify(patients)!==beforeAcceptedPatients)render();
     sync.dirty=sentVersion!==sync.localVersion;
     sync.ready=true;
     sync.error='';
@@ -1612,7 +1635,7 @@ async function pushState(){
     return false;
   }finally{
     sync.pushing=false;
-    if(sync.dirty){
+    if(sync.dirty&&!sync.blockedCode){
       const cadence=syncCadence();
       scheduleAutomaticSync(sync.error?(cadence.workHours?30000:cadence.delay):2500);
     }
@@ -1626,6 +1649,8 @@ function applyRemote(data){
   els.notes.value=notes;
   sync.revision=Number(data.revision||0);
   sync.updatedAt=Number(data.updatedAt||0);
+  sync.deletedPatientIds=mergeDeletedPatientIds(data.deletedPatientIds||[]);
+  sync.blockedCode='';
   sync.ready=true;
   sync.error='';
   sync.localUpdatedAt=Date.now();
@@ -1794,6 +1819,8 @@ function mutate(fn){
     if(patient.status!==prior.status)patient.statusUpdatedAt=now;
     patient.recordUpdatedAt=now;
   });
+  sync.blockedCode='';
+  sync.error='';
   markDirty();
 }
 function derivedStatus(p){if(['done','cancel','left','asks_delay','arrived','early_arrival','active'].includes(p.status))return p.status;const now=new Date(),en=timeDate(p.end);if(now>en&&p.status==='waiting')return'late';return p.status;}
@@ -1861,6 +1888,25 @@ function stageFor(p){if(!p)return'stage-idle';const st=timeDate(p.start).getTime
 function paymentStage(p){if(!p?.paymentRequired)return'';if(p.paymentCompletedAt)return'completed';if(p.paymentAcknowledgedAt)return'received';return'requested'}
 function paymentOrderExists(p){
   return Boolean(p?.paymentRequired||Number(p?.paymentRequestedAt||0)>0||String(p?.paymentAction||'').trim()||(Array.isArray(p?.paymentItems)&&p.paymentItems.length));
+}
+function rootCanalAftercareRequired(items){return Array.isArray(items)&&items.some(item=>['root-canal','root-canal-retreatment'].includes(String(item?.code||'')))}
+function rootCanalAftercarePending(patient){return rootCanalAftercareRequired(patient?.paymentItems)&&Number(patient?.rootCanalAftercareRequiredAt||0)>0&&(Number(patient?.rootCanalAftercareSentOrderAt||0)!==Number(patient?.paymentRequestedAt||0)||Number(patient?.rootCanalAftercareRequiredAt||0)>Number(patient?.rootCanalAftercareSentAt||0))}
+function rootCanalAftercareButtonMarkup(patient){
+  if(!rootCanalAftercareRequired(patient?.paymentItems))return'';
+  const pending=rootCanalAftercarePending(patient),label=pending?(lang==='en'?'Send root-canal aftercare':'إرسال تعليمات العصب'):(lang==='en'?'Open root-canal aftercare':'تعليمات العصب');
+  return `<button type="button" class="mini aftercare-row-btn${pending?' aftercare-pending':''}" data-aftercare-id="${escapeHtml(patient.id)}" aria-label="${escapeHtml(label)}" title="${escapeHtml(label)}"><span class="aftercare-pain-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="30" cy="18" r="11"/><path d="M18 55c1-15 4-23 12-24 8 1 12 9 13 24M20 35c-7 6-8 13-5 19M38 34c7 4 9 10 9 18"/><path class="aftercare-hand" d="M17 39c6-3 10-7 13-13"/><path class="aftercare-bolt" d="M49 8 41 23h8l-5 15 15-20h-9l5-10z"/></svg></span><span>${escapeHtml(label)}</span></button>`;
+}
+function installRootCanalAftercareUI(){
+  const icon=`<span class="aftercare-pain-icon" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="30" cy="18" r="11"/><path d="M18 55c1-15 4-23 12-24 8 1 12 9 13 24M20 35c-7 6-8 13-5 19M38 34c7 4 9 10 9 18"/><path class="aftercare-hand" d="M17 39c6-3 10-7 13-13"/><path class="aftercare-bolt" d="M49 8 41 23h8l-5 15 15-20h-9l5-10z"/></svg></span>`;
+  const requirement=document.createElement('section');requirement.id='rootCanalAftercareRequirement';requirement.className='root-canal-aftercare-requirement';requirement.hidden=true;requirement.setAttribute('aria-live','polite');
+  requirement.innerHTML=`${icon}<span><strong id="rootCanalAftercareRequirementTitle">يلزم إرسال تعليمات ما بعد علاج العصب</strong><small id="rootCanalAftercareRequirementHelp">سيظهر تذكير تفاعلي بجانب اسم المريض بعد حفظ أمر الدفع، ويبقى حتى مشاركة التعليمات.</small></span>`;
+  $('paymentActionField').before(requirement);
+  const medication=type=>`<article data-aftercare-medication="${type.toLowerCase()}"><label><input id="aftercare${type}" type="checkbox"><strong>${type==='Ibuprofen'?'إيبوبروفين':'باراسيتامول'}</strong></label>${['Dose','Frequency','Duration','Notes'].map(field=>`<input id="aftercare${type}${field}" maxlength="${field==='Notes'?240:field==='Frequency'?100:80}" placeholder="${{Dose:'الجرعة',Frequency:'التكرار',Duration:'المدة',Notes:'ملاحظات الطبيب (اختياري)'}[field]}">`).join('')}</article>`;
+  const modal=document.createElement('div');modal.id='rootCanalAftercareModal';modal.className='modal';
+  modal.innerHTML=`<div class="modal-card root-canal-aftercare-modal-card" role="dialog" aria-modal="true" aria-labelledby="rootCanalAftercareModalTitle"><header class="aftercare-modal-head">${icon}<div><h3 id="rootCanalAftercareModalTitle">تعليمات ما بعد علاج العصب</h3><p id="rootCanalAftercarePatientText">بيانات المريض ستُملأ تلقائيًا.</p></div><button type="button" data-close="rootCanalAftercareModal" aria-label="إغلاق">×</button></header><p class="aftercare-intro-preview">عزيزنا المراجع، أُجري لك اليوم إجراء لعلاج العصب وجذور الأسنان، مما يستدعي توعيتك بأهمية اتباع التعليمات التالية.</p><p class="aftercare-draft-notice">DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED</p><label class="aftercare-phone"><span id="rootCanalAftercarePhoneLabel">رقم واتساب المريض</span><input id="rootCanalAftercarePhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="9665XXXXXXXX"></label><section class="aftercare-medication-picker" aria-labelledby="aftercareMedicationTitle"><div><h4 id="aftercareMedicationTitle">المسكنات التي يختارها الطبيب</h4><p id="aftercareMedicationHelp">اختر المسكن ثم أكمل الجرعة والتكرار والمدة. لا يتم تحديد أي علاج تلقائيًا.</p></div>${medication('Ibuprofen')}${medication('Paracetamol')}</section><p id="aftercareAntibioticSeparate" class="aftercare-antibiotic-separate">المضاد الحيوي قرار منفصل للطبيب، ويصدر عند الحاجة عبر الوصفة العلاجية المستقلة؛ لا يُرفق تلقائيًا مع هذه التعليمات.</p><label class="aftercare-confirm"><input id="rootCanalAftercareDoctorConfirm" type="checkbox"><span><strong id="rootCanalAftercareConfirmTitle">اعتماد الطبيب قبل المشاركة</strong><small id="rootCanalAftercareConfirmHelp">راجعت حالة المريض والحساسيات والسجل الدوائي، واخترت الأدوية والتعليمات المناسبة له.</small></span></label><p id="rootCanalAftercareError" class="auth-error" aria-live="polite"></p><div class="modal-actions"><button type="button" data-close="rootCanalAftercareModal">إغلاق</button><button id="copyRootCanalAftercareBtn" type="button">نسخ الرابط</button><button id="printRootCanalAftercareBtn" type="button">طباعة / PDF</button><button id="sendRootCanalAftercareBtn" type="button" class="review-send">فتح واتساب للمشاركة</button><button id="confirmRootCanalAftercareSentBtn" type="button" hidden>تأكيد إرسال التعليمات</button></div></div>`;
+  const issueNew=document.createElement('button');issueNew.id='issueNewRootCanalAftercareBtn';issueNew.type='button';issueNew.textContent='إصدار تعليمات جديدة';modal.querySelector('#copyRootCanalAftercareBtn').before(issueNew);
+  const existingStatus=document.createElement('p');existingStatus.id='rootCanalAftercareExistingStatus';existingStatus.className='aftercare-existing-status';existingStatus.setAttribute('role','status');existingStatus.hidden=true;modal.querySelector('.aftercare-intro-preview').before(existingStatus);
+  $('reviewModal').after(modal);
 }
 function paymentMissingAfterCompletion(p){
   return VIEW_MODE==='admin'&&dailyQuickActionsVisible()&&derivedStatus(p)==='done'&&!paymentOrderExists(p)&&!Number(p?.paymentCompletedAt||0)&&!Number(p?.paymentNotRequiredAt||0);
@@ -1995,8 +2041,9 @@ function patientMatchesSearch(patient,rawQuery){
   return name.includes(query)||Boolean(compact&&file.includes(compact))||Boolean(digits&&phone.includes(digits));
 }
 function paymentReceiptStamp(patient){return Math.max(0,...(Array.isArray(patient?.paymentReceipts)?patient.paymentReceipts:[]).map(item=>Number(item?.updatedAt||item?.recordedAt||0)))}
-function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.actualEndedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.paymentNotRequiredAt||0),paymentReceiptStamp(patient),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.earliestAppointmentRequestedAt||0),Number(patient?.dailyNoteUpdatedAt||0))}
+function patientVersionStamp(patient){return Math.max(Number(patient?.recordUpdatedAt||0),Number(patient?.adminUpdatedAt||0),Number(patient?.statusUpdatedAt||0),Number(patient?.arrivedAt||0),Number(patient?.actualStartedAt||0),Number(patient?.completedAt||0),Number(patient?.lastCalledAt||0),Number(patient?.paymentRequestedAt||0),Number(patient?.paymentAcknowledgedAt||0),Number(patient?.paymentCompletedAt||0),Number(patient?.paymentNotRequiredAt||0),paymentReceiptStamp(patient),Number(patient?.treatmentPlanUpdatedAt||0),Number(patient?.treatmentPlanPrintedAt||0),Number(patient?.reviewRequestedAt||0),Number(patient?.rootCanalAftercareRequiredAt||0),Number(patient?.rootCanalAftercareSentAt||0),Number(patient?.rootCanalAftercareDocumentIssuedAt||0),Number(patient?.earliestAppointmentRequestedAt||0),Number(patient?.dailyNoteUpdatedAt||0))}
 function copyPatientGroup(target,source,fields){fields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(source||{},field))target[field]=source[field]})}
+function aftercareStateStamp(value){return Math.max(Number(value?.rootCanalAftercareRequiredAt||0),Number(value?.rootCanalAftercareSentAt||0),Number(value?.rootCanalAftercareDocumentIssuedAt||0))}
 function mergePatientVersions(remote={},local={}){
   const remoteStamp=patientVersionStamp(remote),localStamp=patientVersionStamp(local);
   const merged=localStamp>=remoteStamp?{...remote,...local}:{...local,...remote};
@@ -2011,6 +2058,18 @@ function mergePatientVersions(remote={},local={}){
     [['dailyNote','dailyNoteUpdatedAt'],value=>Number(value?.dailyNoteUpdatedAt||0)]
   ];
   groups.forEach(([fields,stamp])=>copyPatientGroup(merged,stamp(local)>=stamp(remote)?local:remote,fields));
+  const remotePaymentOrder=Number(remote.paymentRequestedAt||0),localPaymentOrder=Number(local.paymentRequestedAt||0);
+  if(remotePaymentOrder>0&&localPaymentOrder>0&&remotePaymentOrder!==localPaymentOrder){
+    copyPatientGroup(merged,localPaymentOrder>remotePaymentOrder?local:remote,['paymentRequired','paymentAction','paymentItems','paymentDiscount','paymentRequestedAt','paymentAcknowledgedAt','paymentCompletedAt','paymentNotRequiredAt','paymentReceipts']);
+  }
+  const aftercareFields=['rootCanalAftercareRequiredAt','rootCanalAftercareSentAt','rootCanalAftercareSentOrderAt','rootCanalAftercareCount','rootCanalAftercareLastEventId','rootCanalAftercareDocumentId','rootCanalAftercareDocumentOrderAt','rootCanalAftercareDocumentIssuedAt'];
+  const aftercareOwner=localPaymentOrder!==remotePaymentOrder?(localPaymentOrder>remotePaymentOrder?local:remote):(aftercareStateStamp(local)>=aftercareStateStamp(remote)?local:remote);
+  copyPatientGroup(merged,aftercareOwner,aftercareFields);
+  const activePaymentOrder=Number(merged.paymentRequestedAt||0);
+  if(rootCanalAftercareRequired(merged.paymentItems)&&activePaymentOrder>0&&Number(merged.rootCanalAftercareRequiredAt||0)===activePaymentOrder){
+    if(Number(merged.rootCanalAftercareSentOrderAt||0)!==activePaymentOrder)merged.rootCanalAftercareSentAt=0;
+    if(Number(merged.rootCanalAftercareDocumentOrderAt||0)!==activePaymentOrder){merged.rootCanalAftercareDocumentId='';merged.rootCanalAftercareDocumentIssuedAt=0}
+  }
   const addedAtValues=[Number(remote.addedAt||0),Number(local.addedAt||0)].filter(value=>value>0);
   merged.addedAt=addedAtValues.length?Math.min(...addedAtValues):0;
   merged.recordUpdatedAt=Math.max(Number(remote.recordUpdatedAt||0),Number(local.recordUpdatedAt||0));
@@ -2108,6 +2167,138 @@ async function sendReviewWhatsapp(){
 async function copyReviewMessage(){
   const message=$('reviewMessageInput').value.trim();if(!message)return;
   try{await navigator.clipboard.writeText(message);toast(lang==='en'?'Message copied':'تم نسخ الرسالة',lang==='en'?'Paste it into WhatsApp.':'يمكنك لصقها الآن في واتساب.')}catch{toast(lang==='en'?'Copy failed':'تعذر النسخ',lang==='en'?'Select and copy the message manually.':'حدد الرسالة وانسخها يدويًا.')}
+}
+function setRootCanalAftercareFieldsLocked(locked){
+  $('rootCanalAftercareModal').querySelectorAll('[data-aftercare-medication] input').forEach(input=>{input.disabled=locked});
+  $('rootCanalAftercareDoctorConfirm').disabled=locked;
+}
+function clearRootCanalAftercareDraft(){
+  aftercareLink=null;aftercareLinkDocumentId='';aftercareWhatsappOpened=false;
+  $('confirmRootCanalAftercareSentBtn').hidden=true;
+  $('rootCanalAftercareDoctorConfirm').checked=false;
+  for(const type of ['Ibuprofen','Paracetamol']){
+    $(`aftercare${type}`).checked=false;
+    for(const field of ['Dose','Frequency','Duration','Notes'])$(`aftercare${type}${field}`).value='';
+  }
+  setRootCanalAftercareFieldsLocked(false);
+  $('rootCanalAftercareExistingStatus').hidden=true;
+}
+async function loadExistingRootCanalAftercareDocument(id,orderAt,documentId,generation){
+  if(!documentId||!orderAt)return;
+  const response=await request(`/api/root-canal-aftercare?documentId=${encodeURIComponent(documentId)}`,{cache:'no-store'},15000);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.ok)throw new Error(data.error||(lang==='en'?'Could not reopen the saved instructions.':'تعذر فتح التعليمات المحفوظة.'));
+  const patient=patientById(id);
+  if(generation!==aftercareLoadGeneration||pendingAftercareId!==id||Number(patient?.paymentRequestedAt||0)!==orderAt||String(patient?.rootCanalAftercareDocumentId||'')!==documentId)return;
+  const url=new URL(data.url,location.origin);
+  if(url.origin!==location.origin||url.pathname!=='/root-canal-aftercare.html')throw new Error(lang==='en'?'Unexpected aftercare link.':'رابط التعليمات غير متوقع.');
+  clearRootCanalAftercareDraft();
+  for(const item of data.document?.medications||[]){
+    const type={ibuprofen:'Ibuprofen',paracetamol:'Paracetamol'}[item.type];if(!type)continue;
+    $(`aftercare${type}`).checked=true;
+    for(const field of ['Dose','Frequency','Duration','Notes'])$(`aftercare${type}${field}`).value=item[field.toLowerCase()]||'';
+  }
+  aftercareLink=url.href;aftercareLinkOrderAt=orderAt;aftercareLinkDocumentId=documentId;
+  setRootCanalAftercareFieldsLocked(true);
+  $('rootCanalAftercareExistingStatus').hidden=false;
+  $('rootCanalAftercareExistingStatus').textContent=lang==='en'?'Saved instructions are ready to print or share again. Select “Issue new instructions” to make changes.':'التعليمات المحفوظة جاهزة للطباعة أو إعادة المشاركة. اختر «إصدار تعليمات جديدة» لتعديلها.';
+}
+function openRootCanalAftercare(id){
+  const patient=patientById(id);if(!patient||!rootCanalAftercareRequired(patient.paymentItems))return;
+  if(authUser?.role!=='clinic'||VIEW_MODE!=='clinic'){
+    toast(lang==='en'?'Clinician review required':'يلزم مراجعة الطبيب',lang==='en'?'Open the clinic screen so the treating clinician can select analgesics and issue the instructions.':'افتح شاشة الطبيب ليحدد المسكنات ويصدر التعليمات.');return;
+  }
+  pendingAftercareId=String(patient.id);aftercareLinkOrderAt=Number(patient.paymentRequestedAt||0);const loadGeneration=++aftercareLoadGeneration;clearRootCanalAftercareDraft();
+  $('rootCanalAftercarePatientText').textContent=(lang==='en'?`${patient.name} · MRN ${patient.file||'—'}`:`${patient.name} · ملف ${patient.file||'—'}`);
+  $('rootCanalAftercarePhone').value=patientWhatsappNumber(patient);
+  $('rootCanalAftercareError').textContent='';
+  openModal('rootCanalAftercareModal');
+  const documentId=String(patient.rootCanalAftercareDocumentId||''),orderAt=Number(patient.rootCanalAftercareDocumentOrderAt||0);
+  if(documentId&&orderAt===aftercareLinkOrderAt){
+    setRootCanalAftercareFieldsLocked(true);
+    $('rootCanalAftercareExistingStatus').hidden=false;
+    $('rootCanalAftercareExistingStatus').textContent=lang==='en'?'Loading saved instructions…':'جارٍ فتح التعليمات المحفوظة…';
+    loadExistingRootCanalAftercareDocument(String(patient.id),orderAt,documentId,loadGeneration).catch(error=>{
+      if(loadGeneration===aftercareLoadGeneration&&pendingAftercareId===String(patient.id)){clearRootCanalAftercareDraft();$('rootCanalAftercareError').textContent=error.message}
+    });
+  }
+}
+function selectedRootCanalAnalgesics(){
+  return ['Ibuprofen','Paracetamol'].flatMap(type=>{
+    if(!$(`aftercare${type}`).checked)return[];
+    return [{type:type.toLowerCase(),name:type,dose:$(`aftercare${type}Dose`).value.trim(),frequency:$(`aftercare${type}Frequency`).value.trim(),duration:$(`aftercare${type}Duration`).value.trim(),notes:$(`aftercare${type}Notes`).value.trim()}];
+  });
+}
+function rootCanalAftercareContextCurrent(){
+  const patient=patientById(pendingAftercareId);
+  return Boolean(patient&&rootCanalAftercareRequired(patient.paymentItems)&&Number(patient.paymentRequestedAt||0)>0&&Number(patient.paymentRequestedAt||0)===aftercareLinkOrderAt&&(!aftercareLinkDocumentId||(String(patient.rootCanalAftercareDocumentId||'')===aftercareLinkDocumentId&&Number(patient.rootCanalAftercareDocumentOrderAt||0)===aftercareLinkOrderAt)));
+}
+async function ensureRootCanalAftercareLink(){
+  const patient=patientById(pendingAftercareId);
+  if(!rootCanalAftercareContextCurrent())throw new Error(lang==='en'?'The payment order changed. Reopen the patient’s instructions.':'تغيّر أمر الدفع؛ أعد فتح تعليمات المريض.');
+  if(aftercareLink)return aftercareLink;
+  if(!$('rootCanalAftercareDoctorConfirm').checked)throw new Error(lang==='en'?'Clinician confirmation is required.':'يلزم تأكيد الطبيب بعد مراجعة التعليمات.');
+  const medications=selectedRootCanalAnalgesics();
+  if(medications.some(item=>!item.dose||!item.frequency||!item.duration))throw new Error(lang==='en'?'Complete dose, frequency and duration for each selected analgesic.':'أكمل الجرعة والتكرار والمدة لكل مسكن محدد.');
+  const document={patient:{name:patient.name,file:patient.file},clinic:{name:currentClinic?.name,doctorName:currentClinic?.doctorName,phone:''},source:{clinicId:ACTIVE_CLINIC_ID,patientId:String(patient.id),date:selectedDate,paymentRequestedAt:Number(patient.paymentRequestedAt||0)},medications,doctorConfirmed:true};
+  const response=await request('/api/root-canal-aftercare',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({document})},20000);
+  const data=await response.json().catch(()=>({}));if(!response.ok||!data.ok)throw new Error(data.error||(lang==='en'?'Could not create the aftercare link.':'تعذر إنشاء رابط التعليمات.'));
+  const url=new URL(data.url,location.origin);
+  if(url.origin!==location.origin||url.pathname!=='/root-canal-aftercare.html'||!/^[a-zA-Z0-9_-]{24,60}$/.test(String(data.documentId||'')))throw new Error(lang==='en'?'Unexpected aftercare link.':'رابط التعليمات غير متوقع.');
+  if(!rootCanalAftercareContextCurrent())throw new Error(lang==='en'?'The payment order changed while issuing the instructions.':'تغيّر أمر الدفع أثناء إصدار التعليمات.');
+  const current=patientById(pendingAftercareId),previous={id:current.rootCanalAftercareDocumentId||'',orderAt:Number(current.rootCanalAftercareDocumentOrderAt||0),issuedAt:Number(current.rootCanalAftercareDocumentIssuedAt||0)};
+  mutate(()=>{current.rootCanalAftercareDocumentId=data.documentId;current.rootCanalAftercareDocumentOrderAt=aftercareLinkOrderAt;current.rootCanalAftercareDocumentIssuedAt=Number(data.issuedAt||Date.now())});
+  const saved=await pushState();
+  if(saved===false){mutate(()=>{const latest=patientById(pendingAftercareId);if(latest&&Number(latest.paymentRequestedAt||0)===aftercareLinkOrderAt&&String(latest.rootCanalAftercareDocumentId||'')===data.documentId&&Number(latest.rootCanalAftercareDocumentOrderAt||0)===aftercareLinkOrderAt){latest.rootCanalAftercareDocumentId=previous.id;latest.rootCanalAftercareDocumentOrderAt=previous.orderAt;latest.rootCanalAftercareDocumentIssuedAt=previous.issuedAt}});throw new Error(lang==='en'?'Could not synchronize the document reference. Retry shortly.':'تعذرت مزامنة مرجع التعليمات. أعد المحاولة بعد قليل.')}
+  aftercareLink=url.href;aftercareLinkDocumentId=data.documentId;setRootCanalAftercareFieldsLocked(true);
+  $('rootCanalAftercareExistingStatus').hidden=false;$('rootCanalAftercareExistingStatus').textContent=lang==='en'?'Saved instructions are ready. Use “Issue new instructions” to change them.':'حُفظت التعليمات وهي جاهزة للمشاركة. استخدم «إصدار تعليمات جديدة» لتعديلها.';
+  return aftercareLink;
+}
+async function runRootCanalAftercareAction(action){
+  const buttons=['copyRootCanalAftercareBtn','printRootCanalAftercareBtn','sendRootCanalAftercareBtn'].map($);
+  if(buttons.some(button=>button.disabled))return;
+  const popup=action==='copy'?null:window.open('about:blank','_blank');
+  if(popup)popup.opener=null;
+  buttons.forEach(button=>button.disabled=true);
+  $('rootCanalAftercareError').textContent='';
+  try{
+    const url=await ensureRootCanalAftercareLink();
+    if(action==='copy'){
+      await navigator.clipboard.writeText(url);
+      toast(lang==='en'?'Link copied':'تم نسخ الرابط',lang==='en'?'Share it only with the intended patient.':'شاركه مع المريض المقصود فقط.');
+    }else if(action==='print'){
+      if(!popup)throw new Error(lang==='en'?'Allow pop-ups to open the printable sheet.':'اسمح بالنوافذ المنبثقة لفتح الورقة القابلة للطباعة.');
+      popup.location.href=url;
+    }else{
+      if(!popup)throw new Error(lang==='en'?'Allow pop-ups to open WhatsApp.':'اسمح بالنوافذ المنبثقة لفتح واتساب.');
+      const patient=patientById(pendingAftercareId),phone=normalizeWhatsappNumber($('rootCanalAftercarePhone').value)||patientWhatsappNumber(patient);
+      const message=lang==='en'?`Your root-canal aftercare instructions from Best Care Dental Clinics: ${url}`:`تعليمات ما بعد علاج العصب من عيادات أفضل عناية: ${url}`;
+      popup.location.href=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;
+      aftercareWhatsappOpened=true;
+      $('confirmRootCanalAftercareSentBtn').hidden=false;
+      toast(lang==='en'?'WhatsApp opened':'فُتح واتساب',lang==='en'?'After sending, confirm here to clear the reminder.':'بعد الإرسال، أكد ذلك هنا لإيقاف التذكير.');
+    }
+  }catch(error){if(popup&&!popup.closed)popup.close();$('rootCanalAftercareError').textContent=error.message||'تعذر إنشاء الرابط.'}
+  finally{buttons.forEach(button=>button.disabled=false)}
+}
+async function confirmRootCanalAftercareSent(){
+  const patient=patientById(pendingAftercareId),button=$('confirmRootCanalAftercareSentBtn');
+  if(!patient||!aftercareWhatsappOpened||!aftercareLink||button.disabled)return;
+  if(!rootCanalAftercareContextCurrent()){$('rootCanalAftercareError').textContent=lang==='en'?'The payment order or document changed. Reopen instructions; the reminder is still active.':'تغيّر أمر الدفع أو المستند. أعد فتح التعليمات؛ التذكير لا يزال ظاهرًا.';return}
+  button.disabled=true;
+  const sentAt=Date.now(),eventId=crypto.randomUUID?.()||`root-canal-aftercare-${sentAt}`;
+  const sentOrderAt=Number(patient.paymentRequestedAt||0),sentDocumentId=String(patient.rootCanalAftercareDocumentId||'');
+  const previous={sentAt:Number(patient.rootCanalAftercareSentAt||0),sentOrderAt:Number(patient.rootCanalAftercareSentOrderAt||0),count:Number(patient.rootCanalAftercareCount||0),eventId:String(patient.rootCanalAftercareLastEventId||'')};
+  mutate(()=>{patient.rootCanalAftercareSentAt=sentAt;patient.rootCanalAftercareSentOrderAt=sentOrderAt;patient.rootCanalAftercareCount=Math.min(9999,Number(patient.rootCanalAftercareCount||0)+1);patient.rootCanalAftercareLastEventId=eventId});
+  try{
+    const saved=await pushState();
+    if(saved===false)throw new Error('sync-pending');
+    closeModal('rootCanalAftercareModal');renderTable();
+    toast(lang==='en'?'Aftercare sharing recorded':'تم تسجيل مشاركة التعليمات',lang==='en'?'The reminder is cleared for this payment order.':'توقف التذكير لأمر الدفع هذا.');
+  }catch{
+    mutate(()=>{const current=patientById(pendingAftercareId);if(current&&Number(current.paymentRequestedAt||0)===sentOrderAt&&String(current.rootCanalAftercareDocumentId||'')===sentDocumentId&&String(current.rootCanalAftercareLastEventId||'')===eventId){current.rootCanalAftercareSentAt=previous.sentAt;current.rootCanalAftercareSentOrderAt=previous.sentOrderAt;current.rootCanalAftercareCount=previous.count;current.rootCanalAftercareLastEventId=previous.eventId}});
+    $('rootCanalAftercareError').textContent=lang==='en'?'The record is awaiting synchronization. Keep this page open and retry.':'السجل بانتظار المزامنة. أبقِ الصفحة مفتوحة وأعد المحاولة.';
+  }finally{button.disabled=false}
 }
 async function disablePreviewPushSubscription(){
   if(!IS_DEPLOY_PREVIEW||!('serviceWorker' in navigator))return;
@@ -3103,7 +3294,7 @@ function renderTable(){
   let patientRowsMarkup=visible.length
     ? visible.map((p,i)=>{const displayStatus=derivedStatus(p),displayPatient=patientWithDirectoryIdentity(p),recentlyAdded=Number(p.addedAt||0)>0&&Date.now()-Number(p.addedAt)<2*60*60*1000,queueGroup=VIEW_MODE==='admin'?adminQueueGroup(p):'',queueTiming=VIEW_MODE==='admin'?adminQueueTiming(p,queueClock):null;let groupHeading='';if(VIEW_MODE==='admin'&&queueGroup!==previousAdminGroup){previousAdminGroup=queueGroup;groupHeading=`<tr class="admin-table-group-divider ${queueGroup}"><td colspan="8"><span><strong>${queueGroup==='completed'?(lang==='en'?'Completed':'تم إنجازه'):(lang==='en'?'Waiting and in progress':'في الانتظار والمتابعة')}</strong><small>${queueGroup==='completed'?(lang==='en'?'Completed patients':'المرضى المنجزون'):(lang==='en'?'Due appointments are shown first':'من حان موعده يظهر أولًا')}</small></span></td></tr>`;}return`${groupHeading}<tr class="row-status-${escapeHtml(displayStatus)}${['cancel','left'].includes(displayStatus)?' cancelled':''}${VIEW_MODE==='admin'&&queueTiming?` admin-queue-row queue-state-${escapeHtml(queueTiming.state)}`:''}">
         <td>${patientStatusWatermarkMarkup(displayStatus)}<span class="patient-row-index">${i+1}</span></td>
-        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}${p.dailyNote?`<small class="daily-patient-note" title="${escapeHtml(p.dailyNote)}"><span aria-hidden="true">📝</span>${escapeHtml(p.dailyNote)}</small>`:''}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${treatmentPlanComplianceBadgeMarkup(p)}${paymentBadgeMarkup(p)}${paymentMissingBadgeMarkup(p)}${patientNeedsLabCase(p)?`<span class="lab-required-badge"><span aria-hidden="true">!</span>${lang==='en'?'Laboratory case required':'يلزم إضافة حالة معمل'}</span>`:''}${labCaseBadgeMarkup(p)}</td>
+        <td><span class="patient-name-stack">${recentlyAdded?`<small class="patient-new-badge" title="${lang==='en'?'Added to today’s list recently':'مضاف حديثًا'}">NEW · ${lang==='en'?'ADDED':'مضاف'}</small>`:''}${VIEW_MODE==='admin'&&authUser?.role==='admin'?`<button type="button" class="patient-summary-name" data-summary-toggle="${escapeHtml(p.id)}" aria-expanded="${patientSummaryOpen?.id===String(p.id)}" aria-controls="patientSummaryPanel">${escapeHtml(String(displayPatient.name||'').trim()||'—')}</button>`:`<strong>${escapeHtml(VIEW_MODE==='admin'?(String(displayPatient.name||'').trim()||'—'):firstName(displayPatient.name))}</strong>`}${p.dailyNote?`<small class="daily-patient-note" title="${escapeHtml(p.dailyNote)}"><span aria-hidden="true">📝</span>${escapeHtml(p.dailyNote)}</small>`:''}</span>${earliestAppointmentBadgeMarkup(p)}${patientSummaryButtonMarkup(p)}${dailyQuickActionsVisible()&&VIEW_MODE==='clinic'?clinicIconAction('💊',lang==='en'?'Open prescriptions':'فتح وصفات المريض',`data-prescription-id="${escapeHtml(p.id)}"`,'clinic-row-action prescription'):''}${treatmentPlanStatusControlMarkup(p)}${treatmentPlanComplianceBadgeMarkup(p)}${paymentBadgeMarkup(p)}${rootCanalAftercareButtonMarkup(p)}${paymentMissingBadgeMarkup(p)}${patientNeedsLabCase(p)?`<span class="lab-required-badge"><span aria-hidden="true">!</span>${lang==='en'?'Laboratory case required':'يلزم إضافة حالة معمل'}</span>`:''}${labCaseBadgeMarkup(p)}</td>
         <td>${escapeHtml(displayPatient.file)}${isZeroFileNumber(displayPatient.file)?`<span class="file-zero-warning">⚠ ${lang==='en'?'Update on arrival':'تحديثه عند الوصول'}</span>`:''}</td>
         <td>${escapeHtml(p.start)}${VIEW_MODE==='admin'?`<span class="admin-table-timing">${escapeHtml(adminQueueTimingCopy(p,queueTiming))}</span>`:''}</td>
         <td>${escapeHtml(p.end)}</td>
@@ -3707,6 +3898,11 @@ function syncCompletionLabOrderChoice(patient=patientById(pendingCompletionId)){
   if(!shouldShow)input.checked=false;
   else if(wasHidden)input.checked=true;
 }
+function syncRootCanalAftercareRequirement(){
+  const panel=$('rootCanalAftercareRequirement');if(!panel)return;
+  const selection=collectPaymentItems();
+  panel.hidden=!$('paymentRequiredCheck')?.checked||!rootCanalAftercareRequired(selection.items);
+}
 function renderCompletionLabOptions(patient){
   const field=$('completionLabField'),list=$('completionLabList');
   if(!field||!list)return;
@@ -3765,6 +3961,7 @@ function finishPatient(id){
   $('prescriptionCheck').checked=false;
   $('paymentActionField').hidden=true;
   resetPaymentProcedureEditor();
+  syncRootCanalAftercareRequirement();
   renderCompletionLabOptions(p);
   openModal('paymentModal');
   updatePaymentCatalogFromSettings({notify:false});
@@ -3787,6 +3984,7 @@ function openMissingPaymentOrder(id){
   $('prescriptionCheck').checked=false;
   resetPaymentProcedureEditor();
   $('paymentActionField').hidden=false;
+  syncRootCanalAftercareRequirement();
   renderCompletionLabOptions(p);
   openModal('paymentModal');
   updatePaymentCatalogFromSettings({notify:false});
@@ -3825,6 +4023,14 @@ async function confirmPatientCompletion(){
     p.paymentItems=paymentRequired?selection.items:[];
     p.paymentDiscount=paymentRequired?selection.discount:'';
     p.paymentRequestedAt=paymentRequestedAt;
+    if(paymentRequired&&rootCanalAftercareRequired(selection.items)){
+      p.rootCanalAftercareRequiredAt=paymentRequestedAt;
+      p.rootCanalAftercareSentAt=0;
+      p.rootCanalAftercareSentOrderAt=0;
+      p.rootCanalAftercareDocumentId='';
+      p.rootCanalAftercareDocumentOrderAt=0;
+      p.rootCanalAftercareDocumentIssuedAt=0;
+    }
     p.paymentAcknowledgedAt=0;
     p.paymentCompletedAt=0;
     p.paymentNotRequiredAt=noPaymentRequired?Date.now():0;
@@ -4507,14 +4713,12 @@ function patientFormSavedFeedback(wasEditing,item,message=''){
 }
 async function movePatientToDate(item,targetDate){
   const sourceDate=selectedDate;
-  const sourcePatients=patients.map(patient=>({...patient}));
-  const sourceNotes=notes;
-  const sourceAlert={...updateAlert};
   const saveButton=$('savePatientBtn');
   saveButton.disabled=true;
   saveButton.textContent=tr('movingPatient');
   clearTimeout(sync.autoTimer);
   clearTimeout(sync.pushTimer);
+  let targetCommitted=false;
 
   try{
     if(sync.dirty&&!(await pushState()))throw new Error(tr('sourceSaveFailed'));
@@ -4522,40 +4726,27 @@ async function movePatientToDate(item,targetDate){
     const targetResponse=await request(stateUrl(targetDate,true));
     if(!targetResponse.ok)throw new Error(`${tr('targetLoadFailed')} (HTTP ${targetResponse.status})`);
     const targetData=await targetResponse.json();
+    const targetDeletedPatientIds=mergeDeletedPatientIds(targetData.deletedPatientIds||[]);
+    const movedItem=new Set(targetDeletedPatientIds).has(String(item.id))
+      ?{...item,id:crypto.randomUUID?.()||`patient-${Date.now()}-${Math.random().toString(36).slice(2)}`}
+      :item;
     const targetPatients=(Array.isArray(targetData.patients)?targetData.patients:[])
-      .filter(patient=>String(patient.id)!==String(item.id))
+      .filter(patient=>String(patient.id)!==String(movedItem.id))
       .map(patient=>({...patient,name:String(patient.name||'').trim()}));
-    targetPatients.push(item);
+    targetPatients.push(movedItem);
     targetPatients.sort((a,b)=>a.start.localeCompare(b.start));
-
-    patients=patients.filter(patient=>String(patient.id)!==String(item.id));
-    sync.dirty=true;
-    sync.localVersion+=1;
-    sync.localUpdatedAt=Date.now();
-    persistLocal(true);
-    render();
-    if(!(await pushState())){
-      patients=sourcePatients;
-      notes=sourceNotes;
-      updateAlert=sourceAlert;
-      sync.dirty=true;
-      sync.localVersion+=1;
-      sync.localUpdatedAt=Date.now();
-      persistLocal(true);
-      render();
-      throw new Error(tr('sourceSaveFailed'));
-    }
 
     let targetAlert=targetData.updateAlert&&typeof targetData.updateAlert==='object'
       ?{...targetData.updateAlert}
       :{active:false,message:'',updatedAt:0,kind:''};
     const previousAlert=updateAlert;
     updateAlert=targetAlert;
-    applyAutomaticStatusAlert(item,item.status);
+    applyAutomaticStatusAlert(movedItem,movedItem.status);
     targetAlert={...updateAlert};
     updateAlert=previousAlert;
     const targetSnapshot={
       patients:targetPatients,
+      deletedPatientIds:targetDeletedPatientIds,
       notes:String(targetData.notes||''),
       updateAlert:targetAlert,
       clientId:CLIENT_ID,
@@ -4575,13 +4766,23 @@ async function movePatientToDate(item,targetDate){
         const verification=await request(stateUrl(targetDate,true));
         if(!verification.ok)throw saveError;
         const verifiedData=await verification.json();
-        const patientExists=Array.isArray(verifiedData.patients)&&verifiedData.patients.some(patient=>String(patient.id)===String(item.id));
+        const patientExists=Array.isArray(verifiedData.patients)&&verifiedData.patients.some(patient=>String(patient.id)===String(movedItem.id));
         if(!patientExists)throw saveError;
         savedTarget={revision:verifiedData.revision,updatedAt:verifiedData.updatedAt};
       }catch{
         throw saveError;
       }
     }
+    targetCommitted=true;
+
+    patients=patients.filter(patient=>String(patient.id)!==String(item.id));
+    sync.deletedPatientIds=mergeDeletedPatientIds(sync.deletedPatientIds,[item.id]);
+    sync.dirty=true;
+    sync.localVersion+=1;
+    sync.localUpdatedAt=Date.now();
+    persistLocal(true);
+    render();
+    if(!(await pushState()))throw new Error(tr('sourceSaveFailed'));
 
     selectedDate=targetDate;
     els.datePicker.value=targetDate;
@@ -4591,6 +4792,7 @@ async function movePatientToDate(item,targetDate){
     els.notes.value=notes;
     sync.revision=Number(savedTarget.revision||0);
     sync.updatedAt=Number(savedTarget.updatedAt||Date.now());
+    sync.deletedPatientIds=mergeDeletedPatientIds(targetSnapshot.deletedPatientIds);
     sync.dirty=false;
     sync.pushing=false;
     sync.pulling=false;
@@ -4601,24 +4803,15 @@ async function movePatientToDate(item,targetDate){
     persistLocal(false);
     render();
     setIdleSyncBadge(`revision ${sync.revision}`);
-    patientFormSavedFeedback(true,item,`${firstName(item.name)} — ${sourceDate} ← ${targetDate}`);
+    patientFormSavedFeedback(true,movedItem,`${firstName(movedItem.name)} — ${sourceDate} ← ${targetDate}`);
     resetPatientForm(false);
     scheduleAutomaticSync(syncCadence().delay);
     return true;
   }catch(error){
-    if(selectedDate===sourceDate&&!patients.some(patient=>String(patient.id)===String(item.id))){
-      patients=sourcePatients;
-      notes=sourceNotes;
-      updateAlert=sourceAlert;
-      els.notes.value=notes;
-      sync.dirty=true;
-      sync.localVersion+=1;
-      sync.localUpdatedAt=Date.now();
-      persistLocal(true);
-      render();
-      await pushState();
-    }
-    toast(tr('dateMoveFailed'),String(error.message||error));
+    const detail=targetCommitted&&sync.dirty
+      ?(lang==='en'?'The target appointment is saved; removing it from the original day is still pending synchronization.':'حُفظ الموعد في اليوم الجديد، وما زال حذفه من اليوم السابق بانتظار المزامنة.')
+      :String(error.message||error);
+    toast(tr('dateMoveFailed'),detail);
     scheduleAutomaticSync(syncCadence().workHours?1200:syncCadence().delay);
     return false;
   }finally{
@@ -5617,6 +5810,18 @@ function applyLang(){
   setText('#reviewLinkHint',lang==='en'?'Opens the Best Care Dental Clinics profile on Google Maps.':'يفتح ملف عيادات أفضل عناية الاستشارية للأسنان على Google Maps.');
   setText('#reviewLinkPreview',lang==='en'?'Preview link':'معاينة الرابط');
   setTexts('#reviewModal .modal-actions button',[lang==='en'?'Cancel':'إلغاء',lang==='en'?'Copy message':'نسخ الرسالة',lang==='en'?'Send via WhatsApp':'إرسال عبر واتساب']);
+  setText('#rootCanalAftercareModalTitle',lang==='en'?'Root-canal aftercare instructions':'تعليمات ما بعد علاج العصب');
+  setText('#rootCanalAftercarePhoneLabel',lang==='en'?'Patient WhatsApp number':'رقم واتساب المريض');
+  setText('#aftercareMedicationTitle',lang==='en'?'Clinician-selected analgesics':'المسكنات التي يختارها الطبيب');
+  setText('#aftercareMedicationHelp',lang==='en'?'Select an analgesic and enter dose, frequency and duration. Nothing is selected automatically.':'اختر المسكن ثم أكمل الجرعة والتكرار والمدة. لا يتم تحديد أي علاج تلقائيًا.');
+  setText('#aftercareAntibioticSeparate',lang==='en'?'Antibiotics are a separate clinician decision and, if needed, must be issued through the existing prescription workflow.':'المضاد الحيوي قرار منفصل للطبيب، ويصدر عند الحاجة عبر الوصفة العلاجية المستقلة؛ لا يُرفق تلقائيًا مع هذه التعليمات.');
+  setText('#rootCanalAftercareConfirmTitle',lang==='en'?'Clinician sign-off before sharing':'اعتماد الطبيب قبل المشاركة');
+  setText('#rootCanalAftercareConfirmHelp',lang==='en'?'I reviewed the patient record and entered only medications and directions I selected.':'راجعت سجل المريض وأدخلت فقط الأدوية وتعليماتها التي حددتها بنفسي.');
+  setText('#copyRootCanalAftercareBtn',lang==='en'?'Copy link':'نسخ الرابط');
+  setText('#printRootCanalAftercareBtn',lang==='en'?'Print / PDF':'طباعة / PDF');
+  setText('#sendRootCanalAftercareBtn',lang==='en'?'Open WhatsApp to share':'فتح واتساب للمشاركة');
+  setText('#confirmRootCanalAftercareSentBtn',lang==='en'?'Confirm instructions sent':'تأكيد إرسال التعليمات');
+  setText('#issueNewRootCanalAftercareBtn',lang==='en'?'Issue new instructions':'إصدار تعليمات جديدة');
   rebuildStatusSelect($('fStatus'));
   rebuildStatusSelect($('filterStatus'),true);
   $('langBtn').textContent=lang==='en'?'العربية':'English';
@@ -5764,6 +5969,7 @@ function updateClock(){
   }
   renderLive(false);
 }
+installRootCanalAftercareUI();
 $('addBtn').addEventListener('click',()=>openPatient());
 $('patientFormDirectorySearchBtn')?.addEventListener('click',openPatientIdentitySearch);
 $('patientIdentitySearchBtn').addEventListener('click',openPatientIdentitySearch);
@@ -5848,7 +6054,7 @@ $('saveTreatmentCatalogBtn').addEventListener('click',saveTreatmentCatalog);
 $('paymentCatalogRefreshBtn').addEventListener('click',()=>updatePaymentCatalogFromSettings({notify:true}));
 $('syncTestBtn').addEventListener('click',syncTest);
 $('logoutBtn').addEventListener('click',logoutApp);
-$('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
+$('clearBtn').addEventListener('click',()=>{if(confirm('مسح قائمة اليوم بالكامل؟'))mutate(()=>{sync.deletedPatientIds=mergeDeletedPatientIds(sync.deletedPatientIds,patients.map(patient=>patient.id));patients=[];notes='';updateAlert={active:false,message:'',updatedAt:0,kind:''};els.notes.value=''})});
 $('alertBtn').addEventListener('click',openAlertComposer);
 $('sendAlertBtn').addEventListener('click',publishAlert);
 $('clearAlertBtn').addEventListener('click',clearAlert);
@@ -5963,7 +6169,8 @@ els.patientRows.addEventListener('click',event=>{
     openModal('patientIdentitySearchModal');
     loadPatientProfile(patientSummaryOpen.lookup,{tab:summaryProfile.dataset.summaryTab||'appointments'});return;
   }
-  const labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,quickPlan=event.target.closest('[data-quick-plan-id]')?.dataset.quickPlanId,dailyNote=event.target.closest('[data-daily-note-id]')?.dataset.dailyNoteId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  const aftercare=event.target.closest('[data-aftercare-id]')?.dataset.aftercareId,labEntry=event.target.closest('[data-lab-entry-id]')?.dataset.labEntryId,labPatient=event.target.closest('[data-lab-patient]')?.dataset.labPatient,review=event.target.closest('[data-review-id]')?.dataset.reviewId,plan=event.target.closest('[data-plan-id]')?.dataset.planId,prescription=event.target.closest('[data-prescription-id]')?.dataset.prescriptionId,earliest=event.target.closest('[data-earliest-id]')?.dataset.earliestId,completion=event.target.closest('[data-completion-id]')?.dataset.completionId,paymentMissing=event.target.closest('[data-payment-missing-id]')?.dataset.paymentMissingId,quickPlan=event.target.closest('[data-quick-plan-id]')?.dataset.quickPlanId,dailyNote=event.target.closest('[data-daily-note-id]')?.dataset.dailyNoteId,edit=event.target.closest('[data-edit-id]')?.dataset.editId,del=event.target.closest('[data-delete-id]')?.dataset.deleteId;
+  if(aftercare){openRootCanalAftercare(aftercare);return}
   if(labEntry)openLabCaseEditor(labEntry);
   if(labPatient)openLabCasesPage(patientById(labPatient));
   if(review)openReviewComposer(review);
@@ -5975,7 +6182,10 @@ els.patientRows.addEventListener('click',event=>{
   if(quickPlan&&VIEW_MODE==='admin'){openQuickPlanForPatient(quickPlan);return}
   if(dailyNote)updatePatientDailyNote(dailyNote);
   if(edit)openPatient(edit);
-  if(del&&confirm(lang==='en'?'Delete this patient from today’s list?':'حذف هذا المريض من قائمة اليوم؟'))mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
+  if(del&&confirm(lang==='en'?'Delete this patient from today’s list?':'حذف هذا المريض من قائمة اليوم؟')){
+    sync.deletedPatientIds=mergeDeletedPatientIds(sync.deletedPatientIds,[del]);
+    mutate(()=>patients=patients.filter(p=>String(p.id)!==String(del)));
+  }
 });
 $('doctorActionQueue').addEventListener('click',event=>{
   const planId=event.target.closest('[data-doctor-plan-id]')?.dataset.doctorPlanId;
@@ -6055,9 +6265,9 @@ document.addEventListener('keydown',event=>{
 });
 document.querySelectorAll('[data-close]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.close)));
 document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',event=>{if(event.target===modal&&modal.id!=='roleModal')closeModal(modal.id)}));
-$('paymentRequiredCheck').addEventListener('change',()=>{if($('paymentRequiredCheck').checked)$('noPaymentRequiredCheck').checked=false;$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions();syncPaymentPlanChoice();syncCompletionLabOrderChoice()});
-$('noPaymentRequiredCheck').addEventListener('change',()=>{if($('noPaymentRequiredCheck').checked){$('paymentRequiredCheck').checked=false;$('paymentActionField').hidden=true}syncPaymentPlanChoice();syncCompletionLabOrderChoice()});
-$('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true;syncCompletionLabOrderChoice()});
+$('paymentRequiredCheck').addEventListener('change',()=>{if($('paymentRequiredCheck').checked)$('noPaymentRequiredCheck').checked=false;$('paymentActionField').hidden=!$('paymentRequiredCheck').checked;if($('paymentRequiredCheck').checked&&!$('paymentProcedureList').children.length)renderPaymentProcedureOptions();syncPaymentPlanChoice();syncCompletionLabOrderChoice();syncRootCanalAftercareRequirement()});
+$('noPaymentRequiredCheck').addEventListener('change',()=>{if($('noPaymentRequiredCheck').checked){$('paymentRequiredCheck').checked=false;$('paymentActionField').hidden=true}syncPaymentPlanChoice();syncCompletionLabOrderChoice();syncRootCanalAftercareRequirement()});
+$('paymentProcedureList').addEventListener('input',event=>{const row=event.target.closest('[data-payment-row]');if(row&&event.target.matches('input[data-payment-free]'))row.querySelector('[data-payment-select]').checked=true;syncCompletionLabOrderChoice();syncRootCanalAftercareRequirement()});
 $('paymentProcedureList').addEventListener('click',event=>{
   const favorite=event.target.closest('[data-payment-favorite]');
   if(favorite){togglePaymentFavorite(favorite.dataset.paymentFavorite);return}
@@ -6066,6 +6276,7 @@ $('paymentProcedureList').addEventListener('click',event=>{
   changePaymentQuantity(input,button.dataset.paymentStep==='increase'?1:-1);
   if(row?.querySelector('[data-payment-select]'))row.querySelector('[data-payment-select]').checked=true;
   syncCompletionLabOrderChoice();
+  syncRootCanalAftercareRequirement();
 });
 $('paymentModal').addEventListener('click',event=>{
   const button=event.target.closest('[data-payment-other-step]');if(!button)return;
@@ -6110,6 +6321,13 @@ $('reviewUrlInput').addEventListener('change',refreshReviewMessageFromUrl);
 $('reviewUrlInput').addEventListener('input',()=>{$('reviewLinkPreview').href=$('reviewUrlInput').value.trim()||DEFAULT_GOOGLE_REVIEW_URL});
 $('copyReviewBtn').addEventListener('click',copyReviewMessage);
 $('sendReviewWhatsappBtn').addEventListener('click',sendReviewWhatsapp);
+$('rootCanalAftercareModal').addEventListener('input',event=>{if(event.target.id==='rootCanalAftercarePhone')return;aftercareLink=null;aftercareWhatsappOpened=false;$('confirmRootCanalAftercareSentBtn').hidden=true});
+$('rootCanalAftercareModal').addEventListener('change',event=>{if(event.target.id==='rootCanalAftercareDoctorConfirm'&&event.target.checked)return;aftercareLink=null;aftercareWhatsappOpened=false;$('confirmRootCanalAftercareSentBtn').hidden=true});
+$('issueNewRootCanalAftercareBtn').addEventListener('click',()=>{aftercareLoadGeneration++;clearRootCanalAftercareDraft();$('rootCanalAftercareError').textContent='';$('rootCanalAftercareExistingStatus').hidden=false;$('rootCanalAftercareExistingStatus').textContent=lang==='en'?'Enter the new clinician-selected analgesics, then sign off before issuing.':'أدخل المسكنات التي يحددها الطبيب من جديد، ثم أكد المراجعة قبل الإصدار.';$('aftercareIbuprofen').focus()});
+$('copyRootCanalAftercareBtn').addEventListener('click',()=>runRootCanalAftercareAction('copy'));
+$('printRootCanalAftercareBtn').addEventListener('click',()=>runRootCanalAftercareAction('print'));
+$('sendRootCanalAftercareBtn').addEventListener('click',()=>runRootCanalAftercareAction('send'));
+$('confirmRootCanalAftercareSentBtn').addEventListener('click',confirmRootCanalAftercareSent);
 $('roleBtn').addEventListener('click',()=>openRoleChoice());
 $('viewIdentityChange').addEventListener('click',()=>openRoleChoice());
 $('clinicViewLink').addEventListener('click',event=>{
