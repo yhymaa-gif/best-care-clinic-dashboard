@@ -32,4 +32,36 @@ export const patientIdentityKeys = patient => {
   ].filter(Boolean))];
 };
 
+const duplicatePairKey = (left, right) => [String(left || ''), String(right || '')].sort().join('|');
+
+export const duplicatePatientIdentityPairs = patients => {
+  const owners = new Map(), pairs = new Set();
+  for (const patient of Array.isArray(patients) ? patients : []) {
+    const id = String(patient?.id || '').trim();
+    if (!id) continue;
+    for (const alias of patientIdentityKeys(patient)) {
+      if (!owners.has(alias)) owners.set(alias, new Set());
+      owners.get(alias).add(id);
+    }
+  }
+  for (const [alias, identityOwners] of owners) {
+    const ids = [...identityOwners].sort();
+    for (let left = 0; left < ids.length; left += 1) {
+      for (let right = left + 1; right < ids.length; right += 1) {
+        pairs.add(`${alias}|${duplicatePairKey(ids[left], ids[right])}`);
+      }
+    }
+  }
+  return pairs;
+};
+
+export const newlyIntroducedDuplicateIdentity = (before, after) => {
+  const previous = duplicatePatientIdentityPairs(before);
+  return [...duplicatePatientIdentityPairs(after)].find(pair => !previous.has(pair)) || '';
+};
+
+export const cleanDeletedPatientIds = values => [...new Set((Array.isArray(values) ? values : [])
+  .map(value => String(value || '').trim().slice(0, 80))
+  .filter(Boolean))];
+
 export const isPlaceholderFileAlias = value => /^file:0+$/i.test(String(value || '').trim());

@@ -91,6 +91,98 @@ test('an older correction cannot delete a newer edit and correction batches are 
   assert.deepEqual(context.sync.directoryCorrections,[]);
 });
 
+test('a deletion created while an older save is in flight survives the older response', async () => {
+  const helperStart = dashboard.indexOf('function mergeDeletedPatientIds');
+  const helperEnd = dashboard.indexOf('function serialize', helperStart);
+  const pushStart = dashboard.indexOf('async function pushState');
+  const pushEnd = dashboard.indexOf('function applyRemote', pushStart);
+  let releaseRequest;
+  const scheduled = [];
+  const sync = {
+    pushing:false,dirty:true,blockedCode:'',pulling:false,localVersion:1,deletedPatientIds:[],
+    directoryCorrections:[],revision:1,updatedAt:0,ready:true,error:'',lastSync:0
+  };
+  const context = vm.createContext({
+    sync,patients:[{id:'keep'}],selectedDate:'2026-10-13',lang:'ar',CLIENT_ID:'test',VIEW_MODE:'clinic',
+    serialize:()=>({patients:[{id:'keep'}],deletedPatientIds:[],directoryCorrections:[]}),
+    stateUrl:()=>'/api/state',setBadge(){},setIdleSyncBadge(){},render(){},persistLocal(){},announceSyncedState(){},
+    schedulePatientDirectoryCorrectionRetry(){},refreshAdminPatientHub(){},clearTimeout(){},
+    setTimeout(fn){scheduled.push(fn);return scheduled.length},syncCadence:()=>({workHours:true,delay:60000}),
+    scheduleAutomaticSync(){},
+    request:()=>new Promise(resolve=>{releaseRequest=()=>resolve({status:200,ok:true,json:async()=>({revision:2,updatedAt:2,patients:[{id:'keep'}],deletedPatientIds:[]})})})
+  });
+  vm.runInContext(dashboard.slice(helperStart,helperEnd),context);
+  vm.runInContext(dashboard.slice(pushStart,pushEnd),context);
+  const saving=context.pushState();
+  sync.localVersion=2;sync.deletedPatientIds=['deleted-during-save'];sync.dirty=true;
+  releaseRequest();await saving;
+  assert.deepEqual(Array.from(sync.deletedPatientIds),['deleted-during-save']);
+  assert.equal(sync.dirty,true);
+});
+
+test('a successful save immediately removes patients rejected by an accepted tombstone', async () => {
+  const helperStart = dashboard.indexOf('function mergeDeletedPatientIds');
+  const helperEnd = dashboard.indexOf('function serialize', helperStart);
+  const pushStart = dashboard.indexOf('async function pushState');
+  const pushEnd = dashboard.indexOf('function applyRemote', pushStart);
+  const sync = {
+    pushing:false,dirty:true,blockedCode:'',pulling:false,localVersion:1,deletedPatientIds:[],
+    directoryCorrections:[],revision:1,updatedAt:0,ready:true,error:'',lastSync:0
+  };
+  let renders=0;
+  const context = vm.createContext({
+    sync,patients:[{id:'gone',name:'stale row'}],selectedDate:'2026-10-13',lang:'ar',CLIENT_ID:'test',VIEW_MODE:'clinic',
+    serialize:()=>({patients:[{id:'gone',name:'stale row'}],deletedPatientIds:[],directoryCorrections:[]}),
+    stateUrl:()=>'/api/state',setBadge(){},setIdleSyncBadge(){},render(){renders+=1},persistLocal(){},announceSyncedState(){},
+    schedulePatientDirectoryCorrectionRetry(){},refreshAdminPatientHub(){},clearTimeout(){},setTimeout(){return 1},
+    syncCadence:()=>({workHours:true,delay:60000}),scheduleAutomaticSync(){},
+    request:async()=>({status:200,ok:true,json:async()=>({revision:2,updatedAt:2,patients:[],deletedPatientIds:['gone']})})
+  });
+  vm.runInContext(dashboard.slice(helperStart,helperEnd),context);
+  vm.runInContext(dashboard.slice(pushStart,pushEnd),context);
+  assert.equal(await context.pushState(),true,sync.error);
+  assert.deepEqual(Array.from(context.patients),[]);
+  assert.deepEqual(Array.from(sync.deletedPatientIds),['gone']);
+  assert.equal(renders,1);
+});
+
+test('duplicate identity rejection blocks automatic retry instead of entering a merge loop', async () => {
+  const helperStart = dashboard.indexOf('function mergeDeletedPatientIds');
+  const helperEnd = dashboard.indexOf('function serialize', helperStart);
+  const pushStart = dashboard.indexOf('async function pushState');
+  const pushEnd = dashboard.indexOf('function applyRemote', pushStart);
+  let reconciled=false;
+  const scheduled = [];
+  const sync = {
+    pushing:false,dirty:true,blockedCode:'',pulling:false,localVersion:1,deletedPatientIds:[],
+    directoryCorrections:[],revision:1,updatedAt:0,ready:true,error:'',lastSync:0
+  };
+  const context = vm.createContext({
+    sync,patients:[{id:'duplicate'}],selectedDate:'2026-10-13',lang:'ar',CLIENT_ID:'test',VIEW_MODE:'clinic',
+    serialize:()=>({patients:[{id:'duplicate'}],deletedPatientIds:[],directoryCorrections:[]}),
+    stateUrl:()=>'/api/state',setBadge(){},toast(){},render(){},persistLocal(){},announceSyncedState(){},
+    reconcileRevisionConflict(){reconciled=true},schedulePatientDirectoryCorrectionRetry(){},
+    refreshAdminPatientHub(){},clearTimeout(){},setTimeout(fn){scheduled.push(fn);return scheduled.length},
+    syncCadence:()=>({workHours:true,delay:60000}),scheduleAutomaticSync(){scheduled.push('automatic')},
+    request:async()=>({status:409,ok:false,clone:()=>({json:async()=>({code:'DUPLICATE_PATIENT'})})})
+  });
+  vm.runInContext(dashboard.slice(helperStart,helperEnd),context);
+  vm.runInContext(dashboard.slice(pushStart,pushEnd),context);
+  assert.equal(await context.pushState(),false);
+  assert.equal(sync.blockedCode,'DUPLICATE_PATIENT');
+  assert.equal(reconciled,false);
+  assert.deepEqual(scheduled,[]);
+});
+
+test('every dashboard removal path records a tombstone and a move saves the target before deleting the source', () => {
+  assert.match(dashboard, /mergeDeletedPatientIds\(sync\.deletedPatientIds,patients\.map\(patient=>patient\.id\)\)/);
+  assert.match(dashboard, /mergeDeletedPatientIds\(sync\.deletedPatientIds,\[del\]\)/);
+  const move = dashboard.slice(dashboard.indexOf('async function movePatientToDate'),dashboard.indexOf('function patientDirectoryCorrectionLookup'));
+  assert.match(move,/mergeDeletedPatientIds\(sync\.deletedPatientIds,\[item\.id\]\)/);
+  assert.ok(move.indexOf("method:'PUT'") < move.indexOf('patients=patients.filter'));
+  assert.match(move,/deletedPatientIds:targetDeletedPatientIds/);
+});
+
 test('identity propagation never rewrites the live revision-safe source day', () => {
   assert.match(dashboard, /source:\{clinicId:ACTIVE_CLINIC_ID,date:selectedDate,patientId\}/);
   assert.match(dashboard, /source:correction\.source/);

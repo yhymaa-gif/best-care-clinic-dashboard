@@ -1,0 +1,8 @@
+@media print{
+  @page{size:A4;margin:10mm}
+  html,body{height:auto!important;min-height:0!important;overflow:visible!important}
+  .aftercare-page{width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;margin:0!important;padding:0!important;border-top:4mm solid #0b6a56;box-shadow:none!important}
+  .clinic-header,.title-block,.patient-grid,.patient-intro,.draft-notice,.instructions article,.warning,.medication-section,.medication-row,.aftercare-page footer{break-inside:avoid;page-break-inside:avoid}
+  .instructions,.medication-list{break-inside:auto;page-break-inside:auto}
+  .page-actions,.state-card{display:none!important}
+}
