@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.16-root-canal-aftercare-direct",
+  "version": "2026.10.16-root-canal-aftercare-pdf-file",
   "publishedAt": "2026-10-16",
   "summary": {
-    "ar": "تعليمات العصب مباشرة من الإدارة دون أدوية؛ وتوصية مسكنات اختيارية من شاشة الطبيب، مع مشاركة واتساب وطباعة وتذكير بجوار اسم المريض.",
-    "en": "General aftercare from administration; optional clinician analgesic recommendation, WhatsApp share/print, and reminder by patient name."
+    "ar": "تعليمات العصب ملف PDF عربي للمشاركة والطباعة، مع توصية مسكنات اختيارية محددة وبدون مضاد حيوي أو جرعات استخدام تلقائية.",
+    "en": "Share or print Arabic root-canal aftercare as a PDF, with optional allowlisted analgesic suggestions and no automatic dosing."
   }
 }

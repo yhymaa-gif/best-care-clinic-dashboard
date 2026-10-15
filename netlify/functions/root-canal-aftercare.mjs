@@ -1,6 +1,7 @@
 import { getStore } from '@netlify/blobs';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
+import { generateAftercarePdf } from './lib/root-canal-aftercare-pdf.mjs';
 
 const headers=apiHeaders('GET,POST,OPTIONS');
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
@@ -13,6 +14,7 @@ const medicationTypes=new Set(['ibuprofen','paracetamol']);
 const allowedDoses={ibuprofen:new Set(['400 mg','600 mg']),paracetamol:new Set(['500 mg'])};
 const rootCanalCodes=new Set(['root-canal','root-canal-retreatment']);
 const linkLifetimeMs=90*24*60*60*1000;
+const expiredRecord=(record,now=Date.now())=>now>Number(record?.issuedAt||0)+linkLifetimeMs;
 const tokenKey=value=>`tokens/${hash(value)}`;
 const documentKey=value=>`documents/${value}`;
 const dayKeyFor=source=>source.clinicId==='clinic-1'?`days/${source.date}`:`clinics/${source.clinicId}/days/${source.date}`;
@@ -48,18 +50,19 @@ const cleanDocument=value=>({
   patient:{name:text(value?.patient?.name,120),file:text(value?.patient?.file,40)},
   clinic:{name:text(value?.clinic?.name,120),doctorName:text(value?.clinic?.doctorName,120),phone:text(value?.clinic?.phone,30)},
   source:{clinicId:text(value?.source?.clinicId,20),patientId:text(value?.source?.patientId,80),date:text(value?.source?.date,10),paymentRequestedAt:Number(value?.source?.paymentRequestedAt||0)},
-  medications:(Array.isArray(value?.medications)?value.medications:[]).slice(0,3).map(cleanMedication),
-  notice:'DRAFT — NOT MEDICAL ADVICE — DOCUMENTATION-ONLY — AUTHORIZED CLINICIAN SIGN-OFF REQUIRED'
+  medications:(Array.isArray(value?.medications)?value.medications:[]).slice(0,3).map(cleanMedication)
 });
 
 function validateDocument(document,role){
   if(!document.patient.name||!document.source.clinicId||!/^clinic-([1-9]|1[0-5])$/.test(document.source.clinicId)||!/^\d{4}-\d{2}-\d{2}$/.test(document.source.date))return'Patient context is incomplete';
   if((role==='admin'&&document.deliveryMode!=='admin-general')||(role==='clinic'&&document.deliveryMode!=='clinic')||!['admin','clinic'].includes(role))return'Delivery mode is not authorized for this role';
-  if(document.deliveryMode==='admin-general'&&document.medications.length)return'Administration instructions must not include medications';
   if(document.medications.length>2||new Set(document.medications.map(item=>item.type)).size!==document.medications.length)return'Duplicate or excessive analgesics';
-  if(document.medications.some(item=>!item.name||!item.dose||!item.frequency||!item.duration))return'Medication instructions are incomplete';
   if(document.medications.some(item=>!medicationTypes.has(item.type)))return'Only clinician-selected analgesics may be attached';
+  if(document.deliveryMode==='clinic'&&document.medications.some(item=>!item.name||!item.dose||!item.frequency||!item.duration))return'Medication instructions are incomplete';
   if(document.medications.some(item=>!allowedDoses[item.type]?.has(item.dose)))return'Medication strength is not permitted';
+  if(document.deliveryMode==='admin-general'){
+    if(document.medications.some(item=>item.frequency||item.duration||item.notes))return'General guidance must not specify medication frequency, duration or notes';
+  }
   return'';
 }
 
@@ -69,6 +72,8 @@ export default async request=>{
   if(request.method==='GET'){
     const token=text(url.searchParams.get('token'),120);
     const documentId=text(url.searchParams.get('documentId'),60);
+    const format=url.searchParams.get('format');
+    if(format&&format!=='pdf')return reply({error:'Unsupported aftercare format'},400);
     if(!validToken(token)&&!validDocumentId(documentId))return reply({error:'Invalid aftercare reference'},400);
     let record,shareToken=token;
     if(validDocumentId(documentId)){
@@ -81,13 +86,17 @@ export default async request=>{
       if(auth.user?.role==='admin'&&record.document?.deliveryMode!=='admin-general')return reply({error:'Clinician-issued instructions must be opened by clinic staff'},403);
     }else record=await aftercareStore().get(tokenKey(token),{type:'json',consistency:'strong'});
     if(!record)return reply({error:'Aftercare link not found'},404);
-    if(Date.now()>Number(record.issuedAt||0)+linkLifetimeMs)return reply({error:'Aftercare link expired'},410);
+    if(expiredRecord(record))return reply({error:'Aftercare link expired'},410);
     const secret=String(process.env.AUTH_SESSION_SECRET||'');if(secret.length<32)return reply({error:'Aftercare links are not configured'},503);
     const day=await dayStore().get(dayKeyFor(record.document.source),{type:'json',consistency:'strong'});
     const patient=currentDocument(record,day,secret);
     if(!patient)return reply({error:'Aftercare record no longer matches the patient or payment order'},410);
     if(!activeDocument(patient,record))return reply({error:'Aftercare document is no longer active'},410);
     const document={...record.document,patient:{name:text(patient.name,120),file:text(patient.file,40)},clinic:{name:text(day.clinic?.name,120),doctorName:text(record.document.clinic?.doctorName||record.issuedBy,120),phone:''}};
+    if(format==='pdf'){
+      const bytes=await generateAftercarePdf(document,Number(record.issuedAt||0));
+      return new Response(bytes,{status:200,headers:{...headers,'content-type':'application/pdf','content-disposition':`attachment; filename="root-canal-aftercare-${record.documentId}.pdf"`,'cache-control':'private, no-store, max-age=0','x-content-type-options':'nosniff'}});
+    }
     if(validDocumentId(documentId)){const shareUrl=new URL('/root-canal-aftercare.html',request.url);shareUrl.searchParams.set('token',shareToken);return reply({ok:true,documentId,url:shareUrl.toString(),document,issuedAt:Number(record.issuedAt||0),issuedBy:text(record.issuedBy,120)})}
     return reply({ok:true,document,issuedAt:Number(record.issuedAt||0),issuedBy:text(record.issuedBy,120)});
   }
@@ -114,4 +123,4 @@ export default async request=>{
   return reply({ok:true,documentId,url:shareUrl.toString(),issuedAt,expiresAt:issuedAt+linkLifetimeMs,issuedBy});
 };
 
-export const __test={cleanMedication,cleanDocument,validateDocument,validToken,validDocumentId,identityFingerprint,sameFingerprint,matchesCurrentOrder,currentDocument,activeDocument,medicationTypes};
+export const __test={cleanMedication,cleanDocument,validateDocument,validToken,validDocumentId,expiredRecord,identityFingerprint,sameFingerprint,matchesCurrentOrder,currentDocument,activeDocument,medicationTypes};
