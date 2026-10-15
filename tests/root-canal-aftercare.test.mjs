@@ -4,14 +4,15 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
-import { __test as aftercare } from '../netlify/functions/root-canal-aftercare.mjs';
+import aftercareHandler,{ __test as aftercare } from '../netlify/functions/root-canal-aftercare.mjs';
+import { generateAftercarePdf } from '../netlify/functions/lib/root-canal-aftercare-pdf.mjs';
 import { __test as state } from '../netlify/functions/state.mjs';
 
 const root=join(dirname(fileURLToPath(import.meta.url)),'..');
 const read=async file=>readFile(join(root,file),'utf8');
 const sample={deliveryMode:'clinic',patient:{name:'Synthetic Patient',file:'TEST-1'},clinic:{name:'Synthetic Clinic'},source:{clinicId:'clinic-1',patientId:'test-id',date:'2026-10-15',paymentRequestedAt:1234},medications:[{type:'ibuprofen',name:'Ibuprofen',dose:'400 mg',frequency:'clinician supplied',duration:'clinician supplied'}]};
 
-test('only clinician-selected analgesics can be attached; no antibiotic field is accepted',()=>{
+test('only allowlisted analgesic suggestions can be attached; no antibiotic field is accepted',()=>{
   assert.deepEqual([...aftercare.medicationTypes],['ibuprofen','paracetamol']);
   assert.equal(aftercare.validateDocument(aftercare.cleanDocument(sample),'clinic'),'');
   assert.equal(aftercare.validateDocument(aftercare.cleanDocument({...sample,medications:[{...sample.medications[0],dose:'600 mg'}]}),'clinic'),'');
@@ -22,7 +23,14 @@ test('only clinician-selected analgesics can be attached; no antibiotic field is
   assert.match(aftercare.validateDocument(aftercare.cleanDocument({...sample,medications:[{...sample.medications[0],type:'paracetamol',dose:'600 mg'}]}),'clinic'),/strength is not permitted/);
   assert.match(aftercare.validateDocument(aftercare.cleanDocument(sample),'admin'),/Delivery mode/);
   assert.equal(aftercare.validateDocument(aftercare.cleanDocument({...sample,deliveryMode:'admin-general',medications:[]}), 'admin'),'');
-  assert.match(aftercare.validateDocument(aftercare.cleanDocument({...sample,deliveryMode:'admin-general'}),'admin'),/must not include medications/);
+  for(const medications of [
+    [{type:'ibuprofen',name:'Ibuprofen',dose:'400 mg'}],
+    [{type:'ibuprofen',name:'Ibuprofen',dose:'600 mg'}],
+    [{type:'paracetamol',name:'Paracetamol',dose:'500 mg'}],
+    [{type:'ibuprofen',name:'Ibuprofen',dose:'400 mg'},{type:'paracetamol',name:'Paracetamol',dose:'500 mg'}]
+  ])assert.equal(aftercare.validateDocument(aftercare.cleanDocument({...sample,deliveryMode:'admin-general',medications}),'admin'),'');
+  assert.match(aftercare.validateDocument(aftercare.cleanDocument({...sample,deliveryMode:'admin-general',medications:[{type:'ibuprofen',name:'Ibuprofen',dose:'400 mg',frequency:'daily'}]}),'admin'),/must not specify medication frequency/);
+  assert.match(aftercare.validateDocument(aftercare.cleanDocument({...sample,deliveryMode:'admin-general',medications:[{type:'ibuprofen',name:'Ibuprofen',dose:'800 mg'}]}),'admin'),/strength is not permitted/);
   assert.match(aftercare.validateDocument(aftercare.cleanDocument({...sample,deliveryMode:'admin-general',medications:[]}), 'clinic'),/Delivery mode/);
 });
 
@@ -64,7 +72,7 @@ test('two-device merge keeps the newer root-canal payment reminder over an older
   assert.match(dashboard,/if\(current&&Number\(current\.paymentRequestedAt\|\|0\)===sentOrderAt&&rootCanalAftercareReference\(current,sentMode\)\.id===sentDocumentId/);
 });
 
-test('administration opens general aftercare directly without showing medication controls',async()=>{
+test('administration opens general aftercare with a separate optional suggestion, not clinician dosing fields',async()=>{
   const dashboard=await read('dashboard.js');
   const openSource=dashboard.slice(dashboard.indexOf('function openRootCanalAftercare('),dashboard.indexOf('function selectedRootCanalAnalgesics('));
   const patient={id:'synthetic-id',name:'Synthetic Patient',file:'TEST-1',phone:'0500000000',paymentRequestedAt:1234,paymentItems:[{code:'root-canal'}],rootCanalAftercareDocumentId:''};
@@ -78,9 +86,37 @@ test('administration opens general aftercare directly without showing medication
   assert.equal(opened,'rootCanalAftercareModal');
   assert.equal(picker.hidden,true);
   assert.equal(controls.get('rootCanalAftercareGeneralNotice').hidden,false);
-  assert.match(controls.get('rootCanalAftercareGeneralNotice').textContent,/تعليمات عامة فقط/);
+  assert.match(controls.get('rootCanalAftercareGeneralNotice').textContent,/عيادة الطبيب المعالج/);
+  assert.equal(controls.get('rootCanalAftercareGeneralAnalgesics').hidden,false);
   assert.equal(controls.get('rootCanalAftercarePhone').value,'966500000000');
   assert.equal(context.pendingAftercareId,'synthetic-id');
+});
+
+test('general aftercare defaults to no analgesic and supports either or both explicit suggestions',async()=>{
+  const dashboard=await read('dashboard.js');
+  const source=dashboard.slice(dashboard.indexOf('function selectedAdminAftercareAnalgesics('),dashboard.indexOf('function rootCanalAftercareContextCurrent('));
+  const controls={aftercareAdminIbuprofen:{value:''},aftercareAdminParacetamol:{checked:false}};
+  const context=vm.createContext({$:id=>controls[id]});vm.runInContext(source,context);
+  assert.equal(context.selectedAdminAftercareAnalgesics().length,0);
+  controls.aftercareAdminIbuprofen.value='400 mg';assert.deepEqual([...context.selectedAdminAftercareAnalgesics()].map(item=>item.type),['ibuprofen']);
+  controls.aftercareAdminIbuprofen.value='';controls.aftercareAdminParacetamol.checked=true;assert.deepEqual([...context.selectedAdminAftercareAnalgesics()].map(item=>item.type),['paracetamol']);
+  controls.aftercareAdminIbuprofen.value='600 mg';assert.deepEqual([...context.selectedAdminAftercareAnalgesics()].map(item=>item.type),['ibuprofen','paracetamol']);
+  assert.match(dashboard,/aftercareAdminIbuprofen'\)\.value='';\$\('aftercareAdminParacetamol'\)\.checked=false/);
+});
+
+test('public admin-general page renders both saved analgesic suggestions without schedule fields',async()=>{
+  const script=await read('root-canal-aftercare.js');
+  const elements=new Map(),element=id=>{if(!elements.has(id))elements.set(id,{hidden:true,textContent:'',innerHTML:'',addEventListener(){}});return elements.get(id)};
+  const token='a'.repeat(48);
+  const record={ok:true,document:{deliveryMode:'admin-general',patient:{name:'Synthetic Patient',file:'TEST-1'},clinic:{name:'Synthetic Clinic'},source:{paymentRequestedAt:Date.now()},medications:[{type:'ibuprofen',dose:'400 mg'},{type:'paracetamol',dose:'500 mg'}]},issuedAt:Date.now()};
+  const context=vm.createContext({document:{getElementById:element},location:{search:`?token=${token}`},URLSearchParams,Intl,Date,Object,fetch:async()=>({ok:true,json:async()=>record}),navigator:{}});
+  vm.runInContext(script,context);await new Promise(resolve=>setImmediate(resolve));
+  const html=element('medicationList').innerHTML;
+  assert.match(html,/إيبوبروفين/);assert.match(html,/400 mg/);
+  assert.match(html,/باراسيتامول/);assert.match(html,/500 mg/);
+  assert.doesNotMatch(html,/التكرار|المدة|ملاحظات الطبيب/);
+  assert.equal(element('generalModeNotice').hidden,false);
+  assert.equal(element('aftercarePage').hidden,false);
 });
 
 test('sent instructions remain a single gray reopen action, and a newer order restores the red reminder',async()=>{
@@ -115,6 +151,64 @@ test('only the current document for the current payment order may be opened',()=
   assert.equal(aftercare.activeDocument({...patient,rootCanalAftercareDocumentId:'replacement-document-id'},record),false);
   assert.equal(aftercare.activeDocument({...patient,rootCanalAftercareDocumentOrderAt:2345},record),false);
   assert.equal(aftercare.activeDocument({...patient,rootCanalAftercareDocumentId:''},record),false);
+});
+
+test('PDF generator embeds a real Arabic PDF and endpoint preserves private attachment headers',async()=>{
+  const bytes=await generateAftercarePdf({...sample,patient:{name:'مريض تجريبي',file:'TEST-1'},clinic:{name:'عيادة تجريبية',doctorName:'طبيب تجريبي'}},Date.now());
+  assert.equal(bytes.subarray(0,5).toString(),'%PDF-');
+  assert.ok(bytes.length>10000);
+  const endpoint=await read('netlify/functions/root-canal-aftercare.mjs');
+  assert.match(endpoint,/if\(format==='pdf'\)\{[\s\S]*generateAftercarePdf\(document,Number\(record\.issuedAt\|\|0\)\)/);
+  assert.match(endpoint,/'content-type':'application\/pdf'/);
+  assert.match(endpoint,/'content-disposition':`attachment; filename=/);
+  assert.match(endpoint,/'cache-control':'private, no-store, max-age=0'/);
+  const config=await read('netlify.toml');assert.match(config,/included_files = \["assets\/fonts\/IBMPlexSansArabic-Regular\.ttf", "assets\/fonts\/IBMPlexSansArabic-Bold\.ttf", "assets\/best-care-logo-header\.png"\]/);
+  const pdfSource=await read('netlify/functions/lib/root-canal-aftercare-pdf.mjs');
+  assert.match(pdfSource,/عيادة الطبيب المعالج/);
+  assert.match(pdfSource,/best-care-logo-header\.png/);
+  assert.match(pdfSource,/roundedRect/);
+  assert.match(pdfSource,/تعليمات العناية بعد الإجراء/);
+  assert.match(pdfSource,/متى تتواصل مع العيادة/);
+  assert.doesNotMatch(pdfSource,/إدارة العيادة|AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
+});
+
+test('card PDF keeps a long clinical recommendation within two A4 pages',async()=>{
+  const bytes=await generateAftercarePdf({
+    ...sample,
+    deliveryMode:'clinic',
+    patient:{name:'مريض تجريبي باسم طويل من عدة أجزاء للمراجعة البصرية',file:'TEST-101'},
+    clinic:{name:'عيادات أفضل عناية الاستشارية للأسنان',doctorName:'طبيب تجريبي'},
+    medications:[
+      {type:'ibuprofen',dose:'600 mg',frequency:'بعد الطعام عند الحاجة فقط',duration:'حسب توجيه الطبيب لمدة قصيرة',notes:'ملاحظات سريرية تجريبية طويلة للتحقق من المساحة والالتفاف على صفحة التعليمات وعدم قصها'},
+      {type:'paracetamol',dose:'500 mg',frequency:'عند الحاجة',duration:'حسب توجيه الطبيب',notes:'ملاحظة تجريبية إضافية'}
+    ]
+  },Date.now());
+  const pages=[...bytes.toString('latin1').matchAll(/\/Type \/Page\b/g)].length;
+  assert.ok(pages>=1&&pages<=2,`Expected one or two A4 pages, got ${pages}`);
+});
+
+test('invalid and expired PDF links use the same guarded token path',async()=>{
+  const response=await aftercareHandler(new Request('https://example.test/api/root-canal-aftercare?token=bad&format=pdf'));
+  assert.equal(response.status,400);
+  assert.match((await response.json()).error,/Invalid aftercare reference/);
+  assert.equal(aftercare.expiredRecord({issuedAt:100},100+90*24*60*60*1000+1),true);
+  assert.equal(aftercare.expiredRecord({issuedAt:100},100+90*24*60*60*1000),false);
+  const endpoint=await read('netlify/functions/root-canal-aftercare.mjs');
+  assert.ok(endpoint.indexOf('if(expiredRecord(record))')<endpoint.indexOf("if(format==='pdf')"));
+  assert.ok(endpoint.indexOf('if(!activeDocument(patient,record))')<endpoint.indexOf("if(format==='pdf')"));
+});
+
+test('both share surfaces send PDF files without a URL and provide attachment fallback',async()=>{
+  const [dashboard,publicPage]=await Promise.all(['dashboard.js','root-canal-aftercare.js'].map(read));
+  for(const source of [dashboard,publicPage]){
+    assert.match(source,/format=pdf/);
+    assert.match(source,/navigator\.canShare\?\.\(\{files:\[file\]\}\)/);
+    assert.match(source,/navigator\.share\(\{files:\[file\],title:/);
+    assert.doesNotMatch(source,/navigator\.share\(\{[^}]*url:/);
+    assert.match(source,/anchor\.download=(?:filename|'root-canal-aftercare\.pdf')/);
+  }
+  assert.match(dashboard,/أرفق الملف الذي نُزّل للمريض المقصود/);
+  assert.match(publicPage,/أرفقه يدويًا في واتساب/);
 });
 
 test('general and clinic instructions retain independent active links in either issuance order',async()=>{
@@ -158,15 +252,17 @@ test('dashboard and public aftercare page expose the complete share/print workfl
   assert.match(dashboard,/id="printRootCanalAftercareBtn"/);
   assert.match(dashboard,/id="confirmRootCanalAftercareSentBtn"/);
   assert.match(dashboard,/adminGeneral=mode==='admin-general'/);
-  assert.match(dashboard,/const medications=deliveryMode==='admin-general'\?\[\]:selectedRootCanalAnalgesics\(\)/);
+  assert.match(dashboard,/const medications=deliveryMode==='admin-general'\?selectedAdminAftercareAnalgesics\(\):selectedRootCanalAnalgesics\(\)/);
   assert.match(dashboard,/rootCanalAftercareRecommendationCheck/);
+  assert.match(dashboard,/id="aftercareSourceNotice"/);
+  assert.doesNotMatch(dashboard,/AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
   assert.match(dashboard,/choice\.hidden=!required\|\|VIEW_MODE!=='clinic'\|\|authUser\?\.role!=='clinic'/);
   assert.match(dashboard,/if\(saved===false&&openRecommendation\)\{openRecommendation=false/);
   assert.match(dashboard,/if\(openRecommendation\)\{pendingAftercareCompletionAction=finishFollowUp;openRootCanalAftercare\(p\.id\);return\}/);
-  assert.match(dashboard,/Dear patient, please open your root-canal aftercare instructions at \$\{url\}, read and understand them, and follow the guidance/);
-  assert.match(dashboard,/يرجى فتح تعليمات ما بعد علاج العصب عبر الرابط \$\{url\}، وقراءتها وفهمها واتباع الإرشادات/);
-  assert.match(dashboard,/If you have any questions, please contact Best Care Dental Clinics/);
-  assert.match(dashboard,/إذا كان لديك أي استفسار، تواصل مع عيادات أفضل عناية/);
+  assert.match(dashboard,/please read and follow the attached root-canal aftercare PDF/);
+  assert.match(dashboard,/يرجى قراءة ملف PDF المرفق لتعليمات ما بعد علاج العصب/);
+  assert.match(dashboard,/Contact Best Care Dental Clinics if you have any questions/);
+  assert.match(dashboard,/تواصل مع عيادات أفضل عناية إذا كان لديك أي استفسار/);
   assert.match(dashboard,/Share root-canal instructions':'مشاركة تعليمات العصب/);
   assert.match(dashboard,/querySelectorAll\('\.patient-name-stack'\)\.forEach\(stack=>\{const button=stack\.closest\('td'\)\?\.querySelector\('\.aftercare-row-btn'\);if\(button\)stack\.append\(button\)\}/);
   assert.doesNotMatch(dashboard,/\$\('rootCanalAftercareDoctorConfirm'\)\.checked/);
@@ -176,9 +272,12 @@ test('dashboard and public aftercare page expose the complete share/print workfl
   assert.match(patientPage,/id="generalModeNotice"/);
   const publicScript=await read('root-canal-aftercare.js');
   assert.match(publicScript,/adminGeneral=document\.deliveryMode==='admin-general'/);
-  assert.match(publicScript,/\$\('doctorName'\)\.textContent='إدارة العيادة'/);
+  assert.match(publicScript,/\$\('doctorName'\)\.textContent='عيادة الطبيب المعالج'/);
+  assert.doesNotMatch(patientPage,/AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
+  assert.doesNotMatch(publicScript,/أرسلت الإدارة/);
+  const endpoint=await read('netlify/functions/root-canal-aftercare.mjs');assert.doesNotMatch(endpoint,/AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
   const css=await read('dashboard.css');assert.match(css,/\.patient-name-stack \.aftercare-row-btn\.aftercare-pending\{border-color:#d7433b/);
-  const release=JSON.parse(await read('release.json'));assert.match(release.summary.ar,/دون أدوية/);
+  const release=JSON.parse(await read('release.json'));assert.match(release.summary.ar,/ملف PDF/);
   const printCss=await read('root-canal-aftercare-print.css');
   assert.match(printCss,/overflow:visible!important/);
   assert.match(printCss,/height:auto!important/);

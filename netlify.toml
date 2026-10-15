@@ -4,7 +4,8 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@netlify/blobs", "web-push"]
+  external_node_modules = ["@netlify/blobs", "web-push", "pdfkit"]
+  included_files = ["assets/fonts/IBMPlexSansArabic-Regular.ttf", "assets/fonts/IBMPlexSansArabic-Bold.ttf", "assets/best-care-logo-header.png"]
 
 [[redirects]]
   from = "/review"
