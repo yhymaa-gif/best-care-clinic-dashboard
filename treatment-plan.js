@@ -1062,6 +1062,7 @@
       $('shareReadyTitle').textContent=preparedShareIsFinal?(isImage?tr('نسخة نهائية جاهزة','Final copy ready'):tr('نسخة نهائية PDF جاهزة','Final PDF ready')):awaitingSignature?tr('الخطة ورابط التوقيع جاهزان كخطوتين','Plan and signature link are ready in two steps'):(isImage?tr('مسودة جاهزة','Draft ready'):tr('مسودة PDF جاهزة','Draft PDF ready'));
       $('shareReadyText').textContent=awaitingSignature?tr('١) شارك ملف الخطة. ٢) أرسل رابط التوقيع برسالة واتساب مستقلة حتى لا يحذفه التطبيق عند إرفاق الملف.','1) Share the plan file. 2) Send the signature link in a separate WhatsApp message so it is not removed when the file is attached.'):isImage?tr('راجع نسخة الاطلاع ثم افتح مشاركة الجهاز واختر واتساب والمريض.','Review the copy, then open device sharing and choose WhatsApp and the patient.'):tr('هذه نسخة للاطلاع؛ افتح مشاركة الجهاز ثم اختر واتساب والمريض.','This is a review copy; open device sharing, then choose WhatsApp and the patient.');
       $('sharePreparedBtn').textContent=awaitingSignature?(isImage?tr('١ — مشاركة صورة الخطة','1 — Share plan image'):tr('١ — مشاركة ملف الخطة PDF','1 — Share plan PDF')):(isImage?tr('فتح واتساب ومشاركة الصورة','Open WhatsApp and share image'):tr('فتح واتساب ومشاركة PDF','Open WhatsApp and share PDF'));
+      $('sharePlanMessageWhatsappBtn').hidden=true;
       $('shareConsentWhatsappBtn').hidden=!awaitingSignature;
       $('shareImagePreview').hidden=!isImage;$('sharePdfPreview').hidden=isImage;
       $('shareConsentLinkBox').hidden=!awaitingSignature;$('shareConsentLinkText').textContent=awaitingSignature?preparedConsentUrl:'';
@@ -1069,6 +1070,15 @@
       $('shareReadyModal').hidden=false;
       applyUiLanguage($('shareReadyModal'));
       $('sharePreparedBtn').focus();
+    }
+    function sharePlanMessageOnWhatsApp(){
+      collectHeaderFields();
+      const patientPhone=normalizeWhatsAppPhone(state.patient.mobile);
+      if(!patientPhone){toast(tr('رقم جوال المريض غير مكتمل','Patient mobile number is incomplete'),tr('أدخل رقمًا سعوديًا صحيحًا ثم أعد المشاركة.','Enter a valid Saudi mobile number and try again.'));return}
+      const text=whatsappPlanMessage(preparedShareIsFinal,true),whatsappUrl=`https://wa.me/${patientPhone}?text=${encodeURIComponent(text)}`;
+      const whatsappLink=document.createElement('a');whatsappLink.href=whatsappUrl;whatsappLink.target='_blank';whatsappLink.rel='noopener noreferrer';document.body.appendChild(whatsappLink);whatsappLink.click();whatsappLink.remove();
+      recordPreparedShareOnce();document.documentElement.dataset.pdfShareState=`opened-plan-message:${patientPhone}`;
+      $('shareReadyText').textContent=tr('فُتحت محادثة المريض والنص المقترح جاهز للإرسال دون نسخ.','The patient chat opened with the suggested text ready to send—no copying required.');
     }
     function shareConsentLinkOnWhatsApp(){
       collectHeaderFields();
@@ -1118,8 +1128,9 @@
             $('shareConsentWhatsappBtn').focus();
             toast('تمت مشاركة ملف الخطة','عد إلى هذه النافذة ثم أرسل رابط التوقيع بالزر الثاني.');
           }else{
-            closeShareReady();
-            toast('تم فتح المشاركة',`اختر واتساب ثم محادثة المريض على الرقم ${state.patient.mobile}.`);
+            $('shareReadyText').textContent=tr('تمت مشاركة ملف الخطة. اضغط الآن «إرسال النص المقترح عبر واتساب» لفتح محادثة المريض والنص جاهز دون نسخ.','The plan file was shared. Now select “Send suggested text via WhatsApp” to open the patient chat with the message ready—no copying required.');
+            $('sharePlanMessageWhatsappBtn').hidden=false;$('sharePlanMessageWhatsappBtn').focus();
+            toast(tr('تمت مشاركة ملف الخطة','Plan file shared'),tr('أرسل الآن النص المقترح من الزر الظاهر دون نسخ.','Now send the suggested text from the visible button without copying.'));
           }
         }else{
           document.documentElement.dataset.pdfShareState=`downloaded:${preparedShareFile.size}`;
@@ -1340,7 +1351,7 @@
         $('doctorHandoffCard').classList.toggle('confirmed',confirmed);
         $('sendAdminBtn').disabled=!confirmed;
       });
-      $('closeShareReadyBtn').addEventListener('click',closeShareReady);$('shareReadyModal').addEventListener('click',event=>{if(event.target===$('shareReadyModal'))closeShareReady()});$('sharePreparedBtn').addEventListener('click',sharePreparedPlan);$('shareConsentWhatsappBtn').addEventListener('click',shareConsentLinkOnWhatsApp);$('downloadPreparedBtn').addEventListener('click',()=>preparedShareFile&&downloadShareFile(preparedShareFile,preparedShareFormat));$('copyConsentLinkBtn').addEventListener('click',async()=>{if(!preparedConsentUrl)return;try{await navigator.clipboard.writeText(preparedConsentUrl);toast(tr('تم نسخ رابط التوقيع','Signature link copied'),tr('يمكن إرساله للمريض من نفس محادثة واتساب.','You can send it to the patient in the same WhatsApp conversation.'))}catch{toast(tr('تعذر النسخ التلقائي','Automatic copy failed'),tr('حدد الرابط الظاهر وانسخه يدويًا.','Select the visible link and copy it manually.'))}});
+      $('closeShareReadyBtn').addEventListener('click',closeShareReady);$('shareReadyModal').addEventListener('click',event=>{if(event.target===$('shareReadyModal'))closeShareReady()});$('sharePreparedBtn').addEventListener('click',sharePreparedPlan);$('sharePlanMessageWhatsappBtn').addEventListener('click',sharePlanMessageOnWhatsApp);$('shareConsentWhatsappBtn').addEventListener('click',shareConsentLinkOnWhatsApp);$('downloadPreparedBtn').addEventListener('click',()=>preparedShareFile&&downloadShareFile(preparedShareFile,preparedShareFormat));$('copyConsentLinkBtn').addEventListener('click',async()=>{if(!preparedConsentUrl)return;try{await navigator.clipboard.writeText(preparedConsentUrl);toast(tr('تم نسخ رابط التوقيع','Signature link copied'),tr('يمكن إرساله للمريض من نفس محادثة واتساب.','You can send it to the patient in the same WhatsApp conversation.'))}catch{toast(tr('تعذر النسخ التلقائي','Automatic copy failed'),tr('حدد الرابط الظاهر وانسخه يدويًا.','Select the visible link and copy it manually.'))}});
       $('printBtn').addEventListener('click',printPlan);
       $('vatMode').addEventListener('change',()=>{$('vatConfirmed').checked=false;$('vatControl').classList.remove('confirmed');state.financial.vatConfirmed=false;markDirty();toast(tr('يلزم تأكيد الضريبة','Tax confirmation required'),tr('غيّرت وضع الضريبة؛ راجع أهلية المريض ثم فعّل مربع التأكيد.','The tax mode changed; review eligibility, then confirm it.'))});
       $('vatConfirmed').addEventListener('change',()=>{$('vatControl').classList.toggle('confirmed',$('vatConfirmed').checked);state.financial.vatConfirmed=$('vatConfirmed').checked;markDirty()});
