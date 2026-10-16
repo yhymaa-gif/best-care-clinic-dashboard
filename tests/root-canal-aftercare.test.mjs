@@ -164,12 +164,15 @@ test('PDF generator embeds a real Arabic PDF and endpoint preserves private atta
   assert.match(endpoint,/'cache-control':'private, no-store, max-age=0'/);
   const config=await read('netlify.toml');assert.match(config,/included_files = \["assets\/fonts\/IBMPlexSansArabic-Regular\.ttf", "assets\/fonts\/IBMPlexSansArabic-Bold\.ttf", "assets\/best-care-logo-header\.png"\]/);
   const pdfSource=await read('netlify/functions/lib/root-canal-aftercare-pdf.mjs');
-  assert.match(pdfSource,/عيادة الطبيب المعالج/);
   assert.match(pdfSource,/best-care-logo-header\.png/);
   assert.match(pdfSource,/roundedRect/);
   assert.match(pdfSource,/تعليمات العناية بعد الإجراء/);
   assert.match(pdfSource,/متى تتواصل مع العيادة/);
-  assert.doesNotMatch(pdfSource,/إدارة العيادة|AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
+  assert.match(pdfSource,/الجهة المرسلة: عيادات أفضل عناية/);
+  assert.match(pdfSource,/const drawWidth=width>40\?width-14:width/);
+  assert.match(pdfSource,/const wideTextFit=\.68/);
+  assert.match(pdfSource,/write\(warning,[\s\S]*wideTextFit\)/);
+  assert.doesNotMatch(pdfSource,/إدارة العيادة|عيادة الطبيب المعالج|AUTHORIZED CLINICIAN SIGN-OFF REQUIRED/);
 });
 
 test('card PDF keeps a long clinical recommendation within two A4 pages',async()=>{

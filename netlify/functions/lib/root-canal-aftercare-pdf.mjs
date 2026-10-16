@@ -21,18 +21,19 @@ export function generateAftercarePdf(document,issuedAt){
     const chunks=[];pdf.on('data',chunk=>chunks.push(chunk));pdf.on('error',reject);pdf.on('end',()=>resolve(Buffer.concat(chunks)));
     pdf.registerFont('Arabic',assetPath('IBMPlexSansArabic-Regular.ttf')).registerFont('ArabicBold',assetPath('IBMPlexSansArabic-Bold.ttf'));
     const pageBottom=800,contentX=42,contentW=511;let y=42;
-    const lines=(value,width,size=9,boldText=false)=>{
+    const lines=(value,width,size=9,boldText=false,fitFactor=.85)=>{
       pdf.font(boldText?'ArabicBold':'Arabic').fontSize(size);
       const words=safe(value).split(' ').filter(Boolean),result=[];let row=[];
-      for(const word of words){const next=[...row,word];if(row.length&&pdf.widthOfString(next.join(' '))+(next.length-1)*1.1>width*0.85){result.push(row);row=[word]}else row=next}
+      for(const word of words){const next=[...row,word];if(row.length&&pdf.widthOfString(next.join(' '))+(next.length-1)*1.1>width*fitFactor){result.push(row);row=[word]}else row=next}
       if(row.length)result.push(row);
       return result.length?result:[[]];
     };
-    const height=(value,width,size=9,boldText=false)=>lines(value,width,size,boldText).length*size*1.55;
-    const write=(value,x,top,width,size=9,color=ink,boldText=false)=>{
+    const height=(value,width,size=9,boldText=false,fitFactor=.85)=>lines(value,width,size,boldText,fitFactor).length*size*1.55;
+    const write=(value,x,top,width,size=9,color=ink,boldText=false,fitFactor=.85)=>{
       pdf.font(boldText?'ArabicBold':'Arabic').fontSize(size).fillColor(color);
-      const rows=lines(value,width,size,boldText),step=size*1.55;
-      rows.forEach((row,index)=>pdf.text([...row].reverse().join(' '),x,top+index*step,{width,align:'right',lineBreak:false,wordSpacing:1.1}));
+      const rows=lines(value,width,size,boldText,fitFactor),step=size*1.55;
+      const drawWidth=width>40?width-14:width;
+      rows.forEach((row,index)=>pdf.text([...row].reverse().join(' '),x,top+index*step,{width:drawWidth,align:'right',lineBreak:false,wordSpacing:1.1}));
       return top+rows.length*step;
     };
     const box=(x,top,width,h,fill,border)=>pdf.roundedRect(x,top,width,h,8).fillAndStroke(fill,border);
@@ -71,17 +72,18 @@ export function generateAftercarePdf(document,issuedAt){
     }
 
     const warning='ألم متوسط إلى شديد أو متزايد لا يتحسن، ضغط مستمر، تورم في اللثة أو الوجه، حرارة، صديد أو طعم غير طبيعي، تفاعل تحسسي للدواء، أو سقوط أو كسر الحشوة أو التاج المؤقت. الألم عند العض أو الشعور بأن الحشوة مرتفعة يستدعي زيارة العيادة لفحص العضة وضبط ارتفاع الحشوة عند الحاجة؛ لا تحاول تعديلها بنفسك.';
-    const warningH=37+height(warning,contentW-28,8.3)+11;ensure(warningH+10);box(contentX,y,contentW,warningH,'#fff5f4','#e6aaa4');pdf.circle(contentX+contentW-22,y+22,12).fill('#c93838');write('!',contentX+contentW-29,y+14,14,12,'#fff',true);write('متى تتواصل مع العيادة؟',contentX+14,y+12,contentW-53,11,red,true);write(warning,contentX+14,y+37,contentW-28,8.3,'#6f3935');y+=warningH+11;
+    const wideTextFit=.68;
+    const warningH=37+height(warning,contentW-36,8.3,false,wideTextFit)+11;ensure(warningH+10);box(contentX,y,contentW,warningH,'#fff5f4','#e6aaa4');pdf.circle(contentX+contentW-22,y+22,12).fill('#c93838');write('!',contentX+contentW-29,y+14,14,12,'#fff',true);write('متى تتواصل مع العيادة؟',contentX+14,y+12,contentW-53,11,red,true);write(warning,contentX+18,y+37,contentW-36,8.3,'#6f3935',false,wideTextFit);y+=warningH+11;
 
     const meds=(document.medications||[]).filter(item=>Object.hasOwn(label,item.type));
     const medicationLines=meds.length?meds.map(med=>document.deliveryMode==='admin-general'?`${label[med.type]} — ${safe(med.dose)} — دون تحديد التكرار أو المدة`:`${label[med.type]} — ${safe(med.dose)}؛ التكرار: ${safe(med.frequency)}؛ المدة: ${safe(med.duration)}${med.notes?`؛ ملاحظات: ${safe(med.notes)}`:''}`):['لا توجد توصية بمسكن في هذه الورقة. اتبع فقط توجيهات الطبيب الخاصة بك إن وجدت.'];
-    const medicationH=44+medicationLines.reduce((sum,line)=>sum+height(line,contentW-30,8.5)+5,0)+height('المضاد الحيوي قرار مستقل للطبيب، ويصدر عند الحاجة بوصفة علاجية منفصلة؛ ليس جزءًا من هذه التعليمات.',contentW-30,7.6)+14;
+    const medicationH=44+medicationLines.reduce((sum,line)=>sum+height(line,contentW-36,8.5,false,wideTextFit)+5,0)+height('المضاد الحيوي قرار مستقل للطبيب، ويصدر عند الحاجة بوصفة علاجية منفصلة؛ ليس جزءًا من هذه التعليمات.',contentW-36,7.6,false,wideTextFit)+14;
     ensure(medicationH+38);box(contentX,y,contentW,medicationH,'#f8fcfa',green);write(document.deliveryMode==='admin-general'?'توصية اختيارية بالمسكنات':'توصية الطبيب بالمسكنات',contentX+14,y+11,contentW-28,11,green,true);let medY=y+34;
-    medicationLines.forEach(line=>{medY=write(line,contentX+15,medY,contentW-30,8.5,ink)+5});
-    write('المضاد الحيوي قرار مستقل للطبيب، ويصدر عند الحاجة بوصفة علاجية منفصلة؛ ليس جزءًا من هذه التعليمات.',contentX+15,medY+2,contentW-30,7.6,red);
+    medicationLines.forEach(line=>{medY=write(line,contentX+18,medY,contentW-36,8.5,ink,false,wideTextFit)+5});
+    write('المضاد الحيوي قرار مستقل للطبيب، ويصدر عند الحاجة بوصفة علاجية منفصلة؛ ليس جزءًا من هذه التعليمات.',contentX+18,medY+2,contentW-36,7.6,red,false,wideTextFit);
     y+=medicationH+10;
     pdf.moveTo(contentX,y).lineTo(contentX+contentW,y).strokeColor('#cbded8').stroke();y+=8;
-    write(document.deliveryMode==='admin-general'?'جهة الإرسال: عيادة الطبيب المعالج':`الطبيب المعالج: ${safe(document.clinic?.doctorName)||'—'}`,contentX,y,contentW,8.5,ink,true);
+    write('الجهة المرسلة: عيادات أفضل عناية',contentX,y,contentW,8.5,ink,true);
     write(`تاريخ إصدار التعليمات: ${date(issuedAt)}`,contentX,y+15,contentW,8,muted);
     pdf.end();
   });

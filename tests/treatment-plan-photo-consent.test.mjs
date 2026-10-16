@@ -24,7 +24,7 @@ test('editable legacy plans receive the new default once while signed plans keep
 
 test('photo-consent deployment refreshes the treatment-plan script and PWA shell', async () => {
   const [html, worker] = await Promise.all([read('treatment-plan.html'), read('service-worker.js')]);
-  assert.match(html, /treatment-plan\.js\?v=20261006-patient-id-print/);
+  assert.match(html, /treatment-plan\.js\?v=20261016-whatsapp-message/);
   assert.match(worker, /bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety/);
 });
 

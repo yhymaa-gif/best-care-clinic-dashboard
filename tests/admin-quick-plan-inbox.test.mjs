@@ -29,7 +29,7 @@ test('inbox reads server plans across all dates with guarded visible-only refres
 });
 
 test('inbox row escapes identity, builds scoped review link, and only offers existing note', () => {
-  const source = js.match(/function adminQuickPlanRow\(plan,copy\)\{[\s\S]*?\n\}(?=\nfunction renderAdminQuickPlanInbox)/)?.[0];
+  const source = js.match(/function adminQuickPlanRow\(plan,copy\)\{[\s\S]*?\r?\n\}(?=\r?\nfunction renderAdminQuickPlanInbox)/)?.[0];
   assert.ok(source);
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const row = new Function('URLSearchParams','ACTIVE_CLINIC_ID','lang','escapeHtml', `${source}; return adminQuickPlanRow`)(URLSearchParams,'clinic-3','en',escapeHtml);

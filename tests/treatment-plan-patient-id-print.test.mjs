@@ -11,7 +11,7 @@ test('printed and shared treatment plans include the stored patient national ID'
     read('treatment-plan-i18n.js')
   ]);
   assert.match(html,/id="patientNationalId"/);
-  assert.match(html,/treatment-plan\.js\?v=20261006-patient-id-print/);
+  assert.match(html,/treatment-plan\.js\?v=20261016-whatsapp-message/);
   assert.match(html,/treatment-plan-i18n\.js\?v=20261006-patient-id-print/);
   assert.match(script,/state\.patient\.nationalId=normalizeNationalId\(\$\('patientNationalId'\)\.value\)/);
   assert.match(script,/\$\('patientNationalId'\)\.value=normalizeNationalId\(state\.patient\.nationalId\)/);
