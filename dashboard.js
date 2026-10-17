@@ -2266,6 +2266,10 @@ function rootCanalAftercareShareMessage(){
     ?'Dear patient, these instructions explain how to manage the discomfort commonly associated with root-canal treatment. Please read and follow them. Your safety is our priority.'
     :'عزيزنا المراجع، هذه تعليمات تخص التعامل مع الإزعاج الذي يرتبط عادةً بعلاج العصب وجذور الأسنان. يرجى الاطلاع عليها والعمل بما ورد فيها. سلامتك غايتنا.';
 }
+function rootCanalAftercareWhatsAppUrl(message){
+  const patient=patientById(pendingAftercareId),phone=normalizeWhatsappNumber($('rootCanalAftercarePhone').value)||patientWhatsappNumber(patient);
+  return phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;
+}
 async function copyRootCanalAftercareMessage({notify=false}={}){
   const message=rootCanalAftercareShareMessage();
   try{
@@ -2312,7 +2316,7 @@ async function runRootCanalAftercareAction(action){
   buttons.forEach(button=>button.disabled=true);
   $('rootCanalAftercareError').textContent='';$('rootCanalAftercareShareHelp').hidden=true;
   const message=action==='send'?rootCanalAftercareShareMessage():'';
-  const introductionCopied=action==='send'?await copyRootCanalAftercareMessage():false;
+  let openPreparedWhatsAppMessage=false;
   try{
     const url=await ensureRootCanalAftercareLink();
     const token=new URL(url).searchParams.get('token');
@@ -2328,19 +2332,16 @@ async function runRootCanalAftercareAction(action){
       const objectUrl=URL.createObjectURL(file);popup.location.href=objectUrl;setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
     }else{
       if(typeof File==='function'&&navigator.share&&navigator.canShare?.({files:[file]})){
-        await navigator.share({files:[file],title:lang==='en'?'Root-canal aftercare instructions':'تعليمات ما بعد علاج العصب',text:message});
-        $('rootCanalAftercareShareHelp').textContent=introductionCopied
-          ?(lang==='en'?'The PDF was shared and the WhatsApp introduction was copied. If WhatsApp omitted it, paste it into the chat, then confirm below.':'تمت مشاركة ملف PDF ونُسخت مقدمة واتساب. إذا لم يُظهرها واتساب، الصقها في المحادثة ثم أكّد الإرسال أدناه.')
-          :(lang==='en'?'The PDF was shared. If WhatsApp omitted the introduction, copy the visible message above and paste it into the chat, then confirm below.':'تمت مشاركة ملف PDF. إذا لم يُظهر واتساب المقدمة، انسخ النص الظاهر أعلاه والصقه في المحادثة ثم أكّد الإرسال أدناه.');
+        await navigator.share({files:[file],title:lang==='en'?'Root-canal aftercare instructions':'تعليمات ما بعد علاج العصب'});
+        $('rootCanalAftercareShareHelp').textContent=lang==='en'?'The PDF was shared. The patient WhatsApp chat will now open with the introduction ready to send—no copying required.':'تمت مشاركة ملف PDF. ستفتح الآن محادثة المريض والمقدمة جاهزة للإرسال دون نسخ أو لصق.';
+        openPreparedWhatsAppMessage=true;
       }else{
-        download();$('rootCanalAftercareShareHelp').textContent=introductionCopied
-          ?(lang==='en'?'PDF downloaded and the introduction copied. Open WhatsApp, paste the introduction, attach the PDF, then confirm here.':'تم تنزيل ملف PDF ونسخ المقدمة. افتح واتساب، الصق المقدمة وأرفق الملف، ثم أكّد الإرسال هنا.')
-          :(lang==='en'?'PDF downloaded. Open WhatsApp, copy the visible introduction above, attach the PDF, then confirm here.':'تم تنزيل ملف PDF. افتح واتساب، انسخ المقدمة الظاهرة أعلاه وأرفق الملف، ثم أكّد الإرسال هنا.');
-        const patient=patientById(pendingAftercareId),phone=normalizeWhatsappNumber($('rootCanalAftercarePhone').value)||patientWhatsappNumber(patient),fallback=$('rootCanalAftercareWhatsAppFallback');
-        fallback.href=phone?`https://wa.me/${phone}?text=${encodeURIComponent(message)}`:`https://wa.me/?text=${encodeURIComponent(message)}`;fallback.hidden=false;
+        download();$('rootCanalAftercareShareHelp').textContent=lang==='en'?'PDF downloaded. Open WhatsApp from the button below; the patient chat and introduction are ready, then attach the downloaded PDF.':'تم تنزيل ملف PDF. افتح واتساب من الزر أدناه؛ محادثة المريض والمقدمة جاهزتان، ثم أرفق ملف PDF الذي تم تنزيله.';
+        const fallback=$('rootCanalAftercareWhatsAppFallback');fallback.href=rootCanalAftercareWhatsAppUrl(message);fallback.hidden=false;
       }
       $('rootCanalAftercareShareHelp').hidden=false;aftercareWhatsappOpened=true;
       $('confirmRootCanalAftercareSentBtn').hidden=false;
+      if(openPreparedWhatsAppMessage)setTimeout(()=>window.location.assign(rootCanalAftercareWhatsAppUrl(message)),80);
     }
   }catch(error){if(popup&&!popup.closed)popup.close();if(error?.name!=='AbortError')$('rootCanalAftercareError').textContent=error.message||'تعذر إنشاء الملف.'}
   finally{buttons.forEach(button=>button.disabled=false)}

@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261016';
+const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction';
 const APP_SHELL=[
   './',
   './index.html',

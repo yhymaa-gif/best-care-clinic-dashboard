@@ -207,16 +207,20 @@ test('both share surfaces send PDF files without a URL and provide attachment fa
     assert.match(source,/format=pdf/);
     assert.match(source,/navigator\.canShare\?\.\(\{files:\[file\]\}\)/);
     assert.match(source,/navigator\.share\(\{files:\[file\],title:/);
+    assert.doesNotMatch(source,/navigator\.share\(\{files:\[file\],title:[^}]*text:/);
     assert.doesNotMatch(source,/navigator\.share\(\{[^}]*url:/);
     assert.match(source,/anchor\.download=(?:filename|'root-canal-aftercare\.pdf')/);
   }
   for(const source of [dashboard,publicPage]){
     assert.match(source,/عزيزنا المراجع، هذه تعليمات تخص التعامل مع الإزعاج الذي يرتبط عادةً بعلاج العصب وجذور الأسنان/);
-    assert.match(source,/navigator\.clipboard\?\.writeText/);
-    assert.match(source,/إذا لم (?:يُظهرها واتساب|يظهر النص في واتساب)/);
+    assert.match(source,/window\.location\.assign/);
+    assert.match(source,/دون نسخ أو لصق/);
   }
-  assert.match(dashboard,/الصق المقدمة وأرفق الملف/);
-  assert.match(publicPage,/الصقها في واتساب ثم أرفق الملف/);
+  assert.match(dashboard,/function rootCanalAftercareWhatsAppUrl\(message\)/);
+  assert.match(dashboard,/https:\/\/wa\.me\/\$\{phone\}\?text=/);
+  assert.match(dashboard,/setTimeout\(\(\)=>window\.location\.assign\(rootCanalAftercareWhatsAppUrl\(message\)\),80\)/);
+  assert.match(publicPage,/https:\/\/wa\.me\/\?text=/);
+  assert.doesNotMatch(publicPage,/copyWhatsappIntroduction|navigator\.clipboard/);
 });
 
 test('general and clinic instructions retain independent active links in either issuance order',async()=>{
