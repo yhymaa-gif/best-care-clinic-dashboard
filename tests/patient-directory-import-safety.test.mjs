@@ -6,8 +6,16 @@ let fixtureSequence=0;
 async function localDirectoryFixture(registry){
   let source=await readFile(new URL('../netlify/functions/lib/patient-directory.mjs',import.meta.url),'utf8');
   source=source.replace("import { getStore } from '@netlify/blobs';",`
-    let fixtureData=${JSON.stringify(registry)}, fixtureWriteCount=0;
-    const getStore=()=>({get:async()=>structuredClone(fixtureData),setJSON:async(_key,value)=>{fixtureData=structuredClone(value);fixtureWriteCount++;}});
+    let fixtureData=${JSON.stringify(registry)}, fixtureWriteCount=0, fixtureEtag='fixture-0';
+    const getStore=()=>({
+      get:async()=>structuredClone(fixtureData),
+      getWithMetadata:async()=>({data:structuredClone(fixtureData),etag:fixtureEtag}),
+      setJSON:async(_key,value,condition={})=>{
+        if(condition.onlyIfMatch && condition.onlyIfMatch!==fixtureEtag) return {modified:false};
+        if(condition.onlyIfNew && fixtureData) return {modified:false};
+        fixtureData=structuredClone(value);fixtureWriteCount++;fixtureEtag='fixture-'+fixtureWriteCount;return {modified:true};
+      }
+    });
     export const inspectFixture=()=>({registry:structuredClone(fixtureData),writes:fixtureWriteCount});
   `).replace("from './patient-identity.mjs'",`from ${JSON.stringify(new URL('../netlify/functions/lib/patient-identity.mjs',import.meta.url).href)}`);
   return import(`data:text/javascript;base64,${Buffer.from(source+`\n// isolated fixture ${++fixtureSequence}`).toString('base64')}`);

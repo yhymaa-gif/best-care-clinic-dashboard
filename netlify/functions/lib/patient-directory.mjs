@@ -344,9 +344,16 @@ export function reconcileDirectorySnapshot(registry = {}, meta = {}) {
 }
 
 export async function reconcilePatientDirectoryNames(meta = {}) {
-  const current = await getPatientDirectory();
-  const result = reconcileDirectorySnapshot(current, meta);
-  if (result.changed) await directoryStore().setJSON(DIRECTORY_KEY, result.registry);
+  const store = directoryStore();
+  const { registry, etag } = await readRegistrySnapshot(store);
+  const result = reconcileDirectorySnapshot(registry, meta);
+  if (result.changed) {
+    const saved = await saveRegistrySnapshot(store, result.registry, etag);
+    if (!saved.modified) {
+      if (Number(meta._casAttempt || 0) >= 2) throw new Error('Directory revision conflict');
+      return reconcilePatientDirectoryNames({ ...meta, _casAttempt: Number(meta._casAttempt || 0) + 1 });
+    }
+  }
   return result;
 }
 
@@ -354,11 +361,60 @@ export async function getPatientDirectory() {
   return await directoryStore().get(DIRECTORY_KEY, { type: 'json', consistency: 'strong' }) || { records: {}, aliases: {}, revision: 0, updatedAt: 0 };
 }
 
+const readRegistrySnapshot = async store => {
+  const snapshot = await store.getWithMetadata(DIRECTORY_KEY, { type: 'json', consistency: 'strong' });
+  return { registry: snapshot?.data || { records: {}, aliases: {}, revision: 0, updatedAt: 0 }, etag: snapshot?.etag || null };
+};
+const saveRegistrySnapshot = (store, registry, etag) => store.setJSON(DIRECTORY_KEY, registry,
+  etag ? { onlyIfMatch: etag } : { onlyIfNew: true });
+
+// The image-import path may add approved identities, but it must never enrich,
+// rename, evict, or merge an existing Patient Master record from OCR alone.
+export async function insertApprovedPatientDirectory(values, meta = {}) {
+  const list = Array.isArray(values) ? values : [];
+  if (!list.length) return { changed: false, inserted: 0 };
+  const store = meta.store || directoryStore();
+  const { registry, etag } = await readRegistrySnapshot(store);
+  if (!Number.isInteger(meta.expectedRevision) || meta.expectedRevision !== Number(registry.revision || 0)) {
+    throw new Error('Directory revision conflict');
+  }
+  const records = { ...(registry.records || {}) };
+  const aliases = { ...(registry.aliases || {}) };
+  const now = Number(meta.updatedAt || Date.now());
+  if (Object.keys(records).length + list.length > MAX_RECORDS) throw new Error('Directory capacity reached');
+  for (const source of list) {
+    const patient = directoryPatient(source);
+    const file = normalizePatientFile(patient.fileNo);
+    const mobile = normalizePatientPhone(patient.mobile);
+    if (!file || !/^05\d{8}$/.test(mobile) || patient.fullName.split(/\s+/).length < 2) throw new Error('Approved identity incomplete');
+    const keys = [`file:${file}`, `phone:${mobile}`];
+    if (keys.some(key => aliases[key]) || Object.values(records).some(record =>
+      normalizePatientFile(record.fileNo) === file || normalizePatientPhone(record.mobile) === mobile)) {
+      throw new Error('Identity appeared in Patient Master after preview');
+    }
+    const canonical = hash(`file:${file}`);
+    if (records[canonical]) throw new Error('Canonical identity already exists');
+    const record = {
+      canonical, id: patient.id, fullName: patient.fullName, fileNo: file, mobile,
+      nationalId: '', aliases: keys, clinicIds: meta.clinicId ? [cleanText(meta.clinicId, 20)] : [],
+      latestClinicId: cleanText(meta.clinicId, 20), latestPatientId: patient.id,
+      firstSeenAt: now, lastSeenAt: now, updatedAt: now, importedAt: now,
+      updatedBy: cleanText(meta.actor, 120), dataQualityFlags: [], reviewRequired: false
+    };
+    records[canonical] = record;
+    keys.forEach(key => { aliases[key] = canonical; });
+  }
+  const next = { ...registry, records, aliases, revision: Number(registry.revision || 0) + 1, updatedAt: now };
+  const saved = await saveRegistrySnapshot(store, next, etag);
+  if (!saved.modified) throw new Error('Directory revision conflict');
+  return { changed: true, inserted: list.length, revision: next.revision };
+}
+
 export async function upsertPatientDirectory(patients, meta = {}) {
   const list = Array.isArray(patients) ? patients : [];
   if (!list.length) return { changed: false, revision: 0 };
   const store = directoryStore();
-  const registry = await getPatientDirectory();
+  const { registry, etag } = await readRegistrySnapshot(store);
   const records = { ...(registry.records || {}) };
   const aliases = { ...(registry.aliases || {}) };
   const owners = aliasOwners(records), phones = phoneOwners(records);
@@ -439,12 +495,17 @@ export async function upsertPatientDirectory(patients, meta = {}) {
     revision: Number(registry.revision || 0) + 1,
     updatedAt: batchUpdatedAt
   };
-  await store.setJSON(DIRECTORY_KEY, nextRegistry);
+  const saved = await saveRegistrySnapshot(store, nextRegistry, etag);
+  if (!saved.modified) {
+    if (Number(meta._casAttempt || 0) >= 2) throw new Error('Directory revision conflict');
+    return upsertPatientDirectory(patients, { ...meta, _casAttempt: Number(meta._casAttempt || 0) + 1 });
+  }
   return { changed: true, revision: nextRegistry.revision, records: nextRegistry.records };
 }
 
 export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
-  const registry = await getPatientDirectory();
+  const store = directoryStore();
+  const { registry, etag } = await readRegistrySnapshot(store);
   const aliases = { ...(registry.aliases || {}) };
   const records = { ...(registry.records || {}) };
   const normalizedAliases = [...new Set((lookupAliases || []).filter(alias => /^(file|national):/.test(alias)))];
@@ -490,13 +551,18 @@ export async function correctDirectoryPatient(lookupAliases, value, meta = {}) {
   records[canonical] = next;
   next.aliases.forEach(alias => { aliases[alias] = canonical; });
   const nextRegistry = { records, aliases, revision: Number(registry.revision || 0) + 1, updatedAt: now };
-  await directoryStore().setJSON(DIRECTORY_KEY, nextRegistry);
+  const saved = await saveRegistrySnapshot(store, nextRegistry, etag);
+  if (!saved.modified) {
+    if (Number(meta._casAttempt || 0) >= 2) throw new Error('Directory revision conflict');
+    return correctDirectoryPatient(lookupAliases, value, { ...meta, _casAttempt: Number(meta._casAttempt || 0) + 1 });
+  }
   return { canonical, record: next, revision: nextRegistry.revision };
 }
 
 export async function importPatientDirectory(values, meta = {}) {
   const input = Array.isArray(values) ? values.slice(0, 3000) : [];
-  const registry = await getPatientDirectory();
+  const store = directoryStore();
+  const { registry, etag } = await readRegistrySnapshot(store);
   const aliases = { ...(registry.aliases || {}) };
   const records = { ...(registry.records || {}) };
   const owners = aliasOwners(records), phones = phoneOwners(records);
@@ -609,7 +675,11 @@ export async function importPatientDirectory(values, meta = {}) {
     updatedAt: now
   };
   const reconciled = reconcileDirectorySnapshot(nextRegistry, { actor: meta.actor || 'patient-import', now });
-  await directoryStore().setJSON(DIRECTORY_KEY, reconciled.registry);
+  const saved = await saveRegistrySnapshot(store, reconciled.registry, etag);
+  if (!saved.modified) {
+    if (Number(meta._casAttempt || 0) >= 2) throw new Error('Directory revision conflict');
+    return importPatientDirectory(values, { ...meta, _casAttempt: Number(meta._casAttempt || 0) + 1 });
+  }
   return { ...result, duplicateRecordsMerged: reconciled.duplicateRecordsMerged, filesReviewed: reconciled.filesReviewed, correctedNames: result.correctedNames + reconciled.correctedNames, revision: reconciled.registry.revision, records: reconciled.registry.records };
 }
 
