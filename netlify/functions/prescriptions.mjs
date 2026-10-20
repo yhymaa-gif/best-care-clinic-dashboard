@@ -2,6 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { createHash } from 'node:crypto';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 import { patientIdentityKeys } from './lib/patient-identity.mjs';
+import { generatePrescriptionPdf } from './lib/prescription-pdf.mjs';
 
 const headers=apiHeaders('GET,PUT,OPTIONS');
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
@@ -64,7 +65,13 @@ export default async request=>{
   if(request.method==='GET'){
     const record=canonical?await store.get(permanentKey(clinicId,canonical),{type:'json',consistency:'strong'}):null;
     const legacy=record?null:await store.get(legacyKey(clinicId,date,patientId),{type:'json',consistency:'strong'});
-    return reply({ok:true,record:record||legacy||null});
+    const result=record||legacy||null;
+    if(url.searchParams.get('format')==='pdf'){
+      if(!result?.prescription)return reply({error:'Prescription not found'},404);
+      const language=url.searchParams.get('lang')==='en'?'en':'ar',bytes=await generatePrescriptionPdf(result.prescription,language);
+      return new Response(bytes,{status:200,headers:{...headers,'content-type':'application/pdf','content-disposition':`attachment; filename="prescription-${hash(patientId).slice(0,12)}.pdf"`,'cache-control':'private, no-store, max-age=0','x-content-type-options':'nosniff'}});
+    }
+    return reply({ok:true,record:result});
   }
   const body=await request.json().catch(()=>null),prescription=cleanPrescription(body?.prescription);
   if(!prescription.diagnosis||!prescription.medicines.length||!prescription.medicalReview||!prescription.doctorConfirmed)return reply({error:'Prescription review is incomplete'},400);
