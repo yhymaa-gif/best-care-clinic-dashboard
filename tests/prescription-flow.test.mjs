@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { generatePrescriptionPdf } from '../netlify/functions/lib/prescription-pdf.mjs';
 
 const read = file => readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 
@@ -47,4 +48,22 @@ test('prescription flow is patient-linked, categorized, recoverable, and stored 
   assert.match(index, /id="operationPrescriptionsCount"/);
   assert.match(toml, /from = "\/api\/prescriptions"/);
   assert.match(sw, /prescription\.html/);
+});
+
+test('prescription WhatsApp flow shares the generated PDF with the message', async () => {
+  const [js,fn,html]=await Promise.all([read('prescription.js'),read('netlify/functions/prescriptions.mjs'),read('prescription.html')]);
+  assert.match(js,/prescriptionUrl\(\{format:'pdf',lang:language\}\)/);
+  assert.match(js,/navigator\.canShare\?\.\(\{files:/);
+  assert.match(js,/navigator\.share\(\{title:tr\('وصفة طبية'\),text,files:\[file\]\}\)/);
+  assert.match(js,/downloadPdf\(file\)/);
+  assert.match(fn,/generatePrescriptionPdf\(result\.prescription,language\)/);
+  assert.match(fn,/'content-type':'application\/pdf'/);
+  assert.match(fn,/'cache-control':'private, no-store, max-age=0'/);
+  assert.match(html,/prescription\.js\?v=20261020-whatsapp-pdf/);
+  const bytes=await generatePrescriptionPdf({
+    patient:{name:'مريض تجريبي',file:'RX-101'},diagnosis:'سبب تجريبي موثق',issuedAt:new Date().toISOString(),
+    medicines:[{name:'Paracetamol',strength:'500 mg',dose:'قرص واحد',frequency:'عند الحاجة',duration:'ثلاثة أيام',instructions:'بعد الطعام'}],notes:'ملاحظة تجريبية'
+  },'ar');
+  assert.equal(bytes.subarray(0,5).toString(),'%PDF-');
+  assert.ok(bytes.length>10000);
 });
