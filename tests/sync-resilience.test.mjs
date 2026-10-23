@@ -32,8 +32,8 @@ test('remote push wakes open pages and preserves a lightweight polling fallback'
   assert.match(serviceWorker, /client\.postMessage\(message\)/);
   assert.match(dashboard, /navigator\.serviceWorker\.addEventListener\('message'/);
   assert.match(dashboard, /receiveServiceWorkerSyncSignal\(event\.data\)/);
-  assert.match(dashboard, /POLL_MS=5\*1000/);
-  assert.match(dashboard, /syncDisplayVisible\(\)\?10000:60000/);
+  assert.match(dashboard, /POLL_MS=60\*1000/);
+  assert.match(dashboard, /syncDisplayVisible\(\)\?2\*60\*1000:10\*60\*1000/);
   assert.match(push, /clinicId: event\.clinicId/);
   assert.match(push, /revision: Number\(event\.revision/);
   assert.match(state, /date:state\.date,revision:state\.revision/);

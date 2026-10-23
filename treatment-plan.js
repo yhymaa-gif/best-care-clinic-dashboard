@@ -75,6 +75,8 @@
     let procedureCatalog=DEFAULT_PROCEDURES.map(item=>({...item}));
     const phaseDisplayTitle=(phase,index=0)=>{const definition=TREATMENT_PHASES.find(item=>item.kind===phase?.kind),raw=String(phase?.title||'').trim();if(definition&&(!raw||raw===definition.title||raw===definition.titleEn))return tr(definition.title,definition.titleEn);return raw||tr(`المرحلة ${index+1}`,`Stage ${index+1}`)};
     const phaseDisplayHint=phase=>{const definition=TREATMENT_PHASES.find(item=>item.kind===phase?.kind);return definition?tr(definition.hint,definition.hintEn):''};
+    let procedureCatalogFetchedAt=0,procedureCatalogLoading=false;
+    const PROCEDURE_CATALOG_REFRESH_MS=5*60*1000;
     const DEFAULT_DIAGNOSIS='توضح الإجراءات المدرجة في هذه الخطة الاحتياجات العلاجية اللازمة للوصول إلى نتيجة مستقرة وظيفيًا وجماليًا، وتشمل — بحسب حالة المريض — الإجراءات العلاجية والتعويضية والتحفظية اللازمة للمحافظة على صحة الأسنان والأنسجة المحيطة.';
     const blankItem=()=>({code:'',service:'',variant:'',customService:'',teeth:[],qty:1,unitPriceBefore:'',unitPriceAfter:'',priceSource:'',beforePriceSource:'',afterPriceSource:'',type:'billable',includedLabel:''});
     const inferProcedureCategory=value=>{
@@ -383,13 +385,17 @@
         return data.exists?{plan:data.plan,carriedForward:Boolean(data.carriedForward)}:null;
       }catch{return null}
     }
-    async function loadProcedureCatalog(rerender=false){
+    async function loadProcedureCatalog(rerender=false,force=false){
+      if(procedureCatalogLoading)return false;
+      if(!force&&procedureCatalogFetchedAt&&Date.now()-procedureCatalogFetchedAt<PROCEDURE_CATALOG_REFRESH_MS)return false;
+      procedureCatalogLoading=true;
       try{
         const response=await fetch(`/api/treatment-catalog?clinic=${encodeURIComponent(clinicId)}`,{credentials:'include',cache:'no-store'});
         if(!response.ok)return false;
         const data=await response.json(),remoteItems=Array.isArray(data.items)&&data.items.length?data.items:[];
         const remoteIds=new Set(remoteItems.map(item=>String(item?.id||'')));
         const items=remoteItems.length?[...remoteItems,...DEFAULT_PROCEDURES.filter(item=>!remoteIds.has(item.id))]:DEFAULT_PROCEDURES;
+        procedureCatalogFetchedAt=Date.now();
         const changed=JSON.stringify(items)!==JSON.stringify(procedureCatalog);
         procedureCatalog=items.map(item=>({
           id:safeText(item.id,50),name:safeText(item.name,120),
@@ -422,6 +428,7 @@
         if(changed&&rerender&&state){render();if(planChanged){hasUnsyncedChanges=true;persistLocalPlan();await savePlan(true)}}
         return changed;
       }catch{return false}
+      finally{procedureCatalogLoading=false}
     }
     function loadLocalPlan(){
       try{
@@ -1428,7 +1435,7 @@
       $('saveStatus').classList.toggle('saved',Boolean(remote&&!remoteResult?.carriedForward&&!requestedNewPlan));
       applyUiLanguage();
       if(['submitted','patient_accepted'].includes(state.meta.status)||(currentUser?.role==='admin'&&['approved','approved_signed','rejected','cancelled'].includes(state.meta.status)))syncPlanRegistry(state.meta.status,state.meta.rejectionReason||'');
-      setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},15000);
+      setInterval(()=>{if(!document.hidden)loadProcedureCatalog(true)},PROCEDURE_CATALOG_REFRESH_MS);
       window.addEventListener('focus',()=>loadProcedureCatalog(true));
     }
     init();

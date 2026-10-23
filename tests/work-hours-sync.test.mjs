@@ -41,14 +41,14 @@ function harness(overrides={}){
 
 test('working-hours cadence covers visible, background and floating clinic display',()=>{
   const {context:c}=harness();
-  assert.equal(c.syncCadence(working).delay,5000);
+  assert.equal(c.syncCadence(working).delay,60000);
   c.document.hidden=true;
-  assert.equal(c.syncCadence(working).delay,300000);
+  assert.equal(c.syncCadence(working).delay,900000);
   c.window.documentPictureInPicture={window:{closed:false}};
-  assert.equal(c.syncCadence(working).delay,5000);
+  assert.equal(c.syncCadence(working).delay,60000);
   c.window.documentPictureInPicture.window.closed=true;
-  assert.equal(c.syncCadence(working).delay,300000);
-  assert.equal(c.syncCadence(Date.parse('2026-09-11T16:00:00+03:00')).delay,300000);
+  assert.equal(c.syncCadence(working).delay,900000);
+  assert.equal(c.syncCadence(Date.parse('2026-09-11T16:00:00+03:00')).delay,900000);
   assert.equal(c.syncCadence(Date.parse('2026-09-07T06:59:59+03:00')).workHours,false);
   assert.equal(c.syncCadence(Date.parse('2026-09-07T23:59:59+03:00')).workHours,true);
 });

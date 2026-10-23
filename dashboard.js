@@ -97,19 +97,20 @@ const PATIENT_PROFILE_API='/api/patient-profile';
 const PATIENTS_API='/api/patients';
 const PATIENT_LOOKUP_API='/api/patient-lookup';
 const ALERT_DISPLAY_MS=5*60*1000;
-// Keep visible clinic/admin screens responsive even when Web Push is disabled
-// or delayed. Hidden screens retain their reduced cadence below.
-const POLL_MS=5*1000;
-const SYNC_WORK_HIDDEN_MS=5*60*1000;
-const SYNC_OFF_HOURS_MS=15*60*1000;
-const SYNC_OFF_HOURS_HIDDEN_MS=15*60*1000;
+// Remote push wakes active pages after changes. Polling is only a safety net,
+// so keep it deliberately light to avoid charging one function invocation per
+// open tab every few seconds.
+const POLL_MS=60*1000;
+const SYNC_WORK_HIDDEN_MS=15*60*1000;
+const SYNC_OFF_HOURS_MS=30*60*1000;
+const SYNC_OFF_HOURS_HIDDEN_MS=60*60*1000;
 // Auxiliary feeds (plans, alerts, labs) do not need to run on every patient
 // revision poll. Keeping them on their own cadence reduces render/API churn
 // while the patient list remains live during working hours.
-const AUX_WORK_MS=30000;
-const AUX_WORK_HIDDEN_MS=120000;
-const AUX_OFF_HOURS_MS=5*60*1000;
-const AUX_OFF_HOURS_HIDDEN_MS=15*60*1000;
+const AUX_WORK_MS=5*60*1000;
+const AUX_WORK_HIDDEN_MS=15*60*1000;
+const AUX_OFF_HOURS_MS=15*60*1000;
+const AUX_OFF_HOURS_HIDDEN_MS=30*60*1000;
 const RIYADH_OFFSET_MS=3*60*60*1000;
 function syncDisplayVisible(){return !document.hidden||Boolean(window.documentPictureInPicture?.window&&!window.documentPictureInPicture.window.closed)}
 function syncCadence(now=Date.now()){
@@ -131,13 +132,13 @@ function syncCadenceCopy(cadence=syncCadence()){
 }
 function presenceCadence(){
   const cadence=syncCadence();
-  if(cadence.workHours)return document.hidden?5*60*1000:60*1000;
-  return document.hidden?30*60*1000:10*60*1000;
+  if(cadence.workHours)return document.hidden?15*60*1000:5*60*1000;
+  return document.hidden?60*60*1000:30*60*1000;
 }
 function adminHubCadence(){
   const cadence=syncCadence();
-  if(cadence.workHours)return syncDisplayVisible()?10000:60000;
-  return document.hidden?30*60*1000:10*60*1000;
+  if(cadence.workHours)return syncDisplayVisible()?2*60*1000:10*60*1000;
+  return document.hidden?60*60*1000:30*60*1000;
 }
 const DASHBOARD_BUILD='7.73-admin-queue-patient-id';
 const RELEASE_SUMMARY_FALLBACK={ar:'إظهار قسمي الانتظار والمنجز دائمًا، وإضافة رقم هوية المريض إلى النسخة المطبوعة من الخطة العلاجية.',en:'Waiting and completed sections now remain visible, and the patient national ID is included in the printed treatment plan.'};
@@ -2672,7 +2673,7 @@ async function refreshOperationsPrescriptions(){
 }
 function scheduleOperationsPrescriptionPolling(){
   clearTimeout(operationsCenter.prescriptionsTimer);if(!operationsCenter.prescriptionsStarted)return;
-  const cadence=syncCadence(),delay=document.hidden?Math.max(cadence.delay,120000):(cadence.workHours?30000:5*60*1000);
+  const cadence=syncCadence(),delay=document.hidden?(cadence.workHours?15*60*1000:60*60*1000):(cadence.workHours?5*60*1000:30*60*1000);
   operationsCenter.prescriptionsTimer=setTimeout(async()=>{await refreshOperationsPrescriptions();scheduleOperationsPrescriptionPolling()},delay);
 }
 function startOperationsPrescriptionPolling(){
@@ -5941,7 +5942,7 @@ function appointmentRequestCadence(){
   const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',weekday:'short',hour:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
   const read=type=>parts.find(part=>part.type===type)?.value||'';
   const hour=Number(read('hour')),working=read('weekday')!=='Fri'&&hour>=14&&hour<23;
-  return working?(document.hidden?2*60*1000:45*1000):(document.hidden?15*60*1000:3*60*1000);
+  return working?(document.hidden?10*60*1000:3*60*1000):(document.hidden?30*60*1000:15*60*1000);
 }
 function appointmentRequestLink(){return `${location.origin}/book`}
 function renderAppointmentRequests(){
