@@ -43,7 +43,7 @@
       clinicRow:c=>`${n(c.treatedPatients)} مريض · ${n(c.procedures)} إجراء · ${n(c.labSent)} معمل`,
       totalTitle:'الإجمالي منذ البداية',totalSince:m=>`منذ ${m} حتى اليوم`,monthsTitle:'الأداء الشهري',monthsHint:'اضغط أي شهر لعرضه في العداد',monthsLoading:'جارٍ تجميع الأشهر…',monthsError:'تعذر تحميل الأشهر.',
       totals:{uniquePatients:'إجمالي المرضى',procedureUnits:'إجمالي الإجراءات',labSent:'إجمالي المرسل للمعمل',completed:'إجمالي المكتمل'},
-      metrics:{procedureUnits:'الإجراءات',uniquePatients:'المرضى',labSent:'المعمل',completed:'المكتمل'},table:'جدول',chart:'رسم',customMonth:m=>m,
+      metrics:{procedureUnits:'الإجراءات',uniquePatients:'المرضى',labSent:'المعمل',completed:'المكتمل'},table:'جدول',chart:'رسم',fold:'طيّ العداد',expand:'عرض العداد',show:'عرض',hide:'إخفاء',customMonth:m=>m,
       cols:{month:'الشهر',patients:'المرضى',procedures:'الإجراءات',lab:'المعمل',completed:'المكتمل',rate:'الإنجاز'}},
     en:{kicker:'Complete counter · all clinics',title:'Clinic pulse',live:'Live',updated:'Updated',ago:s=>s<10?'now':s<60?`${s}s ago`:`${Math.floor(s/60)}m ago`,loading:'Calculating…',error:'Could not refresh — retrying automatically',
       ranges:{today:'Today',yesterday:'Yesterday',week:'7 days',month:'This month',days30:'30 days'},allClinics:'All clinics',refresh:'Refresh',details:'Full report',
@@ -56,7 +56,7 @@
       clinicRow:c=>`${n(c.treatedPatients)} patients · ${n(c.procedures)} procedures · ${n(c.labSent)} lab`,
       totalTitle:'All-time total',totalSince:m=>`since ${m}`,monthsTitle:'Monthly performance',monthsHint:'Tap a month to open it in the counter',monthsLoading:'Building months…',monthsError:'Could not load months.',
       totals:{uniquePatients:'Total patients',procedureUnits:'Total procedures',labSent:'Total sent to lab',completed:'Total completed'},
-      metrics:{procedureUnits:'Procedures',uniquePatients:'Patients',labSent:'Lab',completed:'Completed'},table:'Table',chart:'Chart',customMonth:m=>m,
+      metrics:{procedureUnits:'Procedures',uniquePatients:'Patients',labSent:'Lab',completed:'Completed'},table:'Table',chart:'Chart',fold:'Fold counter',expand:'Show counter',show:'Show',hide:'Hide',customMonth:m=>m,
       cols:{month:'Month',patients:'Patients',procedures:'Procedures',lab:'Lab',completed:'Completed',rate:'Done'}}
   };
   const TILE_ORDER=['uniquePatients','procedureUnits','labSent','completed','appointments','cancelled','labOverdue','labWaitingToSend'];
@@ -64,7 +64,7 @@
   const UP_IS_BAD=new Set(['cancelled','labOverdue','labWaitingToSend']);
   const SPARK={procedureUnits:'procedures',labSent:'labSent',completed:'completed',appointments:'appointments',cancelled:'cancelled'};
   const TONES={uniquePatients:'navy',procedureUnits:'gold',labSent:'blue',completed:'green',appointments:'teal',cancelled:'red',labOverdue:'red',labWaitingToSend:'orange'};
-  const state={range:'today',custom:null,clinic:'all',data:null,prev:null,months:null,monthsError:'',monthMetric:'procedureUnits',monthView:'chart',focus:null,loading:false,error:'',requestId:0,monthsRequestId:0,started:false,clinics:[],version:'',changeTimer:null,tickTimer:null,shown:{},changed:new Set()};
+  const state={folded:(()=>{try{return localStorage.getItem('bestcare_counter_folded')==='1'}catch{return false}})(),monthsOpen:(()=>{try{return localStorage.getItem('bestcare_counter_months_open')==='1'}catch{return false}})(),range:'today',custom:null,clinic:'all',data:null,prev:null,months:null,monthsError:'',monthMetric:'procedureUnits',monthView:'chart',focus:null,loading:false,error:'',requestId:0,monthsRequestId:0,started:false,clinics:[],version:'',changeTimer:null,tickTimer:null,shown:{},changed:new Set()};
 
   const lng=()=>String(document.documentElement.lang||'').toLowerCase().startsWith('en')?'en':'ar';
   const t=()=>COPY[lng()];
@@ -155,10 +155,11 @@
     const hero=`<div class="ac-hero">
       <div class="ac-hero-copy"><small>${esc(copy.kicker)}</small><h2>${esc(copy.title)}</h2>
         <div class="ac-hero-meta"><span class="ac-live${state.error?' is-error':''}${state.loading?' is-loading':''}" role="status"><i></i>${esc(state.error?copy.error:state.loading&&!s?copy.loading:copy.live)}</span><span class="ac-period">${esc(periodLabel())}${state.clinic!=='all'?` · ${esc(clinicName(state.clinic))}`:''}</span><span class="ac-ago" data-ago></span></div>
+        ${state.folded&&s?`<div class="ac-mini">${['uniquePatients','procedureUnits','labSent','completed'].map(key=>`<span><b>${n(s[key])}</b>${esc(copy.tiles[key])}</span>`).join('')}</div>`:''}
       </div>
       <div class="ac-ring" style="--p:${rate}" title="${esc(copy.ring)}"><div><strong data-count="ring" data-value="${s?rate:''}">${s?n(rate):'—'}</strong><span>%</span></div><small>${esc(copy.ring)}</small>${s?`<em>${esc(copy.ringSub(s))}</em>`:''}</div>
       <div class="ac-controls"><div class="ac-seg" role="group">${rangeButtons}</div>
-        <div class="ac-controls-row"><select class="ac-select" aria-label="${esc(copy.allClinics)}">${options}</select><button type="button" class="ac-btn" data-action="refresh" ${state.loading?'disabled':''} title="${esc(copy.refresh)}">${icon('refresh','ac-icon ac-spin')}<span>${esc(copy.refresh)}</span></button><a class="ac-btn ac-btn-light" href="${esc(detailsUrl())}" target="_blank" rel="noopener">${icon('external')}<span>${esc(copy.details)}</span></a></div>
+        <div class="ac-controls-row"><select class="ac-select" aria-label="${esc(copy.allClinics)}">${options}</select><button type="button" class="ac-btn" data-action="refresh" ${state.loading?'disabled':''} title="${esc(copy.refresh)}">${icon('refresh','ac-icon ac-spin')}<span>${esc(copy.refresh)}</span></button><a class="ac-btn ac-btn-light" href="${esc(detailsUrl())}" target="_blank" rel="noopener">${icon('external')}<span>${esc(copy.details)}</span></a><button type="button" class="ac-btn" data-action="fold" aria-expanded="${!state.folded}">${esc(state.folded?copy.expand:copy.fold)}</button></div>
       </div>
     </div>`;
     const tiles=TILE_ORDER.map(key=>{
@@ -169,7 +170,9 @@
         <small>${s?esc(copy.sub[key](s)):'&nbsp;'}</small>${sparkline(key)}</button>`;
     }).join('');
     const drill=state.focus&&s?`<div class="ac-drill tone-${TONES[state.focus]}"><div class="ac-drill-head"><h3>${icon(state.focus)}${esc(copy.tiles[state.focus])} <span>${n(s[state.focus])}</span></h3><button type="button" class="ac-close" data-action="close" aria-label="${esc(copy.close)}">${icon('close')}</button></div><div class="ac-drill-grid">${drillContent(state.focus)}</div></div>`:`<p class="ac-hint">${esc(copy.tapHint)}</p>`;
-    root.innerHTML=`${hero}<div class="ac-tiles">${tiles}</div>${drill}<div class="ac-months">${monthsSection()}</div>`;
+    const monthsToggle=`<button type="button" class="ac-months-toggle" data-action="months" aria-expanded="${state.monthsOpen}"><span>${icon('appointments')}${esc(copy.totalTitle)} · ${esc(copy.monthsTitle)}</span><b>${esc(state.monthsOpen?copy.hide:copy.show)}</b></button>`;
+    root.classList.toggle('is-folded',state.folded);
+    root.innerHTML=state.folded?hero:`${hero}<div class="ac-tiles">${tiles}</div>${drill}${monthsToggle}${state.monthsOpen?`<div class="ac-months">${monthsSection()}</div>`:''}`;
     root.setAttribute('aria-busy',String(state.loading));
     document.body.classList.toggle('admin-counter-ready',Boolean(state.data));
     animateCounts();updateAgo();scrollChartToLatest();showReadout(root.querySelector('.ac-col.is-selected')||[...root.querySelectorAll('.ac-col')].pop());
@@ -203,13 +206,15 @@
     if(target.dataset.monthView){state.monthView=target.dataset.monthView;render();return}
     if(target.dataset.month){const current=riyadhToday().slice(0,7);target.dataset.month===current?setRange('month'):setRange('custom',target.dataset.month);root.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});return}
     if(target.dataset.action==='close'){state.focus=null;render();return}
-    if(target.dataset.action==='refresh'){load();loadMonths()}
+    if(target.dataset.action==='fold'){state.folded=!state.folded;try{localStorage.setItem('bestcare_counter_folded',state.folded?'1':'0')}catch{}render();return}
+    if(target.dataset.action==='months'){state.monthsOpen=!state.monthsOpen;try{localStorage.setItem('bestcare_counter_months_open',state.monthsOpen?'1':'0')}catch{}if(state.monthsOpen&&!state.months)loadMonths();render();return}
+    if(target.dataset.action==='refresh'){load();if(state.monthsOpen)loadMonths()}
   });
   root.addEventListener('pointerover',event=>{const col=event.target.closest?.('.ac-col');if(col)showReadout(col)});
   root.addEventListener('focusin',event=>{const col=event.target.closest?.('.ac-col');if(col)showReadout(col)});
   root.addEventListener('keydown',event=>{const row=event.target.closest?.('tr[data-month]');if(row&&(event.key==='Enter'||event.key===' ')){event.preventDefault();row.click()}});
   root.addEventListener('change',event=>{if(event.target.matches('.ac-select')){state.clinic=event.target.value;resetAndLoad()}});
-  function resetAndLoad(){state.shown={};load();loadMonths()}
+  function resetAndLoad(){state.shown={};state.months=null;load();if(state.monthsOpen)loadMonths()}
   function setRange(range,custom=null){state.range=range;state.custom=custom;state.shown={};load()}
 
   // ---------- data ----------
@@ -253,7 +258,7 @@
     const wait=Math.max(delay,Number(state.lastLoadAt||0)+MIN_REFRESH_GAP_MS-Date.now());
     state.changeTimer=setTimeout(()=>{
       load({silent:true});
-      if(Date.now()-Number(state.monthsLoadedAt||0)>MONTHS_MIN_GAP_MS)loadMonths();
+      if(state.monthsOpen&&Date.now()-Number(state.monthsLoadedAt||0)>MONTHS_MIN_GAP_MS)loadMonths();
     },wait);
   }
   // Fingerprints of data the dashboard already fetches; a different fingerprint means real change.
@@ -282,7 +287,7 @@
   }
   function start(){
     if(state.started||!isAdminView())return;
-    state.started=true;root.hidden=false;load();loadMonths();loadClinics();
+    state.started=true;root.hidden=false;load();if(state.monthsOpen)loadMonths();loadClinics();
     clearInterval(state.tickTimer);state.tickTimer=setInterval(updateAgo,5000);
   }
   function stop(){root.hidden=true;state.started=false;clearInterval(state.tickTimer);clearTimeout(state.changeTimer);document.body.classList.remove('admin-counter-ready')}
@@ -313,4 +318,33 @@
   new MutationObserver(check).observe(document.body,{attributes:true,attributeFilter:['class']});
   check();
   window.bestCareAdminCounter={refresh:()=>dataChanged(0)};
+})();
+
+// ---- Admin page visual layer (no network requests) -------------------------
+// Marks empty panels so CSS can compact them, makes the "completed" group
+// collapsible, and lets the admin fold the counter. Purely presentational.
+(()=>{
+  const body=document.body;
+  const store={get:key=>{try{return localStorage.getItem(key)}catch{return null}},set:(key,value)=>{try{localStorage.setItem(key,value)}catch{}}};
+  const isAdmin=()=>body.classList.contains('role-admin')&&!body.classList.contains('view-clinic');
+  const count=id=>Number(String(document.getElementById(id)?.textContent||'0').replace(/[^0-9]/g,''))||0;
+  if(store.get('bestcare_admin_done_collapsed')==='1')body.classList.add('admin-done-collapsed');
+  function markEmpty(){
+    if(!isAdmin())return;
+    document.getElementById('paymentPanel')?.classList.toggle('is-empty',count('paymentCount')===0);
+    document.getElementById('adminQuickPlanInbox')?.classList.toggle('is-empty',count('adminQuickPlanPendingCount')===0&&count('adminQuickPlanReviewedCount')===0);
+    const divider=document.querySelector('tr.admin-table-group-divider.completed');
+    if(divider){
+      let rows=0;for(let row=divider.nextElementSibling;row;row=row.nextElementSibling)if(row.matches('tr[class*="row-status-"]'))rows+=1;
+      const label=divider.querySelector('td>span');if(label)label.dataset.count=String(rows);divider.dataset.count=String(rows);divider.setAttribute('role','button');divider.tabIndex=0;
+      divider.setAttribute('aria-expanded',String(!body.classList.contains('admin-done-collapsed')));
+    }
+  }
+  let scheduled=false;
+  const schedule=()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;markEmpty()})};
+  new MutationObserver(schedule).observe(document.querySelector('main')||body,{childList:true,subtree:true,characterData:true});
+  const toggleDone=()=>{body.classList.toggle('admin-done-collapsed');store.set('bestcare_admin_done_collapsed',body.classList.contains('admin-done-collapsed')?'1':'0');markEmpty()};
+  document.addEventListener('click',event=>{if(event.target.closest?.('tr.admin-table-group-divider.completed'))toggleDone()});
+  document.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches?.('tr.admin-table-group-divider.completed')){event.preventDefault();toggleDone()}});
+  schedule();
 })();

@@ -1104,3 +1104,42 @@ html[data-theme="dark"] .admin-counter :is(.ac-col,.ac-bar-row){background:trans
 @media(max-width:600px){.ac-hero{grid-template-columns:1fr;gap:16px;padding:18px;border-radius:22px}.ac-ring{grid-auto-flow:column;justify-content:start;align-items:center;gap:12px;text-align:start}.ac-ring>div{width:88px;height:88px}.ac-ring strong{font-size:25px}.ac-seg{width:100%}.ac-seg button{flex:1}.ac-select{flex:1 1 100%;max-width:none}.ac-tiles{gap:9px}.ac-tile{min-height:128px;padding:12px 12px 30px;border-radius:17px}.ac-tile-icon{width:30px;height:30px;border-radius:10px}.ac-tile-icon .ac-icon{width:17px;height:17px}.ac-tile .ac-delta{display:none}.ac-drill{padding:13px}.ac-drill-grid{grid-template-columns:1fr}.ac-months{padding:14px;border-radius:20px}.ac-total strong{font-size:26px}}
 @media(prefers-reduced-motion:reduce){.admin-counter *{animation:none!important;transition:none!important}}
 @media print{.ac-controls,.ac-hint,.ac-months-tools{display:none}}
+/* Counter: fold + months toggle */
+.admin-counter.is-folded .ac-hero{padding:14px 18px;gap:14px}.admin-counter.is-folded .ac-ring>div{width:76px;height:76px}.admin-counter.is-folded .ac-ring strong{font-size:22px}.admin-counter.is-folded .ac-ring em{display:none}.admin-counter.is-folded .ac-hero-copy h2{font-size:20px}
+.ac-mini{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px}.ac-mini span{display:inline-flex;align-items:baseline;gap:6px;color:rgba(255,255,255,.78);font-size:11px;font-weight:800}.ac-mini b{color:#fff;font-size:20px;font-weight:950;font-variant-numeric:tabular-nums}
+.ac-months-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin-top:12px;padding:12px 16px;border:1px solid var(--ac-line);border-radius:16px;background:var(--ac-surface);color:var(--ac-text);font:inherit;font-size:12.5px;font-weight:900;cursor:pointer}.ac-months-toggle span{display:inline-flex;align-items:center;gap:8px}.ac-months-toggle .ac-icon{color:var(--ac-green)}.ac-months-toggle b{padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--ac-green) 12%,transparent);color:var(--ac-green);font-size:10.5px}.ac-months-toggle:hover{border-color:color-mix(in srgb,var(--ac-green) 40%,var(--ac-line))}
+html[data-theme="dark"] .admin-counter .ac-months-toggle{background:var(--ac-surface);border-color:var(--ac-line);color:var(--ac-text)}
+
+/* ---- Admin page visual polish (admin view only, presentation only) ---- */
+body.role-admin:not(.view-clinic) .view-identity{grid-template-columns:40px minmax(0,1fr) auto;gap:12px;padding:10px 14px;border-radius:16px}
+body.role-admin:not(.view-clinic) .view-identity-icon{width:38px;height:38px;border-radius:12px;font-size:19px}
+body.role-admin:not(.view-clinic) .view-identity-copy small{display:none}body.role-admin:not(.view-clinic) .view-identity-copy strong{font-size:16px}body.role-admin:not(.view-clinic) .view-identity-copy span{font-size:11px}
+body.role-admin:not(.view-clinic) .view-identity button{min-height:36px;padding:6px 14px}
+/* Empty panels collapse to a slim summary line */
+body.role-admin #paymentPanel.is-empty{padding:12px 16px}body.role-admin #paymentPanel.is-empty .payment-panel-head p,body.role-admin #paymentPanel.is-empty #paymentQueue{display:none}
+body.role-admin #paymentPanel.is-empty .payment-panel-head h2{font-size:15px}body.role-admin #paymentPanel.is-empty #paymentCount{min-width:38px;min-height:38px;font-size:16px}
+body.role-admin #adminQuickPlanInbox.is-empty{padding:12px 16px}body.role-admin #adminQuickPlanInbox.is-empty :is(#adminQuickPlanScope,#adminQuickPlanMessage,#adminQuickPlanLists){display:none}
+body.role-admin #adminQuickPlanInbox.is-empty .admin-quick-plan-head h2{font-size:15px}body.role-admin #adminQuickPlanInbox.is-empty .admin-quick-plan-summary{margin-top:8px}
+/* Patient table: denser, calmer rows */
+body.role-admin:not(.view-clinic) tr[class*="row-status-"]>td{padding-top:8px;padding-bottom:8px;vertical-align:middle}
+body.role-admin:not(.view-clinic) .patient-name-stack{gap:2px}
+body.role-admin:not(.view-clinic) .patient-summary-toggle{min-height:26px;padding:2px 8px;font-size:10px}
+body.role-admin:not(.view-clinic) .plan-compliance-alert{display:inline-flex;align-items:center;gap:5px;max-width:100%;margin-top:4px;padding:3px 8px;border-radius:999px;font-size:10px;line-height:1.4;box-shadow:none}
+body.role-admin:not(.view-clinic) .plan-compliance-alert small{display:none}body.role-admin:not(.view-clinic) .plan-compliance-alert>span[aria-hidden]{display:inline-grid;place-items:center;width:16px;height:16px;font-size:9px}
+body.role-admin:not(.view-clinic) .plan-compliance-alert b{overflow:hidden;font-size:10px;text-overflow:ellipsis;white-space:nowrap}
+body.role-admin:not(.view-clinic) tr.row-status-done .plan-compliance-alert{border-color:#f0d29a;background:#fff8e8;color:#8a5a0c}
+body.role-admin:not(.view-clinic) .payment-row-badge{margin-top:4px;padding:2px 8px;font-size:10px}
+body.role-admin:not(.view-clinic) .row-actions{flex-wrap:wrap;gap:5px}
+body.role-admin:not(.view-clinic) .row-actions .mini{min-height:34px;padding:5px 10px;font-size:11px;white-space:nowrap;line-height:1.2}
+body.role-admin:not(.view-clinic) .row-actions .mini .lab-entry-icon,body.role-admin:not(.view-clinic) .row-actions .whatsapp-gold-mark{transform:scale(.85)}
+body.role-admin:not(.view-clinic) .status-select{min-height:36px}
+body.role-admin:not(.view-clinic) .patient-status-watermark{opacity:.07!important}
+/* Completed group: tap the divider to fold it */
+tr.admin-table-group-divider.completed{cursor:pointer}tr.admin-table-group-divider.completed td>span{position:relative;padding-inline-end:120px}
+tr.admin-table-group-divider.completed td>span::after{content:"إخفاء " attr(data-count);position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);padding:3px 10px;border-radius:999px;background:#1f7a52;color:#fff;font-size:10px;font-weight:900}
+tr.admin-table-group-divider.completed[data-count] td>span::after{content:"إخفاء المنجزين (" attr(data-count) ")"}
+body.admin-done-collapsed tr.admin-table-group-divider.completed[data-count] td>span::after{content:"عرض المنجزين (" attr(data-count) ")"}
+body.admin-done-collapsed tr.admin-table-group-divider.completed~tr{display:none}
+html[lang="en"] tr.admin-table-group-divider.completed[data-count] td>span::after{content:"Hide completed (" attr(data-count) ")"}
+html[lang="en"] body.admin-done-collapsed tr.admin-table-group-divider.completed[data-count] td>span::after{content:"Show completed (" attr(data-count) ")"}
+html[data-theme="dark"] body.role-admin:not(.view-clinic) tr.row-status-done .plan-compliance-alert{border-color:#5a4322;background:#2a2014;color:#f0c987}
