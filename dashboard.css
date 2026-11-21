@@ -1197,3 +1197,5 @@ html[data-theme="dark"] .plan-alert-bar{border-color:#5a4322;background:#2a2014;
   html[data-theme="dark"] body.role-admin:not(.view-clinic) .table-wrap tbody tr[class*="row-status-"]{background:#17231e;border-color:#2a3f35}
   html[data-theme="dark"] body.role-admin:not(.view-clinic) .table-wrap tbody tr[class*="row-status-"]>td:nth-child(4){background:#111a16!important}
 }
+.ac-verdict{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.16);font-weight:900}.ac-verdict b{font-size:12px}.ac-verdict small{color:rgba(255,255,255,.75);font-size:10.5px;font-weight:700}.ac-verdict bdi{font-weight:950}
+.ac-verdict.is-improving{background:#7ef0b4;color:#0d3d2a}.ac-verdict.is-improving small{color:#1d5c41}.ac-verdict.is-declining{background:#ffb3bd;color:#5c0f1b}.ac-verdict.is-declining small{color:#7d2733}.ac-verdict.is-stable{background:rgba(255,255,255,.9);color:#145a40}.ac-verdict.is-stable small{color:#3d6b58}

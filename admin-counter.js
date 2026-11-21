@@ -154,7 +154,7 @@
     const rate=Number(s?.completionRate)||0;
     const hero=`<div class="ac-hero">
       <div class="ac-hero-copy"><small>${esc(copy.kicker)}</small><h2>${esc(copy.title)}</h2>
-        <div class="ac-hero-meta"><span class="ac-live${state.error?' is-error':''}${state.loading?' is-loading':''}" role="status"><i></i>${esc(state.error?copy.error:state.loading&&!s?copy.loading:copy.live)}</span><span class="ac-period">${esc(periodLabel())}${state.clinic!=='all'?` · ${esc(clinicName(state.clinic))}`:''}</span><span class="ac-ago" data-ago></span></div>
+        <div class="ac-hero-meta"><span class="ac-live${state.error?' is-error':''}${state.loading?' is-loading':''}" role="status"><i></i>${esc(state.error?copy.error:state.loading&&!s?copy.loading:copy.live)}</span><span class="ac-period">${esc(periodLabel())}${state.clinic!=='all'?` · ${esc(clinicName(state.clinic))}`:''}</span><span class="ac-ago" data-ago></span>${verdictPill()}</div>
         ${state.folded&&s?`<div class="ac-mini">${['uniquePatients','procedureUnits','labSent','completed'].map(key=>`<span><b>${n(s[key])}</b>${esc(copy.tiles[key])}</span>`).join('')}</div>`:''}
       </div>
       <div class="ac-ring" style="--p:${rate}" title="${esc(copy.ring)}"><div><strong data-count="ring" data-value="${s?rate:''}">${s?n(rate):'—'}</strong><span>%</span></div><small>${esc(copy.ring)}</small>${s?`<em>${esc(copy.ringSub(s))}</em>`:''}</div>
@@ -184,6 +184,17 @@
     const c=t().cols;
     out.innerHTML=`<b>${esc(monthLabel(item.month))}</b><span>${esc(c.patients)}: <strong>${n(item.uniquePatients)}</strong></span><span>${esc(c.procedures)}: <strong>${n(item.procedureUnits)}</strong></span><span>${esc(c.lab)}: <strong>${n(item.labSent)}</strong></span><span>${esc(c.completed)}: <strong>${n(item.completed)}</strong> · ${n(item.completionRate)}%</span>`;
   }
+  // Overall direction vs the previous period (shared engine from trends.js).
+  function verdictPill(){
+    const T=window.BestCareTrends;if(!T||!state.data?.summary||!state.prev?.summary)return'';
+    const result=T.compareSummaries(state.data.summary,state.prev.summary);
+    const en=lng()==='en',copy={improving:[en?'Improving':'تحسّن عام','▲'],declining:[en?'Declining':'انخفاض عام','▼'],stable:[en?'Stable':'أداء مستقر','＝'],insufficient:[en?'Too little data':'بيانات قليلة للحكم','·']}[result.verdict];
+    const compare=state.range==='today'?(en?'vs yesterday':'مقارنة بأمس'):(en?'vs previous period':'مقارنة بالفترة السابقة');
+    const reasons=[...result.improving.slice(0,2).map(r=>`▲ ${en?r.en:r.label}`),...result.declining.slice(0,2).map(r=>`▼ ${en?r.en:r.label}`)].join(' · ');
+    return`<span class="ac-verdict is-${result.verdict}" title="${esc(reasons||compare)}"><b>${copy[1]} ${esc(copy[0])}</b>${result.verdict==='insufficient'?'':` <bdi>${result.score>0?'+':''}${n(result.score)}</bdi>`} <small>${esc(compare)}</small></span>`;
+  }
+  // trends.js is shared with the statistics page; load it once, lazily.
+  if(!window.BestCareTrends){const script=document.createElement('script');script.src='./trends.js?v=20261121';script.async=true;script.onload=()=>{if(state.started)render()};document.head.append(script)}
   function animateCounts(){
     root.querySelectorAll('[data-count]').forEach(node=>{
       const key=node.dataset.count,raw=node.dataset.value;if(raw==='')return;

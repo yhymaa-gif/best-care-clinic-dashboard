@@ -9,7 +9,7 @@ const $=id=>document.getElementById(id);
     let latest=null;
     const isoDate=date=>date.toISOString().slice(0,10);
     const addDays=(value,days)=>{const date=new Date(`${value}T12:00:00`);date.setDate(date.getDate()+days);return isoDate(date)};
-    function setRange(days){$('toDate').value=isoDate(new Date());$('fromDate').value=addDays($('toDate').value,1-days);document.querySelectorAll('[data-days]').forEach(button=>button.classList.toggle('active',Number(button.dataset.days)===days));loadStats()}
+    function setRange(days){$('toDate').value=isoDate(new Date());$('fromDate').value=addDays($('toDate').value,1-days);document.querySelectorAll('[data-days]').forEach(button=>button.classList.toggle('active',Number(button.dataset.days)===days));document.querySelector('[data-month]')?.classList.remove('active');loadStats()}
     function setStatus(text,type=''){const el=$('statusNotice');el.className=`notice ${type}`.trim();el.querySelector('span').textContent=text}
     function format(value){return nf.format(Number(value||0))}
     function renderKpis(summary){document.querySelectorAll('[data-kpi]').forEach(el=>{const key=el.dataset.kpi;const suffix=key==='completionRate'?'%':['averageDelayMinutes','averageStayMinutes'].includes(key)?' د':'';el.textContent=`${format(summary[key])}${suffix}`});const counts=latest?.communicationCounts||{reviewWhatsapp:0,planWhatsapp:0};renderMetrics('communicationMetrics',counts,communicationLabels);$('communicationsTotal').textContent=`${format(Number(counts.reviewWhatsapp||0)+Number(counts.planWhatsapp||0))} مشاركة`}
@@ -97,8 +97,69 @@ const $=id=>document.getElementById(id);
       const blob=new Blob(['\ufeff'+rows.map(row=>row.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
       const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`bestcare-statistics-${latest.from}-${latest.to}.csv`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),1000);
     }
-    function render(data){latest=data;renderProcedures(data);renderLabPeriod(data);renderKpis(data.summary);renderDaily(data.daily);renderDonut('statusDonut','statusLegend',data.statusCounts,statusLabels,'statusDonutTotal');renderMetrics('planMetrics',data.planStatusCounts,planLabels);renderDonut('paymentDonut','paymentLegend',{pending:data.paymentCounts.pending,acknowledged:data.paymentCounts.acknowledged,completed:data.paymentCounts.completed},{pending:'بانتظار الإجراء',acknowledged:'تم الاستلام',completed:'تم التنفيذ'},'paymentDonutTotal');renderMetrics('labMetrics',data.labStatusCounts,labLabels);renderClinics(data.clinics);$('appointmentsTotal').textContent=`${format(data.summary.appointments)} موعد`;$('plansTotal').textContent=`${format(data.summary.planTotal)} خطة`;$('paymentsTotal').textContent=`${format(data.paymentCounts.requested)} طلب`;$('labsTotal').textContent=`${format(Object.values(data.labStatusCounts).reduce((a,b)=>a+b,0))} حالة`;$('rangeChip').textContent=`${data.from} — ${data.to}`;const selected=$('clinicFilter').selectedOptions[0];$('clinicChip').textContent=selected?.textContent||'جميع العيادات';$('generatedChip').textContent=`تحديث ${new Date(data.generatedAt).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`;setStatus('تم تحديث المؤشرات من البيانات المركزية.')}
-    async function loadStats(){const from=$('fromDate').value,to=$('toDate').value,clinic=$('clinicFilter').value;if(!from||!to||from>to){setStatus('راجع تاريخ البداية والنهاية.','error');return}setStatus('جارٍ تجهيز المؤشرات…','loading');try{const response=await fetch(`/api/statistics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&clinic=${encodeURIComponent(clinic)}`,{credentials:'include',cache:'no-store'});if(response.status===401){location.replace('./');return}const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر تحميل الإحصائيات');render(data)}catch(error){setStatus(error.message||'تعذر تحميل الإحصائيات.','error')}}
+    // ---- Performance reading (trend vs previous period + monthly direction) ----
+    let latestMonths=null;
+    const T=window.BestCareTrends;
+    const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const monthShift=(date,months)=>{const y=Number(date.slice(0,4)),m=Number(date.slice(5,7))-1+months,d=Number(date.slice(8,10));const last=new Date(Date.UTC(y,m+1,0)).getUTCDate();return new Date(Date.UTC(y,m,Math.min(d,last))).toISOString().slice(0,10)};
+    function compareRange(from,to,mode){if(mode==='lastMonth')return{from:monthShift(from,-1),to:monthShift(to,-1)};if(mode==='lastYear')return{from:monthShift(from,-12),to:monthShift(to,-12)};return null}
+    const dayFmt=new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'short',timeZone:'UTC'});
+    const rangeText=(from,to)=>{const a=dayFmt.format(new Date(`${from}T00:00:00Z`)),b=dayFmt.format(new Date(`${to}T00:00:00Z`));return from===to?a:`${a} – ${b}`};
+    const money=new Intl.NumberFormat('ar-SA',{style:'currency',currency:'SAR',maximumFractionDigits:0});
+    function metricValue(row,value){if(row.kind==='money')return money.format((Number(value)||0)/100);if(row.kind==='rate')return`${format(value)}%`;if(row.kind==='minutes')return`${format(value)} د`;return format(value)}
+    function changeBadge(row){
+      if(row.status==='insufficient')return'<span class="chg flat">—</span>';
+      if(!row.diff)return'<span class="chg flat">بدون تغيير</span>';
+      const good=row.status==='improving'?'good':row.status==='declining'?'bad':'flat',arrow=row.direction==='up'?'▲':'▼';
+      const amount=row.kind==='rate'?`${format(Math.abs(row.pp))} نقطة`:row.pct===null?'':`${format(Math.abs(row.pct))}%`;
+      return`<span class="chg ${good}"><span aria-hidden="true">${arrow}</span><bdi>${amount||format(Math.abs(row.diff))}</bdi></span>`;
+    }
+    const statusText={improving:'تحسّن',declining:'انخفاض',stable:'مستقر',insufficient:'غير كافٍ للحكم'};
+    function renderTrends(data){
+      if(!T||!data.previous){$('trendPanel').hidden=true;return}
+      $('trendPanel').hidden=false;
+      const result=T.compareSummaries(data.summary,data.previous.summary),mode=$('compareMode').value;
+      $('trendCompareText').textContent=`الفترة الحالية ${rangeText(data.from,data.to)} مقارنةً بـ ${rangeText(data.previous.from,data.previous.to)}${mode==='previous'?' (الفترة السابقة مباشرة)':mode==='lastMonth'?' (نفس الأيام من الشهر الماضي)':' (نفس الأيام من العام الماضي)'}`;
+      const verdictCopy={improving:['▲','تحسّن عام','أغلب المؤشرات المهمة أفضل من الفترة السابقة.'],declining:['▼','انخفاض عام','أغلب المؤشرات المهمة أضعف من الفترة السابقة، راجع البنود أدناه.'],stable:['＝','أداء مستقر','التغيرات صغيرة وضمن الحدود الطبيعية (±5%).'],insufficient:['?','البيانات غير كافية للحكم','الأعداد في الفترتين قليلة؛ اختر فترة أطول.']}[result.verdict];
+      const v=$('trendVerdict');v.className=`trend-verdict ${result.verdict}`;
+      v.innerHTML=`<span class="v-icon">${verdictCopy[0]}</span><strong>${verdictCopy[1]}</strong><p>${esc(verdictCopy[2])}</p><span class="v-score" title="متوسط موزون لتغير المؤشرات، من −50 إلى +50">مؤشر التقدم: <bdi>${result.score>0?'+':''}${format(result.score)}</bdi></span>`;
+      const item=row=>`<li><span><b>${esc(row.label)}</b><small>${metricValue(row,row.previous)} ← ${metricValue(row,row.current)}</small></span>${changeBadge(row)}</li>`;
+      $('trendUp').innerHTML=result.improving.slice(0,5).map(item).join('')||'<li><span>لا يوجد تحسن واضح في هذه الفترة.</span></li>';
+      $('trendDown').innerHTML=result.declining.slice(0,5).map(item).join('')||'<li><span>لا يوجد انخفاض واضح في هذه الفترة. 👍</span></li>';
+      $('trendRows').innerHTML=result.rows.map(row=>`<tr><td><b>${esc(row.label)}</b></td><td>${metricValue(row,row.current)}</td><td>${metricValue(row,row.previous)}</td><td>${changeBadge(row)}</td><td><span class="status-chip ${row.status}">${statusText[row.status]}</span></td></tr>`).join('');
+      const insights=[];
+      const clinicMoves=T.movers(data.clinics,data.previous.clinics,{field:'procedures',name:c=>`${c.name||''} · ${c.roomNumber||''}${c.doctorName?` (د. ${c.doctorName})`:''}`});
+      const drop=clinicMoves.find(m=>m.diff<0),gain=[...clinicMoves].reverse().find(m=>m.diff>0);
+      if(drop)insights.push(['🏥',`أكبر انخفاض في الإجراءات: <b>${esc(drop.name)}</b> من ${format(drop.previous)} إلى ${format(drop.current)}${drop.pct!==null?` (−${format(Math.abs(drop.pct))}%)`:''}.`]);
+      if(gain)insights.push(['🚀',`أكبر نمو في الإجراءات: <b>${esc(gain.name)}</b> من ${format(gain.previous)} إلى ${format(gain.current)}${gain.pct!==null?` (+${format(gain.pct)}%)`:''}.`]);
+      const procMoves=T.movers(data.topProcedures,data.previous.topProcedures,{key:'key',field:'count',name:p=>p.name});
+      const pDrop=procMoves.find(m=>m.diff<0),pGain=[...procMoves].reverse().find(m=>m.diff>0);
+      if(pGain)insights.push(['🦷',`الإجراء الأكثر نموًا: <b>${esc(pGain.name)}</b> (${format(pGain.previous)} ← ${format(pGain.current)}).`]);
+      if(pDrop)insights.push(['📉',`الإجراء الأكثر تراجعًا: <b>${esc(pDrop.name)}</b> (${format(pDrop.previous)} ← ${format(pDrop.current)}).`]);
+      const cancel=result.rows.find(r=>r.key==='cancelRate');
+      if(cancel&&cancel.status==='declining')insights.push(['⚠',`نسبة الإلغاء ارتفعت من ${format(cancel.previous)}% إلى ${format(cancel.current)}%؛ راجع التذكير بالمواعيد.`]);
+      const pace=latestMonths&&T.monthPace(latestMonths.months,'procedureUnits',{today:isoDate(new Date())});
+      if(pace&&pace.reliable&&pace.pct!==null)insights.push([pace.pct>=0?'📈':'📉',`على الوتيرة الحالية سيُنهي هذا الشهر بنحو <b>${format(pace.projected)}</b> إجراء، ${pace.pct>=0?'أعلى':'أقل'} من الشهر الماضي بـ ${format(Math.abs(pace.pct))}%.`]);
+      $('trendInsights').innerHTML=insights.map(([icon,text])=>`<div class="insight"><i>${icon}</i><span>${text}</span></div>`).join('');
+      renderMonthTrends();
+    }
+    function renderMonthTrends(){
+      const box=$('trendMonths');if(!latestMonths||!T){box.innerHTML='<p class="empty">جارٍ تحميل الأشهر…</p>';return}
+      const months=latestMonths.months||[],current=isoDate(new Date()).slice(0,7);
+      const fields=[['uniquePatients','المرضى'],['procedureUnits','الإجراءات'],['labSent','المرسل للمعمل'],['completed','المواعيد المكتملة']];
+      const recent=[...months].sort((a,b)=>a.month.localeCompare(b.month)).slice(-6);
+      box.innerHTML=fields.map(([field,label])=>{
+        const trend=T.monthlyTrend(months,field,{currentMonth:current}),pace=T.monthPace(months,field,{today:isoDate(new Date())});
+        const max=Math.max(1,...recent.map(m=>Number(m[field])||0),pace?.projected||0);
+        const bars=recent.map((m,i)=>{const value=m.month===current&&pace?pace.projected:Number(m[field])||0;return`<i class="${m.month===current?'cur':i===recent.length-2?'last':''}" style="height:${Math.max(4,value/max*100)}%" title="${m.month}: ${format(m[field])}${m.month===current&&pace?` (متوقع ${format(pace.projected)})`:''}"></i>`}).join('');
+        const dir=trend.direction==='insufficient'?'<span class="tm-dir insufficient">بيانات غير كافية</span>':`<span class="tm-dir ${trend.direction}">${trend.direction==='up'?'↗ صاعد':trend.direction==='down'?'↘ هابط':'→ مستقر'} <bdi>${trend.slopePct>0?'+':''}${format(trend.slopePct)}%</bdi>/شهر</span>`;
+        const paceText=pace&&pace.pct!==null?`الشهر الحالي متوقع <b>${format(pace.projected)}</b> (${pace.pct>=0?'+':'−'}${format(Math.abs(pace.pct))}% عن الماضي)${pace.reliable?'':' · تقدير مبكر'}`:'لا يوجد شهر سابق للمقارنة';
+        return`<div class="tm-card"><h5>${label}</h5>${dir}<div class="tm-bars">${bars}</div><small>${paceText}</small></div>`;
+      }).join('');
+    }
+    async function loadMonths(){try{const response=await fetch(`/api/statistics?mode=months&clinic=${encodeURIComponent($('clinicFilter').value)}`,{credentials:'include',cache:'no-store'});if(response.ok){latestMonths=await response.json();if(latest)renderTrends(latest);else renderMonthTrends()}}catch{}}
+    function render(data){latest=data;renderTrends(data);renderProcedures(data);renderLabPeriod(data);renderKpis(data.summary);renderDaily(data.daily);renderDonut('statusDonut','statusLegend',data.statusCounts,statusLabels,'statusDonutTotal');renderMetrics('planMetrics',data.planStatusCounts,planLabels);renderDonut('paymentDonut','paymentLegend',{pending:data.paymentCounts.pending,acknowledged:data.paymentCounts.acknowledged,completed:data.paymentCounts.completed},{pending:'بانتظار الإجراء',acknowledged:'تم الاستلام',completed:'تم التنفيذ'},'paymentDonutTotal');renderMetrics('labMetrics',data.labStatusCounts,labLabels);renderClinics(data.clinics);$('appointmentsTotal').textContent=`${format(data.summary.appointments)} موعد`;$('plansTotal').textContent=`${format(data.summary.planTotal)} خطة`;$('paymentsTotal').textContent=`${format(data.paymentCounts.requested)} طلب`;$('labsTotal').textContent=`${format(Object.values(data.labStatusCounts).reduce((a,b)=>a+b,0))} حالة`;$('rangeChip').textContent=`${data.from} — ${data.to}`;const selected=$('clinicFilter').selectedOptions[0];$('clinicChip').textContent=selected?.textContent||'جميع العيادات';$('generatedChip').textContent=`تحديث ${new Date(data.generatedAt).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`;setStatus('تم تحديث المؤشرات من البيانات المركزية.')}
+    async function loadStats(){const from=$('fromDate').value,to=$('toDate').value,clinic=$('clinicFilter').value;if(!from||!to||from>to){setStatus('راجع تاريخ البداية والنهاية.','error');return}setStatus('جارٍ تجهيز المؤشرات…','loading');try{const prev=compareRange(from,to,$('compareMode').value),prevQuery=prev?`&pfrom=${prev.from}&pto=${prev.to}`:'';const response=await fetch(`/api/statistics?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&clinic=${encodeURIComponent(clinic)}&compare=1${prevQuery}`,{credentials:'include',cache:'no-store'});if(response.status===401){location.replace('./');return}const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر تحميل الإحصائيات');render(data)}catch(error){setStatus(error.message||'تعذر تحميل الإحصائيات.','error')}}
     async function init(){
       try{
         const session=await fetch('/api/auth?action=session',{credentials:'include',cache:'no-store'}),auth=await session.json();
@@ -115,8 +176,9 @@ const $=id=>document.getElementById(id);
         if(clinic&&[...$('clinicFilter').options].some(option=>option.value===clinic))$('clinicFilter').value=clinic;
         if(/^\d{4}-\d{2}-\d{2}$/.test(from)&&/^\d{4}-\d{2}-\d{2}$/.test(to)&&from<=to){$('fromDate').value=from;$('toDate').value=to;document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active'));loadStats()}
         else setRange(30);
+        loadMonths();
       }catch(error){setStatus('تعذر التحقق من الجلسة. أعد فتح التطبيق.','error')}
     }
     document.querySelectorAll('[data-days]').forEach(button=>button.addEventListener('click',()=>setRange(Number(button.dataset.days))));
-    $('refreshBtn').addEventListener('click',loadStats);$('clinicFilter').addEventListener('change',loadStats);$('fromDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('toDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('printBtn').addEventListener('click',()=>window.print());$('exportBtn').addEventListener('click',exportCsv);
+    $('refreshBtn').addEventListener('click',loadStats);$('clinicFilter').addEventListener('change',()=>{loadStats();loadMonths()});$('compareMode').addEventListener('change',loadStats);document.querySelector('[data-month]')?.addEventListener('click',event=>{const today=isoDate(new Date());$('toDate').value=today;$('fromDate').value=`${today.slice(0,8)}01`;document.querySelectorAll('[data-days],[data-month]').forEach(b=>b.classList.toggle('active',b===event.currentTarget));$('compareMode').value='lastMonth';loadStats()});$('fromDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('toDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('printBtn').addEventListener('click',()=>window.print());$('exportBtn').addEventListener('click',exportCsv);
     init();

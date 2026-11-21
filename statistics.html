@@ -33,6 +33,27 @@
     @media print{.headline{grid-template-columns:repeat(4,1fr)}.headline-card{break-inside:avoid}}
     html[data-theme="dark"] .chip{border-color:#2f4a3e;background:#16231d}html[data-theme="dark"] .chip.warn{border-color:#5a4322;background:#2a2014}html[data-theme="dark"] .chip.alert{border-color:#5a2a33;background:#2a161a}html[data-theme="dark"] .headline-card .headline-label span{background:rgba(255,255,255,.07)}
   </style>
+  <style>
+    .trend-panel{margin-top:15px;padding:18px}.trend-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}.trend-head h3{margin:0;font-size:18px}.trend-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
+    .trend-compare{display:grid;gap:4px;color:var(--muted);font-size:10px;font-weight:900}.trend-compare select{min-height:38px;padding:5px 10px;border:1px solid #cbddd5;border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:12px}
+    .trend-body{display:grid;grid-template-columns:minmax(260px,.9fr) 1.6fr;gap:14px}
+    .trend-verdict{--tone:#668074;--soft:#eef3f1;display:grid;align-content:center;gap:8px;padding:20px;border-radius:20px;background:var(--soft);border:1px solid color-mix(in srgb,var(--tone) 25%,transparent)}
+    .trend-verdict.improving{--tone:#17774c;--soft:#e4f6ec}.trend-verdict.declining{--tone:#b23347;--soft:#fdecef}.trend-verdict.stable{--tone:#356f8a;--soft:#e8f1f5}
+    .trend-verdict .v-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:var(--tone);color:#fff;font-size:30px;font-weight:900}.trend-verdict strong{color:var(--tone);font-size:26px;line-height:1.2}.trend-verdict p{margin:0;color:#365a4c;font-size:12px;line-height:1.8}.trend-verdict .v-score{justify-self:start;padding:4px 11px;border-radius:999px;background:#fff;color:var(--tone);font-size:11px;font-weight:950}
+    .trend-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px}.trend-lists h4{margin:0 0 8px;font-size:13px}.trend-lists>div:first-child h4{color:#17774c}.trend-lists>div:last-child h4{color:#b23347}
+    .trend-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}.trend-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:12px}.trend-list li small{display:block;color:var(--muted);font-size:10px}.trend-list b{font-size:12.5px}
+    .chg{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;unicode-bidi:isolate}.chg.good{background:#e2f5eb;color:#17774c}.chg.bad{background:#fbe8eb;color:#b23347}.chg.flat{background:#eef3f1;color:#668074}
+    .trend-insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px}.insight{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:12px;border-radius:15px;background:#f6faf8;border:1px solid var(--line);font-size:12px;line-height:1.7}.insight i{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#fff;font-style:normal;font-size:16px}.insight b{color:var(--ink)}
+    .trend-details{margin-top:14px}.trend-details summary{cursor:pointer;color:var(--green);font-size:12px;font-weight:900}.trend-table td,.trend-table th{white-space:nowrap}
+    .status-chip{padding:3px 9px;border-radius:999px;font-size:10px;font-weight:900}.status-chip.improving{background:#e2f5eb;color:#17774c}.status-chip.declining{background:#fbe8eb;color:#b23347}.status-chip.stable{background:#e8f1f5;color:#356f8a}.status-chip.insufficient{background:#f1f1f1;color:#8a8a8a}
+    .trend-months{margin-top:16px}.trend-months-head h4{margin:0;font-size:14px}.trend-months-head p{margin:3px 0 10px;color:var(--muted);font-size:10.5px}
+    .trend-month-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.tm-card{display:grid;gap:6px;padding:13px;border:1px solid var(--line);border-radius:16px;background:#fff}.tm-card h5{margin:0;color:var(--muted);font-size:11px}.tm-dir{font-size:16px;font-weight:950}.tm-dir.up{color:#17774c}.tm-dir.down{color:#b23347}.tm-dir.flat{color:#356f8a}.tm-dir.insufficient{color:#8a8a8a;font-size:12px}
+    .tm-bars{display:flex;align-items:flex-end;gap:4px;height:46px}.tm-bars i{flex:1;min-height:3px;border-radius:5px 5px 2px 2px;background:#cfe3d9}.tm-bars i.cur{background:repeating-linear-gradient(45deg,#c39a3e 0 4px,#e3c06e 4px 8px)}.tm-bars i.last{background:#2f8c67}
+    .tm-card small{color:var(--muted);font-size:10px;line-height:1.6}.tm-card small b{color:var(--ink)}
+    @media(max-width:1000px){.trend-body{grid-template-columns:1fr}.trend-month-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.trend-lists{grid-template-columns:1fr}.trend-panel{padding:13px}.trend-verdict strong{font-size:22px}}
+    @media print{.trend-compare,.trend-details summary{display:none}.trend-details{display:block}.trend-panel{break-inside:avoid}}
+    html[data-theme="dark"] .trend-list li,html[data-theme="dark"] .tm-card,html[data-theme="dark"] .trend-compare select{background:#17231e;border-color:#2a3f35;color:#e4f0ea}html[data-theme="dark"] .insight{background:#121c18;border-color:#2a3f35}html[data-theme="dark"] .insight i{background:#17231e}html[data-theme="dark"] .trend-verdict p{color:#c9dcd2}html[data-theme="dark"] .trend-verdict .v-score{background:#17231e}
+  </style>
   <link rel="stylesheet" href="./theme.css">
 </head>
 <body>
@@ -51,7 +72,7 @@
       <label class="field">من تاريخ<input id="fromDate" type="date"></label>
       <label class="field">إلى تاريخ<input id="toDate" type="date"></label>
       <label class="field">العيادة<select id="clinicFilter"><option value="all">جميع العيادات</option></select></label>
-      <div class="range-buttons"><button type="button" data-days="7">7 أيام</button><button class="active" type="button" data-days="30">30 يومًا</button><button type="button" data-days="90">90 يومًا</button><button id="refreshBtn" class="primary" type="button">تحديث</button></div>
+      <div class="range-buttons"><button type="button" data-days="7">7 أيام</button><button class="active" type="button" data-days="30">30 يومًا</button><button type="button" data-days="90">90 يومًا</button><button type="button" data-month="1">هذا الشهر</button><button id="refreshBtn" class="primary" type="button">تحديث</button></div>
     </section>
     <div id="statusNotice" class="notice loading" role="status" aria-live="polite"><i></i><span>جارٍ تجهيز المؤشرات…</span></div>
 
@@ -60,6 +81,18 @@
       <article class="panel headline-card" style="--accent:#c39a3e;--soft:#fff3d9"><div class="headline-label"><span aria-hidden="true">🦷</span>الإجراءات المنفذة</div><strong data-kpi="procedureUnits">—</strong><small>في <b data-kpi="visitsWithProcedures">—</b> زيارة · منها <b data-kpi="procedureFreeUnits">—</b> مجانية</small></article>
       <article class="panel headline-card" style="--accent:#3f7f98;--soft:#e5f0f5"><div class="headline-label"><span aria-hidden="true">⇪</span>أُرسلت للمعمل</div><strong data-kpi="labSent">—</strong><small><b data-kpi="labSentUnits">—</b> وحدة · سُلّم للمريض <b data-kpi="labDelivered">—</b></small></article>
       <article class="panel headline-card" style="--accent:#51af7f;--soft:#e5f5ec"><div class="headline-label"><span aria-hidden="true">✓</span>المواعيد المكتملة</div><strong data-kpi="completed">—</strong><small>نسبة الإنجاز <b data-kpi="completionRate">—</b> · ملغي <b data-kpi="cancelled">—</b></small></article>
+    </section>
+
+    <section class="panel trend-panel" id="trendPanel" aria-label="قراءة الأداء">
+      <div class="trend-head"><div><h3>قراءة الأداء</h3><p id="trendCompareText">مقارنة بالفترة السابقة</p></div>
+        <label class="trend-compare">قارن بـ<select id="compareMode"><option value="previous">الفترة السابقة مباشرة</option><option value="lastMonth">نفس الأيام من الشهر الماضي</option><option value="lastYear">نفس الأيام من العام الماضي</option></select></label></div>
+      <div class="trend-body">
+        <div id="trendVerdict" class="trend-verdict"></div>
+        <div class="trend-lists"><div><h4>▲ ما تحسّن</h4><ul id="trendUp" class="trend-list"></ul></div><div><h4>▼ ما انخفض</h4><ul id="trendDown" class="trend-list"></ul></div></div>
+      </div>
+      <div id="trendInsights" class="trend-insights"></div>
+      <details class="trend-details"><summary>كل المؤشرات مقارنة بالفترة السابقة</summary><div class="table-wrap"><table class="clinic-table trend-table"><thead><tr><th>المؤشر</th><th>الفترة الحالية</th><th>الفترة السابقة</th><th>التغير</th><th>الحكم</th></tr></thead><tbody id="trendRows"></tbody></table></div></details>
+      <div class="trend-months"><div class="trend-months-head"><h4>الاتجاه الشهري</h4><p>آخر 3 أشهر مكتملة، ووتيرة الشهر الحالي متوقعةً حتى نهايته</p></div><div id="trendMonths" class="trend-month-grid"></div></div>
     </section>
 
     <section class="kpis" aria-label="المؤشرات الرئيسية">
@@ -117,6 +150,7 @@
     </section>
     <footer class="footer">جميع المؤشرات للمتابعة التشغيلية الداخلية — تطوير يحيى هادي</footer>
   </main>
+  <script src="./trends.js"></script>
   <script src="./statistics.js"></script>
 </body>
 </html>

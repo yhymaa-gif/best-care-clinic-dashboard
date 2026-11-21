@@ -613,8 +613,14 @@ export default async request => {
   // compare=1 returns the previous period of the same length from this same
   // invocation, so the counter needs one function call per refresh.
   const compare = url.searchParams.get('compare') === '1';
-  const prevTo = addDays(from, -1);
-  const prevFrom = addDays(from, -daysBetween(from, to));
+  // Default comparison: the same number of days right before the period.
+  // pfrom/pto let the caller compare like with like (e.g. month-to-date
+  // against the same days of last month).
+  const explicitPrev = datePattern.test(url.searchParams.get('pfrom') || '') && datePattern.test(url.searchParams.get('pto') || '')
+    && url.searchParams.get('pfrom') <= url.searchParams.get('pto') && url.searchParams.get('pto') < from
+    && daysBetween(url.searchParams.get('pfrom'), url.searchParams.get('pto')) <= MAX_RANGE_DAYS;
+  const prevTo = explicitPrev ? url.searchParams.get('pto') : addDays(from, -1);
+  const prevFrom = explicitPrev ? url.searchParams.get('pfrom') : addDays(from, -daysBetween(from, to));
   const readFrom = compare ? prevFrom : from;
   const directKeys = directDayKeys(clinics, readFrom, to, clinicFilter);
   const [primaryKeys, scopedKeys, registry, labRecords, communicationRegistry] = await Promise.all([
@@ -648,7 +654,16 @@ export default async request => {
   const inWindow = (a, b) => records.filter(record => record.date >= a && record.date <= b);
   const result = summarize({ records: inWindow(from, to), clinics, from, to, clinicFilter, plans, labCases, communicationEvents });
   const previous = compare
-    ? { from: prevFrom, to: prevTo, summary: summarize({ records: inWindow(prevFrom, prevTo), clinics, from: prevFrom, to: prevTo, clinicFilter, plans, labCases, communicationEvents }).summary }
+    ? (() => {
+      const prior = summarize({ records: inWindow(prevFrom, prevTo), clinics, from: prevFrom, to: prevTo, clinicFilter, plans, labCases, communicationEvents });
+      return {
+        from: prevFrom,
+        to: prevTo,
+        summary: prior.summary,
+        clinics: prior.clinics.map(({ clinicId, appointments, completed, cancelled, procedures, treatedPatients, labSent, revenueCents }) => ({ clinicId, appointments, completed, cancelled, procedures, treatedPatients, labSent, revenueCents })),
+        topProcedures: prior.topProcedures,
+      };
+    })()
     : undefined;
   return reply({
     from,

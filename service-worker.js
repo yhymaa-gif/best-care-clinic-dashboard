@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020-20261121-admin-ui-v4-perf1-ui1-pulse';
+const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020-20261121-admin-ui-v4-perf1-ui1-pulse-trends';
 const APP_SHELL=[
   './',
   './index.html',
@@ -31,6 +31,7 @@ const APP_SHELL=[
   './quick-plan-center.js',
   './statistics.html',
   './statistics.js',
+  './trends.js',
   './appointment-request.html',
   './appointment-request.js',
   './appointment-requests.html',
