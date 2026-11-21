@@ -583,22 +583,11 @@ export default async request => {
   const from = datePattern.test(url.searchParams.get('from') || '') ? url.searchParams.get('from') : addDays(to, -29);
   const clinicFilter = url.searchParams.get('clinic') === 'all' ? 'all' : String(url.searchParams.get('clinic') || 'all');
   const mode = String(url.searchParams.get('mode') || '');
-  if (mode === 'version' || mode === 'months') {
+  if (mode === 'months') {
     if (clinicFilter !== 'all' && !clinicPattern.test(clinicFilter)) return reply({ error: 'Invalid clinic' }, 400);
     const savedClinics = await store('clinic-dashboard-config').get('clinics', { type: 'json', consistency: 'strong' });
     const clinics = activeClinics(savedClinics).filter(clinic => clinicFilter === 'all' || clinic.id === clinicFilter);
     const labStore = store('clinic-lab-cases');
-    if (mode === 'version') {
-      // Cheap change detector: etags of today's day lists and of every lab list.
-      const dayStore = store('clinic-dashboard-days');
-      const keys = directDayKeys(clinics, today, today, 'all') || [];
-      const [dayMeta, labMeta] = await Promise.all([
-        Promise.all(keys.map(key => dayStore.getMetadata(key, { consistency: 'strong' }).catch(() => null))),
-        Promise.all(clinics.map(clinic => labStore.getMetadata(`clinics/${clinic.id}`, { consistency: 'strong' }).catch(() => null))),
-      ]);
-      const signature = [...keys.map((key, index) => `${key}:${dayMeta[index]?.etag || '-'}`), ...clinics.map((clinic, index) => `lab:${clinic.id}:${labMeta[index]?.etag || '-'}`)].join('|');
-      return reply({ version: shortHash(signature), date: today, generatedAt: Date.now() });
-    }
     const allClinics = activeClinics(savedClinics);
     const [digests, labRecords] = await Promise.all([
       cachedDigests({ dayStore: store('clinic-dashboard-days'), cacheStore: store('clinic-statistics-cache'), allowedClinics: new Set(allClinics.map(clinic => clinic.id)) }),
@@ -621,7 +610,13 @@ export default async request => {
   const clinics = activeClinics(savedClinics);
   const allowedClinics = new Set(clinics.map(clinic => clinic.id));
 
-  const directKeys = directDayKeys(clinics, from, to, clinicFilter);
+  // compare=1 returns the previous period of the same length from this same
+  // invocation, so the counter needs one function call per refresh.
+  const compare = url.searchParams.get('compare') === '1';
+  const prevTo = addDays(from, -1);
+  const prevFrom = addDays(from, -daysBetween(from, to));
+  const readFrom = compare ? prevFrom : from;
+  const directKeys = directDayKeys(clinics, readFrom, to, clinicFilter);
   const [primaryKeys, scopedKeys, registry, labRecords, communicationRegistry] = await Promise.all([
     directKeys ? directKeys : clinicFilter === 'all' || clinicFilter === 'clinic-1' ? listKeys(dayStore, 'days/') : [],
     directKeys ? [] : clinicFilter === 'all' ? listKeys(dayStore, 'clinics/') : clinicFilter !== 'clinic-1' ? listKeys(dayStore, `clinics/${clinicFilter}/days/`) : [],
@@ -638,7 +633,7 @@ export default async request => {
     .map(key => ({ key, ...parseDayKey(key) }))
     .filter(item => item.clinicId && allowedClinics.has(item.clinicId))
     .filter(item => clinicFilter === 'all' || item.clinicId === clinicFilter)
-    .filter(item => item.date >= from && item.date <= to);
+    .filter(item => item.date >= readFrom && item.date <= to);
 
   const records = (await mapLimited(dayKeys, async item => {
     const state = await dayStore.get(item.key, { type: 'json', consistency: 'strong' });
@@ -650,12 +645,17 @@ export default async request => {
   const labCases = labRecords.flatMap(record => Array.isArray(record?.cases) ? record.cases : []);
   const communicationEvents = Object.values(communicationRegistry?.records && typeof communicationRegistry.records === 'object' ? communicationRegistry.records : {})
     .flatMap(record => Array.isArray(record?.events) ? record.events : []);
-  const result = summarize({ records, clinics, from, to, clinicFilter, plans, labCases, communicationEvents });
+  const inWindow = (a, b) => records.filter(record => record.date >= a && record.date <= b);
+  const result = summarize({ records: inWindow(from, to), clinics, from, to, clinicFilter, plans, labCases, communicationEvents });
+  const previous = compare
+    ? { from: prevFrom, to: prevTo, summary: summarize({ records: inWindow(prevFrom, prevTo), clinics, from: prevFrom, to: prevTo, clinicFilter, plans, labCases, communicationEvents }).summary }
+    : undefined;
   return reply({
     from,
     to,
     clinic: clinicFilter,
     generatedAt: Date.now(),
     ...result,
+    ...(previous ? { previous } : {}),
   });
 };

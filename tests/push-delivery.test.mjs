@@ -33,7 +33,7 @@ test('service worker renews rotated subscriptions and re-alerts on repeated tags
 
 test('client keeps the subscription alive and offers an end-to-end test', async () => {
   const [dashboard, endpoint] = await Promise.all([read('dashboard.js'), read('netlify/functions/push-subscription.mjs')]);
-  assert.match(dashboard, /keepPushSubscriptionAlive\(\{force:true\}\)/);
+  assert.match(dashboard, /keepPushSubscriptionAlive\(\)/);
   assert.match(dashboard, /sameServerKey\(subscription,publicKey\)/);
   assert.match(dashboard, /action=test/);
   assert.match(endpoint, /action==='test'/);

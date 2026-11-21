@@ -5,8 +5,12 @@
 (()=>{
   const root=document.getElementById('adminCounter');
   if(!root)return;
-  const VERSION_POLL_MS=30_000;
-  const SAFETY_REFRESH_MS=10*60_000;
+  // Netlify usage budget: the counter never polls on its own. It recalculates
+  // only when a change is observed in requests the dashboard already makes,
+  // and coalesces bursts so one refresh costs one function call.
+  const MIN_REFRESH_GAP_MS=15_000;
+  const MONTHS_MIN_GAP_MS=15*60_000;
+  const WATCHED_READS=['/api/admin-patients','/api/state','/api/lab-cases'];
   const MUTATION_PATHS=['/api/state','/api/lab-cases','/api/patients','/api/admin-patients','/api/patient-profile','/api/appointment-imports','/api/appointment-requests'];
   const reduceMotion=()=>matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 
@@ -60,7 +64,7 @@
   const UP_IS_BAD=new Set(['cancelled','labOverdue','labWaitingToSend']);
   const SPARK={procedureUnits:'procedures',labSent:'labSent',completed:'completed',appointments:'appointments',cancelled:'cancelled'};
   const TONES={uniquePatients:'navy',procedureUnits:'gold',labSent:'blue',completed:'green',appointments:'teal',cancelled:'red',labOverdue:'red',labWaitingToSend:'orange'};
-  const state={range:'today',custom:null,clinic:'all',data:null,prev:null,months:null,monthsError:'',monthMetric:'procedureUnits',monthView:'chart',focus:null,loading:false,error:'',requestId:0,monthsRequestId:0,started:false,clinics:[],version:'',pollTimer:null,changeTimer:null,tickTimer:null,shown:{},changed:new Set()};
+  const state={range:'today',custom:null,clinic:'all',data:null,prev:null,months:null,monthsError:'',monthMetric:'procedureUnits',monthView:'chart',focus:null,loading:false,error:'',requestId:0,monthsRequestId:0,started:false,clinics:[],version:'',changeTimer:null,tickTimer:null,shown:{},changed:new Set()};
 
   const lng=()=>String(document.documentElement.lang||'').toLowerCase().startsWith('en')?'en':'ar';
   const t=()=>COPY[lng()];
@@ -83,7 +87,6 @@
     if(range==='month')return{from:`${today.slice(0,8)}01`,to:today};
     return{from:today,to:today};
   }
-  function previousRange(){const{from,to}=rangeDates(),days=span(from,to);return{from:shift(from,-days),to:shift(from,-1)}}
   const periodLabel=()=>{const{from,to}=rangeDates();if(state.range==='custom')return monthLabel(state.custom);return from===to?dayLabel(from):`${dayLabel(from)} – ${dayLabel(to)}`};
   const detailsUrl=()=>{const{from,to}=rangeDates();return`./statistics.html?from=${from}&to=${to}&clinic=${encodeURIComponent(state.clinic)}`};
   const clinicName=id=>{const clinic=state.clinics.find(item=>String(item.id)===id)||(state.data?.clinics||[]).find(item=>item.clinicId===id);return clinic?`${clinic.name||''} · ${clinic.roomNumber||''}`:id};
@@ -220,10 +223,11 @@
     }finally{clearTimeout(timer)}
   };
   async function load({silent=false}={}){
-    const requestId=++state.requestId,{from,to}=rangeDates(),prev=previousRange(),clinic=encodeURIComponent(state.clinic);
+    const requestId=++state.requestId,{from,to}=rangeDates(),clinic=encodeURIComponent(state.clinic);
+    state.lastLoadAt=Date.now();state.pending=false;
     state.loading=true;if(!silent){state.error='';render()}
     try{
-      const [data,previous]=await Promise.all([api(`from=${from}&to=${to}&clinic=${clinic}`),api(`from=${prev.from}&to=${prev.to}&clinic=${clinic}`).catch(()=>null)]);
+      const data=await api(`from=${from}&to=${to}&clinic=${clinic}&compare=1`),previous=data.previous?{summary:data.previous.summary}:null;
       if(requestId!==state.requestId)return;
       const before=state.data?.summary,summary=data.summary||{};
       state.changed=new Set(before&&silent?TILE_ORDER.filter(key=>Number(before[key])!==Number(summary[key])):[]);
@@ -237,22 +241,37 @@
     try{
       const data=await api(`mode=months&clinic=${encodeURIComponent(state.clinic)}`,45_000);
       if(requestId!==state.monthsRequestId)return;
-      state.months=data;state.monthsError='';
+      state.months=data;state.monthsError='';state.monthsLoadedAt=Date.now();
     }catch(error){if(requestId===state.monthsRequestId){state.monthsError=String(error?.message||error);console.warn('Admin counter months unavailable',error)}}
     finally{if(requestId===state.monthsRequestId&&state.started)render()}
   }
   function dataChanged(delay=900){
     if(!state.started)return;
+    // Hidden page: remember the change and refresh once when it is visible again.
+    if(document.hidden){state.pending=true;return}
     clearTimeout(state.changeTimer);
-    state.changeTimer=setTimeout(()=>{load({silent:true});loadMonths()},delay);
+    const wait=Math.max(delay,Number(state.lastLoadAt||0)+MIN_REFRESH_GAP_MS-Date.now());
+    state.changeTimer=setTimeout(()=>{
+      load({silent:true});
+      if(Date.now()-Number(state.monthsLoadedAt||0)>MONTHS_MIN_GAP_MS)loadMonths();
+    },wait);
   }
-  async function checkVersion(){
-    if(!state.started||document.hidden||!isAdminView())return;
-    try{
-      const data=await api(`mode=version&clinic=${encodeURIComponent(state.clinic)}`,10_000);
-      if(state.version&&data.version!==state.version)dataChanged(0);
-      state.version=data.version||state.version;
-    }catch{}
+  // Fingerprints of data the dashboard already fetches; a different fingerprint means real change.
+  const fingerprints=new Map();
+  function fingerprint(path,data){
+    if(Array.isArray(data?.records))return data.records.map(record=>`${record.clinicId}:${record.revision}:${record.updatedAt}:${(record.patients||[]).length}`).join('|');
+    if(Array.isArray(data?.cases))return`${data.revision||''}:${data.updatedAt||''}:${data.cases.map(item=>`${item.id}:${item.status}:${item.sentAt||0}`).join(',')}`;
+    if(Array.isArray(data?.patients))return`${data.revision||''}:${data.updatedAt||''}:${data.patients.length}`;
+    return'';
+  }
+  function observeRead(url,response){
+    if(!response.ok)return;
+    response.clone().json().then(data=>{
+      const key=`${url.pathname}?${url.searchParams.get('clinic')||''}&${url.searchParams.get('scope')||''}&${url.searchParams.get('date')||''}`;
+      const print=fingerprint(url.pathname,data);if(!print)return;
+      const before=fingerprints.get(key);fingerprints.set(key,print);
+      if(before!==undefined&&before!==print)dataChanged(500);
+    }).catch(()=>{});
   }
   const isAdminView=()=>{const body=document.body.classList;return body.contains('role-admin')&&!body.contains('view-clinic')&&!body.contains('auth-locked')&&!body.contains('auth-checking')};
   async function loadClinics(){
@@ -263,13 +282,10 @@
   }
   function start(){
     if(state.started||!isAdminView())return;
-    state.started=true;root.hidden=false;load();loadMonths();loadClinics();checkVersion();
-    let lastSafety=Date.now();
-    clearInterval(state.pollTimer);
-    state.pollTimer=setInterval(()=>{checkVersion();if(!document.hidden&&Date.now()-lastSafety>SAFETY_REFRESH_MS){lastSafety=Date.now();dataChanged(0)}},VERSION_POLL_MS);
+    state.started=true;root.hidden=false;load();loadMonths();loadClinics();
     clearInterval(state.tickTimer);state.tickTimer=setInterval(updateAgo,5000);
   }
-  function stop(){root.hidden=true;state.started=false;clearInterval(state.pollTimer);clearInterval(state.tickTimer);clearTimeout(state.changeTimer);document.body.classList.remove('admin-counter-ready')}
+  function stop(){root.hidden=true;state.started=false;clearInterval(state.tickTimer);clearTimeout(state.changeTimer);document.body.classList.remove('admin-counter-ready')}
 
   // Live triggers: saves on this device, other tabs, other devices (service worker relay).
   let channel=null;
@@ -280,14 +296,17 @@
     try{
       const method=String(init?.method||(input instanceof Request?input.method:'GET')).toUpperCase();
       const url=new URL(typeof input==='string'?input:input?.url||String(input),location.href);
-      if(method!=='GET'&&method!=='HEAD'&&method!=='OPTIONS'&&url.origin===location.origin&&MUTATION_PATHS.some(path=>url.pathname.startsWith(path))){
+      if(url.origin!==location.origin){}
+      else if(method!=='GET'&&method!=='HEAD'&&method!=='OPTIONS'&&MUTATION_PATHS.some(path=>url.pathname.startsWith(path))){
         result.then(response=>{if(response.ok){dataChanged();try{channel?.postMessage(Date.now())}catch{}}}).catch(()=>{});
+      }else if(method==='GET'&&state.started&&WATCHED_READS.some(path=>url.pathname.startsWith(path))){
+        result.then(response=>observeRead(url,response)).catch(()=>{});
       }
     }catch{}
     return result;
   };
   navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='BESTCARE_REMOTE_SYNC')dataChanged(600)});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.started)checkVersion()});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.started&&state.pending)dataChanged(0)});
   window.addEventListener('online',()=>{if(state.started)dataChanged(0)});
   new MutationObserver(()=>{if(state.started)render()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
   const check=()=>{if(isAdminView())start();else if(state.started&&document.body.classList.contains('auth-locked'))stop()};

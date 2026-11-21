@@ -275,7 +275,7 @@ function unlockApp(user=null){
   if(audioContext)playLoginSignature();
   startAuthIdleProtection();
   startPresence();
-  keepPushSubscriptionAlive({force:true});
+  keepPushSubscriptionAlive();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
     if(VIEW_MODE==='admin'){startAdminQuickPlanInbox();startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
@@ -896,8 +896,12 @@ async function ensurePushSubscription(){
   // Self-heal: an existing browser subscription means the user opted in, even if local storage was cleared.
   if(!subscription&&localStorage.getItem('bestcare_system_notifications')!=='enabled')return false;
   localStorage.setItem('bestcare_system_notifications','enabled');
-  const response=await fetch(PUSH_API,{cache:'no-store'});if(!response.ok)throw new Error('Push service unavailable');
-  const {publicKey}=await response.json();
+  // The public key rarely changes; reuse it to avoid an extra function call.
+  let publicKey=localStorage.getItem('bestcare_push_public_key')||'';
+  if(!publicKey||!subscription){
+    const response=await fetch(PUSH_API,{cache:'no-store'});if(!response.ok)throw new Error('Push service unavailable');
+    publicKey=String((await response.json()).publicKey||'');localStorage.setItem('bestcare_push_public_key',publicKey);
+  }
   // Server keys changed: the old subscription can never be delivered to, so replace it.
   if(subscription&&!sameServerKey(subscription,publicKey)){
     const oldEndpoint=subscription.endpoint;
@@ -915,7 +919,7 @@ async function ensurePushSubscription(){
 function keepPushSubscriptionAlive({force=false}={}){
   if(!authReady||IS_DEPLOY_PREVIEW||!('Notification' in window)||Notification.permission!=='granted')return;
   const last=Number(localStorage.getItem('bestcare_push_refreshed_at')||0);
-  if(!force&&Date.now()-last<6*60*60*1000)return;
+  if(!force&&Date.now()-last<24*60*60*1000)return;
   ensurePushSubscription().then(()=>refreshPushSubscriptionState()).catch(error=>console.warn('Push keep-alive failed',error));
 }
 async function testPushNotifications(){
@@ -5587,7 +5591,7 @@ async function registerPwa(){
   try{
     const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
     sync.pwaRegistration=registration;sync.pwaCheckAt=Date.now();
-    if(systemNotificationsEnabled())ensurePushSubscription().catch(error=>console.warn('Push subscription refresh failed',error));
+    // Subscription upkeep runs after sign-in (keepPushSubscriptionAlive), where the request can be authorized.
     const showUpdate=async worker=>{
       waitingServiceWorker=worker;
       try{
