@@ -188,3 +188,41 @@ test('small windows read day blobs directly instead of listing history', () => {
   assert.deepEqual(stats.directDayKeys(clinics, '2026-07-30', '2026-07-30', 'clinic-3'), ['clinics/clinic-3/days/2026-07-30']);
   assert.equal(stats.directDayKeys(clinics, '2026-01-01', '2026-07-30', 'all'), null);
 });
+
+test('day digests feed monthly and all-time totals with de-duplicated patients', () => {
+  const a = stats.dayDigest('clinic-1', '2026-09-10', [
+    { file: '1', status: 'done', paymentItems: [{ name: 'كشف', quantity: 1 }] },
+    { file: '2', status: 'cancel', paymentItems: [{ name: 'كشف', quantity: 1 }] },
+  ]);
+  const b = stats.dayDigest('clinic-2', '2026-11-02', [
+    { file: '1', status: 'done', paymentItems: [{ name: 'علاج عصب', quantity: 2 }] },
+    { file: '3', status: 'waiting' },
+  ]);
+  assert.equal(a.procedureUnits, 1);
+  assert.equal(a.ids.length, 2);
+  assert.equal(a.treated.length, 1);
+  assert.ok(!JSON.stringify(a).includes('"1"'), 'identities are stored hashed');
+  const report = stats.aggregateMonths({
+    digests: [a, b],
+    labCases: [
+      { clinicId: 'clinic-1', status: 'delivered_patient', createdAt: Date.UTC(2026, 8, 9), sentAt: Date.UTC(2026, 8, 10), deliveredAt: Date.UTC(2026, 10, 1), units: 2 },
+      { clinicId: 'clinic-2', status: 'cancelled', createdAt: Date.UTC(2026, 10, 1), sentAt: Date.UTC(2026, 10, 1) },
+    ],
+    clinicFilter: 'all',
+    currentMonth: '2026-11',
+  });
+  assert.deepEqual(report.months.map(item => item.month), ['2026-11', '2026-10', '2026-09']);
+  assert.equal(report.months[2].labSent, 1);
+  assert.equal(report.months[2].labSentUnits, 2);
+  assert.equal(report.months[0].labDelivered, 1);
+  assert.equal(report.months[0].procedureUnits, 2);
+  assert.equal(report.total.appointments, 4);
+  assert.equal(report.total.procedureUnits, 3);
+  assert.equal(report.total.uniquePatients, 3);
+  assert.equal(report.total.treatedPatients, 1);
+  assert.equal(report.total.labSent, 1);
+  assert.equal(report.total.firstMonth, '2026-09');
+  const clinicTwo = stats.aggregateMonths({ digests: [a, b], labCases: [], clinicFilter: 'clinic-2', currentMonth: '2026-11' });
+  assert.equal(clinicTwo.total.uniquePatients, 2);
+  assert.deepEqual(clinicTwo.months.map(item => item.month), ['2026-11']);
+});

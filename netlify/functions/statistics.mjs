@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
 import { apiHeaders, requireUser } from './lib/session.mjs';
 
@@ -70,6 +71,20 @@ async function listKeys(blobStore, prefix) {
     cursor = next;
   }
   return keys;
+}
+
+async function listEntries(blobStore, prefix) {
+  const entries = [];
+  let cursor;
+  for (let pageNo = 0; pageNo < 50; pageNo += 1) {
+    const page = await blobStore.list({ prefix, ...(cursor ? { cursor } : {}) });
+    const blobs = Array.isArray(page?.blobs) ? page.blobs : [];
+    entries.push(...blobs.filter(entry => entry?.key).map(entry => ({ key: entry.key, etag: String(entry.etag || '') })));
+    const next = page?.cursor || page?.nextCursor || '';
+    if (!next || next === cursor || blobs.length === 0) break;
+    cursor = next;
+  }
+  return entries;
 }
 
 async function mapLimited(items, mapper, limit = 24) {
@@ -393,7 +408,135 @@ function directDayKeys(clinics, from, to, clinicFilter) {
   return keys;
 }
 
+// ---- Monthly and all-time totals -------------------------------------------
+// Each day blob is reduced to a small digest and cached per month, keyed by the
+// blob etag, so only days that changed since the last request are read again.
+const CACHE_VERSION = 1;
+const shortHash = value => createHash('sha1').update(String(value)).digest('hex').slice(0, 12);
+const monthOf = date => String(date).slice(0, 7);
+const monthKeys = ['appointments', 'completed', 'cancelled', 'procedureUnits', 'visitsWithProcedures'];
+
+function dayDigest(clinicId, date, patients) {
+  const list = Array.isArray(patients) ? patients : [];
+  const { summary } = summarize({ records: [{ clinicId, date, patients: list }], clinics: [], from: date, to: date, clinicFilter: 'all', plans: [], labCases: [] });
+  const ids = new Set();
+  const treated = new Set();
+  list.forEach(patient => {
+    const identity = shortHash(patientIdentity(patient));
+    ids.add(identity);
+    const status = statusKeys.includes(patient?.status) ? patient.status : 'waiting';
+    const hasItems = status !== 'cancel' && (Array.isArray(patient?.paymentItems) ? patient.paymentItems : []).some(item => cleanLabel(item?.name));
+    if (status === 'done' || hasItems) treated.add(identity);
+  });
+  return {
+    clinicId,
+    date,
+    ...Object.fromEntries(monthKeys.map(key => [key, numeric(summary[key])])),
+    ids: [...ids],
+    treated: [...treated],
+  };
+}
+
+const emptyMonth = month => ({ month, ...Object.fromEntries(monthKeys.map(key => [key, 0])), uniquePatients: 0, treatedPatients: 0, labCreated: 0, labSent: 0, labSentUnits: 0, labDelivered: 0 });
+
+function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
+  const months = new Map();
+  const ids = new Map();
+  const treated = new Map();
+  const allIds = new Set();
+  const allTreated = new Set();
+  const month = key => {
+    if (!months.has(key)) { months.set(key, emptyMonth(key)); ids.set(key, new Set()); treated.set(key, new Set()); }
+    return months.get(key);
+  };
+  digests.forEach(digest => {
+    if (clinicFilter !== 'all' && digest.clinicId !== clinicFilter) return;
+    const key = monthOf(digest.date);
+    const item = month(key);
+    monthKeys.forEach(field => { item[field] += numeric(digest[field]); });
+    (digest.ids || []).forEach(id => { ids.get(key).add(id); allIds.add(id); });
+    (digest.treated || []).forEach(id => { treated.get(key).add(id); allTreated.add(id); });
+  });
+  labCases.forEach(item => {
+    if (clinicFilter !== 'all' && item.clinicId !== clinicFilter) return;
+    const status = String(item.status || '');
+    const created = numeric(item.createdAt || item.updatedAt);
+    if (created > 0) month(monthOf(riyadhDate(created))).labCreated += 1;
+    const sentAt = numeric(item.sentAt);
+    if (sentAt > 0 && status !== 'cancelled') {
+      const entry = month(monthOf(riyadhDate(sentAt)));
+      entry.labSent += 1;
+      entry.labSentUnits += Math.max(1, Math.min(99, Math.round(numeric(item.units) || 1)));
+    }
+    const deliveredAt = numeric(item.deliveredAt);
+    if (deliveredAt > 0) month(monthOf(riyadhDate(deliveredAt))).labDelivered += 1;
+  });
+  month(currentMonth);
+  // Fill gaps so the timeline has no missing months.
+  const keys = [...months.keys()].sort();
+  for (let cursor = keys[0]; cursor && cursor < currentMonth;) {
+    const next = new Date(Date.UTC(Number(cursor.slice(0, 4)), Number(cursor.slice(5, 7)), 1)).toISOString().slice(0, 7);
+    month(next);
+    cursor = next;
+  }
+  const list = [...months.values()].sort((a, b) => b.month.localeCompare(a.month)).map(item => ({
+    ...item,
+    uniquePatients: ids.get(item.month).size,
+    treatedPatients: treated.get(item.month).size,
+    completionRate: item.appointments - item.cancelled > 0 ? Math.round(item.completed / (item.appointments - item.cancelled) * 100) : 0,
+  }));
+  const total = list.reduce((sum, item) => {
+    [...monthKeys, 'labCreated', 'labSent', 'labSentUnits', 'labDelivered'].forEach(field => { sum[field] += item[field]; });
+    return sum;
+  }, emptyMonth('all'));
+  total.uniquePatients = allIds.size;
+  total.treatedPatients = allTreated.size;
+  total.completionRate = total.appointments - total.cancelled > 0 ? Math.round(total.completed / (total.appointments - total.cancelled) * 100) : 0;
+  total.firstMonth = list.length ? list[list.length - 1].month : currentMonth;
+  return { months: list, total };
+}
+
+async function cachedDigests({ dayStore, cacheStore, allowedClinics }) {
+  const listed = new Map();
+  (await Promise.all([listEntries(dayStore, 'days/'), listEntries(dayStore, 'clinics/')])).flat().forEach(entry => {
+    const parsed = parseDayKey(entry.key);
+    if (parsed && allowedClinics.has(parsed.clinicId)) listed.set(entry.key, { ...entry, ...parsed });
+  });
+  const byMonth = new Map();
+  listed.forEach(entry => {
+    const key = monthOf(entry.date);
+    if (!byMonth.has(key)) byMonth.set(key, []);
+    byMonth.get(key).push(entry);
+  });
+  const digests = [];
+  await mapLimited([...byMonth.entries()], async ([month, entries]) => {
+    const cacheKey = `days/v${CACHE_VERSION}/${month}`;
+    const cached = await cacheStore.get(cacheKey, { type: 'json', consistency: 'strong' }).catch(() => null);
+    const saved = cached?.version === CACHE_VERSION && cached.entries && typeof cached.entries === 'object' ? cached.entries : {};
+    const next = {};
+    const stale = [];
+    entries.forEach(entry => {
+      const hit = saved[entry.key];
+      if (hit && entry.etag && hit.etag === entry.etag) next[entry.key] = hit;
+      else stale.push(entry);
+    });
+    const fresh = await mapLimited(stale, async entry => {
+      const state = await dayStore.get(entry.key, { type: 'json', consistency: 'strong' });
+      return [entry.key, { etag: entry.etag, ...dayDigest(entry.clinicId, entry.date, state?.patients) }];
+    }, 16);
+    fresh.forEach(([key, value]) => { next[key] = value; });
+    const removed = Object.keys(saved).some(key => !next[key]);
+    if (stale.length || removed) {
+      await cacheStore.setJSON(cacheKey, { version: CACHE_VERSION, updatedAt: Date.now(), entries: next }).catch(error => console.warn('Statistics cache write failed', error));
+    }
+    digests.push(...Object.values(next));
+  }, 6);
+  return digests;
+}
+
 export const __test = {
+  aggregateMonths,
+  dayDigest,
   activeClinics,
   directDayKeys,
   addDays,
@@ -417,6 +560,31 @@ export default async request => {
   const to = datePattern.test(url.searchParams.get('to') || '') ? url.searchParams.get('to') : today;
   const from = datePattern.test(url.searchParams.get('from') || '') ? url.searchParams.get('from') : addDays(to, -29);
   const clinicFilter = url.searchParams.get('clinic') === 'all' ? 'all' : String(url.searchParams.get('clinic') || 'all');
+  const mode = String(url.searchParams.get('mode') || '');
+  if (mode === 'version' || mode === 'months') {
+    if (clinicFilter !== 'all' && !clinicPattern.test(clinicFilter)) return reply({ error: 'Invalid clinic' }, 400);
+    const savedClinics = await store('clinic-dashboard-config').get('clinics', { type: 'json', consistency: 'strong' });
+    const clinics = activeClinics(savedClinics).filter(clinic => clinicFilter === 'all' || clinic.id === clinicFilter);
+    const labStore = store('clinic-lab-cases');
+    if (mode === 'version') {
+      // Cheap change detector: etags of today's day lists and of every lab list.
+      const dayStore = store('clinic-dashboard-days');
+      const keys = directDayKeys(clinics, today, today, 'all') || [];
+      const [dayMeta, labMeta] = await Promise.all([
+        Promise.all(keys.map(key => dayStore.getMetadata(key, { consistency: 'strong' }).catch(() => null))),
+        Promise.all(clinics.map(clinic => labStore.getMetadata(`clinics/${clinic.id}`, { consistency: 'strong' }).catch(() => null))),
+      ]);
+      const signature = [...keys.map((key, index) => `${key}:${dayMeta[index]?.etag || '-'}`), ...clinics.map((clinic, index) => `lab:${clinic.id}:${labMeta[index]?.etag || '-'}`)].join('|');
+      return reply({ version: shortHash(signature), date: today, generatedAt: Date.now() });
+    }
+    const allClinics = activeClinics(savedClinics);
+    const [digests, labRecords] = await Promise.all([
+      cachedDigests({ dayStore: store('clinic-dashboard-days'), cacheStore: store('clinic-statistics-cache'), allowedClinics: new Set(allClinics.map(clinic => clinic.id)) }),
+      Promise.all(clinics.map(clinic => labStore.get(`clinics/${clinic.id}`, { type: 'json', consistency: 'strong' }))),
+    ]);
+    const labCases = labRecords.flatMap(record => Array.isArray(record?.cases) ? record.cases : []);
+    return reply({ clinic: clinicFilter, generatedAt: Date.now(), ...aggregateMonths({ digests, labCases, clinicFilter, currentMonth: monthOf(today) }) });
+  }
   if (from > to || daysBetween(from, to) < 1 || daysBetween(from, to) > MAX_RANGE_DAYS) {
     return reply({ error: `Date range must be between 1 and ${MAX_RANGE_DAYS} days` }, 400);
   }
