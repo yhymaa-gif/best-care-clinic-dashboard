@@ -51,6 +51,15 @@
     .tm-bars{display:flex;align-items:flex-end;gap:4px;height:46px}.tm-bars i{flex:1;min-height:3px;border-radius:5px 5px 2px 2px;background:#cfe3d9}.tm-bars i.cur{background:repeating-linear-gradient(45deg,#c39a3e 0 4px,#e3c06e 4px 8px)}.tm-bars i.last{background:#2f8c67}
     .tm-card small{color:var(--muted);font-size:10px;line-height:1.6}.tm-card small b{color:var(--ink)}
     @media(max-width:1000px){.trend-body{grid-template-columns:1fr}.trend-month-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.trend-lists{grid-template-columns:1fr}.trend-panel{padding:13px}.trend-verdict strong{font-size:22px}}
+    .types-panel{margin-top:15px;padding:18px}.types-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px}
+    .types-list{display:grid;gap:7px}.type-row{--c:#2f8c67;display:grid;grid-template-columns:12px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:15px;background:#fff;color:var(--ink);font:inherit;text-align:start;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+    .type-row:hover{border-color:#a9caba}.type-row.active{border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 18%,transparent)}.type-row>i{width:12px;height:12px;border-radius:4px;background:var(--c)}
+    .type-main b{display:block;font-size:13px}.type-main small{color:var(--muted);font-size:10.5px}.type-bar{height:7px;margin-top:6px;overflow:hidden;border-radius:99px;background:#edf3f0}.type-bar span{display:block;height:100%;border-radius:inherit;background:var(--c)}
+    .type-side{display:grid;justify-items:end;gap:4px}.type-side strong{font-size:18px;font-weight:950}
+    .type-detail{padding:15px;border:1px solid var(--line);border-radius:18px;background:#f8fbf9}.type-detail h4{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:15px}.type-detail h4 i{width:12px;height:12px;border-radius:4px;background:var(--c)}.type-detail>p{margin:0 0 12px;color:var(--muted);font-size:11px}
+    .type-block{margin-top:12px}.type-block h5{margin:0 0 7px;color:var(--muted);font-size:11px}.type-months{display:flex;align-items:flex-end;gap:6px;height:92px}.type-months div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;flex:1;height:100%}.type-months i{width:100%;max-width:34px;min-height:3px;border-radius:6px 6px 2px 2px;background:color-mix(in srgb,var(--c) 45%,#fff)}.type-months div.cur i{background:repeating-linear-gradient(45deg,var(--c) 0 4px,color-mix(in srgb,var(--c) 55%,#fff) 4px 8px)}.type-months small{color:var(--muted);font-size:9px;white-space:nowrap}.type-months b{font-size:10px}
+    @media(max-width:1000px){.types-layout{grid-template-columns:1fr}}
+    html[data-theme="dark"] .type-row{background:#17231e;border-color:#2a3f35;color:#e4f0ea}html[data-theme="dark"] .type-detail{background:#121c18;border-color:#2a3f35}html[data-theme="dark"] .type-bar{background:#22332b}
     @media print{.trend-compare,.trend-details summary{display:none}.trend-details{display:block}.trend-panel{break-inside:avoid}}
     html[data-theme="dark"] .trend-list li,html[data-theme="dark"] .tm-card,html[data-theme="dark"] .trend-compare select{background:#17231e;border-color:#2a3f35;color:#e4f0ea}html[data-theme="dark"] .insight{background:#121c18;border-color:#2a3f35}html[data-theme="dark"] .insight i{background:#17231e}html[data-theme="dark"] .trend-verdict p{color:#c9dcd2}html[data-theme="dark"] .trend-verdict .v-score{background:#17231e}
   </style>
@@ -93,6 +102,11 @@
       <div id="trendInsights" class="trend-insights"></div>
       <details class="trend-details"><summary>كل المؤشرات مقارنة بالفترة السابقة</summary><div class="table-wrap"><table class="clinic-table trend-table"><thead><tr><th>المؤشر</th><th>الفترة الحالية</th><th>الفترة السابقة</th><th>التغير</th><th>الحكم</th></tr></thead><tbody id="trendRows"></tbody></table></div></details>
       <div class="trend-months"><div class="trend-months-head"><h4>الاتجاه الشهري</h4><p>آخر 3 أشهر مكتملة، ووتيرة الشهر الحالي متوقعةً حتى نهايته</p></div><div id="trendMonths" class="trend-month-grid"></div></div>
+    </section>
+
+    <section class="panel types-panel" id="typesPanel" aria-label="الإجراءات حسب النوع">
+      <div class="trend-head"><div><h3>الإجراءات حسب النوع</h3><p id="typesSubtitle">توزيع الإجراءات المنفذة على أنواع العلاج، والتغير عن الفترة السابقة. اضغط أي نوع لتفاصيله.</p></div><span id="typesTotal" class="chart-total">0 إجراء</span></div>
+      <div class="types-layout"><div id="typesList" class="types-list" role="list"></div><div id="typeDetail" class="type-detail"></div></div>
     </section>
 
     <section class="kpis" aria-label="المؤشرات الرئيسية">

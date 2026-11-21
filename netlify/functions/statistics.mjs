@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
 import { apiHeaders, requireUser } from './lib/session.mjs';
+import { PROCEDURE_TYPES, procedureType, typeLabel } from './lib/procedure-types.mjs';
 
 const headers = apiHeaders('GET,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -182,6 +183,8 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
   const payments = { requested: 0, acknowledged: 0, completed: 0, pending: 0, collectedCents: 0, transactionCount: 0 };
   const countedReceipts = new Set();
   const procedureMap = new Map();
+  const typeMap = new Map();
+  const clinicTypes = new Map();
   const treatedIdentities = new Set();
   const clinicTreated = new Map();
   const procedureTotals = { units: 0, lines: 0, freeUnits: 0, visitsWithProcedures: 0, completedWithoutProcedure: 0 };
@@ -208,6 +211,17 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
         procedureTotals.lines += 1;
         if (item?.free) procedureTotals.freeUnits += quantity;
         tally(procedureMap, procedureKey(item), cleanLabel(item.name), cleanLabel(item?.code, 60), quantity, { free: item?.free ? quantity : 0, visits: 1 });
+        const type = procedureType(item?.code, item?.name);
+        const typeEntry = typeMap.get(type) || { count: 0, visits: 0, free: 0, patients: new Set(), procedures: new Map() };
+        typeEntry.count += quantity;
+        typeEntry.visits += 1;
+        if (item?.free) typeEntry.free += quantity;
+        typeEntry.patients.add(patientIdentity(patient));
+        tally(typeEntry.procedures, procedureKey(item), cleanLabel(item.name), cleanLabel(item?.code, 60), quantity);
+        typeMap.set(type, typeEntry);
+        if (!clinicTypes.has(record.clinicId)) clinicTypes.set(record.clinicId, {});
+        const perClinic = clinicTypes.get(record.clinicId);
+        perClinic[type] = (perClinic[type] || 0) + quantity;
       });
       procedureTotals.units += visitUnits;
       if (visitUnits) procedureTotals.visitsWithProcedures += 1;
@@ -392,6 +406,18 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       labOpenNow: labTotals.openNow,
     },
     topProcedures: topEntries(procedureMap),
+    procedureTypes: PROCEDURE_TYPES.map(({ id, label, en }) => {
+      const entry = typeMap.get(id);
+      return entry ? {
+        type: id, label, en,
+        count: entry.count,
+        visits: entry.visits,
+        free: entry.free,
+        patients: entry.patients.size,
+        share: procedureTotals.units ? Math.round(entry.count / procedureTotals.units * 1000) / 10 : 0,
+        procedures: topEntries(entry.procedures).slice(0, 8),
+      } : null;
+    }).filter(Boolean).sort((a, b) => b.count - a.count),
     labAttention: labAttention
       .sort((a, b) => (a.reason === b.reason ? 0 : a.reason === 'overdue' ? -1 : 1) || (a.expectedAt || a.createdAt) - (b.expectedAt || b.createdAt))
       .slice(0, 30),
@@ -408,6 +434,7 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       return {
         ...clinic,
         treatedPatients: clinicTreated.get(clinic.clinicId)?.size || 0,
+        procedureTypes: clinicTypes.get(clinic.clinicId) || {},
         stayMeasured,
         averageStayMinutes: stayMeasured ? Math.round(stayTotalMinutes / stayMeasured) : 0,
       };
@@ -433,7 +460,7 @@ function directDayKeys(clinics, from, to, clinicFilter) {
 // ---- Monthly and all-time totals -------------------------------------------
 // Each day blob is reduced to a small digest and cached per month, keyed by the
 // blob etag, so only days that changed since the last request are read again.
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const shortHash = value => createHash('sha1').update(String(value)).digest('hex').slice(0, 12);
 const monthOf = date => String(date).slice(0, 7);
 const monthKeys = ['appointments', 'completed', 'cancelled', 'procedureUnits', 'visitsWithProcedures'];
@@ -450,16 +477,26 @@ function dayDigest(clinicId, date, patients) {
     const hasItems = status !== 'cancel' && (Array.isArray(patient?.paymentItems) ? patient.paymentItems : []).some(item => cleanLabel(item?.name));
     if (status === 'done' || hasItems) treated.add(identity);
   });
+  const types = {};
+  list.forEach(patient => {
+    if (patient?.status === 'cancel') return;
+    (Array.isArray(patient?.paymentItems) ? patient.paymentItems : []).forEach(item => {
+      if (!cleanLabel(item?.name)) return;
+      const type = procedureType(item?.code, item?.name);
+      types[type] = (types[type] || 0) + Math.max(1, Math.min(99, Math.round(numeric(item?.quantity) || 1)));
+    });
+  });
   return {
     clinicId,
     date,
+    types,
     ...Object.fromEntries(monthKeys.map(key => [key, numeric(summary[key])])),
     ids: [...ids],
     treated: [...treated],
   };
 }
 
-const emptyMonth = month => ({ month, ...Object.fromEntries(monthKeys.map(key => [key, 0])), uniquePatients: 0, treatedPatients: 0, labCreated: 0, labSent: 0, labSentUnits: 0, labDelivered: 0 });
+const emptyMonth = month => ({ month, ...Object.fromEntries(monthKeys.map(key => [key, 0])), uniquePatients: 0, treatedPatients: 0, labCreated: 0, labSent: 0, labSentUnits: 0, labDelivered: 0, types: {} });
 
 function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
   const months = new Map();
@@ -476,6 +513,7 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
     const key = monthOf(digest.date);
     const item = month(key);
     monthKeys.forEach(field => { item[field] += numeric(digest[field]); });
+    Object.entries(digest.types || {}).forEach(([type, count]) => { item.types[type] = (item.types[type] || 0) + numeric(count); });
     (digest.ids || []).forEach(id => { ids.get(key).add(id); allIds.add(id); });
     (digest.treated || []).forEach(id => { treated.get(key).add(id); allTreated.add(id); });
   });
@@ -511,6 +549,7 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
     [...monthKeys, 'labCreated', 'labSent', 'labSentUnits', 'labDelivered'].forEach(field => { sum[field] += item[field]; });
     return sum;
   }, emptyMonth('all'));
+  total.types = list.reduce((sum, item) => { Object.entries(item.types).forEach(([type, count]) => { sum[type] = (sum[type] || 0) + count; }); return sum; }, {});
   total.uniquePatients = allIds.size;
   total.treatedPatients = allTreated.size;
   total.completionRate = total.appointments - total.cancelled > 0 ? Math.round(total.completed / (total.appointments - total.cancelled) * 100) : 0;
@@ -558,6 +597,7 @@ async function cachedDigests({ dayStore, cacheStore, allowedClinics }) {
 
 export const __test = {
   aggregateMonths,
+  typeLabel,
   dayDigest,
   activeClinics,
   directDayKeys,
@@ -662,6 +702,7 @@ export default async request => {
         summary: prior.summary,
         clinics: prior.clinics.map(({ clinicId, appointments, completed, cancelled, procedures, treatedPatients, labSent, revenueCents }) => ({ clinicId, appointments, completed, cancelled, procedures, treatedPatients, labSent, revenueCents })),
         topProcedures: prior.topProcedures,
+        procedureTypes: prior.procedureTypes.map(({ type, count, visits, patients }) => ({ type, count, visits, patients })),
       };
     })()
     : undefined;

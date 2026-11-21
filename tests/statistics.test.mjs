@@ -243,3 +243,38 @@ test('lab attention lists overdue cases first, then cases waiting to be sent', (
   assert.equal(output.labAttention[0].labName, 'معمل خارجي');
   assert.equal(output.labAttention[0].work, 'تاج');
 });
+
+test('procedures are grouped by clinical type with shares, patients and clinic split', async () => {
+  const { procedureType } = await import('../netlify/functions/lib/procedure-types.mjs');
+  assert.equal(procedureType('root-canal', 'علاج عصب'), 'endo');
+  assert.equal(procedureType('other', 'زراعة سن أمامي'), 'implant');
+  assert.equal(procedureType('', 'تاج زيركون'), 'prosthetic');
+  assert.equal(procedureType('', 'فينير'), 'cosmetic');
+  assert.equal(procedureType('', 'شيء غير معروف'), 'other');
+  const output = stats.summarize({
+    from: '2026-07-30', to: '2026-07-30', clinicFilter: 'all',
+    clinics: [{ id: 'clinic-1', name: 'ع1', doctorName: '', roomNumber: '1' }, { id: 'clinic-2', name: 'ع2', doctorName: '', roomNumber: '2' }],
+    records: [
+      { clinicId: 'clinic-1', date: '2026-07-30', patients: [
+        { file: '1', status: 'done', paymentItems: [{ code: 'root-canal', name: 'علاج عصب', quantity: 2 }, { code: 'examination', name: 'كشف', quantity: 1, free: true }] },
+        { file: '2', status: 'done', paymentItems: [{ code: 'root-canal-retreatment', name: 'إعادة علاج عصب', quantity: 1 }] },
+      ] },
+      { clinicId: 'clinic-2', date: '2026-07-30', patients: [{ file: '3', status: 'done', paymentItems: [{ code: 'other', name: 'زراعة', quantity: 1 }] }] },
+    ],
+    plans: [], labCases: [],
+  });
+  const endo = output.procedureTypes.find(item => item.type === 'endo');
+  assert.equal(output.procedureTypes[0].type, 'endo');
+  assert.equal(endo.count, 3);
+  assert.equal(endo.patients, 2);
+  assert.equal(endo.share, 60);
+  assert.equal(endo.procedures.length, 2);
+  assert.equal(output.procedureTypes.find(item => item.type === 'diagnostic').free, 1);
+  assert.deepEqual(output.clinics[0].procedureTypes, { endo: 3, diagnostic: 1 });
+  assert.deepEqual(output.clinics[1].procedureTypes, { implant: 1 });
+  const digest = stats.dayDigest('clinic-1', '2026-07-30', [{ status: 'done', paymentItems: [{ code: 'ceramic-crown', name: 'تاج', quantity: 2 }] }, { status: 'cancel', paymentItems: [{ code: 'extraction', name: 'خلع' }] }]);
+  assert.deepEqual(digest.types, { prosthetic: 2 });
+  const report = stats.aggregateMonths({ digests: [digest], labCases: [], clinicFilter: 'all', currentMonth: '2026-07' });
+  assert.deepEqual(report.months[0].types, { prosthetic: 2 });
+  assert.deepEqual(report.total.types, { prosthetic: 2 });
+});
