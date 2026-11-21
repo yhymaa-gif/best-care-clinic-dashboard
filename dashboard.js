@@ -173,6 +173,12 @@ const IOS_INSTALL_COPY={
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let pendingAftercareId=null; let aftercareLink=null; let aftercareLinkOrderAt=0; let aftercareLinkDocumentId=''; let aftercareLoadGeneration=0; let aftercareWhatsappOpened=false; let pendingAftercareCompletionAction=null; let adminQueueMinuteKey=''; const requestedLang=new URLSearchParams(location.search).get('lang');let lang=requestedLang==='en'?'en':requestedLang==='ar'?'ar':localStorage.getItem('bestcare_lang')||'ar';
 let manualAlertFetchedAt=0;
+// Admin pulse: one light request reports which areas changed so the separate
+// periodic calls can wait. While it is healthy each area keeps only a slow
+// safety refresh; if it fails, every area returns to its normal schedule.
+const ADMIN_PULSE_SAFETY_MS=30*60*1000;
+let adminPulse={healthy:false,started:false,timer:null,busy:false,signatures:null,failures:0,lastAt:0};
+const pulseDelay=normal=>adminPulse.healthy?ADMIN_PULSE_SAFETY_MS:normal;
 let audioContext=null;
 let presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
 let adminPatientHub={records:[],updatedAt:0,date:'',loading:false,error:'',timer:null,started:false};
@@ -278,7 +284,7 @@ function unlockApp(user=null){
   keepPushSubscriptionAlive();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
-    if(VIEW_MODE==='admin'){startAdminQuickPlanInbox();startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
+    if(VIEW_MODE==='admin'){startAdminPulse();startAdminQuickPlanInbox();startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
     if(NEED_ROLE_CHOICE&&authUser?.role==='admin')requestAnimationFrame(()=>openRoleChoice());
   });
 }
@@ -1556,7 +1562,7 @@ function renderAdminPatientHub(){
 function scheduleAdminPatientHub(delay=adminHubCadence()){
   clearTimeout(adminPatientHub.timer);
   if(!adminPatientHub.started||VIEW_MODE!=='admin')return;
-  adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub(),delay);
+  adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub(),pulseDelay(delay));
 }
 async function refreshAdminPatientHub({force=false}={}){
   if(VIEW_MODE!=='admin'||!authReady||adminPatientHub.loading)return false;
@@ -1810,6 +1816,7 @@ async function checkApplicationUpdate(now=Date.now()){
   finally{sync.pwaChecking=false}
 }
 function auxiliaryCadence(now=Date.now()){
+  if(adminPulse.healthy)return ADMIN_PULSE_SAFETY_MS;
   const cadence=syncCadence(now);
   if(cadence.workHours)return syncDisplayVisible()?AUX_WORK_MS:AUX_WORK_HIDDEN_MS;
   return document.hidden?AUX_OFF_HOURS_HIDDEN_MS:AUX_OFF_HOURS_MS;
@@ -2725,7 +2732,58 @@ async function refreshOperationsPrescriptions(){
 function scheduleOperationsPrescriptionPolling(){
   clearTimeout(operationsCenter.prescriptionsTimer);if(!operationsCenter.prescriptionsStarted)return;
   const cadence=syncCadence(),delay=document.hidden?(cadence.workHours?15*60*1000:60*60*1000):(cadence.workHours?5*60*1000:30*60*1000);
-  operationsCenter.prescriptionsTimer=setTimeout(async()=>{await refreshOperationsPrescriptions();scheduleOperationsPrescriptionPolling()},delay);
+  operationsCenter.prescriptionsTimer=setTimeout(async()=>{await refreshOperationsPrescriptions();scheduleOperationsPrescriptionPolling()},pulseDelay(delay));
+}
+function adminPulseCadence(){
+  const cadence=syncCadence();
+  if(cadence.workHours)return syncDisplayVisible()?2*60*1000:15*60*1000;
+  return document.hidden?60*60*1000:30*60*1000;
+}
+function scheduleAdminPulse(delay=adminPulseCadence()){
+  clearTimeout(adminPulse.timer);
+  if(!adminPulse.started)return;
+  adminPulse.timer=setTimeout(runAdminPulse,delay);
+}
+function setAdminPulseHealthy(healthy){
+  if(adminPulse.healthy===healthy)return;
+  adminPulse.healthy=healthy;
+  // Re-arm every area with the schedule that now applies.
+  scheduleAdminPatientHub();scheduleAdminQuickPlanInbox();scheduleAppointmentRequests();scheduleOperationsPrescriptionPolling();
+}
+async function runAdminPulse(){
+  if(!adminPulse.started||adminPulse.busy||!authReady)return scheduleAdminPulse();
+  if(navigator.onLine===false)return scheduleAdminPulse(60*1000);
+  adminPulse.busy=true;
+  try{
+    const response=await request(`/api/pulse?date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{},10000);
+    if(response.status===401){lockApp('انتهت الجلسة. سجّل الدخول مرة أخرى.');return}
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.signatures)throw new Error(data.error||`HTTP ${response.status}`);
+    const before=adminPulse.signatures,next=data.signatures;
+    adminPulse.signatures=next;adminPulse.failures=0;adminPulse.lastAt=Date.now();
+    if(before&&data.date===selectedDate){
+      const changed=key=>before[key]!==next[key];
+      if(changed('allDays'))refreshAdminPatientHub({force:true});
+      if(changed('activeDay')&&!sync.dirty&&!sync.pushing)scheduleAutomaticSync(60);
+      if(changed('labs'))Promise.allSettled([refreshLabCases({force:true}),refreshOperationsLabCases()]);
+      if(changed('quickPlans'))refreshAdminQuickPlanInbox();
+      if(changed('appointmentRequests'))refreshAppointmentRequests({notify:true});
+      if(changed('registry'))refreshTreatmentPlanRegistry(true);
+      if(changed('prescriptions'))refreshOperationsPrescriptions();
+      if(changed('alert'))refreshManualAlert(true);
+    }
+    setAdminPulseHealthy(true);
+  }catch(error){
+    adminPulse.failures+=1;
+    if(adminPulse.failures>=2)setAdminPulseHealthy(false);
+    console.warn('Admin pulse unavailable',error?.message||error);
+  }finally{adminPulse.busy=false;scheduleAdminPulse()}
+}
+function startAdminPulse(){
+  if(VIEW_MODE!=='admin'||authUser?.role!=='admin'||adminPulse.started)return;
+  adminPulse.started=true;
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-adminPulse.lastAt>60*1000)scheduleAdminPulse(300)});
+  scheduleAdminPulse(15000);
 }
 function startOperationsPrescriptionPolling(){
   if(operationsCenter.prescriptionsStarted)return;operationsCenter.prescriptionsStarted=true;
@@ -4695,7 +4753,7 @@ function renderAdminQuickPlanInbox(){
     adminQuickPlans.renderedKey=renderKey;
   }
 }
-function scheduleAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;adminQuickPlans.timer=setTimeout(()=>refreshAdminQuickPlanInbox(),20000)}
+function scheduleAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;adminQuickPlans.timer=setTimeout(()=>refreshAdminQuickPlanInbox(),pulseDelay(20000))}
 async function refreshAdminQuickPlanInbox(){
   if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;
   if(adminQuickPlans.loading){adminQuickPlans.refreshAgain=true;return}
@@ -6058,7 +6116,7 @@ async function refreshAppointmentRequests({notify=true}={}){
 function scheduleAppointmentRequests(){
   clearTimeout(appointmentRequests.timer);
   if(!appointmentRequests.started)return;
-  appointmentRequests.timer=setTimeout(async()=>{await refreshAppointmentRequests();scheduleAppointmentRequests()},appointmentRequestCadence());
+  appointmentRequests.timer=setTimeout(async()=>{await refreshAppointmentRequests();scheduleAppointmentRequests()},pulseDelay(appointmentRequestCadence()));
 }
 function startAppointmentRequests(){
   if(appointmentRequests.started)return;

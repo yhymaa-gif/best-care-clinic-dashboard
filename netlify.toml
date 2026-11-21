@@ -70,6 +70,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/pulse"
+  to = "/.netlify/functions/pulse"
+  status = 200
+
+[[redirects]]
   from = "/api/push"
   to = "/.netlify/functions/push-subscription"
   status = 200
