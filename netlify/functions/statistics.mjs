@@ -460,7 +460,7 @@ function directDayKeys(clinics, from, to, clinicFilter) {
 // ---- Monthly and all-time totals -------------------------------------------
 // Each day blob is reduced to a small digest and cached per month, keyed by the
 // blob etag, so only days that changed since the last request are read again.
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 const shortHash = value => createHash('sha1').update(String(value)).digest('hex').slice(0, 12);
 const monthOf = date => String(date).slice(0, 7);
 const monthKeys = ['appointments', 'completed', 'cancelled', 'procedureUnits', 'visitsWithProcedures'];
@@ -478,18 +478,26 @@ function dayDigest(clinicId, date, patients) {
     if (status === 'done' || hasItems) treated.add(identity);
   });
   const types = {};
+  // Per-procedure counts for all-time totals: key -> [name, code, count].
+  const procs = {};
   list.forEach(patient => {
     if (patient?.status === 'cancel') return;
     (Array.isArray(patient?.paymentItems) ? patient.paymentItems : []).forEach(item => {
       if (!cleanLabel(item?.name)) return;
+      const quantity = Math.max(1, Math.min(99, Math.round(numeric(item?.quantity) || 1)));
       const type = procedureType(item?.code, item?.name);
-      types[type] = (types[type] || 0) + Math.max(1, Math.min(99, Math.round(numeric(item?.quantity) || 1)));
+      types[type] = (types[type] || 0) + quantity;
+      const key = procedureKey(item);
+      const entry = procs[key] || [cleanLabel(item.name), cleanLabel(item?.code, 60), 0];
+      entry[2] += quantity;
+      procs[key] = entry;
     });
   });
   return {
     clinicId,
     date,
     types,
+    procs,
     ...Object.fromEntries(monthKeys.map(key => [key, numeric(summary[key])])),
     ids: [...ids],
     treated: [...treated],
@@ -504,6 +512,9 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
   const treated = new Map();
   const allIds = new Set();
   const allTreated = new Set();
+  const allProcs = new Map();
+  const clinicTypes = {};
+  let firstDate = '';
   const month = key => {
     if (!months.has(key)) { months.set(key, emptyMonth(key)); ids.set(key, new Set()); treated.set(key, new Set()); }
     return months.get(key);
@@ -513,7 +524,17 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
     const key = monthOf(digest.date);
     const item = month(key);
     monthKeys.forEach(field => { item[field] += numeric(digest[field]); });
-    Object.entries(digest.types || {}).forEach(([type, count]) => { item.types[type] = (item.types[type] || 0) + numeric(count); });
+    Object.entries(digest.types || {}).forEach(([type, count]) => {
+      item.types[type] = (item.types[type] || 0) + numeric(count);
+      const perClinic = clinicTypes[digest.clinicId] || (clinicTypes[digest.clinicId] = {});
+      perClinic[type] = (perClinic[type] || 0) + numeric(count);
+    });
+    Object.entries(digest.procs || {}).forEach(([key, [name, code, count]]) => {
+      const entry = allProcs.get(key) || { key, name, code, count: 0, type: procedureType(code, name) };
+      entry.count += numeric(count);
+      allProcs.set(key, entry);
+    });
+    if (numeric(digest.procedureUnits) > 0 && (!firstDate || digest.date < firstDate)) firstDate = digest.date;
     (digest.ids || []).forEach(id => { ids.get(key).add(id); allIds.add(id); });
     (digest.treated || []).forEach(id => { treated.get(key).add(id); allTreated.add(id); });
   });
@@ -554,6 +575,12 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
   total.treatedPatients = allTreated.size;
   total.completionRate = total.appointments - total.cancelled > 0 ? Math.round(total.completed / (total.appointments - total.cancelled) * 100) : 0;
   total.firstMonth = list.length ? list[list.length - 1].month : currentMonth;
+  total.firstDate = firstDate;
+  const units = Object.values(total.types).reduce((sum, count) => sum + count, 0);
+  total.typeList = PROCEDURE_TYPES.map(({ id, label, en }) => ({ type: id, label, en, count: total.types[id] || 0, share: units ? Math.round((total.types[id] || 0) / units * 1000) / 10 : 0 }))
+    .filter(item => item.count).sort((a, b) => b.count - a.count);
+  total.procedures = [...allProcs.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar')).slice(0, 200);
+  total.clinicTypes = clinicTypes;
   return { months: list, total };
 }
 

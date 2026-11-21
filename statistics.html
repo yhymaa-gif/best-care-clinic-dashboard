@@ -59,6 +59,13 @@
     .type-detail{padding:15px;border:1px solid var(--line);border-radius:18px;background:#f8fbf9}.type-detail h4{display:flex;align-items:center;gap:8px;margin:0 0 4px;font-size:15px}.type-detail h4 i{width:12px;height:12px;border-radius:4px;background:var(--c)}.type-detail>p{margin:0 0 12px;color:var(--muted);font-size:11px}
     .type-block{margin-top:12px}.type-block h5{margin:0 0 7px;color:var(--muted);font-size:11px}.type-months{display:flex;align-items:flex-end;gap:6px;height:92px}.type-months div{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px;flex:1;height:100%}.type-months i{width:100%;max-width:34px;min-height:3px;border-radius:6px 6px 2px 2px;background:color-mix(in srgb,var(--c) 45%,#fff)}.type-months div.cur i{background:repeating-linear-gradient(45deg,var(--c) 0 4px,color-mix(in srgb,var(--c) 55%,#fff) 4px 8px)}.type-months small{color:var(--muted);font-size:9px;white-space:nowrap}.type-months b{font-size:10px}
     @media(max-width:1000px){.types-layout{grid-template-columns:1fr}}
+    .alltime-panel{margin-top:15px;padding:18px}.alltime-actions{display:flex;align-items:center;gap:10px}.alltime-total{font-size:30px;font-weight:950;color:var(--green)}.alltime-total small{display:block;margin-top:-4px;color:var(--muted);font-size:10px;font-weight:800;text-align:center}
+    .alltime-types{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+    .at-type{--c:#2f8c67;display:grid;gap:4px;padding:12px;border:1px solid var(--line);border-top:4px solid var(--c);border-radius:15px;background:#fff;color:var(--ink);font:inherit;text-align:start;cursor:pointer}.at-type.active{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}
+    .at-type span{color:var(--muted);font-size:11px;font-weight:900}.at-type strong{font-size:24px;font-weight:950}.at-type small{color:var(--muted);font-size:10px}.at-type .type-bar{margin-top:2px}
+    .alltime-tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px 0 8px}.alltime-tools input{flex:1 1 260px;min-height:40px;padding:6px 12px;border:1px solid #cbddd5;border-radius:11px;background:#fff;color:var(--ink);font:inherit}.alltime-tools span{color:var(--muted);font-size:11px}
+    .alltime-table td:nth-child(4){font-weight:950;font-size:12px}.type-pill{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--c) 14%,#fff);color:var(--c);font-size:10px;font-weight:900}
+    html[data-theme="dark"] .at-type,html[data-theme="dark"] .alltime-tools input{background:#17231e;border-color:#2a3f35;color:#e4f0ea}
     html[data-theme="dark"] .type-row{background:#17231e;border-color:#2a3f35;color:#e4f0ea}html[data-theme="dark"] .type-detail{background:#121c18;border-color:#2a3f35}html[data-theme="dark"] .type-bar{background:#22332b}
     @media print{.trend-compare,.trend-details summary{display:none}.trend-details{display:block}.trend-panel{break-inside:avoid}}
     html[data-theme="dark"] .trend-list li,html[data-theme="dark"] .tm-card,html[data-theme="dark"] .trend-compare select{background:#17231e;border-color:#2a3f35;color:#e4f0ea}html[data-theme="dark"] .insight{background:#121c18;border-color:#2a3f35}html[data-theme="dark"] .insight i{background:#17231e}html[data-theme="dark"] .trend-verdict p{color:#c9dcd2}html[data-theme="dark"] .trend-verdict .v-score{background:#17231e}
@@ -107,6 +114,13 @@
     <section class="panel types-panel" id="typesPanel" aria-label="الإجراءات حسب النوع">
       <div class="trend-head"><div><h3>الإجراءات حسب النوع</h3><p id="typesSubtitle">توزيع الإجراءات المنفذة على أنواع العلاج، والتغير عن الفترة السابقة. اضغط أي نوع لتفاصيله.</p></div><span id="typesTotal" class="chart-total">0 إجراء</span></div>
       <div class="types-layout"><div id="typesList" class="types-list" role="list"></div><div id="typeDetail" class="type-detail"></div></div>
+    </section>
+
+    <section class="panel alltime-panel" id="allTimePanel" aria-label="الإجمالي منذ البداية حسب الإجراء">
+      <div class="trend-head"><div><h3>كل ما تم منذ البداية</h3><p id="allTimeSince">جارٍ تجميع السجل…</p></div><div class="alltime-actions"><strong id="allTimeTotal" class="alltime-total">—</strong><button id="allTimeExport" type="button">تصدير CSV</button></div></div>
+      <div id="allTimeTypes" class="alltime-types"></div>
+      <div class="alltime-tools"><input id="allTimeSearch" type="search" placeholder="ابحث عن إجراء… (عصب، حشوة، تاج…)" aria-label="بحث في الإجراءات"><span id="allTimeFilterNote"></span></div>
+      <div class="table-wrap"><table class="clinic-table alltime-table"><thead><tr><th>#</th><th>الإجراء</th><th>النوع</th><th>العدد منذ البداية</th><th>النسبة</th></tr></thead><tbody id="allTimeRows"></tbody></table></div>
     </section>
 
     <section class="kpis" aria-label="المؤشرات الرئيسية">

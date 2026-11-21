@@ -278,3 +278,16 @@ test('procedures are grouped by clinical type with shares, patients and clinic s
   assert.deepEqual(report.months[0].types, { prosthetic: 2 });
   assert.deepEqual(report.total.types, { prosthetic: 2 });
 });
+
+test('all-time totals list every procedure and type since the first recorded day', () => {
+  const a = stats.dayDigest('clinic-1', '2026-03-04', [{ status: 'done', paymentItems: [{ code: 'root-canal', name: 'علاج عصب', quantity: 2 }, { code: 'cosmetic-filling', name: 'حشوة تجميلية' }] }]);
+  const b = stats.dayDigest('clinic-2', '2026-11-20', [{ status: 'done', paymentItems: [{ code: 'root-canal', name: 'علاج عصب' }, { code: 'post-rct-filling', name: 'حشوة بعد العصب', quantity: 3 }] }]);
+  const report = stats.aggregateMonths({ digests: [b, a], labCases: [], clinicFilter: 'all', currentMonth: '2026-11' });
+  assert.equal(report.total.firstDate, '2026-03-04');
+  assert.deepEqual(report.total.procedures.map(item => [item.name, item.count, item.type]), [['حشوة بعد العصب', 3, 'fillings'], ['علاج عصب', 3, 'endo'], ['حشوة تجميلية', 1, 'fillings']]);
+  assert.deepEqual(report.total.typeList.map(item => [item.type, item.count, item.share]), [['fillings', 4, 57.1], ['endo', 3, 42.9]]);
+  assert.deepEqual(report.total.clinicTypes, { 'clinic-1': { endo: 2, fillings: 1 }, 'clinic-2': { endo: 1, fillings: 3 } });
+  const onlyTwo = stats.aggregateMonths({ digests: [b, a], labCases: [], clinicFilter: 'clinic-2', currentMonth: '2026-11' });
+  assert.equal(onlyTwo.total.firstDate, '2026-11-20');
+  assert.equal(onlyTwo.total.procedures.length, 2);
+});
