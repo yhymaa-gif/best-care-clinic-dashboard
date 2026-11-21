@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { getStore } from '@netlify/blobs';
 import { apiHeaders, requireUser } from './lib/session.mjs';
+import { PROCEDURE_TYPES, procedureType, typeLabel } from './lib/procedure-types.mjs';
 
 const headers = apiHeaders('GET,OPTIONS');
 const reply = (data, status = 200) => new Response(JSON.stringify(data), { status, headers });
@@ -182,6 +183,8 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
   const payments = { requested: 0, acknowledged: 0, completed: 0, pending: 0, collectedCents: 0, transactionCount: 0 };
   const countedReceipts = new Set();
   const procedureMap = new Map();
+  const typeMap = new Map();
+  const clinicTypes = new Map();
   const treatedIdentities = new Set();
   const clinicTreated = new Map();
   const procedureTotals = { units: 0, lines: 0, freeUnits: 0, visitsWithProcedures: 0, completedWithoutProcedure: 0 };
@@ -208,6 +211,17 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
         procedureTotals.lines += 1;
         if (item?.free) procedureTotals.freeUnits += quantity;
         tally(procedureMap, procedureKey(item), cleanLabel(item.name), cleanLabel(item?.code, 60), quantity, { free: item?.free ? quantity : 0, visits: 1 });
+        const type = procedureType(item?.code, item?.name);
+        const typeEntry = typeMap.get(type) || { count: 0, visits: 0, free: 0, patients: new Set(), procedures: new Map() };
+        typeEntry.count += quantity;
+        typeEntry.visits += 1;
+        if (item?.free) typeEntry.free += quantity;
+        typeEntry.patients.add(patientIdentity(patient));
+        tally(typeEntry.procedures, procedureKey(item), cleanLabel(item.name), cleanLabel(item?.code, 60), quantity);
+        typeMap.set(type, typeEntry);
+        if (!clinicTypes.has(record.clinicId)) clinicTypes.set(record.clinicId, {});
+        const perClinic = clinicTypes.get(record.clinicId);
+        perClinic[type] = (perClinic[type] || 0) + quantity;
       });
       procedureTotals.units += visitUnits;
       if (visitUnits) procedureTotals.visitsWithProcedures += 1;
@@ -392,6 +406,18 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       labOpenNow: labTotals.openNow,
     },
     topProcedures: topEntries(procedureMap),
+    procedureTypes: PROCEDURE_TYPES.map(({ id, label, en }) => {
+      const entry = typeMap.get(id);
+      return entry ? {
+        type: id, label, en,
+        count: entry.count,
+        visits: entry.visits,
+        free: entry.free,
+        patients: entry.patients.size,
+        share: procedureTotals.units ? Math.round(entry.count / procedureTotals.units * 1000) / 10 : 0,
+        procedures: topEntries(entry.procedures).slice(0, 8),
+      } : null;
+    }).filter(Boolean).sort((a, b) => b.count - a.count),
     labAttention: labAttention
       .sort((a, b) => (a.reason === b.reason ? 0 : a.reason === 'overdue' ? -1 : 1) || (a.expectedAt || a.createdAt) - (b.expectedAt || b.createdAt))
       .slice(0, 30),
@@ -408,6 +434,7 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       return {
         ...clinic,
         treatedPatients: clinicTreated.get(clinic.clinicId)?.size || 0,
+        procedureTypes: clinicTypes.get(clinic.clinicId) || {},
         stayMeasured,
         averageStayMinutes: stayMeasured ? Math.round(stayTotalMinutes / stayMeasured) : 0,
       };
@@ -433,7 +460,7 @@ function directDayKeys(clinics, from, to, clinicFilter) {
 // ---- Monthly and all-time totals -------------------------------------------
 // Each day blob is reduced to a small digest and cached per month, keyed by the
 // blob etag, so only days that changed since the last request are read again.
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 4;
 const shortHash = value => createHash('sha1').update(String(value)).digest('hex').slice(0, 12);
 const monthOf = date => String(date).slice(0, 7);
 const monthKeys = ['appointments', 'completed', 'cancelled', 'procedureUnits', 'visitsWithProcedures'];
@@ -450,16 +477,79 @@ function dayDigest(clinicId, date, patients) {
     const hasItems = status !== 'cancel' && (Array.isArray(patient?.paymentItems) ? patient.paymentItems : []).some(item => cleanLabel(item?.name));
     if (status === 'done' || hasItems) treated.add(identity);
   });
+  const types = {};
+  // Per-procedure counts for all-time totals: key -> [name, code, count].
+  const procs = {};
+  // Per patient: hash -> [name, file, units, visits]; per hour: [appointments, cancelled, units, completed, waitSum, waitN];
+  // durations: [waitSum, waitN, treatSum, treatN, staySum, stayN]; per type: [treatSum, treatN, visits].
+  const patientsOut = {};
+  const hours = {};
+  const dur = [0, 0, 0, 0, 0, 0];
+  const typeDur = {};
+  const minutesBetween = (start, end, max) => {
+    const a = numeric(start), b = numeric(end);
+    if (!(a > 0) || !(b >= a)) return null;
+    const value = Math.round((b - a) / 60_000);
+    return value <= max ? value : null;
+  };
+  list.forEach(patient => {
+    const status = statusKeys.includes(patient?.status) ? patient.status : 'waiting';
+    const hourMatch = /^(\d{1,2}):/.exec(String(patient?.start || ''));
+    const hour = hourMatch ? Math.min(23, Number(hourMatch[1])) : (numeric(patient?.arrivedAt) > 0 ? new Date(numeric(patient.arrivedAt) + 3 * 3_600_000).getUTCHours() : -1);
+    const slot = hour >= 0 ? (hours[hour] || (hours[hour] = [0, 0, 0, 0, 0, 0])) : null;
+    if (slot) { slot[0] += 1; if (status === 'cancel') slot[1] += 1; if (status === 'done') slot[3] += 1; }
+    if (status === 'cancel') return;
+    let units = 0;
+    const visitTypes = {};
+    (Array.isArray(patient?.paymentItems) ? patient.paymentItems : []).forEach(item => {
+      if (!cleanLabel(item?.name)) return;
+      const quantity = Math.max(1, Math.min(99, Math.round(numeric(item?.quantity) || 1)));
+      units += quantity;
+      const type = procedureType(item?.code, item?.name);
+      types[type] = (types[type] || 0) + quantity;
+      visitTypes[type] = (visitTypes[type] || 0) + quantity;
+      const key = procedureKey(item);
+      const entry = procs[key] || [cleanLabel(item.name), cleanLabel(item?.code, 60), 0];
+      entry[2] += quantity;
+      procs[key] = entry;
+    });
+    if (slot) slot[2] += units;
+    const wait = minutesBetween(patient?.arrivedAt, patient?.actualStartedAt, 300);
+    const treat = minutesBetween(patient?.actualStartedAt, patient?.completedAt || patient?.actualEndedAt, 300);
+    const stay = status === 'done' ? minutesBetween(patient?.arrivedAt, patient?.completedAt || patient?.actualEndedAt, 480) : null;
+    if (wait !== null) { dur[0] += wait; dur[1] += 1; if (slot) { slot[4] += wait; slot[5] += 1; } }
+    if (treat !== null) { dur[2] += treat; dur[3] += 1; }
+    if (stay !== null) { dur[4] += stay; dur[5] += 1; }
+    const primary = Object.entries(visitTypes).sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (primary) {
+      const entry = typeDur[primary] || (typeDur[primary] = [0, 0, 0]);
+      entry[2] += 1;
+      if (treat !== null) { entry[0] += treat; entry[1] += 1; }
+    }
+    if (units > 0 || status === 'done') {
+      const id = shortHash(patientIdentity(patient));
+      const entry = patientsOut[id] || [cleanLabel(patient?.name, 60), cleanLabel(patient?.file, 30), 0, 0];
+      entry[2] += units;
+      entry[3] += 1;
+      patientsOut[id] = entry;
+    }
+  });
   return {
     clinicId,
     date,
+    types,
+    procs,
+    patients: patientsOut,
+    hours,
+    dur,
+    typeDur,
     ...Object.fromEntries(monthKeys.map(key => [key, numeric(summary[key])])),
     ids: [...ids],
     treated: [...treated],
   };
 }
 
-const emptyMonth = month => ({ month, ...Object.fromEntries(monthKeys.map(key => [key, 0])), uniquePatients: 0, treatedPatients: 0, labCreated: 0, labSent: 0, labSentUnits: 0, labDelivered: 0 });
+const emptyMonth = month => ({ month, ...Object.fromEntries(monthKeys.map(key => [key, 0])), uniquePatients: 0, treatedPatients: 0, labCreated: 0, labSent: 0, labSentUnits: 0, labDelivered: 0, types: {} });
 
 function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
   const months = new Map();
@@ -467,6 +557,9 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
   const treated = new Map();
   const allIds = new Set();
   const allTreated = new Set();
+  const allProcs = new Map();
+  const clinicTypes = {};
+  let firstDate = '';
   const month = key => {
     if (!months.has(key)) { months.set(key, emptyMonth(key)); ids.set(key, new Set()); treated.set(key, new Set()); }
     return months.get(key);
@@ -476,6 +569,17 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
     const key = monthOf(digest.date);
     const item = month(key);
     monthKeys.forEach(field => { item[field] += numeric(digest[field]); });
+    Object.entries(digest.types || {}).forEach(([type, count]) => {
+      item.types[type] = (item.types[type] || 0) + numeric(count);
+      const perClinic = clinicTypes[digest.clinicId] || (clinicTypes[digest.clinicId] = {});
+      perClinic[type] = (perClinic[type] || 0) + numeric(count);
+    });
+    Object.entries(digest.procs || {}).forEach(([key, [name, code, count]]) => {
+      const entry = allProcs.get(key) || { key, name, code, count: 0, type: procedureType(code, name) };
+      entry.count += numeric(count);
+      allProcs.set(key, entry);
+    });
+    if (numeric(digest.procedureUnits) > 0 && (!firstDate || digest.date < firstDate)) firstDate = digest.date;
     (digest.ids || []).forEach(id => { ids.get(key).add(id); allIds.add(id); });
     (digest.treated || []).forEach(id => { treated.get(key).add(id); allTreated.add(id); });
   });
@@ -511,10 +615,17 @@ function aggregateMonths({ digests, labCases, clinicFilter, currentMonth }) {
     [...monthKeys, 'labCreated', 'labSent', 'labSentUnits', 'labDelivered'].forEach(field => { sum[field] += item[field]; });
     return sum;
   }, emptyMonth('all'));
+  total.types = list.reduce((sum, item) => { Object.entries(item.types).forEach(([type, count]) => { sum[type] = (sum[type] || 0) + count; }); return sum; }, {});
   total.uniquePatients = allIds.size;
   total.treatedPatients = allTreated.size;
   total.completionRate = total.appointments - total.cancelled > 0 ? Math.round(total.completed / (total.appointments - total.cancelled) * 100) : 0;
   total.firstMonth = list.length ? list[list.length - 1].month : currentMonth;
+  total.firstDate = firstDate;
+  const units = Object.values(total.types).reduce((sum, count) => sum + count, 0);
+  total.typeList = PROCEDURE_TYPES.map(({ id, label, en }) => ({ type: id, label, en, count: total.types[id] || 0, share: units ? Math.round((total.types[id] || 0) / units * 1000) / 10 : 0 }))
+    .filter(item => item.count).sort((a, b) => b.count - a.count);
+  total.procedures = [...allProcs.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar')).slice(0, 200);
+  total.clinicTypes = clinicTypes;
   return { months: list, total };
 }
 
@@ -556,8 +667,138 @@ async function cachedDigests({ dayStore, cacheStore, allowedClinics }) {
   return digests;
 }
 
+// ---- Comprehensive report over any date range (from the cached day digests) ----
+const WEEKDAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+const avg = (sum, count, digits = 1) => count ? Math.round(sum / count * 10 ** digits) / 10 ** digits : 0;
+
+function buildInsights({ digests, clinicFilter, from, to }) {
+  const selected = digests.filter(d => (clinicFilter === 'all' || d.clinicId === clinicFilter) && (!from || d.date >= from) && (!to || d.date <= to));
+  const byDay = new Map();
+  const byMonth = new Map();
+  const procs = new Map();
+  const patients = new Map();
+  const hours = Array.from({ length: 24 }, (_, hour) => ({ hour, appointments: 0, cancelled: 0, procedures: 0, completed: 0, waitSum: 0, waitN: 0 }));
+  const weekdays = WEEKDAYS.map((name, index) => ({ index, name, days: 0, procedures: 0, appointments: 0, cancelled: 0, completed: 0 }));
+  const types = {};
+  const typeDur = {};
+  const dur = [0, 0, 0, 0, 0, 0];
+  const ids = new Set();
+  let firstDate = '';
+  let lastDate = '';
+  selected.forEach(d => {
+    const day = byDay.get(d.date) || { date: d.date, procedures: 0, appointments: 0, cancelled: 0, completed: 0, visits: 0 };
+    day.procedures += numeric(d.procedureUnits);
+    day.appointments += numeric(d.appointments);
+    day.cancelled += numeric(d.cancelled);
+    day.completed += numeric(d.completed);
+    day.visits += numeric(d.visitsWithProcedures);
+    byDay.set(d.date, day);
+    (d.ids || []).forEach(id => ids.add(id));
+    const monthKey = monthOf(d.date);
+    const month = byMonth.get(monthKey) || { month: monthKey, procedures: 0, appointments: 0, cancelled: 0, completed: 0, procs: new Map(), types: {}, patients: new Set() };
+    month.procedures += numeric(d.procedureUnits);
+    month.appointments += numeric(d.appointments);
+    month.cancelled += numeric(d.cancelled);
+    month.completed += numeric(d.completed);
+    (d.ids || []).forEach(id => month.patients.add(id));
+    byMonth.set(monthKey, month);
+    Object.entries(d.procs || {}).forEach(([key, [name, code, count]]) => {
+      const total = procs.get(key) || { key, name, code, count: 0, type: procedureType(code, name) };
+      total.count += numeric(count);
+      procs.set(key, total);
+      const monthly = month.procs.get(key) || { key, name, count: 0 };
+      monthly.count += numeric(count);
+      month.procs.set(key, monthly);
+    });
+    Object.entries(d.types || {}).forEach(([type, count]) => {
+      types[type] = (types[type] || 0) + numeric(count);
+      month.types[type] = (month.types[type] || 0) + numeric(count);
+    });
+    Object.entries(d.patients || {}).forEach(([id, [name, file, units, visits]]) => {
+      const entry = patients.get(id) || { name, file, procedures: 0, visits: 0, lastDate: '' };
+      entry.procedures += numeric(units);
+      entry.visits += numeric(visits);
+      if (d.date > entry.lastDate) { entry.lastDate = d.date; if (name) entry.name = name; if (file) entry.file = file; }
+      patients.set(id, entry);
+    });
+    Object.entries(d.hours || {}).forEach(([hour, [appointments, cancelled, units, completed, waitSum, waitN]]) => {
+      const slot = hours[Number(hour)];
+      if (!slot) return;
+      slot.appointments += numeric(appointments); slot.cancelled += numeric(cancelled); slot.procedures += numeric(units);
+      slot.completed += numeric(completed); slot.waitSum += numeric(waitSum); slot.waitN += numeric(waitN);
+    });
+    (d.dur || []).forEach((value, index) => { dur[index] += numeric(value); });
+    Object.entries(d.typeDur || {}).forEach(([type, [sum, count, visits]]) => {
+      const entry = typeDur[type] || (typeDur[type] = [0, 0, 0]);
+      entry[0] += numeric(sum); entry[1] += numeric(count); entry[2] += numeric(visits);
+    });
+    if (numeric(d.appointments) > 0) {
+      if (!firstDate || d.date < firstDate) firstDate = d.date;
+      if (!lastDate || d.date > lastDate) lastDate = d.date;
+    }
+  });
+  const days = [...byDay.values()].filter(day => day.appointments > 0);
+  days.forEach(day => {
+    const weekday = weekdays[new Date(`${day.date}T00:00:00Z`).getUTCDay()];
+    weekday.days += 1; weekday.procedures += day.procedures; weekday.appointments += day.appointments;
+    weekday.cancelled += day.cancelled; weekday.completed += day.completed;
+  });
+  const totals = days.reduce((sum, day) => {
+    sum.procedures += day.procedures; sum.appointments += day.appointments; sum.cancelled += day.cancelled;
+    sum.completed += day.completed; sum.visits += day.visits;
+    return sum;
+  }, { procedures: 0, appointments: 0, cancelled: 0, completed: 0, visits: 0 });
+  const monthsList = [...byMonth.values()].sort((a, b) => a.month.localeCompare(b.month));
+  const activeMonths = monthsList.filter(m => m.appointments > 0).length;
+  const units = Object.values(types).reduce((sum, count) => sum + count, 0);
+  const hourList = hours.filter(slot => slot.appointments > 0).map(slot => ({
+    hour: slot.hour, appointments: slot.appointments, cancelled: slot.cancelled, procedures: slot.procedures, completed: slot.completed,
+    cancelRate: avg(slot.cancelled * 100, slot.appointments, 0), averageWaitMinutes: avg(slot.waitSum, slot.waitN, 0),
+  }));
+  const pick = (list, field, min = 1) => list.filter(item => numeric(item[field]) >= min).sort((a, b) => b[field] - a[field])[0] || null;
+  const busiestCancelHour = hourList.filter(slot => slot.appointments >= 5).sort((a, b) => b.cancelRate - a.cancelRate || b.cancelled - a.cancelled)[0] || null;
+  return {
+    from: from || firstDate, to: to || lastDate, firstDate, lastDate,
+    activeDays: days.length,
+    activeMonths,
+    totals: { ...totals, patients: ids.size, completionRate: avg(totals.completed * 100, totals.appointments - totals.cancelled, 0), cancelRate: avg(totals.cancelled * 100, totals.appointments, 0) },
+    averages: {
+      proceduresPerDay: avg(totals.procedures, days.length),
+      appointmentsPerDay: avg(totals.appointments, days.length),
+      completedPerDay: avg(totals.completed, days.length),
+      patientsPerDay: avg([...byDay.values()].reduce((sum, day) => sum + day.completed, 0), days.length),
+      proceduresPerMonth: avg(totals.procedures, activeMonths, 0),
+      patientsPerMonth: avg(monthsList.reduce((sum, m) => sum + m.patients.size, 0), activeMonths, 0),
+      proceduresPerVisit: avg(totals.procedures, totals.visits),
+      proceduresPerPatient: avg(totals.procedures, ids.size),
+      visitsPerPatient: avg([...patients.values()].reduce((sum, p) => sum + p.visits, 0), patients.size),
+      waitMinutes: avg(dur[0], dur[1], 0), treatmentMinutes: avg(dur[2], dur[3], 0), stayMinutes: avg(dur[4], dur[5], 0),
+      measured: { wait: dur[1], treatment: dur[3], stay: dur[5] },
+    },
+    months: monthsList.map(m => {
+      const top = [...m.procs.values()].sort((a, b) => b.count - a.count)[0] || null;
+      const topType = Object.entries(m.types).sort((a, b) => b[1] - a[1])[0] || null;
+      return { month: m.month, procedures: m.procedures, appointments: m.appointments, cancelled: m.cancelled, completed: m.completed, patients: m.patients.size,
+        topProcedure: top ? { name: top.name, count: top.count, share: avg(top.count * 100, m.procedures, 0) } : null,
+        topType: topType ? { ...typeLabel(topType[0]), type: topType[0], count: topType[1] } : null };
+    }),
+    topPatients: [...patients.values()].filter(p => p.procedures > 0).sort((a, b) => b.procedures - a.procedures || b.visits - a.visits).slice(0, 10),
+    topDays: [...days].sort((a, b) => b.procedures - a.procedures || b.completed - a.completed).slice(0, 5),
+    busiestDay: pick(days, 'procedures'),
+    weekdays: weekdays.filter(w => w.days > 0).map(w => ({ ...w, averageProcedures: avg(w.procedures, w.days), averageAppointments: avg(w.appointments, w.days), cancelRate: avg(w.cancelled * 100, w.appointments, 0) })),
+    hours: hourList,
+    peakProcedureHour: pick(hourList, 'procedures'),
+    peakCancelHour: busiestCancelHour,
+    typeList: PROCEDURE_TYPES.map(({ id, label, en }) => ({ type: id, label, en, count: types[id] || 0, share: units ? Math.round((types[id] || 0) / units * 1000) / 10 : 0,
+      averageTreatmentMinutes: avg(typeDur[id]?.[0] || 0, typeDur[id]?.[1] || 0, 0), measured: typeDur[id]?.[1] || 0 })).filter(item => item.count).sort((a, b) => b.count - a.count),
+    procedures: [...procs.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar')).slice(0, 200),
+  };
+}
+
 export const __test = {
+  buildInsights,
   aggregateMonths,
+  typeLabel,
   dayDigest,
   activeClinics,
   directDayKeys,
@@ -583,6 +824,16 @@ export default async request => {
   const from = datePattern.test(url.searchParams.get('from') || '') ? url.searchParams.get('from') : addDays(to, -29);
   const clinicFilter = url.searchParams.get('clinic') === 'all' ? 'all' : String(url.searchParams.get('clinic') || 'all');
   const mode = String(url.searchParams.get('mode') || '');
+  if (mode === 'insights') {
+    if (clinicFilter !== 'all' && !clinicPattern.test(clinicFilter)) return reply({ error: 'Invalid clinic' }, 400);
+    const rangeFrom = datePattern.test(url.searchParams.get('from') || '') ? url.searchParams.get('from') : '';
+    const rangeTo = datePattern.test(url.searchParams.get('to') || '') ? url.searchParams.get('to') : '';
+    if (rangeFrom && rangeTo && rangeFrom > rangeTo) return reply({ error: 'Invalid range' }, 400);
+    const savedClinics = await store('clinic-dashboard-config').get('clinics', { type: 'json', consistency: 'strong' });
+    const allClinics = activeClinics(savedClinics);
+    const digests = await cachedDigests({ dayStore: store('clinic-dashboard-days'), cacheStore: store('clinic-statistics-cache'), allowedClinics: new Set(allClinics.map(clinic => clinic.id)) });
+    return reply({ clinic: clinicFilter, generatedAt: Date.now(), ...buildInsights({ digests, clinicFilter, from: rangeFrom, to: rangeTo }) });
+  }
   if (mode === 'months') {
     if (clinicFilter !== 'all' && !clinicPattern.test(clinicFilter)) return reply({ error: 'Invalid clinic' }, 400);
     const savedClinics = await store('clinic-dashboard-config').get('clinics', { type: 'json', consistency: 'strong' });
@@ -662,6 +913,7 @@ export default async request => {
         summary: prior.summary,
         clinics: prior.clinics.map(({ clinicId, appointments, completed, cancelled, procedures, treatedPatients, labSent, revenueCents }) => ({ clinicId, appointments, completed, cancelled, procedures, treatedPatients, labSent, revenueCents })),
         topProcedures: prior.topProcedures,
+        procedureTypes: prior.procedureTypes.map(({ type, count, visits, patients }) => ({ type, count, visits, patients })),
       };
     })()
     : undefined;
