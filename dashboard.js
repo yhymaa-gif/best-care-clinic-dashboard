@@ -173,6 +173,12 @@ const IOS_INSTALL_COPY={
 const els={datePicker:$('datePicker'),syncBadge:$('syncBadge'),presenceBadge:$('presenceBadge'),settingsBtn:$('settingsBtn'),settingsMenu:$('settingsMenu'),csvInput:$('csvInput'),patientRows:$('patientRows'),notes:$('notes'),search:$('searchInput'),filter:$('filterStatus'),alertRow:$('alertRow'),alertText:$('alertText'),alertRowDismissBtn:$('alertRowDismissBtn'),alertBtn:$('alertBtn'),alertBtnHint:$('alertBtnHint'),alertMessageInput:$('alertMessageInput'),clearAlertBtn:$('clearAlertBtn'),alertTargetClinic:$('alertTargetClinic'),alertClinicPicker:$('alertClinicPicker'),alertTargetSummary:$('alertTargetSummary')};
 let selectedDate=''; let patients=[]; let notes=''; let updateAlert={active:false,message:'',updatedAt:0,kind:''}; let manualAlert={active:false,message:'',updatedAt:0,kind:'manual',scope:'all',targetClinicId:'',targetClinicLabel:''}; let editingId=null; let pendingCompletionId=null; let pendingReviewId=null; let pendingAftercareId=null; let aftercareLink=null; let aftercareLinkOrderAt=0; let aftercareLinkDocumentId=''; let aftercareLoadGeneration=0; let aftercareWhatsappOpened=false; let pendingAftercareCompletionAction=null; let adminQueueMinuteKey=''; const requestedLang=new URLSearchParams(location.search).get('lang');let lang=requestedLang==='en'?'en':requestedLang==='ar'?'ar':localStorage.getItem('bestcare_lang')||'ar';
 let manualAlertFetchedAt=0;
+// Admin pulse: one light request reports which areas changed so the separate
+// periodic calls can wait. While it is healthy each area keeps only a slow
+// safety refresh; if it fails, every area returns to its normal schedule.
+const ADMIN_PULSE_SAFETY_MS=30*60*1000;
+let adminPulse={healthy:false,started:false,timer:null,busy:false,signatures:null,failures:0,lastAt:0};
+const pulseDelay=normal=>adminPulse.healthy?ADMIN_PULSE_SAFETY_MS:normal;
 let audioContext=null;
 let presence={online:0,administration:0,clinics:0,desktop:0,mobile:0,tablet:0,byClinic:{},updatedAt:0,timer:null,started:false,busy:false,error:''};
 let adminPatientHub={records:[],updatedAt:0,date:'',loading:false,error:'',timer:null,started:false};
@@ -275,9 +281,10 @@ function unlockApp(user=null){
   if(audioContext)playLoginSignature();
   startAuthIdleProtection();
   startPresence();
+  keepPushSubscriptionAlive();
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
-    if(VIEW_MODE==='admin'){startAdminQuickPlanInbox();startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
+    if(VIEW_MODE==='admin'){startAdminPulse();startAdminQuickPlanInbox();startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
     if(NEED_ROLE_CHOICE&&authUser?.role==='admin')requestAnimationFrame(()=>openRoleChoice());
   });
 }
@@ -881,18 +888,68 @@ function urlBase64ToUint8Array(value){
   const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)));
 }
+function sameServerKey(subscription,publicKey){
+  try{
+    const current=subscription?.options?.applicationServerKey;if(!current||!publicKey)return true;
+    const a=new Uint8Array(current),b=urlBase64ToUint8Array(publicKey);
+    return a.length===b.length&&a.every((value,index)=>value===b[index]);
+  }catch{return true}
+}
 async function ensurePushSubscription(){
-  if(!systemNotificationsEnabled()||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
+  if(IS_DEPLOY_PREVIEW||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
   const registration=await navigator.serviceWorker.ready;
   let subscription=await registration.pushManager.getSubscription();
-  if(!subscription){
+  // Self-heal: an existing browser subscription means the user opted in, even if local storage was cleared.
+  if(!subscription&&localStorage.getItem('bestcare_system_notifications')!=='enabled')return false;
+  localStorage.setItem('bestcare_system_notifications','enabled');
+  // The public key rarely changes; reuse it to avoid an extra function call.
+  let publicKey=localStorage.getItem('bestcare_push_public_key')||'';
+  if(!publicKey||!subscription){
     const response=await fetch(PUSH_API,{cache:'no-store'});if(!response.ok)throw new Error('Push service unavailable');
-    const {publicKey}=await response.json();
-    subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
+    publicKey=String((await response.json()).publicKey||'');localStorage.setItem('bestcare_push_public_key',publicKey);
   }
+  // Server keys changed: the old subscription can never be delivered to, so replace it.
+  if(subscription&&!sameServerKey(subscription,publicKey)){
+    const oldEndpoint=subscription.endpoint;
+    await subscription.unsubscribe().catch(()=>{});
+    await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:oldEndpoint})}).catch(()=>{});
+    subscription=null;
+  }
+  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
   const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID,showPatientDetails:VIEW_MODE==='admin',allowOutsideWorkHours:outsideHoursNotificationsEnabled()})});
   if(!saved.ok)throw new Error('Subscription save failed');
-  localStorage.setItem('bestcare_push_registered','enabled');return true;
+  localStorage.setItem('bestcare_push_registered','enabled');localStorage.setItem('bestcare_push_refreshed_at',String(Date.now()));pushSubscriptionActive=true;return true;
+}
+// Keeps this device's subscription registered on the server: after sign-in,
+// when the app returns to the foreground after a while, and when back online.
+function keepPushSubscriptionAlive({force=false}={}){
+  if(!authReady||IS_DEPLOY_PREVIEW||!('Notification' in window)||Notification.permission!=='granted')return;
+  const last=Number(localStorage.getItem('bestcare_push_refreshed_at')||0);
+  if(!force&&Date.now()-last<24*60*60*1000)return;
+  ensurePushSubscription().then(()=>refreshPushSubscriptionState()).catch(error=>console.warn('Push keep-alive failed',error));
+}
+async function testPushNotifications(){
+  const button=$('testNotificationsBtn');if(button)button.disabled=true;
+  const en=lang==='en';
+  try{
+    if(!('Notification' in window)||!('PushManager' in window)){toast(en?'Not supported here':'غير مدعوم على هذا المتصفح',en?'On iPhone, add the app to the Home Screen first, then open it from there.':'على iPhone أضف التطبيق إلى الشاشة الرئيسية أولًا ثم افتحه منها.');return}
+    if(Notification.permission!=='granted'){toast(en?'Notifications are off':'الإشعارات غير مفعلة',en?'Enable system notifications first.':'فعّل إشعارات النظام أولًا من الزر السابق.');return}
+    await ensurePushSubscription();
+    const subscription=await currentPushSubscription();
+    if(!subscription){toast(en?'Not registered':'الجهاز غير مسجل',en?'Enable system notifications again.':'أعد تفعيل إشعارات النظام.');return}
+    const response=await fetch(`${PUSH_API}?action=test`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:subscription.endpoint})});
+    const result=await response.json().catch(()=>({}));
+    if(result.ok){toast(en?'Test sent ✓':'أُرسل الإشعار التجريبي ✓',en?'It should appear within seconds, even if the app is in the background.':'يفترض أن يظهر خلال ثوانٍ حتى لو كان التطبيق في الخلفية. إن لم يظهر فراجع إعدادات الإشعارات ووضع عدم الإزعاج في الجوال.');return}
+    const reasons={not_configured:en?'Push keys are missing on the server (VAPID).':'مفاتيح الإشعارات غير مضبوطة على الخادم (VAPID).',not_registered:en?'This device is not registered. Enable notifications again.':'هذا الجهاز غير مسجل. أعد تفعيل الإشعارات.',expired:en?'The phone ended this subscription. It was removed; enable notifications again.':'أنهى الجوال هذا الاشتراك وحُذف. أعد تفعيل الإشعارات.',key_mismatch:en?'Subscription keys do not match the server. Disable then enable notifications.':'مفاتيح الاشتراك لا تطابق الخادم. أوقف الإشعارات ثم فعّلها من جديد.',push_service_error:en?'The push service did not accept the message. Try again shortly.':'لم تقبل خدمة الإشعارات الرسالة. أعد المحاولة بعد قليل.'};
+    toast(en?'Test failed':'فشل الاختبار',`${reasons[result.reason]||(en?'Unexpected error.':'خطأ غير متوقع.')}${result.statusCode?` (${result.statusCode})`:''}`);
+  }catch(error){toast(en?'Test failed':'فشل الاختبار',String(error?.message||error))}
+  finally{if(button)button.disabled=false;refreshPushSubscriptionState()}
+}
+function mountTestNotificationsButton(){
+  const anchor=$('notificationsBtn');if(!anchor||$('testNotificationsBtn'))return;
+  const button=document.createElement('button');button.type='button';button.id='testNotificationsBtn';
+  button.textContent=lang==='en'?'🧪 Send a test notification':'🧪 إرسال إشعار تجريبي';
+  button.addEventListener('click',testPushNotifications);anchor.insertAdjacentElement('afterend',button);
 }
 function updateNotificationsButton(){
   const button=$('notificationsBtn');if(!button)return;
@@ -1505,7 +1562,7 @@ function renderAdminPatientHub(){
 function scheduleAdminPatientHub(delay=adminHubCadence()){
   clearTimeout(adminPatientHub.timer);
   if(!adminPatientHub.started||VIEW_MODE!=='admin')return;
-  adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub(),delay);
+  adminPatientHub.timer=setTimeout(()=>refreshAdminPatientHub(),pulseDelay(delay));
 }
 async function refreshAdminPatientHub({force=false}={}){
   if(VIEW_MODE!=='admin'||!authReady||adminPatientHub.loading)return false;
@@ -1759,6 +1816,7 @@ async function checkApplicationUpdate(now=Date.now()){
   finally{sync.pwaChecking=false}
 }
 function auxiliaryCadence(now=Date.now()){
+  if(adminPulse.healthy)return ADMIN_PULSE_SAFETY_MS;
   const cadence=syncCadence(now);
   if(cadence.workHours)return syncDisplayVisible()?AUX_WORK_MS:AUX_WORK_HIDDEN_MS;
   return document.hidden?AUX_OFF_HOURS_HIDDEN_MS:AUX_OFF_HOURS_MS;
@@ -2674,7 +2732,58 @@ async function refreshOperationsPrescriptions(){
 function scheduleOperationsPrescriptionPolling(){
   clearTimeout(operationsCenter.prescriptionsTimer);if(!operationsCenter.prescriptionsStarted)return;
   const cadence=syncCadence(),delay=document.hidden?(cadence.workHours?15*60*1000:60*60*1000):(cadence.workHours?5*60*1000:30*60*1000);
-  operationsCenter.prescriptionsTimer=setTimeout(async()=>{await refreshOperationsPrescriptions();scheduleOperationsPrescriptionPolling()},delay);
+  operationsCenter.prescriptionsTimer=setTimeout(async()=>{await refreshOperationsPrescriptions();scheduleOperationsPrescriptionPolling()},pulseDelay(delay));
+}
+function adminPulseCadence(){
+  const cadence=syncCadence();
+  if(cadence.workHours)return syncDisplayVisible()?2*60*1000:15*60*1000;
+  return document.hidden?60*60*1000:30*60*1000;
+}
+function scheduleAdminPulse(delay=adminPulseCadence()){
+  clearTimeout(adminPulse.timer);
+  if(!adminPulse.started)return;
+  adminPulse.timer=setTimeout(runAdminPulse,delay);
+}
+function setAdminPulseHealthy(healthy){
+  if(adminPulse.healthy===healthy)return;
+  adminPulse.healthy=healthy;
+  // Re-arm every area with the schedule that now applies.
+  scheduleAdminPatientHub();scheduleAdminQuickPlanInbox();scheduleAppointmentRequests();scheduleOperationsPrescriptionPolling();
+}
+async function runAdminPulse(){
+  if(!adminPulse.started||adminPulse.busy||!authReady)return scheduleAdminPulse();
+  if(navigator.onLine===false)return scheduleAdminPulse(60*1000);
+  adminPulse.busy=true;
+  try{
+    const response=await request(`/api/pulse?date=${encodeURIComponent(selectedDate)}&clinic=${encodeURIComponent(ACTIVE_CLINIC_ID)}`,{},10000);
+    if(response.status===401){lockApp('انتهت الجلسة. سجّل الدخول مرة أخرى.');return}
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.signatures)throw new Error(data.error||`HTTP ${response.status}`);
+    const before=adminPulse.signatures,next=data.signatures;
+    adminPulse.signatures=next;adminPulse.failures=0;adminPulse.lastAt=Date.now();
+    if(before&&data.date===selectedDate){
+      const changed=key=>before[key]!==next[key];
+      if(changed('allDays'))refreshAdminPatientHub({force:true});
+      if(changed('activeDay')&&!sync.dirty&&!sync.pushing)scheduleAutomaticSync(60);
+      if(changed('labs'))Promise.allSettled([refreshLabCases({force:true}),refreshOperationsLabCases()]);
+      if(changed('quickPlans'))refreshAdminQuickPlanInbox();
+      if(changed('appointmentRequests'))refreshAppointmentRequests({notify:true});
+      if(changed('registry'))refreshTreatmentPlanRegistry(true);
+      if(changed('prescriptions'))refreshOperationsPrescriptions();
+      if(changed('alert'))refreshManualAlert(true);
+    }
+    setAdminPulseHealthy(true);
+  }catch(error){
+    adminPulse.failures+=1;
+    if(adminPulse.failures>=2)setAdminPulseHealthy(false);
+    console.warn('Admin pulse unavailable',error?.message||error);
+  }finally{adminPulse.busy=false;scheduleAdminPulse()}
+}
+function startAdminPulse(){
+  if(VIEW_MODE!=='admin'||authUser?.role!=='admin'||adminPulse.started)return;
+  adminPulse.started=true;
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-adminPulse.lastAt>60*1000)scheduleAdminPulse(300)});
+  scheduleAdminPulse(15000);
 }
 function startOperationsPrescriptionPolling(){
   if(operationsCenter.prescriptionsStarted)return;operationsCenter.prescriptionsStarted=true;
@@ -4644,7 +4753,7 @@ function renderAdminQuickPlanInbox(){
     adminQuickPlans.renderedKey=renderKey;
   }
 }
-function scheduleAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;adminQuickPlans.timer=setTimeout(()=>refreshAdminQuickPlanInbox(),20000)}
+function scheduleAdminQuickPlanInbox(){clearTimeout(adminQuickPlans.timer);if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;adminQuickPlans.timer=setTimeout(()=>refreshAdminQuickPlanInbox(),pulseDelay(20000))}
 async function refreshAdminQuickPlanInbox(){
   if(!adminQuickPlanActive()||document.hidden||navigator.onLine===false||adminQuickPlans.suspended)return;
   if(adminQuickPlans.loading){adminQuickPlans.refreshAgain=true;return}
@@ -5540,7 +5649,7 @@ async function registerPwa(){
   try{
     const registration=await navigator.serviceWorker.register('./service-worker.js',{scope:'./'});
     sync.pwaRegistration=registration;sync.pwaCheckAt=Date.now();
-    if(systemNotificationsEnabled())ensurePushSubscription().catch(error=>console.warn('Push subscription refresh failed',error));
+    // Subscription upkeep runs after sign-in (keepPushSubscriptionAlive), where the request can be authorized.
     const showUpdate=async worker=>{
       waitingServiceWorker=worker;
       try{
@@ -6007,7 +6116,7 @@ async function refreshAppointmentRequests({notify=true}={}){
 function scheduleAppointmentRequests(){
   clearTimeout(appointmentRequests.timer);
   if(!appointmentRequests.started)return;
-  appointmentRequests.timer=setTimeout(async()=>{await refreshAppointmentRequests();scheduleAppointmentRequests()},appointmentRequestCadence());
+  appointmentRequests.timer=setTimeout(async()=>{await refreshAppointmentRequests();scheduleAppointmentRequests()},pulseDelay(appointmentRequestCadence()));
 }
 function startAppointmentRequests(){
   if(appointmentRequests.started)return;
@@ -6109,6 +6218,9 @@ $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
 $('notificationsBtn').addEventListener('click',toggleSystemNotifications);
+mountTestNotificationsButton();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)keepPushSubscriptionAlive()});
+window.addEventListener('online',()=>keepPushSubscriptionAlive());
 $('outsideHoursNotificationsBtn').addEventListener('click',toggleOutsideHoursNotifications);
 $('soundAlertsBtn').addEventListener('click',toggleSoundAlerts);
 document.addEventListener('pointerdown',()=>{if(soundAlertsEnabled())prepareAudio()},{once:true,passive:true});

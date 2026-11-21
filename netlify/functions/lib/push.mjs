@@ -18,20 +18,101 @@ export function isNotificationDeliveryWindow(value = Date.now()) {
 }
 
 export const publicVapidKey = () => process.env.VAPID_PUBLIC_KEY || '';
+const vapid = () => webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:notifications@bestcare.sa', process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+// Push services drop messages whose TTL expires while a phone sleeps. Keep
+// short-lived status alerts brief and give actionable work more time; the
+// topic header still collapses repeats so the phone shows only the latest one.
+const LONG_LIVED_TYPES = new Set(['payment', 'lab', 'appointment_request', 'treatment_plan', 'prescription']);
+export const deliveryOptions = (type, tag) => ({
+  TTL: LONG_LIVED_TYPES.has(type) ? 4 * 60 * 60 : 30 * 60,
+  urgency: 'high',
+  topic: crypto.createHash('sha256').update(String(tag || type || 'update')).digest('base64url').slice(0, 24),
+});
+// 404/410: the browser dropped the subscription. 401/403: usually a key
+// mismatch; tolerate a few in case of a transient configuration problem.
+const MAX_AUTH_FAILURES = 5;
+export const failureAction = (statusCode, failures = 0) => {
+  if (statusCode === 404 || statusCode === 410) return 'delete';
+  if ((statusCode === 401 || statusCode === 403) && failures + 1 >= MAX_AUTH_FAILURES) return 'delete';
+  return 'record';
+};
 
-export async function savePushSubscription(subscription, { user = null, clientId = '', clinicId = 'clinic-1', showPatientDetails = false, allowOutsideWorkHours = false } = {}) {
+export async function savePushSubscription(subscription, { user = null, clientId = '', clinicId = 'clinic-1', showPatientDetails = false, allowOutsideWorkHours = false, oldEndpoint = '', inherit = false } = {}) {
   if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) throw new Error('Invalid push subscription');
   if (!user?.username) throw new Error('Authenticated user required');
-  await store().setJSON(keyFor(subscription.endpoint), {
+  const pushStore = store();
+  // A browser-rotated subscription (pushsubscriptionchange) keeps the device's
+  // previous preferences; the old endpoint is removed once the new one is saved.
+  const previous = oldEndpoint && oldEndpoint !== subscription.endpoint
+    ? await pushStore.get(keyFor(oldEndpoint), { type: 'json', consistency: 'strong' }).catch(() => null)
+    : null;
+  const ownsPrevious = previous && (user.role === 'admin' || String(previous.username || '') === String(user.username));
+  const base = inherit && ownsPrevious ? previous : null;
+  const existing = await pushStore.get(keyFor(subscription.endpoint), { type: 'json', consistency: 'strong' }).catch(() => null);
+  await pushStore.setJSON(keyFor(subscription.endpoint), {
     subscription,
     username: String(user.username).slice(0, 48),
     role: safeRole(user.role),
-    clientId: String(clientId || '').slice(0, 100),
-    clinicId: safeClinic(clinicId),
-    showPatientDetails: Boolean(showPatientDetails),
-    allowOutsideWorkHours: Boolean(allowOutsideWorkHours),
+    clientId: String((base ? base.clientId : clientId) || '').slice(0, 100),
+    clinicId: safeClinic(base ? base.clinicId : clinicId),
+    showPatientDetails: Boolean(base ? base.showPatientDetails : showPatientDetails),
+    allowOutsideWorkHours: Boolean(base ? base.allowOutsideWorkHours : allowOutsideWorkHours),
+    createdAt: Number(existing?.createdAt || base?.createdAt || Date.now()),
+    lastDeliveredAt: Number(existing?.lastDeliveredAt || 0),
+    failures: 0,
+    lastError: '',
     updatedAt: Date.now(),
   });
+  if (ownsPrevious) await pushStore.delete(keyFor(oldEndpoint)).catch(() => {});
+}
+
+export async function pushSubscriptionStatus(endpoint, user = null) {
+  if (!endpoint || !user?.username) return { registered: false };
+  const record = await store().get(keyFor(endpoint), { type: 'json', consistency: 'strong' }).catch(() => null);
+  if (!record || (user.role !== 'admin' && String(record.username || '') !== String(user.username))) return { registered: false, configured: configured() };
+  return {
+    registered: true,
+    configured: configured(),
+    role: record.role,
+    clinicId: record.clinicId,
+    allowOutsideWorkHours: Boolean(record.allowOutsideWorkHours),
+    withinDeliveryWindow: isNotificationDeliveryWindow(),
+    updatedAt: Number(record.updatedAt || 0),
+    lastDeliveredAt: Number(record.lastDeliveredAt || 0),
+    failures: Number(record.failures || 0),
+    lastError: String(record.lastError || ''),
+  };
+}
+
+// Sends one notification to the caller's own device, ignoring the delivery
+// window, and reports exactly what the push service answered.
+export async function sendTestNotification(endpoint, user = null) {
+  if (!configured()) return { ok: false, reason: 'not_configured' };
+  if (!endpoint || !user?.username) return { ok: false, reason: 'not_registered' };
+  const pushStore = store();
+  const key = keyFor(endpoint);
+  const record = await pushStore.get(key, { type: 'json', consistency: 'strong' }).catch(() => null);
+  if (!record?.subscription?.endpoint || (user.role !== 'admin' && String(record.username || '') !== String(user.username))) return { ok: false, reason: 'not_registered' };
+  vapid();
+  const payload = {
+    title: 'اختبار تنبيهات أفضل عناية',
+    body: 'وصل الإشعار التجريبي إلى هذا الجهاز بنجاح ✓',
+    type: 'test',
+    tag: `bestcare-test-${Date.now()}`,
+    url: `/?view=${record.role === 'admin' ? 'admin' : 'clinic'}&clinic=${record.clinicId}`,
+    test: true,
+    updatedAt: Date.now(),
+  };
+  try {
+    const result = await webpush.sendNotification(record.subscription, JSON.stringify(payload), { TTL: 120, urgency: 'high' });
+    await pushStore.setJSON(key, { ...record, failures: 0, lastError: '', lastDeliveredAt: Date.now() });
+    return { ok: true, statusCode: Number(result?.statusCode || 201) };
+  } catch (error) {
+    const statusCode = Number(error?.statusCode || 0);
+    if (failureAction(statusCode, Number(record.failures || 0)) === 'delete') await pushStore.delete(key).catch(() => {});
+    else await pushStore.setJSON(key, { ...record, failures: Number(record.failures || 0) + 1, lastError: String(statusCode || error?.message || 'error').slice(0, 80), lastErrorAt: Date.now() }).catch(() => {});
+    return { ok: false, reason: statusCode === 404 || statusCode === 410 ? 'expired' : statusCode === 401 || statusCode === 403 ? 'key_mismatch' : 'push_service_error', statusCode };
+  }
 }
 
 export async function deletePushSubscription(endpoint, user = null) {
@@ -48,7 +129,7 @@ export async function deletePushSubscription(endpoint, user = null) {
 
 export async function sendPushNotifications(event, { excludeClientId = '' } = {}) {
   if (!configured() || !event?.title) return { sent: 0, skipped: true };
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:notifications@bestcare.sa', process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+  vapid();
   const pushStore = store();
   const listed = await pushStore.list({ prefix: 'subscriptions/' });
   const entries = Array.isArray(listed?.blobs) ? listed.blobs : [];
@@ -90,12 +171,16 @@ export async function sendPushNotifications(event, { excludeClientId = '' } = {}
         : `/?view=${event.type === 'payment' ? 'admin' : record.role}&clinic=${targetClinic}`),
     };
     try {
-      const topic = crypto.createHash('sha256').update(String(payload.tag)).digest('base64url').slice(0, 24);
-      await webpush.sendNotification(record.subscription, JSON.stringify(payload), { TTL: 180, urgency: 'normal', topic });
+      await webpush.sendNotification(record.subscription, JSON.stringify(payload), deliveryOptions(payload.type, payload.tag));
       sent += 1;
+      if (Number(record.failures || 0) > 0) await pushStore.setJSON(entry.key, { ...record, failures: 0, lastError: '', lastDeliveredAt: Date.now() }).catch(() => {});
     } catch (error) {
-      if (error?.statusCode === 404 || error?.statusCode === 410) await pushStore.delete(entry.key);
-      else console.warn('Push delivery failed', error?.statusCode || error?.message);
+      const statusCode = Number(error?.statusCode || 0);
+      if (failureAction(statusCode, Number(record.failures || 0)) === 'delete') await pushStore.delete(entry.key).catch(() => {});
+      else {
+        console.warn('Push delivery failed', statusCode || error?.message);
+        await pushStore.setJSON(entry.key, { ...record, failures: Number(record.failures || 0) + 1, lastError: String(statusCode || error?.message || 'error').slice(0, 80), lastErrorAt: Date.now() }).catch(() => {});
+      }
     }
   }));
   return { sent, suppressed, outsideWorkingHours: !withinDeliveryWindow };

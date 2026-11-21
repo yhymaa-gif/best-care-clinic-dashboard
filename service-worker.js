@@ -1,9 +1,10 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020';
+const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020-20261121-admin-ui-v4-perf1-ui1-pulse-trends';
 const APP_SHELL=[
   './',
   './index.html',
   './dashboard.css',
   './dashboard.js',
+  './admin-counter.js',
   './admin-patient-queue.js',
   './patient-summary.js',
   './patient-summary.css',
@@ -30,6 +31,7 @@ const APP_SHELL=[
   './quick-plan-center.js',
   './statistics.html',
   './statistics.js',
+  './trends.js',
   './appointment-request.html',
   './appointment-request.js',
   './appointment-requests.html',
@@ -55,11 +57,12 @@ const APP_SHELL=[
   './manifest.webmanifest',
   './release.json',
   './best-care-logo.png',
+  './best-care-logo.webp',
   './assets/best-care-logo-header.png',
   './assets/treatment-plan-department-stamp.svg',
   './assets/treatment-plan-hero-v1.webp',
-  './assets/fonts/IBMPlexSansArabic-Regular.ttf',
-  './assets/fonts/IBMPlexSansArabic-Bold.ttf',
+  './assets/fonts/IBMPlexSansArabic-Regular.woff2',
+  './assets/fonts/IBMPlexSansArabic-Bold.woff2',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/icon-maskable-512.png',
@@ -82,6 +85,21 @@ self.addEventListener('activate',event=>{
 self.addEventListener('message',event=>{
   if(event.data?.type==='SKIP_WAITING')self.skipWaiting();
 });
+
+// The page shell (HTML + JS + CSS) is network-first. To avoid revalidating the
+// same files on every navigation, a shell fetched from the network less than
+// SHELL_FRESH_MS ago is served from this worker's cache. The window is per
+// worker instance and a new deploy installs a new worker with a fresh cache,
+// so HTML and scripts always come from the same snapshot.
+const SHELL_FRESH_MS=5*60*1000;
+let shellFetchedAt=0;
+const shellFresh=()=>Date.now()-shellFetchedAt<SHELL_FRESH_MS;
+const fromCacheOrNetwork=async(request,cacheKey=request)=>{
+  if(shellFresh()){const cached=await caches.match(cacheKey);if(cached)return cached}
+  const response=await fetch(request);
+  if(response.ok){shellFetchedAt=Date.now();const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(cacheKey,copy))}
+  return response;
+};
 
 self.addEventListener('fetch',event=>{
   const request=event.request;
@@ -123,12 +141,7 @@ self.addEventListener('fetch',event=>{
             ?'./prescription.html'
             :'./index.html';
     event.respondWith(
-      fetch(request)
-        .then(response=>{
-          const copy=response.clone();
-          caches.open(CACHE_NAME).then(cache=>cache.put(shellPage,copy));
-          return response;
-        })
+      fromCacheOrNetwork(request,shellPage)
         .catch(()=>caches.match(shellPage).then(response=>response||caches.match('./offline.html')))
     );
     return;
@@ -141,14 +154,7 @@ self.addEventListener('fetch',event=>{
     request.destination==='script'||request.destination==='style'||
     /\.(?:js|css)$/i.test(url.pathname)
   )){
-    event.respondWith(
-      fetch(request)
-        .then(response=>{
-          if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put(request,response.clone()));
-          return response;
-        })
-        .catch(()=>caches.match(request))
-    );
+    event.respondWith(fromCacheOrNetwork(request).catch(()=>caches.match(request)));
     return;
   }
 
@@ -172,7 +178,9 @@ self.addEventListener('push',event=>{
     badge:'./assets/icons/icon-192.png',
     color:payload.color||'#176344',
     tag:payload.tag||`bestcare-${payload.type||'update'}`,
-    renotify:false,
+    // A repeated tag must still alert (sound/vibration) instead of replacing silently.
+    renotify:true,
+    timestamp:Number(payload.updatedAt||Date.now()),
     vibrate:[160,70,180],
     data:{url:payload.url||'./'}
   };
@@ -182,6 +190,23 @@ self.addEventListener('push',event=>{
     openClients.forEach(client=>client.postMessage(message));
   });
   event.waitUntil(Promise.allSettled([notify,wakeOpenPages]));
+});
+
+// Browsers may rotate a push subscription at any time; without this the
+// server keeps the dead endpoint and the device silently stops receiving alerts.
+self.addEventListener('pushsubscriptionchange',event=>{
+  event.waitUntil((async()=>{
+    const oldEndpoint=event.oldSubscription?.endpoint||'';
+    let subscription=event.newSubscription||null;
+    if(!subscription){
+      const response=await fetch('/api/push',{cache:'no-store'});
+      if(!response.ok)return;
+      const {publicKey}=await response.json();
+      const padding='='.repeat((4-publicKey.length%4)%4),raw=atob((publicKey+padding).replace(/-/g,'+').replace(/_/g,'/'));
+      subscription=await self.registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:Uint8Array.from([...raw].map(char=>char.charCodeAt(0)))});
+    }
+    await fetch('/api/push',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),oldEndpoint,source:'service-worker'})});
+  })().catch(error=>console.warn('Push subscription renewal failed',error)));
 });
 
 self.addEventListener('notificationclick',event=>{

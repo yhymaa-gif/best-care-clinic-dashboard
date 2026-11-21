@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#155b42">
   <title>إحصائيات التشغيل — أفضل عناية</title>
   <style>
-    @font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");font-weight:400;font-display:swap}@font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype");font-weight:700 950;font-display:swap}
+    @font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Regular.woff2") format("woff2"),url("./assets/fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");font-weight:400;font-display:swap}@font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Bold.woff2") format("woff2"),url("./assets/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype");font-weight:700 950;font-display:swap}
     :root{--ink:#173d30;--muted:#668074;--green:#176345;--green2:#2f8c67;--mint:#e9f6ef;--line:#d8e8e0;--paper:#fff;--bg:#f2f8f5;--gold:#c39a3e;--blue:#356f8a;--red:#c64555;--amber:#d58a25;--shadow:0 18px 50px rgba(24,76,55,.09);font-family:"Best Care Arabic","IBM Plex Sans Arabic","Noto Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif}
     *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,rgba(178,224,202,.3),transparent 24%),linear-gradient(150deg,#f8fbf9,#edf6f2);color:var(--ink)}button,input,select{font:inherit}.shell{width:min(1500px,100%);margin:auto;padding:18px}.panel{border:1px solid rgba(39,104,78,.13);border-radius:22px;background:rgba(255,255,255,.92);box-shadow:var(--shadow)}
     .topbar{position:sticky;z-index:20;top:10px;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 16px;backdrop-filter:blur(16px)}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand img{width:56px;height:56px;object-fit:contain;border:1px solid var(--line);border-radius:17px;background:#fff}.brand h1,.brand p{margin:0}.brand h1{font-size:21px}.brand p{margin-top:3px;color:var(--muted);font-size:11px}.top-actions{display:flex;gap:7px;flex-wrap:wrap}button,.button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 12px;border:1px solid #c9ded4;border-radius:12px;background:#fff;color:var(--ink);font-weight:850;cursor:pointer;text-decoration:none}button:hover,.button:hover{border-color:#87b7a1;background:#f5fbf8}.primary{border-color:var(--green);background:var(--green);color:#fff}.primary:hover{background:#104f36;color:#fff}
@@ -23,13 +23,44 @@
     .empty{padding:42px 14px;text-align:center;color:var(--muted);font-size:12px}.footer{padding:18px;text-align:center;color:#789084;font-size:9px}.skeleton{position:relative;overflow:hidden;background:#e9f1ed;color:transparent!important;border-radius:7px}.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.68),transparent);transform:translateX(100%);animation:shine 1.25s infinite}
     @keyframes shine{to{transform:translateX(-100%)}}@keyframes pulse{50%{opacity:.35}}@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-meta{justify-content:flex-start}.filters{grid-template-columns:1fr 1fr}.range-buttons{grid-column:1/-1}}@media(max-width:620px){.shell{padding:8px}.topbar{top:5px;padding:11px}.brand img{width:46px;height:46px}.brand h1{font-size:16px}.brand p{display:none}.top-actions .print{display:none}.hero{padding:20px;border-radius:18px}.hero h2{font-size:25px}.filters{grid-template-columns:1fr;padding:11px}.range-buttons{grid-column:auto}.kpis{grid-template-columns:1fr 1fr;gap:8px}.kpi{padding:13px}.kpi strong{font-size:24px}.chart-card{padding:14px}.donut-layout{grid-template-columns:1fr}.donut{margin:auto;width:165px;height:165px}.clinic-table{min-width:600px}.table-wrap{overflow-x:auto}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}@media print{body{background:#fff}.shell{width:100%;padding:0}.topbar,.filters,.notice,.footer{display:none!important}.panel{box-shadow:none}.hero{margin:0;background:#155b42!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr 1fr}.chart-card{break-inside:avoid}.bars{height:190px}}
   </style>
+  <style>
+    .headline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:15px}.headline-card{position:relative;overflow:hidden;display:grid;gap:6px;padding:20px 20px 18px;border-inline-start:6px solid var(--accent,#2f8c67)}.headline-card .headline-label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:900}.headline-card .headline-label span{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--soft,#e8f5ef);font-size:17px}.headline-card strong{font-size:clamp(34px,4vw,48px);line-height:1.05;font-weight:950;color:var(--ink)}.headline-card small{color:var(--muted);font-size:11px;line-height:1.6}.headline-card small b{color:var(--ink)}
+    .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#f7fbf9;color:var(--muted);font-size:10px;font-weight:850}.chip b{color:var(--ink);font-size:13px}.chip.warn{border-color:#f1d2a8;background:#fff7ec}.chip.warn b{color:#a8620f}.chip.alert{border-color:#efc5cc;background:#fff4f6}.chip.alert b{color:#b23347}
+    .ranked{display:grid;gap:9px}.ranked-title{margin:14px 0 8px;color:var(--muted);font-size:10px;font-weight:950}.ranked .metric-row{grid-template-columns:minmax(110px,1.1fr) 2fr 54px}.ranked .metric-row small{display:block;color:var(--muted);font-size:8px;font-weight:700}.ranked .metric-fill.gold{background:linear-gradient(90deg,#c39a3e,#e0bd6c)}.ranked .metric-fill.blue{background:linear-gradient(90deg,#356f8a,#5aa0bf)}
+    .bar-group{grid-template-columns:repeat(4,7px)}.bar.procedures{background:#c39a3e}.bar.lab{background:#3f7f98}.bar-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;color:var(--muted);font-size:10px}.bar-legend i{display:inline-block;width:9px;height:9px;margin-inline-end:5px;border-radius:3px;background:var(--color)}
+    .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+    @media(max-width:1000px){.headline,.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.headline{gap:8px}.headline-card{padding:14px}.headline-card strong{font-size:32px}}
+    @media print{.headline{grid-template-columns:repeat(4,1fr)}.headline-card{break-inside:avoid}}
+    html[data-theme="dark"] .chip{border-color:#2f4a3e;background:#16231d}html[data-theme="dark"] .chip.warn{border-color:#5a4322;background:#2a2014}html[data-theme="dark"] .chip.alert{border-color:#5a2a33;background:#2a161a}html[data-theme="dark"] .headline-card .headline-label span{background:rgba(255,255,255,.07)}
+  </style>
+  <style>
+    .trend-panel{margin-top:15px;padding:18px}.trend-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px}.trend-head h3{margin:0;font-size:18px}.trend-head p{margin:4px 0 0;color:var(--muted);font-size:11px}
+    .trend-compare{display:grid;gap:4px;color:var(--muted);font-size:10px;font-weight:900}.trend-compare select{min-height:38px;padding:5px 10px;border:1px solid #cbddd5;border-radius:11px;background:#fff;color:var(--ink);font:inherit;font-size:12px}
+    .trend-body{display:grid;grid-template-columns:minmax(260px,.9fr) 1.6fr;gap:14px}
+    .trend-verdict{--tone:#668074;--soft:#eef3f1;display:grid;align-content:center;gap:8px;padding:20px;border-radius:20px;background:var(--soft);border:1px solid color-mix(in srgb,var(--tone) 25%,transparent)}
+    .trend-verdict.improving{--tone:#17774c;--soft:#e4f6ec}.trend-verdict.declining{--tone:#b23347;--soft:#fdecef}.trend-verdict.stable{--tone:#356f8a;--soft:#e8f1f5}
+    .trend-verdict .v-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:var(--tone);color:#fff;font-size:30px;font-weight:900}.trend-verdict strong{color:var(--tone);font-size:26px;line-height:1.2}.trend-verdict p{margin:0;color:#365a4c;font-size:12px;line-height:1.8}.trend-verdict .v-score{justify-self:start;padding:4px 11px;border-radius:999px;background:#fff;color:var(--tone);font-size:11px;font-weight:950}
+    .trend-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px}.trend-lists h4{margin:0 0 8px;font-size:13px}.trend-lists>div:first-child h4{color:#17774c}.trend-lists>div:last-child h4{color:#b23347}
+    .trend-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}.trend-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:12px}.trend-list li small{display:block;color:var(--muted);font-size:10px}.trend-list b{font-size:12.5px}
+    .chg{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;unicode-bidi:isolate}.chg.good{background:#e2f5eb;color:#17774c}.chg.bad{background:#fbe8eb;color:#b23347}.chg.flat{background:#eef3f1;color:#668074}
+    .trend-insights{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:14px}.insight{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:12px;border-radius:15px;background:#f6faf8;border:1px solid var(--line);font-size:12px;line-height:1.7}.insight i{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#fff;font-style:normal;font-size:16px}.insight b{color:var(--ink)}
+    .trend-details{margin-top:14px}.trend-details summary{cursor:pointer;color:var(--green);font-size:12px;font-weight:900}.trend-table td,.trend-table th{white-space:nowrap}
+    .status-chip{padding:3px 9px;border-radius:999px;font-size:10px;font-weight:900}.status-chip.improving{background:#e2f5eb;color:#17774c}.status-chip.declining{background:#fbe8eb;color:#b23347}.status-chip.stable{background:#e8f1f5;color:#356f8a}.status-chip.insufficient{background:#f1f1f1;color:#8a8a8a}
+    .trend-months{margin-top:16px}.trend-months-head h4{margin:0;font-size:14px}.trend-months-head p{margin:3px 0 10px;color:var(--muted);font-size:10.5px}
+    .trend-month-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.tm-card{display:grid;gap:6px;padding:13px;border:1px solid var(--line);border-radius:16px;background:#fff}.tm-card h5{margin:0;color:var(--muted);font-size:11px}.tm-dir{font-size:16px;font-weight:950}.tm-dir.up{color:#17774c}.tm-dir.down{color:#b23347}.tm-dir.flat{color:#356f8a}.tm-dir.insufficient{color:#8a8a8a;font-size:12px}
+    .tm-bars{display:flex;align-items:flex-end;gap:4px;height:46px}.tm-bars i{flex:1;min-height:3px;border-radius:5px 5px 2px 2px;background:#cfe3d9}.tm-bars i.cur{background:repeating-linear-gradient(45deg,#c39a3e 0 4px,#e3c06e 4px 8px)}.tm-bars i.last{background:#2f8c67}
+    .tm-card small{color:var(--muted);font-size:10px;line-height:1.6}.tm-card small b{color:var(--ink)}
+    @media(max-width:1000px){.trend-body{grid-template-columns:1fr}.trend-month-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.trend-lists{grid-template-columns:1fr}.trend-panel{padding:13px}.trend-verdict strong{font-size:22px}}
+    @media print{.trend-compare,.trend-details summary{display:none}.trend-details{display:block}.trend-panel{break-inside:avoid}}
+    html[data-theme="dark"] .trend-list li,html[data-theme="dark"] .tm-card,html[data-theme="dark"] .trend-compare select{background:#17231e;border-color:#2a3f35;color:#e4f0ea}html[data-theme="dark"] .insight{background:#121c18;border-color:#2a3f35}html[data-theme="dark"] .insight i{background:#17231e}html[data-theme="dark"] .trend-verdict p{color:#c9dcd2}html[data-theme="dark"] .trend-verdict .v-score{background:#17231e}
+  </style>
   <link rel="stylesheet" href="./theme.css">
 </head>
 <body>
   <main class="shell">
     <header class="panel topbar">
-      <div class="brand"><img src="./best-care-logo.png" width="613" height="900" alt="شعار أفضل عناية"><div><h1>مركز الإحصائيات</h1><p>لوحة مراجعة الأداء والتشغيل</p></div></div>
-      <div class="top-actions"><button class="print" id="printBtn" type="button">طباعة التقرير</button><a class="button primary" href="./?view=admin">العودة للإدارة</a></div>
+      <div class="brand"><img src="./best-care-logo.webp" width="613" height="900" alt="شعار أفضل عناية"><div><h1>مركز الإحصائيات</h1><p>لوحة مراجعة الأداء والتشغيل</p></div></div>
+      <div class="top-actions"><button id="exportBtn" type="button">تصدير CSV</button><button class="print" id="printBtn" type="button">طباعة التقرير</button><a class="button primary" href="./?view=admin">العودة للإدارة</a></div>
     </header>
 
     <section class="panel hero">
@@ -41,31 +72,60 @@
       <label class="field">من تاريخ<input id="fromDate" type="date"></label>
       <label class="field">إلى تاريخ<input id="toDate" type="date"></label>
       <label class="field">العيادة<select id="clinicFilter"><option value="all">جميع العيادات</option></select></label>
-      <div class="range-buttons"><button type="button" data-days="7">7 أيام</button><button class="active" type="button" data-days="30">30 يومًا</button><button type="button" data-days="90">90 يومًا</button><button id="refreshBtn" class="primary" type="button">تحديث</button></div>
+      <div class="range-buttons"><button type="button" data-days="7">7 أيام</button><button class="active" type="button" data-days="30">30 يومًا</button><button type="button" data-days="90">90 يومًا</button><button type="button" data-month="1">هذا الشهر</button><button id="refreshBtn" class="primary" type="button">تحديث</button></div>
     </section>
     <div id="statusNotice" class="notice loading" role="status" aria-live="polite"><i></i><span>جارٍ تجهيز المؤشرات…</span></div>
 
+    <section class="headline" aria-label="الأرقام الأساسية للفترة">
+      <article class="panel headline-card" style="--accent:#2f8c67;--soft:#e8f5ef"><div class="headline-label"><span aria-hidden="true">♙</span>عدد المرضى</div><strong data-kpi="uniquePatients">—</strong><small><b data-kpi="treatedPatients">—</b> مريض أكمل علاجه · <b data-kpi="appointments">—</b> موعد</small></article>
+      <article class="panel headline-card" style="--accent:#c39a3e;--soft:#fff3d9"><div class="headline-label"><span aria-hidden="true">🦷</span>الإجراءات المنفذة</div><strong data-kpi="procedureUnits">—</strong><small>في <b data-kpi="visitsWithProcedures">—</b> زيارة · منها <b data-kpi="procedureFreeUnits">—</b> مجانية</small></article>
+      <article class="panel headline-card" style="--accent:#3f7f98;--soft:#e5f0f5"><div class="headline-label"><span aria-hidden="true">⇪</span>أُرسلت للمعمل</div><strong data-kpi="labSent">—</strong><small><b data-kpi="labSentUnits">—</b> وحدة · سُلّم للمريض <b data-kpi="labDelivered">—</b></small></article>
+      <article class="panel headline-card" style="--accent:#51af7f;--soft:#e5f5ec"><div class="headline-label"><span aria-hidden="true">✓</span>المواعيد المكتملة</div><strong data-kpi="completed">—</strong><small>نسبة الإنجاز <b data-kpi="completionRate">—</b> · ملغي <b data-kpi="cancelled">—</b></small></article>
+    </section>
+
+    <section class="panel trend-panel" id="trendPanel" aria-label="قراءة الأداء">
+      <div class="trend-head"><div><h3>قراءة الأداء</h3><p id="trendCompareText">مقارنة بالفترة السابقة</p></div>
+        <label class="trend-compare">قارن بـ<select id="compareMode"><option value="previous">الفترة السابقة مباشرة</option><option value="lastMonth">نفس الأيام من الشهر الماضي</option><option value="lastYear">نفس الأيام من العام الماضي</option></select></label></div>
+      <div class="trend-body">
+        <div id="trendVerdict" class="trend-verdict"></div>
+        <div class="trend-lists"><div><h4>▲ ما تحسّن</h4><ul id="trendUp" class="trend-list"></ul></div><div><h4>▼ ما انخفض</h4><ul id="trendDown" class="trend-list"></ul></div></div>
+      </div>
+      <div id="trendInsights" class="trend-insights"></div>
+      <details class="trend-details"><summary>كل المؤشرات مقارنة بالفترة السابقة</summary><div class="table-wrap"><table class="clinic-table trend-table"><thead><tr><th>المؤشر</th><th>الفترة الحالية</th><th>الفترة السابقة</th><th>التغير</th><th>الحكم</th></tr></thead><tbody id="trendRows"></tbody></table></div></details>
+      <div class="trend-months"><div class="trend-months-head"><h4>الاتجاه الشهري</h4><p>آخر 3 أشهر مكتملة، ووتيرة الشهر الحالي متوقعةً حتى نهايته</p></div><div id="trendMonths" class="trend-month-grid"></div></div>
+    </section>
+
     <section class="kpis" aria-label="المؤشرات الرئيسية">
-      <article class="panel kpi" style="--tone:#e8f1f4"><div class="kpi-head"><span class="kpi-label">إجمالي المواعيد</span><span class="kpi-icon">◫</span></div><strong data-kpi="appointments">—</strong><small>كل المواعيد خلال الفترة</small></article>
-      <article class="panel kpi"><div class="kpi-head"><span class="kpi-label">المرضى المسجلون</span><span class="kpi-icon">♙</span></div><strong data-kpi="uniquePatients">—</strong><small>مرضى فريدون حسب الملف أو الجوال</small></article>
-      <article class="panel kpi" style="--tone:#e5f5ec"><div class="kpi-head"><span class="kpi-label">نسبة الإنجاز</span><span class="kpi-icon">✓</span></div><strong data-kpi="completionRate">—</strong><small>من المواعيد غير الملغاة</small></article>
       <article class="panel kpi" style="--tone:#fff1df"><div class="kpi-head"><span class="kpi-label">متوسط التأخير</span><span class="kpi-icon">◷</span></div><strong data-kpi="averageDelayMinutes">—</strong><small>بالدقائق للحالات التي بدأ علاجها</small></article>
       <article class="panel kpi" style="--tone:#e5f0fb"><div class="kpi-head"><span class="kpi-label">متوسط مدة بقاء المريض</span><span class="kpi-icon">⏱</span></div><strong data-kpi="averageStayMinutes">—</strong><small>من وقت الوصول حتى إكمال العلاج</small></article>
       <article class="panel kpi" style="--tone:#fff0f2"><div class="kpi-head"><span class="kpi-label">طلبات الدفع المعلقة</span><span class="kpi-icon">﷼</span></div><strong data-kpi="paymentPending">—</strong><small>تحتاج متابعة الإدارة</small></article>
       <article class="panel kpi" style="--tone:#eef0fb"><div class="kpi-head"><span class="kpi-label">الخطط العلاجية</span><span class="kpi-icon">▤</span></div><strong data-kpi="planTotal">—</strong><small>الخطط المحدثة خلال الفترة</small></article>
-      <article class="panel kpi" style="--tone:#e5f5f7"><div class="kpi-head"><span class="kpi-label">حالات المعمل النشطة</span><span class="kpi-icon">🦷</span></div><strong data-kpi="labActive">—</strong><small>لم تُسلّم للمريض بعد</small></article>
-      <article class="panel kpi" style="--tone:#f7ecee"><div class="kpi-head"><span class="kpi-label">المواعيد الملغاة</span><span class="kpi-icon">×</span></div><strong data-kpi="cancelled">—</strong><small>خلال الفترة المحددة</small></article>
+      <article class="panel kpi" style="--tone:#e5f5f7"><div class="kpi-head"><span class="kpi-label">حالات المعمل المفتوحة</span><span class="kpi-icon">🦷</span></div><strong data-kpi="labOpenNow">—</strong><small>مفتوحة الآن ولم تُسلّم للمريض</small></article>
+      <article class="panel kpi" style="--tone:#fff0f2"><div class="kpi-head"><span class="kpi-label">حالات معمل متأخرة</span><span class="kpi-icon">⚠</span></div><strong data-kpi="labOverdue">—</strong><small>تجاوزت موعد الاستلام المتوقع</small></article>
+      <article class="panel kpi" style="--tone:#fff7e6"><div class="kpi-head"><span class="kpi-label">بانتظار الإرسال للمعمل</span><span class="kpi-icon">⏳</span></div><strong data-kpi="labWaitingToSend">—</strong><small>مسجلة ولم تُرسل بعد</small></article>
       <article class="panel kpi" style="--tone:#fff3c9"><div class="kpi-head"><span class="kpi-label">طلبات التقييم عبر واتساب</span><span class="kpi-icon">★</span></div><strong data-kpi="reviewWhatsappShares">—</strong><small>تُحتسب عند فتح المشاركة من أيقونة التقييم</small></article>
     </section>
 
     <section class="grid">
       <article class="panel chart-card">
-        <div class="card-head"><div><h3>حركة المواعيد اليومية</h3><p>إجمالي المواعيد والمنجز والملغي يومًا بيوم</p></div><span id="appointmentsTotal" class="chart-total">0 موعد</span></div>
-        <div id="dailyBars" class="bars" aria-label="رسم بياني عمودي للمواعيد اليومية"></div>
+        <div class="card-head"><div><h3>الحركة اليومية</h3><p>المواعيد والمنجز والملغي والإجراءات والمرسل للمعمل يومًا بيوم</p></div><span id="appointmentsTotal" class="chart-total">0 موعد</span></div>
+        <div id="dailyBars" class="bars" aria-label="رسم بياني عمودي للحركة اليومية"></div>
+        <div class="bar-legend"><span style="--color:var(--green2)"><i></i>المواعيد</span><span style="--color:#51af7f"><i></i>المكتمل</span><span style="--color:#d56775"><i></i>الملغي</span><span style="--color:#c39a3e"><i></i>الإجراءات</span><span style="--color:#3f7f98"><i></i>أُرسل للمعمل</span></div>
       </article>
       <article class="panel chart-card">
         <div class="card-head"><div><h3>توزيع حالات المرضى</h3><p>الحالة الأخيرة المسجلة لكل موعد</p></div></div>
         <div class="donut-layout"><div id="statusDonut" class="donut"><div class="donut-center"><strong id="statusDonutTotal">0</strong><small>موعد</small></div></div><div id="statusLegend" class="legend"></div></div>
+      </article>
+      <article class="panel chart-card">
+        <div class="card-head"><div><h3>الإجراءات المنفذة</h3><p>من الإجراءات التي حددها الطبيب عند إكمال الزيارة</p></div><span id="proceduresTotal" class="chart-total">0 إجراء</span></div>
+        <div id="procedureChips" class="chips"></div>
+        <div id="procedureMetrics" class="ranked"></div>
+      </article>
+      <article class="panel chart-card">
+        <div class="card-head"><div><h3>المعمل خلال الفترة</h3><p>ما أُرسل واستُلم وسُلّم، وأكثر الأعمال والمعامل</p></div><span id="labSentTotal" class="chart-total">0 مرسلة</span></div>
+        <div id="labChips" class="chips"></div>
+        <div id="labWorkMetrics" class="ranked"></div>
+        <div id="labVendorMetrics" class="ranked"></div>
       </article>
       <article class="panel chart-card">
         <div class="card-head"><div><h3>دورة الخطط العلاجية</h3><p>المسودات والاعتمادات وموافقة المريض</p></div><span id="plansTotal" class="chart-total">0 خطة</span></div>
@@ -76,7 +136,7 @@
         <div class="donut-layout"><div id="paymentDonut" class="donut"><div class="donut-center"><strong id="paymentDonutTotal">0</strong><small>طلب دفع</small></div></div><div id="paymentLegend" class="legend"></div></div>
       </article>
       <article class="panel chart-card">
-        <div class="card-head"><div><h3>حالات معمل الأسنان</h3><p>توزيع الحالات حسب مرحلة التنفيذ</p></div><span id="labsTotal" class="chart-total">0 حالة</span></div>
+        <div class="card-head"><div><h3>مراحل حالات المعمل</h3><p>الحالات المسجلة خلال الفترة حسب مرحلتها الحالية</p></div><span id="labsTotal" class="chart-total">0 حالة</span></div>
         <div id="labMetrics" class="stacked-list"></div>
       </article>
       <article class="panel chart-card">
@@ -84,12 +144,13 @@
         <div id="communicationMetrics" class="stacked-list"></div>
       </article>
       <article class="panel chart-card">
-        <div class="card-head"><div><h3>مقارنة العيادات</h3><p>عدد المواعيد ونسبة الإنجاز والإجراءات المعلقة</p></div></div>
-        <div class="table-wrap"><table class="clinic-table"><thead><tr><th>العيادة والطبيب</th><th>المواعيد</th><th>المنجز</th><th>الملغي</th><th>دفع معلق</th><th>الخطط</th><th>مدة البقاء</th><th>الإنجاز</th></tr></thead><tbody id="clinicRows"></tbody></table></div>
+        <div class="card-head"><div><h3>مقارنة العيادات</h3><p>المرضى والإجراءات والمعمل ونسبة الإنجاز لكل عيادة</p></div></div>
+        <div class="table-wrap"><table class="clinic-table"><thead><tr><th>العيادة والطبيب</th><th>المواعيد</th><th>المرضى المعالجون</th><th>الإجراءات</th><th>أُرسل للمعمل</th><th>المنجز</th><th>الملغي</th><th>دفع معلق</th><th>الخطط</th><th>مدة البقاء</th><th>الإنجاز</th></tr></thead><tbody id="clinicRows"></tbody></table></div>
       </article>
     </section>
     <footer class="footer">جميع المؤشرات للمتابعة التشغيلية الداخلية — تطوير يحيى هادي</footer>
   </main>
+  <script src="./trends.js"></script>
   <script src="./statistics.js"></script>
 </body>
 </html>
