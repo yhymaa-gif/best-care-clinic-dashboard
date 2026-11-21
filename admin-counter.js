@@ -333,6 +333,7 @@
     if(!isAdmin())return;
     document.getElementById('paymentPanel')?.classList.toggle('is-empty',count('paymentCount')===0);
     document.getElementById('adminQuickPlanInbox')?.classList.toggle('is-empty',count('adminQuickPlanPendingCount')===0&&count('adminQuickPlanReviewedCount')===0);
+    enhancePatientList();
     const divider=document.querySelector('tr.admin-table-group-divider.completed');
     if(divider){
       let rows=0;for(let row=divider.nextElementSibling;row;row=row.nextElementSibling)if(row.matches('tr[class*="row-status-"]'))rows+=1;
@@ -340,6 +341,36 @@
       divider.setAttribute('aria-expanded',String(!body.classList.contains('admin-done-collapsed')));
     }
   }
+  const setText=(node,text)=>{if(node&&node.textContent!==text)node.textContent=text};
+  const en=()=>String(document.documentElement.lang||'').startsWith('en');
+  // Unified plan warning + status chips with counts that filter the list.
+  function enhancePatientList(){
+    const wrap=document.querySelector('.table-wrap');const tbody=wrap?.querySelector('tbody');if(!wrap||!tbody)return;
+    const filter=document.getElementById('filterStatus');
+    const rows=[...tbody.querySelectorAll('tr[class*="row-status-"]')];
+    if(!filter?.value){
+      const counts={};rows.forEach(row=>{const key=(row.className.match(/row-status-([a-z_]+)/)||[])[1];if(key)counts[key]=(counts[key]||0)+1});
+      document.querySelectorAll('#statusLegend .legend-chip').forEach(chip=>{const key=(chip.className.match(/legend-(?!chip\b)([a-z_]+)/)||[])[1];const value=String(counts[key]||0);if(chip.dataset.count!==value)chip.dataset.count=value});
+    }
+    document.querySelectorAll('#statusLegend .legend-chip').forEach(chip=>{
+      const key=(chip.className.match(/legend-(?!chip\b)([a-z_]+)/)||[])[1];
+      if(!chip.hasAttribute('role')){chip.setAttribute('role','button');chip.tabIndex=0}
+      const active=Boolean(filter&&filter.value===key);if(chip.classList.contains('is-active')!==active)chip.classList.toggle('is-active',active);
+    });
+    let bar=document.getElementById('planAlertBar');
+    const planRows=rows.filter(row=>row.querySelector('.plan-compliance-alert')).length;
+    const filtering=body.classList.contains('admin-plan-filter');
+    if(!bar){bar=document.createElement('div');bar.id='planAlertBar';bar.className='plan-alert-bar';bar.setAttribute('role','status');bar.innerHTML='<span class="plan-alert-icon" aria-hidden="true">⚠</span><span class="plan-alert-text"></span><button type="button" class="plan-alert-btn"></button>';wrap.before(bar)}
+    const visible=planRows>0||filtering;if(bar.hidden===visible)bar.hidden=!visible;
+    setText(bar.querySelector('.plan-alert-text'),en()?`${planRows} patients started treatment without an approved plan`:`${planRows} ${planRows===1?'مريض بدأ علاجه':'مرضى بدأ علاجهم'} ولم تُعتمد خطتهم بعد`);
+    setText(bar.querySelector('.plan-alert-btn'),filtering?(en()?'Show everyone':'عرض الجميع'):(en()?'Show them only':'عرضهم فقط'));
+  }
+  document.addEventListener('click',event=>{
+    if(event.target.closest?.('.plan-alert-btn')){body.classList.toggle('admin-plan-filter');markEmpty();return}
+    const chip=event.target.closest?.('#statusLegend .legend-chip');
+    if(chip&&isAdmin()){const key=(chip.className.match(/legend-(?!chip\b)([a-z_]+)/)||[])[1];const filter=document.getElementById('filterStatus');if(filter&&key&&[...filter.options].some(option=>option.value===key)){filter.value=filter.value===key?'':key;filter.dispatchEvent(new Event('change',{bubbles:true}))}}
+  });
+  document.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches?.('#statusLegend .legend-chip')){event.preventDefault();event.target.click()}});
   let scheduled=false;
   const schedule=()=>{if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;markEmpty()})};
   new MutationObserver(schedule).observe(document.querySelector('main')||body,{childList:true,subtree:true,characterData:true});
