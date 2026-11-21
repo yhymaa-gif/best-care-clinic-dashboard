@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#155b42">
   <title>إحصائيات التشغيل — أفضل عناية</title>
   <style>
-    @font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");font-weight:400;font-display:swap}@font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype");font-weight:700 950;font-display:swap}
+    @font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Regular.woff2") format("woff2"),url("./assets/fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");font-weight:400;font-display:swap}@font-face{font-family:"Best Care Arabic";src:url("./assets/fonts/IBMPlexSansArabic-Bold.woff2") format("woff2"),url("./assets/fonts/IBMPlexSansArabic-Bold.ttf") format("truetype");font-weight:700 950;font-display:swap}
     :root{--ink:#173d30;--muted:#668074;--green:#176345;--green2:#2f8c67;--mint:#e9f6ef;--line:#d8e8e0;--paper:#fff;--bg:#f2f8f5;--gold:#c39a3e;--blue:#356f8a;--red:#c64555;--amber:#d58a25;--shadow:0 18px 50px rgba(24,76,55,.09);font-family:"Best Care Arabic","IBM Plex Sans Arabic","Noto Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif}
     *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,rgba(178,224,202,.3),transparent 24%),linear-gradient(150deg,#f8fbf9,#edf6f2);color:var(--ink)}button,input,select{font:inherit}.shell{width:min(1500px,100%);margin:auto;padding:18px}.panel{border:1px solid rgba(39,104,78,.13);border-radius:22px;background:rgba(255,255,255,.92);box-shadow:var(--shadow)}
     .topbar{position:sticky;z-index:20;top:10px;display:flex;align-items:center;justify-content:space-between;gap:15px;padding:14px 16px;backdrop-filter:blur(16px)}.brand{display:flex;align-items:center;gap:12px;min-width:0}.brand img{width:56px;height:56px;object-fit:contain;border:1px solid var(--line);border-radius:17px;background:#fff}.brand h1,.brand p{margin:0}.brand h1{font-size:21px}.brand p{margin-top:3px;color:var(--muted);font-size:11px}.top-actions{display:flex;gap:7px;flex-wrap:wrap}button,.button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 12px;border:1px solid #c9ded4;border-radius:12px;background:#fff;color:var(--ink);font-weight:850;cursor:pointer;text-decoration:none}button:hover,.button:hover{border-color:#87b7a1;background:#f5fbf8}.primary{border-color:var(--green);background:var(--green);color:#fff}.primary:hover{background:#104f36;color:#fff}
@@ -38,7 +38,7 @@
 <body>
   <main class="shell">
     <header class="panel topbar">
-      <div class="brand"><img src="./best-care-logo.png" width="613" height="900" alt="شعار أفضل عناية"><div><h1>مركز الإحصائيات</h1><p>لوحة مراجعة الأداء والتشغيل</p></div></div>
+      <div class="brand"><img src="./best-care-logo.webp" width="613" height="900" alt="شعار أفضل عناية"><div><h1>مركز الإحصائيات</h1><p>لوحة مراجعة الأداء والتشغيل</p></div></div>
       <div class="top-actions"><button id="exportBtn" type="button">تصدير CSV</button><button class="print" id="printBtn" type="button">طباعة التقرير</button><a class="button primary" href="./?view=admin">العودة للإدارة</a></div>
     </header>
 
