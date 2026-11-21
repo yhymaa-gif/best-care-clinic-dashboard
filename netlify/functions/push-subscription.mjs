@@ -1,4 +1,4 @@
-import { publicVapidKey,savePushSubscription,deletePushSubscription } from './lib/push.mjs';
+import { publicVapidKey,savePushSubscription,deletePushSubscription,pushSubscriptionStatus,sendTestNotification } from './lib/push.mjs';
 import { apiHeaders, canAccessClinic, requireUser, sameOriginRequest } from './lib/session.mjs';
 
 const headers=apiHeaders('GET,POST,DELETE,OPTIONS');
@@ -14,10 +14,16 @@ export default async request=>{
   let body;try{body=await request.json()}catch{return reply({error:'Invalid JSON'},400)}
   const auth=await requireUser(request);
   if(!auth.ok)return reply({error:auth.error},auth.status);
+  const action=new URL(request.url).searchParams.get('action')||'';
+  if(request.method==='POST'&&action==='status')return reply(await pushSubscriptionStatus(String(body.endpoint||''),auth.user));
+  if(request.method==='POST'&&action==='test'){
+    const result=await sendTestNotification(String(body.endpoint||''),auth.user);
+    return reply(result,result.ok?200:result.reason==='not_configured'?503:result.reason==='not_registered'?404:502);
+  }
   if(request.method==='POST'){
     const requestedClinic=auth.user.role==='admin'?String(body.clinicId||'clinic-1'):String(auth.user.clinicId||'');
     if(!canAccessClinic(auth.user,requestedClinic))return reply({error:'Clinic access denied'},403);
-    try{await savePushSubscription(body.subscription,{user:auth.user,clientId:body.clientId,clinicId:requestedClinic,showPatientDetails:body.showPatientDetails,allowOutsideWorkHours:body.allowOutsideWorkHours});return reply({ok:true})}
+    try{await savePushSubscription(body.subscription,{user:auth.user,clientId:body.clientId,clinicId:requestedClinic,showPatientDetails:body.showPatientDetails,allowOutsideWorkHours:body.allowOutsideWorkHours,oldEndpoint:String(body.oldEndpoint||''),inherit:body.source==='service-worker'});return reply({ok:true})}
     catch{return reply({error:'Invalid subscription'},400)}
   }
   if(request.method==='DELETE'){

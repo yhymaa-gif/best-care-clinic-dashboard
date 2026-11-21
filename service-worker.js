@@ -1,4 +1,4 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020-20261121-admin-counter-v3';
+const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020-20261121-admin-counter-v3-push';
 const APP_SHELL=[
   './',
   './index.html',
@@ -173,7 +173,9 @@ self.addEventListener('push',event=>{
     badge:'./assets/icons/icon-192.png',
     color:payload.color||'#176344',
     tag:payload.tag||`bestcare-${payload.type||'update'}`,
-    renotify:false,
+    // A repeated tag must still alert (sound/vibration) instead of replacing silently.
+    renotify:true,
+    timestamp:Number(payload.updatedAt||Date.now()),
     vibrate:[160,70,180],
     data:{url:payload.url||'./'}
   };
@@ -183,6 +185,23 @@ self.addEventListener('push',event=>{
     openClients.forEach(client=>client.postMessage(message));
   });
   event.waitUntil(Promise.allSettled([notify,wakeOpenPages]));
+});
+
+// Browsers may rotate a push subscription at any time; without this the
+// server keeps the dead endpoint and the device silently stops receiving alerts.
+self.addEventListener('pushsubscriptionchange',event=>{
+  event.waitUntil((async()=>{
+    const oldEndpoint=event.oldSubscription?.endpoint||'';
+    let subscription=event.newSubscription||null;
+    if(!subscription){
+      const response=await fetch('/api/push',{cache:'no-store'});
+      if(!response.ok)return;
+      const {publicKey}=await response.json();
+      const padding='='.repeat((4-publicKey.length%4)%4),raw=atob((publicKey+padding).replace(/-/g,'+').replace(/_/g,'/'));
+      subscription=await self.registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:Uint8Array.from([...raw].map(char=>char.charCodeAt(0)))});
+    }
+    await fetch('/api/push',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),oldEndpoint,source:'service-worker'})});
+  })().catch(error=>console.warn('Push subscription renewal failed',error)));
 });
 
 self.addEventListener('notificationclick',event=>{

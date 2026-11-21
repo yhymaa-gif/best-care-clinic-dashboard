@@ -275,6 +275,7 @@ function unlockApp(user=null){
   if(audioContext)playLoginSignature();
   startAuthIdleProtection();
   startPresence();
+  keepPushSubscriptionAlive({force:true});
   loadClinicDirectory().catch(error=>console.warn('Clinic directory unavailable',error)).finally(()=>{
     startSyncAfterAuth();
     if(VIEW_MODE==='admin'){startAdminQuickPlanInbox();startAdminPatientHub();startAppointmentRequests();startOperationsPrescriptionPolling();refreshOperationsLabCases().catch(()=>{});refreshPatientIdentityDirectory().catch(()=>{})}
@@ -881,18 +882,64 @@ function urlBase64ToUint8Array(value){
   const padding='='.repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,'+').replace(/_/g,'/');
   const raw=atob(base64);return Uint8Array.from([...raw].map(char=>char.charCodeAt(0)));
 }
+function sameServerKey(subscription,publicKey){
+  try{
+    const current=subscription?.options?.applicationServerKey;if(!current||!publicKey)return true;
+    const a=new Uint8Array(current),b=urlBase64ToUint8Array(publicKey);
+    return a.length===b.length&&a.every((value,index)=>value===b[index]);
+  }catch{return true}
+}
 async function ensurePushSubscription(){
-  if(!systemNotificationsEnabled()||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
+  if(IS_DEPLOY_PREVIEW||!('Notification' in window)||Notification.permission!=='granted'||!('serviceWorker' in navigator)||!('PushManager' in window))return false;
   const registration=await navigator.serviceWorker.ready;
   let subscription=await registration.pushManager.getSubscription();
-  if(!subscription){
-    const response=await fetch(PUSH_API,{cache:'no-store'});if(!response.ok)throw new Error('Push service unavailable');
-    const {publicKey}=await response.json();
-    subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
+  // Self-heal: an existing browser subscription means the user opted in, even if local storage was cleared.
+  if(!subscription&&localStorage.getItem('bestcare_system_notifications')!=='enabled')return false;
+  localStorage.setItem('bestcare_system_notifications','enabled');
+  const response=await fetch(PUSH_API,{cache:'no-store'});if(!response.ok)throw new Error('Push service unavailable');
+  const {publicKey}=await response.json();
+  // Server keys changed: the old subscription can never be delivered to, so replace it.
+  if(subscription&&!sameServerKey(subscription,publicKey)){
+    const oldEndpoint=subscription.endpoint;
+    await subscription.unsubscribe().catch(()=>{});
+    await fetch(PUSH_API,{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:oldEndpoint})}).catch(()=>{});
+    subscription=null;
   }
+  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(publicKey)});
   const saved=await fetch(PUSH_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({subscription:subscription.toJSON(),role:VIEW_MODE,clientId:CLIENT_ID,clinicId:ACTIVE_CLINIC_ID,showPatientDetails:VIEW_MODE==='admin',allowOutsideWorkHours:outsideHoursNotificationsEnabled()})});
   if(!saved.ok)throw new Error('Subscription save failed');
-  localStorage.setItem('bestcare_push_registered','enabled');return true;
+  localStorage.setItem('bestcare_push_registered','enabled');localStorage.setItem('bestcare_push_refreshed_at',String(Date.now()));pushSubscriptionActive=true;return true;
+}
+// Keeps this device's subscription registered on the server: after sign-in,
+// when the app returns to the foreground after a while, and when back online.
+function keepPushSubscriptionAlive({force=false}={}){
+  if(!authReady||IS_DEPLOY_PREVIEW||!('Notification' in window)||Notification.permission!=='granted')return;
+  const last=Number(localStorage.getItem('bestcare_push_refreshed_at')||0);
+  if(!force&&Date.now()-last<6*60*60*1000)return;
+  ensurePushSubscription().then(()=>refreshPushSubscriptionState()).catch(error=>console.warn('Push keep-alive failed',error));
+}
+async function testPushNotifications(){
+  const button=$('testNotificationsBtn');if(button)button.disabled=true;
+  const en=lang==='en';
+  try{
+    if(!('Notification' in window)||!('PushManager' in window)){toast(en?'Not supported here':'غير مدعوم على هذا المتصفح',en?'On iPhone, add the app to the Home Screen first, then open it from there.':'على iPhone أضف التطبيق إلى الشاشة الرئيسية أولًا ثم افتحه منها.');return}
+    if(Notification.permission!=='granted'){toast(en?'Notifications are off':'الإشعارات غير مفعلة',en?'Enable system notifications first.':'فعّل إشعارات النظام أولًا من الزر السابق.');return}
+    await ensurePushSubscription();
+    const subscription=await currentPushSubscription();
+    if(!subscription){toast(en?'Not registered':'الجهاز غير مسجل',en?'Enable system notifications again.':'أعد تفعيل إشعارات النظام.');return}
+    const response=await fetch(`${PUSH_API}?action=test`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:subscription.endpoint})});
+    const result=await response.json().catch(()=>({}));
+    if(result.ok){toast(en?'Test sent ✓':'أُرسل الإشعار التجريبي ✓',en?'It should appear within seconds, even if the app is in the background.':'يفترض أن يظهر خلال ثوانٍ حتى لو كان التطبيق في الخلفية. إن لم يظهر فراجع إعدادات الإشعارات ووضع عدم الإزعاج في الجوال.');return}
+    const reasons={not_configured:en?'Push keys are missing on the server (VAPID).':'مفاتيح الإشعارات غير مضبوطة على الخادم (VAPID).',not_registered:en?'This device is not registered. Enable notifications again.':'هذا الجهاز غير مسجل. أعد تفعيل الإشعارات.',expired:en?'The phone ended this subscription. It was removed; enable notifications again.':'أنهى الجوال هذا الاشتراك وحُذف. أعد تفعيل الإشعارات.',key_mismatch:en?'Subscription keys do not match the server. Disable then enable notifications.':'مفاتيح الاشتراك لا تطابق الخادم. أوقف الإشعارات ثم فعّلها من جديد.',push_service_error:en?'The push service did not accept the message. Try again shortly.':'لم تقبل خدمة الإشعارات الرسالة. أعد المحاولة بعد قليل.'};
+    toast(en?'Test failed':'فشل الاختبار',`${reasons[result.reason]||(en?'Unexpected error.':'خطأ غير متوقع.')}${result.statusCode?` (${result.statusCode})`:''}`);
+  }catch(error){toast(en?'Test failed':'فشل الاختبار',String(error?.message||error))}
+  finally{if(button)button.disabled=false;refreshPushSubscriptionState()}
+}
+function mountTestNotificationsButton(){
+  const anchor=$('notificationsBtn');if(!anchor||$('testNotificationsBtn'))return;
+  const button=document.createElement('button');button.type='button';button.id='testNotificationsBtn';
+  button.textContent=lang==='en'?'🧪 Send a test notification':'🧪 إرسال إشعار تجريبي';
+  button.addEventListener('click',testPushNotifications);anchor.insertAdjacentElement('afterend',button);
 }
 function updateNotificationsButton(){
   const button=$('notificationsBtn');if(!button)return;
@@ -6109,6 +6156,9 @@ $('importBtn').addEventListener('click',()=>els.csvInput.click());
 els.csvInput.addEventListener('change',event=>event.target.files[0]&&importPatientFile(event.target.files[0]));
 $('exportBtn').addEventListener('click',exportCsv);
 $('notificationsBtn').addEventListener('click',toggleSystemNotifications);
+mountTestNotificationsButton();
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)keepPushSubscriptionAlive()});
+window.addEventListener('online',()=>keepPushSubscriptionAlive());
 $('outsideHoursNotificationsBtn').addEventListener('click',toggleOutsideHoursNotifications);
 $('soundAlertsBtn').addEventListener('click',toggleSoundAlerts);
 document.addEventListener('pointerdown',()=>{if(soundAlertsEnabled())prepareAudio()},{once:true,passive:true});
