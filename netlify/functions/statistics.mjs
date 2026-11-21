@@ -291,6 +291,7 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
   const labWorkMap = new Map();
   const labVendorMap = new Map();
   const labTotals = { sent: 0, sentUnits: 0, received: 0, delivered: 0, overdue: 0, waitingToSend: 0, openNow: 0 };
+  const labAttention = [];
   labCases.forEach(item => {
     if (clinicFilter !== 'all' && item.clinicId !== clinicFilter) return;
     const status = labStatusKeys.includes(item.status) ? item.status : 'pending_send';
@@ -299,7 +300,25 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
     if (status !== 'cancelled' && status !== 'delivered_patient') labTotals.openNow += 1;
     if (status === 'pending_send' || status === 'sent_coordination') labTotals.waitingToSend += 1;
     const expectedAt = numeric(item.expectedAt);
-    if (expectedAt > 0 && expectedAt < now && !labClosedStatuses.has(status)) labTotals.overdue += 1;
+    const overdue = expectedAt > 0 && expectedAt < now && !labClosedStatuses.has(status);
+    const waiting = status === 'pending_send' || status === 'sent_coordination';
+    if (overdue) labTotals.overdue += 1;
+    if (overdue || waiting) {
+      labAttention.push({
+        id: cleanLabel(item.id, 100),
+        reason: overdue ? 'overdue' : 'waiting',
+        clinicId: cleanLabel(item.clinicId, 30),
+        patientName: cleanLabel(item.patient?.name, 100),
+        patientFile: cleanLabel(item.patient?.file, 50),
+        labName: item.labName === 'other' ? cleanLabel(item.customLabName) || 'معمل آخر' : cleanLabel(item.labName),
+        work: (Array.isArray(item.items) ? item.items : []).map(entry => cleanLabel(entry?.name, 60)).filter(Boolean).slice(0, 3).join('، '),
+        units,
+        status,
+        expectedAt,
+        sentAt: numeric(item.sentAt),
+        createdAt: numeric(item.createdAt),
+      });
+    }
 
     if (inRange(numeric(item.createdAt || item.updatedAt), from, to)) labStatusCounts[status] += 1;
     const sentAt = numeric(item.sentAt);
@@ -373,6 +392,9 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       labOpenNow: labTotals.openNow,
     },
     topProcedures: topEntries(procedureMap),
+    labAttention: labAttention
+      .sort((a, b) => (a.reason === b.reason ? 0 : a.reason === 'overdue' ? -1 : 1) || (a.expectedAt || a.createdAt) - (b.expectedAt || b.createdAt))
+      .slice(0, 30),
     topLabWork: topEntries(labWorkMap),
     labVendors: topEntries(labVendorMap),
     statusCounts,

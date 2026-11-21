@@ -226,3 +226,20 @@ test('day digests feed monthly and all-time totals with de-duplicated patients',
   assert.equal(clinicTwo.total.uniquePatients, 2);
   assert.deepEqual(clinicTwo.months.map(item => item.month), ['2026-11']);
 });
+
+test('lab attention lists overdue cases first, then cases waiting to be sent', () => {
+  const day = (d, h = 9) => Date.UTC(2026, 6, d, h);
+  const output = stats.summarize({
+    from: '2026-07-30', to: '2026-07-30', clinicFilter: 'all', now: day(31),
+    clinics: [{ id: 'clinic-1', name: 'العيادة 1', doctorName: '', roomNumber: '1' }],
+    records: [], plans: [],
+    labCases: [
+      { id: 'w', clinicId: 'clinic-1', status: 'pending_send', createdAt: day(29), patient: { name: 'منتظر', file: '9' } },
+      { id: 'o', clinicId: 'clinic-1', status: 'sent', sentAt: day(20), expectedAt: day(25), patient: { name: 'متأخر', file: '7' }, labName: 'other', customLabName: 'معمل خارجي', items: [{ name: 'تاج' }] },
+      { id: 'ok', clinicId: 'clinic-1', status: 'received_clinic', expectedAt: day(25) },
+    ],
+  });
+  assert.deepEqual(output.labAttention.map(item => [item.id, item.reason]), [['o', 'overdue'], ['w', 'waiting']]);
+  assert.equal(output.labAttention[0].labName, 'معمل خارجي');
+  assert.equal(output.labAttention[0].work, 'تاج');
+});

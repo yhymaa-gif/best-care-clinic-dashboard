@@ -1,41 +1,78 @@
-// Comprehensive admin counter: live totals across all clinics (patients,
-// procedures, lab cases) read from /api/statistics. Admin view only.
-// Updates immediately after any save made on this device, when another device
-// signals a change (push/service worker), and through a light change check.
+// Comprehensive admin counter: live, interactive totals across all clinics
+// (patients, procedures, lab cases) from /api/statistics. Admin view only.
+// Refreshes right after any save on this device, on service-worker sync
+// signals from other devices, across tabs, and through a light etag check.
 (()=>{
   const root=document.getElementById('adminCounter');
   if(!root)return;
-  const VERSION_POLL_MS=30_000;   // cheap etag check while the page is visible
+  const VERSION_POLL_MS=30_000;
   const SAFETY_REFRESH_MS=10*60_000;
   const MUTATION_PATHS=['/api/state','/api/lab-cases','/api/patients','/api/admin-patients','/api/patient-profile','/api/appointment-imports','/api/appointment-requests'];
+  const reduceMotion=()=>matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+
+  const ICONS={
+    uniquePatients:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>',
+    procedureUnits:'<path d="M7.5 3.5c-2.3 0-3.7 2-3.2 4.6.4 2 1.3 3.2 1.7 5.6.4 2.6.6 6.8 2.2 6.8 1.7 0 1.4-5.3 3.8-5.3s2.1 5.3 3.8 5.3c1.6 0 1.8-4.2 2.2-6.8.4-2.4 1.3-3.6 1.7-5.6.5-2.6-.9-4.6-3.2-4.6-1.9 0-2.7 1.2-4.5 1.2s-2.6-1.2-4.5-1.2Z"/>',
+    labSent:'<path d="M9 3.5h6M10 3.5v6L4.8 18a1.6 1.6 0 0 0 1.4 2.5h11.6a1.6 1.6 0 0 0 1.4-2.5L14 9.5v-6"/><path d="M7.2 14.5h9.6"/>',
+    completed:'<circle cx="12" cy="12" r="8.5"/><path d="m8.2 12.3 2.6 2.6 5-5.3"/>',
+    appointments:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/>',
+    cancelled:'<circle cx="12" cy="12" r="8.5"/><path d="m9 9 6 6M15 9l-6 6"/>',
+    labOverdue:'<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.8M9.5 3h5"/>',
+    labWaitingToSend:'<path d="M7 3.5h10M7 20.5h10M8 3.5c0 4 8 5 8 8.5s-8 4.5-8 8.5M16 3.5c0 4-8 5-8 8.5"/>',
+    refresh:'<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4.5V11h-6.5"/>',
+    close:'<path d="m6 6 12 12M18 6 6 18"/>',
+    external:'<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>'
+  };
+  const icon=(name,cls='ac-icon')=>`<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]||''}</svg>`;
+
+  const STATUS_LABELS={ar:{waiting:'بانتظار الموعد',arrived:'وصل',early_arrival:'وصول مبكر',active:'قيد العلاج',done:'مكتمل',late:'متأخر',cancel:'ملغي',left:'غادر',asks_delay:'يطلب تأخيرًا'},en:{waiting:'Waiting',arrived:'Arrived',early_arrival:'Early',active:'In treatment',done:'Done',late:'Late',cancel:'Cancelled',left:'Left',asks_delay:'Asks delay'}};
+  const LAB_LABELS={ar:{pending_send:'بانتظار الإرسال',sent_coordination:'لدى التنسيق',sent:'سُلّمت للمعمل',in_production:'قيد التصنيع',ready_at_lab:'جاهزة بالمعمل',received_clinic:'وصلت للعيادة',delivered_coordination:'سُلّمت للتنسيق',delivered_patient:'سُلّمت للمريض',needs_adjustment:'تحتاج تعديلًا',returned_lab:'أُعيدت للمعمل',cancelled:'ملغاة'},en:{pending_send:'Waiting to send',sent_coordination:'At coordination',sent:'Sent',in_production:'In production',ready_at_lab:'Ready at lab',received_clinic:'At clinic',delivered_coordination:'At coordination',delivered_patient:'Delivered',needs_adjustment:'Needs adjustment',returned_lab:'Returned',cancelled:'Cancelled'}};
   const COPY={
-    ar:{kicker:'العداد الشامل',title:'أرقام العيادات بدقة',help:'يتحدث مباشرة مع كل إضافة مريض أو إجراء أو إرسال حالة للمعمل. اضغط أي رقم لفتح تفاصيله.',ranges:{today:'اليوم',yesterday:'أمس',week:'7 أيام',month:'هذا الشهر',days30:'30 يومًا'},allClinics:'جميع العيادات',refresh:'تحديث',details:'التفاصيل الكاملة',updated:'آخر تحديث',live:'مباشر',loading:'جارٍ الحساب…',error:'تعذر تحميل العداد. سيُعاد المحاولة تلقائيًا.',customMonth:m=>`شهر ${m}`,
-      tiles:{uniquePatients:['المرضى','مريض فريد'],procedureUnits:['الإجراءات المنفذة','إجراء'],labSent:['أُرسلت للمعمل','حالة'],completed:['المكتملة','موعد'],appointments:['المواعيد','موعد'],cancelled:['الملغاة','موعد'],labOverdue:['معمل متأخر','الآن'],labWaitingToSend:['بانتظار الإرسال','للمعمل الآن']},
-      sub:{uniquePatients:s=>`${n(s.treatedPatients)} أكمل علاجه`,procedureUnits:s=>`في ${n(s.visitsWithProcedures)} زيارة`,labSent:s=>`${n(s.labSentUnits)} وحدة · سُلّم ${n(s.labDelivered)}`,completed:s=>`نسبة الإنجاز ${n(s.completionRate)}%`,appointments:s=>`${n(s.appointments-s.cancelled)} فعّال`,cancelled:()=>'خلال الفترة',labOverdue:()=>'تجاوزت الموعد المتوقع',labWaitingToSend:()=>'مسجلة ولم تُرسل'},
-      topProcedures:'أكثر الإجراءات',clinics:'حسب العيادة',noData:'لا توجد بيانات في هذه الفترة.',clinicRow:c=>`${n(c.treatedPatients)} مريض · ${n(c.procedures)} إجراء · ${n(c.labSent)} معمل`,filterHint:'اضغط العيادة لعرض أرقامها فقط',
-      totalTitle:'الإجمالي منذ البداية',totalSince:m=>`منذ ${m}`,monthsTitle:'حسب الأشهر',monthsHint:'اضغط الشهر لعرض تفاصيله في العداد',monthsLoading:'جارٍ تجميع الأشهر…',monthsError:'تعذر تحميل الأشهر.',
+    ar:{kicker:'العداد الشامل · جميع العيادات',title:'نبض العيادات',live:'مباشر',updated:'آخر تحديث',ago:s=>s<10?'الآن':s<60?`قبل ${n(s)} ث`:`قبل ${n(Math.floor(s/60))} د`,loading:'جارٍ الحساب…',error:'تعذر التحديث — ستُعاد المحاولة تلقائيًا',
+      ranges:{today:'اليوم',yesterday:'أمس',week:'7 أيام',month:'هذا الشهر',days30:'30 يومًا'},allClinics:'جميع العيادات',refresh:'تحديث',details:'التقرير الكامل',
+      compare:{today:'مقارنة بأمس',yesterday:'مقارنة بقبل أمس',other:'مقارنة بالفترة السابقة'},same:'بدون تغيير',
+      ring:'نسبة الإنجاز',ringSub:s=>`${n(s.completed)} من ${n(Math.max(0,s.appointments-s.cancelled))} موعدًا فعّالًا`,
+      tiles:{uniquePatients:'المرضى',procedureUnits:'الإجراءات المنفذة',labSent:'أُرسلت للمعمل',completed:'المواعيد المكتملة',appointments:'إجمالي المواعيد',cancelled:'الملغاة',labOverdue:'معمل متأخر',labWaitingToSend:'بانتظار الإرسال للمعمل'},
+      sub:{uniquePatients:s=>`${n(s.treatedPatients)} أكمل علاجه`,procedureUnits:s=>`في ${n(s.visitsWithProcedures)} زيارة · ${n(s.procedureFreeUnits)} مجاني`,labSent:s=>`${n(s.labSentUnits)} وحدة · سُلّم ${n(s.labDelivered)}`,completed:s=>`متوسط البقاء ${n(s.averageStayMinutes)} د`,appointments:s=>`${n(s.appointments-s.cancelled)} فعّال`,cancelled:s=>s.appointments?`${n(Math.round(s.cancelled/s.appointments*100))}% من المواعيد`:'خلال الفترة',labOverdue:()=>'تجاوزت الموعد المتوقع',labWaitingToSend:()=>'مسجلة ولم تُرسل'},
+      now:'الآن',tapHint:'اضغط أي بطاقة لعرض تفاصيلها هنا',close:'إغلاق التفاصيل',
+      drill:{byClinic:'حسب العيادة',topProcedures:'الإجراءات الأكثر تنفيذًا',labWork:'الأعمال المرسلة',vendors:'المعامل',statuses:'حالات المواعيد',labStatuses:'مراحل حالات المعمل',attention:{overdue:'حالات متأخرة',waiting:'بانتظار الإرسال'},noData:'لا توجد بيانات في هذه الفترة.',visits:v=>`${n(v)} زيارة`,units:v=>`${n(v)} وحدة`,expected:d=>`المتوقع ${d}`,created:d=>`سُجلت ${d}`,openClinic:'عرض هذه العيادة فقط',rate:'الإنجاز'},
+      clinicRow:c=>`${n(c.treatedPatients)} مريض · ${n(c.procedures)} إجراء · ${n(c.labSent)} معمل`,
+      totalTitle:'الإجمالي منذ البداية',totalSince:m=>`منذ ${m} حتى اليوم`,monthsTitle:'الأداء الشهري',monthsHint:'اضغط أي شهر لعرضه في العداد',monthsLoading:'جارٍ تجميع الأشهر…',monthsError:'تعذر تحميل الأشهر.',
       totals:{uniquePatients:'إجمالي المرضى',procedureUnits:'إجمالي الإجراءات',labSent:'إجمالي المرسل للمعمل',completed:'إجمالي المكتمل'},
-      cols:{month:'الشهر',patients:'المرضى',procedures:'الإجراءات',lab:'أُرسل للمعمل',completed:'المكتمل',rate:'الإنجاز'},more:'عرض كل الأشهر',less:'عرض آخر 6 أشهر'},
-    en:{kicker:'Complete counter',title:'Accurate clinic totals',help:'Updates live with every new patient, procedure or lab dispatch. Tap any number for details.',ranges:{today:'Today',yesterday:'Yesterday',week:'7 days',month:'This month',days30:'30 days'},allClinics:'All clinics',refresh:'Refresh',details:'Full details',updated:'Updated',live:'Live',loading:'Calculating…',error:'Could not load the counter. It will retry automatically.',customMonth:m=>m,
-      tiles:{uniquePatients:['Patients','unique'],procedureUnits:['Procedures done','procedures'],labSent:['Sent to lab','cases'],completed:['Completed','visits'],appointments:['Appointments','total'],cancelled:['Cancelled','visits'],labOverdue:['Lab overdue','now'],labWaitingToSend:['Awaiting lab dispatch','now']},
-      sub:{uniquePatients:s=>`${n(s.treatedPatients)} treated`,procedureUnits:s=>`in ${n(s.visitsWithProcedures)} visits`,labSent:s=>`${n(s.labSentUnits)} units · ${n(s.labDelivered)} delivered`,completed:s=>`${n(s.completionRate)}% completion`,appointments:s=>`${n(s.appointments-s.cancelled)} active`,cancelled:()=>'in this period',labOverdue:()=>'past expected date',labWaitingToSend:()=>'recorded, not sent'},
-      topProcedures:'Top procedures',clinics:'By clinic',noData:'No data in this period.',clinicRow:c=>`${n(c.treatedPatients)} patients · ${n(c.procedures)} procedures · ${n(c.labSent)} lab`,filterHint:'Tap a clinic to filter',
-      totalTitle:'All-time total',totalSince:m=>`since ${m}`,monthsTitle:'By month',monthsHint:'Tap a month to open it in the counter',monthsLoading:'Building months…',monthsError:'Could not load months.',
+      metrics:{procedureUnits:'الإجراءات',uniquePatients:'المرضى',labSent:'المعمل',completed:'المكتمل'},table:'جدول',chart:'رسم',customMonth:m=>m,
+      cols:{month:'الشهر',patients:'المرضى',procedures:'الإجراءات',lab:'المعمل',completed:'المكتمل',rate:'الإنجاز'}},
+    en:{kicker:'Complete counter · all clinics',title:'Clinic pulse',live:'Live',updated:'Updated',ago:s=>s<10?'now':s<60?`${s}s ago`:`${Math.floor(s/60)}m ago`,loading:'Calculating…',error:'Could not refresh — retrying automatically',
+      ranges:{today:'Today',yesterday:'Yesterday',week:'7 days',month:'This month',days30:'30 days'},allClinics:'All clinics',refresh:'Refresh',details:'Full report',
+      compare:{today:'vs yesterday',yesterday:'vs the day before',other:'vs previous period'},same:'No change',
+      ring:'Completion',ringSub:s=>`${n(s.completed)} of ${n(Math.max(0,s.appointments-s.cancelled))} active visits`,
+      tiles:{uniquePatients:'Patients',procedureUnits:'Procedures done',labSent:'Sent to lab',completed:'Completed visits',appointments:'Appointments',cancelled:'Cancelled',labOverdue:'Lab overdue',labWaitingToSend:'Awaiting lab dispatch'},
+      sub:{uniquePatients:s=>`${n(s.treatedPatients)} treated`,procedureUnits:s=>`${n(s.visitsWithProcedures)} visits · ${n(s.procedureFreeUnits)} free`,labSent:s=>`${n(s.labSentUnits)} units · ${n(s.labDelivered)} delivered`,completed:s=>`avg stay ${n(s.averageStayMinutes)} min`,appointments:s=>`${n(s.appointments-s.cancelled)} active`,cancelled:s=>s.appointments?`${n(Math.round(s.cancelled/s.appointments*100))}% of visits`:'in this period',labOverdue:()=>'past expected date',labWaitingToSend:()=>'recorded, not sent'},
+      now:'Now',tapHint:'Tap any card to see its breakdown here',close:'Close details',
+      drill:{byClinic:'By clinic',topProcedures:'Top procedures',labWork:'Work sent',vendors:'Laboratories',statuses:'Visit statuses',labStatuses:'Lab stages',attention:{overdue:'Overdue cases',waiting:'Waiting to send'},noData:'No data in this period.',visits:v=>`${n(v)} visits`,units:v=>`${n(v)} units`,expected:d=>`expected ${d}`,created:d=>`recorded ${d}`,openClinic:'Show this clinic only',rate:'Done'},
+      clinicRow:c=>`${n(c.treatedPatients)} patients · ${n(c.procedures)} procedures · ${n(c.labSent)} lab`,
+      totalTitle:'All-time total',totalSince:m=>`since ${m}`,monthsTitle:'Monthly performance',monthsHint:'Tap a month to open it in the counter',monthsLoading:'Building months…',monthsError:'Could not load months.',
       totals:{uniquePatients:'Total patients',procedureUnits:'Total procedures',labSent:'Total sent to lab',completed:'Total completed'},
-      cols:{month:'Month',patients:'Patients',procedures:'Procedures',lab:'Sent to lab',completed:'Completed',rate:'Done'},more:'Show all months',less:'Show last 6 months'}
+      metrics:{procedureUnits:'Procedures',uniquePatients:'Patients',labSent:'Lab',completed:'Completed'},table:'Table',chart:'Chart',customMonth:m=>m,
+      cols:{month:'Month',patients:'Patients',procedures:'Procedures',lab:'Lab',completed:'Completed',rate:'Done'}}
   };
   const TILE_ORDER=['uniquePatients','procedureUnits','labSent','completed','appointments','cancelled','labOverdue','labWaitingToSend'];
-  const TOTAL_ORDER=['uniquePatients','procedureUnits','labSent','completed'];
+  const SNAPSHOT=new Set(['labOverdue','labWaitingToSend']);
+  const UP_IS_BAD=new Set(['cancelled','labOverdue','labWaitingToSend']);
+  const SPARK={procedureUnits:'procedures',labSent:'labSent',completed:'completed',appointments:'appointments',cancelled:'cancelled'};
   const TONES={uniquePatients:'navy',procedureUnits:'gold',labSent:'blue',completed:'green',appointments:'teal',cancelled:'red',labOverdue:'red',labWaitingToSend:'orange'};
-  const state={range:'today',custom:null,clinic:'all',data:null,months:null,monthsError:'',monthsLoading:false,showAllMonths:false,loading:false,error:'',requestId:0,monthsRequestId:0,started:false,clinics:[],version:'',pollTimer:null,changeTimer:null,previous:{},changed:new Set()};
-  // dashboard.js runs inside an IIFE, so read shared state from the DOM rather than its variables.
+  const state={range:'today',custom:null,clinic:'all',data:null,prev:null,months:null,monthsError:'',monthMetric:'procedureUnits',monthView:'chart',focus:null,loading:false,error:'',requestId:0,monthsRequestId:0,started:false,clinics:[],version:'',pollTimer:null,changeTimer:null,tickTimer:null,shown:{},changed:new Set()};
+
   const lng=()=>String(document.documentElement.lang||'').toLowerCase().startsWith('en')?'en':'ar';
   const t=()=>COPY[lng()];
   const locale=()=>lng()==='en'?'en-US':'ar-SA';
   function n(value){return new Intl.NumberFormat(locale()).format(Number(value)||0)}
-  const monthLabel=month=>new Intl.DateTimeFormat(locale(),{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${month}-01T00:00:00Z`));
+  const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const monthLabel=(month,style='long')=>new Intl.DateTimeFormat(locale(),{month:style,year:style==='long'?'numeric':undefined,timeZone:'UTC'}).format(new Date(`${month}-01T00:00:00Z`));
+  const dayLabel=date=>new Intl.DateTimeFormat(locale(),{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(`${date}T00:00:00Z`));
+  const stampLabel=at=>at>0?new Intl.DateTimeFormat(locale(),{day:'numeric',month:'short',timeZone:'Asia/Riyadh'}).format(new Date(at)):'—';
   const riyadhToday=()=>{const parts=new Intl.DateTimeFormat('en',{timeZone:'Asia/Riyadh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const read=type=>parts.find(part=>part.type===type)?.value||'';return`${read('year')}-${read('month')}-${read('day')}`};
   const shift=(date,days)=>new Date(Date.parse(`${date}T00:00:00Z`)+days*86_400_000).toISOString().slice(0,10);
+  const span=(from,to)=>Math.round((Date.parse(`${to}T00:00:00Z`)-Date.parse(`${from}T00:00:00Z`))/86_400_000)+1;
   const monthEnd=month=>new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),0)).toISOString().slice(0,10);
   function rangeDates(range=state.range){
     const today=riyadhToday();
@@ -46,103 +83,133 @@
     if(range==='month')return{from:`${today.slice(0,8)}01`,to:today};
     return{from:today,to:today};
   }
-  const el=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node};
-  function detailsUrl(range){const{from,to}=range||rangeDates();return`./statistics.html?from=${from}&to=${to}&clinic=${encodeURIComponent(state.clinic)}`}
-  const clinicOptions=()=>state.clinics.map(item=>({id:String(item.id),label:`${String(item.name||'')} · ${String(item.roomNumber||'')}${item.doctorName?` · ${String(item.doctorName)}`:''}`}));
+  function previousRange(){const{from,to}=rangeDates(),days=span(from,to);return{from:shift(from,-days),to:shift(from,-1)}}
+  const periodLabel=()=>{const{from,to}=rangeDates();if(state.range==='custom')return monthLabel(state.custom);return from===to?dayLabel(from):`${dayLabel(from)} – ${dayLabel(to)}`};
+  const detailsUrl=()=>{const{from,to}=rangeDates();return`./statistics.html?from=${from}&to=${to}&clinic=${encodeURIComponent(state.clinic)}`};
+  const clinicName=id=>{const clinic=state.clinics.find(item=>String(item.id)===id)||(state.data?.clinics||[]).find(item=>item.clinicId===id);return clinic?`${clinic.name||''} · ${clinic.roomNumber||''}`:id};
 
-  function setRange(range,custom=null){state.range=range;state.custom=custom;state.previous={};load()}
-  function renderControls(){
-    const copy=t(),bar=el('div','admin-counter-controls');
-    const ranges=el('div','admin-counter-ranges');ranges.setAttribute('role','group');
-    Object.entries(copy.ranges).forEach(([key,label])=>{const button=el('button',key===state.range?'active':'',label);button.type='button';button.setAttribute('aria-pressed',String(key===state.range));button.addEventListener('click',()=>setRange(key));ranges.append(button)});
-    if(state.range==='custom'&&state.custom){const button=el('button','active',copy.customMonth(monthLabel(state.custom)));button.type='button';button.setAttribute('aria-pressed','true');ranges.append(button)}
-    const select=el('select','admin-counter-clinic');select.setAttribute('aria-label',copy.allClinics);
-    [{id:'all',label:copy.allClinics},...clinicOptions()].forEach(option=>{const node=el('option','',option.label);node.value=option.id;node.selected=option.id===state.clinic;select.append(node)});
-    select.addEventListener('change',()=>{state.clinic=select.value;state.previous={};load();loadMonths()});
-    const refresh=el('button','admin-counter-refresh',`↻ ${copy.refresh}`);refresh.type='button';refresh.disabled=state.loading;refresh.addEventListener('click',()=>{load();loadMonths()});
-    const details=el('a','admin-counter-details',`${copy.details} ←`);details.href=detailsUrl();details.target='_blank';details.rel='noopener';
-    bar.append(ranges,select,refresh,details);return bar;
+  // ---------- rendering helpers ----------
+  function deltaBadge(key){
+    if(SNAPSHOT.has(key)||!state.prev?.summary||!state.data?.summary)return'';
+    const cur=Number(state.data.summary[key])||0,prev=Number(state.prev.summary[key])||0,diff=cur-prev;
+    const copy=t(),compare=state.range==='today'?copy.compare.today:state.range==='yesterday'?copy.compare.yesterday:copy.compare.other;
+    if(!diff)return`<span class="ac-delta is-flat" title="${esc(compare)}">${esc(copy.same)}</span>`;
+    const good=UP_IS_BAD.has(key)?diff<0:diff>0;
+    const pct=prev?`<small><bdi>${new Intl.NumberFormat(locale(),{style:'percent',maximumFractionDigits:0}).format(Math.abs(diff)/prev)}</bdi></small>`:'';
+    return`<span class="ac-delta ${good?'is-good':'is-bad'}" title="${esc(compare)}: ${n(prev)}"><span aria-hidden="true">${diff>0?'▲':'▼'}</span><bdi>${n(Math.abs(diff))}</bdi>${pct}</span>`;
   }
-  function renderRanked(title,rows,hint){
-    const box=el('div','admin-counter-list'),head=el('div','admin-counter-list-head');head.append(el('strong','',title));if(hint)head.append(el('small','',hint));box.append(head);
-    if(!rows.length){box.append(el('p','admin-counter-empty',t().noData));return box}
+  function sparkline(key){
+    const field=SPARK[key],daily=state.data?.daily||[];
+    if(!field||daily.length<2)return'';
+    const values=daily.map(item=>Number(item[field])||0),max=Math.max(1,...values),w=120,h=30,step=w/(values.length-1);
+    const points=values.map((value,index)=>`${(w-index*step).toFixed(1)},${(h-2-value/max*(h-6)).toFixed(1)}`);
+    return`<svg class="ac-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${w},${h} ${points.join(' ')} 0,${h}" class="ac-spark-fill"/><polyline points="${points.join(' ')}" class="ac-spark-line"/></svg>`;
+  }
+  function bars(rows,{unit,empty,tone='',onPick}={}){
+    if(!rows.length)return`<p class="ac-empty">${esc(empty||t().drill.noData)}</p>`;
     const max=Math.max(1,...rows.map(row=>row.value));
-    rows.forEach(row=>{
-      const item=el(row.onClick?'button':'div','admin-counter-row');if(row.onClick){item.type='button';item.addEventListener('click',row.onClick)}
-      const label=el('span','admin-counter-row-label');label.append(el('b','',row.label));if(row.note)label.append(el('small','',row.note));
-      const track=el('span','admin-counter-track'),fill=el('i');fill.style.width=`${row.value/max*100}%`;track.append(fill);
-      item.append(label,track,el('em','',n(row.value)));box.append(item);
-    });
-    return box;
+    return`<div class="ac-bars">${rows.map((row,index)=>`<${onPick&&row.id?'button type="button"':'div'} class="ac-bar-row"${onPick&&row.id?` data-pick="${esc(row.id)}" title="${esc(t().drill.openClinic)}"`:''}><span class="ac-bar-label"><b>${esc(row.label)}</b>${row.note?`<small>${esc(row.note)}</small>`:''}</span><span class="ac-bar-track"><i class="${tone}" style="width:${(row.value/max*100).toFixed(1)}%;--i:${index}"></i></span><em>${n(row.value)}${unit?` ${esc(unit)}`:''}</em></${onPick&&row.id?'button':'div'}>`).join('')}</div>`;
   }
-  function renderMonths(){
-    const copy=t(),box=el('div','admin-counter-months');
-    const head=el('div','admin-counter-months-head'),title=el('div');
-    title.append(el('strong','',copy.totalTitle));
-    const total=state.months?.total;
-    if(total)title.append(el('small','',copy.totalSince(monthLabel(total.firstMonth))));
-    else title.append(el('small','',state.monthsError?copy.monthsError:copy.monthsLoading));
-    head.append(title);box.append(head);
-    const totals=el('div','admin-counter-totals');
-    TOTAL_ORDER.forEach(key=>{
-      const tile=el('div',`admin-counter-total tone-${TONES[key]}`);
-      tile.append(el('span','',copy.totals[key]),el('strong',total?'':'is-placeholder',total?n(total[key]):'—'));
-      if(total){const sub=key==='uniquePatients'?copy.sub.uniquePatients(total):key==='labSent'?copy.sub.labSent(total):key==='completed'?copy.sub.completed(total):copy.sub.procedureUnits(total);tile.append(el('small','',sub))}
-      totals.append(tile);
-    });
-    box.append(totals);
-    const months=state.months?.months||[];
-    if(!months.length)return box;
-    const tableHead=el('div','admin-counter-months-title');tableHead.append(el('strong','',copy.monthsTitle),el('small','',copy.monthsHint));box.append(tableHead);
-    const wrap=el('div','admin-counter-table-wrap'),table=el('table','admin-counter-table'),thead=el('thead'),headRow=el('tr');
-    [copy.cols.month,copy.cols.patients,copy.cols.procedures,copy.cols.lab,copy.cols.completed,copy.cols.rate].forEach(label=>headRow.append(el('th','',label)));
-    thead.append(headRow);table.append(thead);
-    const body=el('tbody'),visible=state.showAllMonths?months:months.slice(0,6),max=Math.max(1,...visible.map(item=>item.procedureUnits));
-    const current=riyadhToday().slice(0,7);
-    visible.forEach(item=>{
-      const row=el('tr');row.tabIndex=0;row.setAttribute('role','button');
-      if(state.range==='custom'&&state.custom===item.month||state.range==='month'&&item.month===current)row.classList.add('is-selected');
-      const open=()=>item.month===current?setRange('month'):setRange('custom',item.month);
-      row.addEventListener('click',open);row.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}});
-      const monthCell=el('th','',monthLabel(item.month));monthCell.scope='row';row.append(monthCell);
-      row.append(el('td','',n(item.uniquePatients)));
-      const procedures=el('td','admin-counter-bar-cell'),bar=el('span','admin-counter-mini'),fill=el('i');fill.style.width=`${item.procedureUnits/max*100}%`;bar.append(fill);procedures.append(el('b','',n(item.procedureUnits)),bar);row.append(procedures);
-      row.append(el('td','',n(item.labSent)),el('td','',n(item.completed)),el('td','',`${n(item.completionRate)}%`));
-      body.append(row);
-    });
-    table.append(body);wrap.append(table);box.append(wrap);
-    if(months.length>6){const toggle=el('button','admin-counter-more',state.showAllMonths?copy.less:copy.more);toggle.type='button';toggle.addEventListener('click',()=>{state.showAllMonths=!state.showAllMonths;render()});box.append(toggle)}
-    return box;
+  const clinicRows=field=>(state.data?.clinics||[]).map(item=>({id:item.clinicId,label:`${item.name||''} · ${item.roomNumber||''}`,value:Number(item[field])||0,note:item.doctorName?`د. ${item.doctorName}`:''})).filter(row=>row.value).sort((a,b)=>b.value-a.value);
+  function drillContent(key){
+    const d=t().drill,data=state.data||{},s=data.summary||{},pick=state.clinic==='all';
+    const section=(title,body)=>`<section class="ac-drill-block"><h4>${esc(title)}</h4>${body}</section>`;
+    const statusRows=(counts,labels)=>Object.entries(counts||{}).filter(([,value])=>Number(value)>0).map(([status,value])=>({label:labels[status]||status,value:Number(value)})).sort((a,b)=>b.value-a.value);
+    if(key==='uniquePatients')return section(d.byClinic,bars(clinicRows('treatedPatients'),{onPick:pick}))+section(d.statuses,bars(statusRows(data.statusCounts,STATUS_LABELS[lng()]),{tone:'teal'}));
+    if(key==='procedureUnits')return section(d.topProcedures,bars((data.topProcedures||[]).map(item=>({label:item.name,value:Number(item.count)||0,note:d.visits(item.visits)+(Number(item.free)?` · ${n(item.free)} ${lng()==='en'?'free':'مجاني'}`:'')})),{tone:'gold'}))+section(d.byClinic,bars(clinicRows('procedures'),{tone:'gold',onPick:pick}));
+    if(key==='labSent')return section(d.labWork,bars((data.topLabWork||[]).map(item=>({label:item.name,value:Number(item.count)||0})),{tone:'blue',unit:lng()==='en'?'units':'وحدة'}))+section(d.vendors,bars((data.labVendors||[]).map(item=>({label:item.name,value:Number(item.count)||0,note:d.units(item.units)})),{tone:'blue'}))+section(d.byClinic,bars(clinicRows('labSent'),{tone:'blue',onPick:pick}));
+    if(key==='completed'){
+      const rows=(data.clinics||[]).map(item=>{const active=Math.max(0,Number(item.appointments)-Number(item.cancelled));return{id:item.clinicId,label:`${item.name||''} · ${item.roomNumber||''}`,value:Number(item.completed)||0,note:`${d.rate} ${active?n(Math.round(item.completed/active*100)):0}%${item.stayMeasured?` · ${n(item.averageStayMinutes)} ${lng()==='en'?'min':'د'}`:''}`}}).filter(row=>row.value).sort((a,b)=>b.value-a.value);
+      return section(d.byClinic,bars(rows,{tone:'green',onPick:pick}));
+    }
+    if(key==='appointments')return section(d.statuses,bars(statusRows(data.statusCounts,STATUS_LABELS[lng()]),{tone:'teal'}))+section(d.byClinic,bars(clinicRows('appointments'),{tone:'teal',onPick:pick}));
+    if(key==='cancelled')return section(d.byClinic,bars(clinicRows('cancelled'),{tone:'red',onPick:pick}));
+    const reason=key==='labOverdue'?'overdue':'waiting',items=(data.labAttention||[]).filter(item=>item.reason===reason);
+    const list=items.length?`<ul class="ac-cases">${items.map(item=>`<li><span class="ac-case-dot ${reason}"></span><div><b>${esc(item.patientName||'—')}${item.patientFile?` <small>#${esc(item.patientFile)}</small>`:''}</b><small>${esc(clinicName(item.clinicId))}${item.labName?` · ${esc(item.labName)}`:''}${item.work?` · ${esc(item.work)}`:''}</small></div><em>${esc(reason==='overdue'?d.expected(stampLabel(item.expectedAt)):d.created(stampLabel(item.createdAt)))}<small>${esc(LAB_LABELS[lng()][item.status]||item.status)}</small></em></li>`).join('')}</ul>`:`<p class="ac-empty">${esc(d.noData)}</p>`;
+    return section(d.attention[reason],list)+section(d.labStatuses,bars(statusRows(data.labStatusCounts,LAB_LABELS[lng()]),{tone:'blue'}));
+  }
+  function monthsSection(){
+    const copy=t(),report=state.months,total=report?.total,months=(report?.months||[]).slice(0,state.monthView==='chart'?18:120);
+    const totalsHtml=['uniquePatients','procedureUnits','labSent','completed'].map(key=>`<div class="ac-total tone-${TONES[key]}">${icon(key)}<span>${esc(copy.totals[key])}</span><strong data-count="total-${key}" data-value="${total?Number(total[key])||0:''}">${total?n(total[key]):'—'}</strong>${total?`<small>${esc(key==='uniquePatients'?copy.sub.uniquePatients(total):key==='labSent'?copy.sub.labSent(total):key==='completed'?`${copy.ring} ${n(total.completionRate)}%`:copy.sub.procedureUnits(total))}</small>`:''}</div>`).join('');
+    const head=`<div class="ac-months-head"><div><h3>${esc(copy.totalTitle)}</h3><small>${esc(total?copy.totalSince(monthLabel(total.firstMonth)):state.monthsError?copy.monthsError:copy.monthsLoading)}</small></div></div><div class="ac-totals">${totalsHtml}</div>`;
+    if(!months.length)return head;
+    const current=riyadhToday().slice(0,7),selected=state.range==='custom'?state.custom:state.range==='month'?current:'';
+    const metricSwitch=`<div class="ac-seg ac-seg-small" role="group">${Object.entries(copy.metrics).map(([key,label])=>`<button type="button" data-metric="${key}" class="${state.monthMetric===key?'active':''}" aria-pressed="${state.monthMetric===key}">${esc(label)}</button>`).join('')}</div><div class="ac-seg ac-seg-small" role="group"><button type="button" data-month-view="chart" class="${state.monthView==='chart'?'active':''}">${esc(copy.chart)}</button><button type="button" data-month-view="table" class="${state.monthView==='table'?'active':''}">${esc(copy.table)}</button></div>`;
+    let body;
+    if(state.monthView==='chart'){
+      const ordered=[...months].reverse(),max=Math.max(1,...ordered.map(item=>Number(item[state.monthMetric])||0));
+      body=`<div class="ac-chart" role="list">${ordered.map((item,index)=>{const value=Number(item[state.monthMetric])||0;return`<button type="button" role="listitem" class="ac-col${item.month===selected?' is-selected':''}${item.month===current?' is-current':''}" data-month="${item.month}" aria-label="${esc(monthLabel(item.month))}: ${n(value)}"><span class="ac-col-value">${n(value)}</span><span class="ac-col-bar"><i class="tone-${TONES[state.monthMetric]}" style="height:${Math.max(value?4:0,value/max*100).toFixed(1)}%;--i:${index}"></i></span><span class="ac-col-label">${esc(monthLabel(item.month,'short'))}</span><span class="ac-tip"><b>${esc(monthLabel(item.month))}</b><span>${esc(copy.cols.patients)}: ${n(item.uniquePatients)}</span><span>${esc(copy.cols.procedures)}: ${n(item.procedureUnits)}</span><span>${esc(copy.cols.lab)}: ${n(item.labSent)}</span><span>${esc(copy.cols.completed)}: ${n(item.completed)} · ${n(item.completionRate)}%</span></span></button>`}).join('')}</div><div class="ac-readout" data-readout aria-live="polite"></div>`;
+    }else{
+      body=`<div class="ac-table-wrap"><table class="ac-table"><thead><tr>${['month','patients','procedures','lab','completed','rate'].map(col=>`<th>${esc(copy.cols[col])}</th>`).join('')}</tr></thead><tbody>${months.map(item=>`<tr data-month="${item.month}" tabindex="0" class="${item.month===selected?'is-selected':''}"><th scope="row">${esc(monthLabel(item.month))}</th><td>${n(item.uniquePatients)}</td><td>${n(item.procedureUnits)}</td><td>${n(item.labSent)}</td><td>${n(item.completed)}</td><td>${n(item.completionRate)}%</td></tr>`).join('')}</tbody></table></div>`;
+    }
+    return`${head}<div class="ac-months-bar"><div><h3>${esc(copy.monthsTitle)}</h3><small>${esc(copy.monthsHint)}</small></div><div class="ac-months-tools">${metricSwitch}</div></div>${body}`;
   }
   function render(){
     const copy=t(),s=state.data?.summary;
-    const head=el('div','admin-counter-head'),titleBox=el('div','admin-counter-title');
-    titleBox.append(el('small','',copy.kicker),el('h2','',copy.title),el('p','',copy.help));
-    const status=el('span',`admin-counter-status${state.error?' is-error':''}${state.loading?' is-loading':''}`);
-    const time=state.data?new Intl.DateTimeFormat(locale(),{hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date(state.data.generatedAt||Date.now())):'';
-    status.textContent=state.error?copy.error:state.loading&&!state.data?copy.loading:state.data?`${copy.live} · ${copy.updated} ${time}`:'';
-    status.setAttribute('role','status');titleBox.append(status);
-    head.append(titleBox,renderControls());
-    const tiles=el('div','admin-counter-tiles');
-    TILE_ORDER.forEach(key=>{
-      const [label,unit]=copy.tiles[key],tile=el('a',`admin-counter-tile tone-${TONES[key]}`);
-      tile.href=detailsUrl();tile.target='_blank';tile.rel='noopener';
-      const value=s?Number(s[key])||0:null;
-      if(s&&['labOverdue','labWaitingToSend','cancelled'].includes(key)&&value>0)tile.classList.add('needs-attention');
-      if(state.changed.has(key))tile.classList.add('just-changed');
-      tile.append(el('span','admin-counter-tile-label',label),el('strong',s?'':'is-placeholder',s?n(value):'—'),el('small','',s?copy.sub[key](s):unit));
-      tiles.append(tile);
-    });
-    const lists=el('div','admin-counter-lists');
-    const procedures=(state.data?.topProcedures||[]).slice(0,5).map(item=>({label:item.name,value:Number(item.count)||0,note:lng()==='en'?`${n(item.visits)} visits`:`${n(item.visits)} زيارة`}));
-    const clinics=(state.data?.clinics||[]).map(item=>({id:item.clinicId,label:`${item.name||''} · ${item.roomNumber||''}`,value:Number(item.procedures)||0,note:copy.clinicRow(item),patients:Number(item.treatedPatients)||0}))
-      .filter(item=>item.value||item.patients).sort((a,b)=>b.value-a.value||b.patients-a.patients).slice(0,6)
-      .map(item=>({...item,onClick:state.clinic==='all'?()=>{state.clinic=item.id;state.previous={};load();loadMonths()}:null}));
-    lists.append(renderRanked(copy.topProcedures,procedures),renderRanked(copy.clinics,clinics,state.clinic==='all'?copy.filterHint:''));
-    root.replaceChildren(head,tiles,lists,renderMonths());
+    const rangeButtons=Object.entries(copy.ranges).map(([key,label])=>`<button type="button" data-range="${key}" class="${key===state.range?'active':''}" aria-pressed="${key===state.range}">${esc(label)}</button>`).join('')+(state.range==='custom'?`<button type="button" class="active" aria-pressed="true">${esc(monthLabel(state.custom))}</button>`:'');
+    const options=[{id:'all',label:copy.allClinics},...state.clinics.map(item=>({id:String(item.id),label:`${item.name||''} · ${item.roomNumber||''}${item.doctorName?` · د. ${item.doctorName}`:''}`}))].map(option=>`<option value="${esc(option.id)}"${option.id===state.clinic?' selected':''}>${esc(option.label)}</option>`).join('');
+    const rate=Number(s?.completionRate)||0;
+    const hero=`<div class="ac-hero">
+      <div class="ac-hero-copy"><small>${esc(copy.kicker)}</small><h2>${esc(copy.title)}</h2>
+        <div class="ac-hero-meta"><span class="ac-live${state.error?' is-error':''}${state.loading?' is-loading':''}" role="status"><i></i>${esc(state.error?copy.error:state.loading&&!s?copy.loading:copy.live)}</span><span class="ac-period">${esc(periodLabel())}${state.clinic!=='all'?` · ${esc(clinicName(state.clinic))}`:''}</span><span class="ac-ago" data-ago></span></div>
+      </div>
+      <div class="ac-ring" style="--p:${rate}" title="${esc(copy.ring)}"><div><strong data-count="ring" data-value="${s?rate:''}">${s?n(rate):'—'}</strong><span>%</span></div><small>${esc(copy.ring)}</small>${s?`<em>${esc(copy.ringSub(s))}</em>`:''}</div>
+      <div class="ac-controls"><div class="ac-seg" role="group">${rangeButtons}</div>
+        <div class="ac-controls-row"><select class="ac-select" aria-label="${esc(copy.allClinics)}">${options}</select><button type="button" class="ac-btn" data-action="refresh" ${state.loading?'disabled':''} title="${esc(copy.refresh)}">${icon('refresh','ac-icon ac-spin')}<span>${esc(copy.refresh)}</span></button><a class="ac-btn ac-btn-light" href="${esc(detailsUrl())}" target="_blank" rel="noopener">${icon('external')}<span>${esc(copy.details)}</span></a></div>
+      </div>
+    </div>`;
+    const tiles=TILE_ORDER.map(key=>{
+      const value=s?Number(s[key])||0:null,attention=s&&UP_IS_BAD.has(key)&&value>0;
+      return`<button type="button" class="ac-tile tone-${TONES[key]}${state.focus===key?' is-open':''}${attention?' needs-attention':''}${state.changed.has(key)?' just-changed':''}" data-tile="${key}" aria-expanded="${state.focus===key}">
+        <span class="ac-tile-top"><span class="ac-tile-icon">${icon(key)}</span><span class="ac-tile-label">${esc(copy.tiles[key])}</span>${SNAPSHOT.has(key)?`<span class="ac-now">${esc(copy.now)}</span>`:deltaBadge(key)}</span>
+        <strong data-count="${key}" data-value="${value??''}">${s?n(value):'—'}</strong>
+        <small>${s?esc(copy.sub[key](s)):'&nbsp;'}</small>${sparkline(key)}</button>`;
+    }).join('');
+    const drill=state.focus&&s?`<div class="ac-drill tone-${TONES[state.focus]}"><div class="ac-drill-head"><h3>${icon(state.focus)}${esc(copy.tiles[state.focus])} <span>${n(s[state.focus])}</span></h3><button type="button" class="ac-close" data-action="close" aria-label="${esc(copy.close)}">${icon('close')}</button></div><div class="ac-drill-grid">${drillContent(state.focus)}</div></div>`:`<p class="ac-hint">${esc(copy.tapHint)}</p>`;
+    root.innerHTML=`${hero}<div class="ac-tiles">${tiles}</div>${drill}<div class="ac-months">${monthsSection()}</div>`;
     root.setAttribute('aria-busy',String(state.loading));
     document.body.classList.toggle('admin-counter-ready',Boolean(state.data));
+    animateCounts();updateAgo();scrollChartToLatest();showReadout(root.querySelector('.ac-col.is-selected')||[...root.querySelectorAll('.ac-col')].pop());
   }
+  function scrollChartToLatest(){const chart=root.querySelector('.ac-chart');if(!chart||chart.scrollWidth<=chart.clientWidth)return;const rtl=getComputedStyle(chart).direction==='rtl';chart.scrollLeft=rtl?-chart.scrollWidth:chart.scrollWidth}
+  function showReadout(col){
+    const out=root.querySelector('[data-readout]');if(!out||!col)return;
+    const item=(state.months?.months||[]).find(entry=>entry.month===col.dataset.month);if(!item)return;
+    const c=t().cols;
+    out.innerHTML=`<b>${esc(monthLabel(item.month))}</b><span>${esc(c.patients)}: <strong>${n(item.uniquePatients)}</strong></span><span>${esc(c.procedures)}: <strong>${n(item.procedureUnits)}</strong></span><span>${esc(c.lab)}: <strong>${n(item.labSent)}</strong></span><span>${esc(c.completed)}: <strong>${n(item.completed)}</strong> · ${n(item.completionRate)}%</span>`;
+  }
+  function animateCounts(){
+    root.querySelectorAll('[data-count]').forEach(node=>{
+      const key=node.dataset.count,raw=node.dataset.value;if(raw==='')return;
+      const target=Number(raw),from=state.shown[key];state.shown[key]=target;
+      if(from===undefined||from===target||reduceMotion())return;
+      const start=performance.now(),duration=750;
+      const step=now=>{const p=Math.min(1,(now-start)/duration),eased=1-Math.pow(1-p,3);node.textContent=n(Math.round(from+(target-from)*eased));if(p<1&&node.isConnected)requestAnimationFrame(step)};
+      requestAnimationFrame(step);
+    });
+  }
+  function updateAgo(){const node=root.querySelector('[data-ago]');if(!node||!state.data)return;const seconds=Math.max(0,Math.round((Date.now()-Number(state.data.generatedAt||Date.now()))/1000));node.textContent=`${t().updated} ${t().ago(seconds)}`}
+
+  // ---------- interactions ----------
+  root.addEventListener('click',event=>{
+    const target=event.target.closest('button,[data-month]');if(!target||!root.contains(target))return;
+    if(target.dataset.range){setRange(target.dataset.range);return}
+    if(target.dataset.tile){state.focus=state.focus===target.dataset.tile?null:target.dataset.tile;render();if(state.focus)root.querySelector('.ac-drill')?.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'nearest'});return}
+    if(target.dataset.pick){state.clinic=target.dataset.pick;resetAndLoad();return}
+    if(target.dataset.metric){state.monthMetric=target.dataset.metric;render();return}
+    if(target.dataset.monthView){state.monthView=target.dataset.monthView;render();return}
+    if(target.dataset.month){const current=riyadhToday().slice(0,7);target.dataset.month===current?setRange('month'):setRange('custom',target.dataset.month);root.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});return}
+    if(target.dataset.action==='close'){state.focus=null;render();return}
+    if(target.dataset.action==='refresh'){load();loadMonths()}
+  });
+  root.addEventListener('pointerover',event=>{const col=event.target.closest?.('.ac-col');if(col)showReadout(col)});
+  root.addEventListener('focusin',event=>{const col=event.target.closest?.('.ac-col');if(col)showReadout(col)});
+  root.addEventListener('keydown',event=>{const row=event.target.closest?.('tr[data-month]');if(row&&(event.key==='Enter'||event.key===' ')){event.preventDefault();row.click()}});
+  root.addEventListener('change',event=>{if(event.target.matches('.ac-select')){state.clinic=event.target.value;resetAndLoad()}});
+  function resetAndLoad(){state.shown={};load();loadMonths()}
+  function setRange(range,custom=null){state.range=range;state.custom=custom;state.shown={};load()}
+
+  // ---------- data ----------
   const api=async(query,timeout=20_000)=>{
     const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
     try{
@@ -153,28 +220,27 @@
     }finally{clearTimeout(timer)}
   };
   async function load({silent=false}={}){
-    const requestId=++state.requestId,{from,to}=rangeDates();
+    const requestId=++state.requestId,{from,to}=rangeDates(),prev=previousRange(),clinic=encodeURIComponent(state.clinic);
     state.loading=true;if(!silent){state.error='';render()}
     try{
-      const data=await api(`from=${from}&to=${to}&clinic=${encodeURIComponent(state.clinic)}`);
+      const [data,previous]=await Promise.all([api(`from=${from}&to=${to}&clinic=${clinic}`),api(`from=${prev.from}&to=${prev.to}&clinic=${clinic}`).catch(()=>null)]);
       if(requestId!==state.requestId)return;
-      const summary=data.summary||{};
-      state.changed=new Set(Object.keys(state.previous).length?TILE_ORDER.filter(key=>Number(state.previous[key])!==Number(summary[key])):[]);
-      state.previous={...summary};state.data=data;state.error='';
-      if(state.changed.size)setTimeout(()=>{state.changed.clear();if(state.started)render()},2600);
+      const before=state.data?.summary,summary=data.summary||{};
+      state.changed=new Set(before&&silent?TILE_ORDER.filter(key=>Number(before[key])!==Number(summary[key])):[]);
+      state.data=data;state.prev=previous;state.error='';
+      if(state.changed.size)setTimeout(()=>{state.changed.clear();root.querySelectorAll('.just-changed').forEach(node=>node.classList.remove('just-changed'))},2600);
     }catch(error){if(requestId===state.requestId){state.error=String(error?.message||error);console.warn('Admin counter unavailable',error)}}
     finally{if(requestId===state.requestId){state.loading=false;render()}}
   }
   async function loadMonths(){
-    const requestId=++state.monthsRequestId;state.monthsLoading=true;
+    const requestId=++state.monthsRequestId;
     try{
       const data=await api(`mode=months&clinic=${encodeURIComponent(state.clinic)}`,45_000);
       if(requestId!==state.monthsRequestId)return;
       state.months=data;state.monthsError='';
     }catch(error){if(requestId===state.monthsRequestId){state.monthsError=String(error?.message||error);console.warn('Admin counter months unavailable',error)}}
-    finally{if(requestId===state.monthsRequestId){state.monthsLoading=false;if(state.started)render()}}
+    finally{if(requestId===state.monthsRequestId&&state.started)render()}
   }
-  // Any data change: refresh the live range now and the monthly totals right after.
   function dataChanged(delay=900){
     if(!state.started)return;
     clearTimeout(state.changeTimer);
@@ -195,23 +261,19 @@
     catch(error){console.warn('Admin counter clinics unavailable',error)}
     if(state.started)render();
   }
-  function schedule(){
-    clearInterval(state.pollTimer);
-    let lastSafety=Date.now();
-    state.pollTimer=setInterval(()=>{
-      checkVersion();
-      if(!document.hidden&&Date.now()-lastSafety>SAFETY_REFRESH_MS){lastSafety=Date.now();dataChanged(0)}
-    },VERSION_POLL_MS);
-  }
   function start(){
     if(state.started||!isAdminView())return;
-    state.started=true;root.hidden=false;load();loadMonths();loadClinics();schedule();checkVersion();
+    state.started=true;root.hidden=false;load();loadMonths();loadClinics();checkVersion();
+    let lastSafety=Date.now();
+    clearInterval(state.pollTimer);
+    state.pollTimer=setInterval(()=>{checkVersion();if(!document.hidden&&Date.now()-lastSafety>SAFETY_REFRESH_MS){lastSafety=Date.now();dataChanged(0)}},VERSION_POLL_MS);
+    clearInterval(state.tickTimer);state.tickTimer=setInterval(updateAgo,5000);
   }
-  function stop(){root.hidden=true;state.started=false;clearInterval(state.pollTimer);clearTimeout(state.changeTimer);document.body.classList.remove('admin-counter-ready')}
+  function stop(){root.hidden=true;state.started=false;clearInterval(state.pollTimer);clearInterval(state.tickTimer);clearTimeout(state.changeTimer);document.body.classList.remove('admin-counter-ready')}
 
+  // Live triggers: saves on this device, other tabs, other devices (service worker relay).
   let channel=null;
   try{channel=new BroadcastChannel('bestcare-admin-counter');channel.onmessage=()=>dataChanged(300)}catch{}
-  // 1) Saves made on this device (patient added, procedure recorded, lab case sent…).
   const nativeFetch=window.fetch.bind(window);
   window.fetch=function(input,init){
     const result=nativeFetch(input,init);
@@ -224,12 +286,10 @@
     }catch{}
     return result;
   };
-  // 2) Changes from other devices, delivered by the service worker push relay.
   navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='BESTCARE_REMOTE_SYNC')dataChanged(600)});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.started)checkVersion()});
   window.addEventListener('online',()=>{if(state.started)dataChanged(0)});
   new MutationObserver(()=>{if(state.started)render()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
-  // Auth finishes asynchronously in dashboard.js; react to its body classes.
   const check=()=>{if(isAdminView())start();else if(state.started&&document.body.classList.contains('auth-locked'))stop()};
   new MutationObserver(check).observe(document.body,{attributes:true,attributeFilter:['class']});
   check();
