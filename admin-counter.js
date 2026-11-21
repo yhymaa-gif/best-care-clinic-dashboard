@@ -7,8 +7,8 @@
   if(!root)return;
   // Netlify usage budget: the counter never polls on its own. It recalculates
   // only when a change is observed in requests the dashboard already makes,
-  // and coalesces bursts so one refresh costs one function call.
-  const MIN_REFRESH_GAP_MS=15_000;
+  // and coalesces bursts: at most one call per minute while the page is visible.
+  const MIN_REFRESH_GAP_MS=60_000;
   const MONTHS_MIN_GAP_MS=15*60_000;
   const WATCHED_READS=['/api/admin-patients','/api/state','/api/lab-cases'];
   const MUTATION_PATHS=['/api/state','/api/lab-cases','/api/patients','/api/admin-patients','/api/patient-profile','/api/appointment-imports','/api/appointment-requests'];
