@@ -224,27 +224,58 @@ const $=id=>document.getElementById(id);
       const clinicText=$('clinicFilter').value==='all'?'جميع العيادات':($('clinicFilter').selectedOptions[0]?.textContent||'');
       $('allTimeSince').textContent=r.firstDate?`من ${longD(r.from)} إلى ${longD(r.to)} · ${format(r.activeDays)} يوم عمل · ${clinicText}`:'لا توجد بيانات في هذه الفترة.';
       $('allTimeTotal').innerHTML=`${format(r.totals.procedures)}<small>إجراء</small>`;
-      const a=r.averages,t=r.totals;
+      const a=r.averages,t=r.totals,m=a.measured||{};
+      const cellBar=(value,max,color='#2f8c67',label)=>`<span class="cell-bar" style="--c:${color}"><b>${label??format(value)}</b><span><i style="width:${max?Math.max(2,value/max*100):0}%"></i></span></span>`;
+      // 1) Visual counter band
+      const journey=m.wait||m.treatment?`<div class="ins-journey"><span>رحلة المريض في المتوسط (من حاسبة الوصول حتى «مكتمل»)</span><div class="ins-track">${m.wait?`<div class="wait" style="flex:${Math.max(1,a.waitMinutes)}">⏳ انتظار ${format(a.waitMinutes)} د</div>`:''}${m.treatment?`<div class="treat" style="flex:${Math.max(1,a.treatmentMinutes)}">🦷 علاج ${format(a.treatmentMinutes)} د</div>`:''}</div><div class="ins-steps"><span>🚶 وصول المريض</span><span>بدء العلاج</span><span>✅ مكتمل · الإجمالي ${m.stay?`${format(a.stayMinutes)} د`:'—'}</span></div></div>`:'';
+      $('insCounter').innerHTML=`
+        <div class="ins-big"><span>🦷 الإجراءات</span><strong data-count-to="${t.procedures}">${format(t.procedures)}</strong><small>${format(a.proceduresPerDay)} في اليوم</small></div>
+        <div class="ins-big"><span>👥 المرضى</span><strong data-count-to="${t.patients}">${format(t.patients)}</strong><small>${format(a.proceduresPerPatient)} إجراء لكل مريض</small></div>
+        <div class="ins-big"><span>📅 المواعيد</span><strong data-count-to="${t.appointments}">${format(t.appointments)}</strong><small>${format(a.appointmentsPerDay)} في اليوم</small></div>
+        <div class="ins-big"><span>🗓 أيام العمل</span><strong data-count-to="${r.activeDays}">${format(r.activeDays)}</strong><small>${format(r.activeMonths)} شهر</small></div>
+        <div class="ins-rings"><div class="ins-ring" style="--p:${t.completionRate};--c:#7ef0b4"><div><b>${format(t.completionRate)}%</b><small>الإنجاز</small></div></div><div class="ins-ring" style="--p:${t.cancelRate};--c:#ff9aa6"><div><b>${format(t.cancelRate)}%</b><small>الإلغاء</small></div></div></div>
+        ${journey}`;
+      if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelectorAll('[data-count-to]').forEach(node=>{const target=Number(node.dataset.countTo)||0,start=performance.now();const step=now=>{const p=Math.min(1,(now-start)/900);node.textContent=format(Math.round(target*(1-Math.pow(1-p,3))));if(p<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
+      // 2) Highlights with icons
       const hl=[];
-      if(r.busiestDay)hl.push(['اليوم الأكثر إجراءات',format(r.busiestDay.procedures)+' إجراء',shortDay.format(new Date(`${r.busiestDay.date}T00:00:00Z`))]);
+      if(r.busiestDay)hl.push(['🏅','اليوم الأكثر إجراءات',`${format(r.busiestDay.procedures)} إجراء`,shortDay.format(new Date(`${r.busiestDay.date}T00:00:00Z`))]);
       const bestWeekday=[...(r.weekdays||[])].sort((x,y)=>y.averageProcedures-x.averageProcedures)[0];
-      if(bestWeekday)hl.push(['أنشط يوم في الأسبوع',bestWeekday.name,`بمتوسط ${format(bestWeekday.averageProcedures)} إجراء`]);
-      if(r.peakProcedureHour)hl.push(['الساعة الأكثر إجراءات',hourText(r.peakProcedureHour.hour),`${format(r.peakProcedureHour.procedures)} إجراء`]);
-      if(r.peakCancelHour)hl.push(['الساعة الأكثر إلغاءً',hourText(r.peakCancelHour.hour),`${format(r.peakCancelHour.cancelRate)}% من مواعيدها (${format(r.peakCancelHour.cancelled)} إلغاء)`,'bad']);
-      if(r.topPatients?.[0])hl.push(['المريض الأكثر إجراءات',r.topPatients[0].name||'—',`${format(r.topPatients[0].procedures)} إجراء في ${format(r.topPatients[0].visits)} زيارة`]);
+      if(bestWeekday)hl.push(['📆','أنشط يوم في الأسبوع',bestWeekday.name,`بمتوسط ${format(bestWeekday.averageProcedures)} إجراء`]);
+      if(r.peakProcedureHour)hl.push(['⏰','الساعة الأكثر إجراءات',hourText(r.peakProcedureHour.hour),`${format(r.peakProcedureHour.procedures)} إجراء`]);
+      if(r.peakCancelHour)hl.push(['🚫','الساعة الأكثر إلغاءً',hourText(r.peakCancelHour.hour),`${format(r.peakCancelHour.cancelRate)}% من مواعيدها (${format(r.peakCancelHour.cancelled)} إلغاء)`,'bad']);
+      if(r.topPatients?.[0])hl.push(['👑','المريض الأكثر إجراءات',r.topPatients[0].name||'—',`${format(r.topPatients[0].procedures)} إجراء في ${format(r.topPatients[0].visits)} زيارة`]);
       const topMonth=[...(r.months||[])].sort((x,y)=>y.procedures-x.procedures)[0];
-      if(topMonth&&topMonth.procedures)hl.push(['الشهر الأعلى',monthName.format(new Date(`${topMonth.month}-01T00:00:00Z`)),`${format(topMonth.procedures)} إجراء`]);
-      $('insHighlights').innerHTML=hl.map(([label,value,sub,tone])=>`<div class="ins-hl ${tone||''}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(sub)}</small></div>`).join('');
-      const avgs=[['إجراءات في اليوم',a.proceduresPerDay],['مواعيد في اليوم',a.appointmentsPerDay],['مرضى مكتملون في اليوم',a.completedPerDay],['إجراءات في الشهر',a.proceduresPerMonth],['مرضى في الشهر',a.patientsPerMonth],['إجراءات لكل زيارة',a.proceduresPerVisit],['إجراءات لكل مريض',a.proceduresPerPatient],['زيارات لكل مريض',a.visitsPerPatient],['نسبة الإنجاز',`${format(t.completionRate)}%`],['نسبة الإلغاء',`${format(t.cancelRate)}%`],['الانتظار من الوصول للبدء',a.measured.wait?`${format(a.waitMinutes)} د`:'—',`من ${format(a.measured.wait)} زيارة`],['مدة العلاج',a.measured.treatment?`${format(a.treatmentMinutes)} د`:'—',`من ${format(a.measured.treatment)} زيارة`],['من الوصول حتى الاكتمال',a.measured.stay?`${format(a.stayMinutes)} د`:'—',`من ${format(a.measured.stay)} زيارة`],['إجمالي المرضى',format(t.patients)],['إجمالي المواعيد',format(t.appointments)]];
-      $('insAverages').innerHTML=avgs.map(([label,value,sub])=>`<div class="ins-avg"><span>${esc(label)}</span><strong>${typeof value==='number'?format(value):esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}</div>`).join('');
-      $('insMonths').innerHTML=[...(r.months||[])].reverse().map(m=>`<tr><td><b>${monthName.format(new Date(`${m.month}-01T00:00:00Z`))}</b></td><td>${format(m.procedures)}</td><td>${format(m.patients)}</td><td>${format(m.completed)}</td><td>${format(m.cancelled)}</td><td>${m.topProcedure?`<span class="ins-badge">🏆 ${esc(m.topProcedure.name)} · ${format(m.topProcedure.count)} (${format(m.topProcedure.share)}%)</span>`:'—'}</td><td>${m.topType?`<span class="type-pill" style="--c:${typeColors[m.topType.type]||'#69887a'}">${esc(m.topType.label)}</span>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">لا توجد بيانات.</td></tr>';
-      $('insPatients').innerHTML=(r.topPatients||[]).map((p,i)=>`<tr><td>${format(i+1)}</td><td><b>${esc(p.name||'—')}</b></td><td>${esc(p.file||'—')}</td><td><b>${format(p.procedures)}</b></td><td>${format(p.visits)}</td><td>${p.lastDate?dayFmt.format(new Date(`${p.lastDate}T00:00:00Z`)):'—'}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا توجد بيانات.</td></tr>';
-      $('insWeekdays').innerHTML=(r.weekdays||[]).map(w=>`<tr><td><b>${esc(w.name)}</b></td><td>${format(w.days)}</td><td>${format(w.averageProcedures)}</td><td>${format(w.averageAppointments)}</td><td>${format(w.cancelRate)}%</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد بيانات.</td></tr>';
-      $('insTopDays').innerHTML=(r.topDays||[]).map(d=>`<div><span>${shortDay.format(new Date(`${d.date}T00:00:00Z`))}</span><b>${format(d.procedures)} إجراء · ${format(d.completed)} مكتمل</b></div>`).join('')||'<div class="empty">لا توجد بيانات.</div>';
+      if(topMonth&&topMonth.procedures)hl.push(['📈','الشهر الأعلى',monthName.format(new Date(`${topMonth.month}-01T00:00:00Z`)),`${format(topMonth.procedures)} إجراء`]);
+      $('insHighlights').innerHTML=hl.map(([icon,label,value,sub,tone])=>`<div class="ins-hl ${tone||''}"><i>${icon}</i><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(sub)}</small></div>`).join('');
+      // 3) Grouped averages table
+      const groups=[
+        ['يوميًا (لكل يوم عمل)',[['الإجراءات',a.proceduresPerDay,'إجمالي الإجراءات ÷ أيام العمل'],['المواعيد',a.appointmentsPerDay,''],['المواعيد المكتملة',a.completedPerDay,'']]],
+        ['شهريًا',[['الإجراءات',a.proceduresPerMonth,'إجمالي الإجراءات ÷ الأشهر التي فيها عمل'],['المرضى',a.patientsPerMonth,'مرضى مختلفون في الشهر']]],
+        ['لكل مريض وزيارة',[['إجراءات لكل زيارة',a.proceduresPerVisit,'في الزيارات التي فيها إجراءات'],['إجراءات لكل مريض',a.proceduresPerPatient,''],['زيارات لكل مريض',a.visitsPerPatient,'']]],
+        ['الأوقات (من حاسبة الوصول)',[['الانتظار من الوصول حتى بدء العلاج',m.wait?`${format(a.waitMinutes)} دقيقة`:'—',`محسوب من ${format(m.wait||0)} زيارة`],['مدة العلاج',m.treatment?`${format(a.treatmentMinutes)} دقيقة`:'—',`محسوب من ${format(m.treatment||0)} زيارة`],['من الوصول حتى «مكتمل»',m.stay?`${format(a.stayMinutes)} دقيقة`:'—',`محسوب من ${format(m.stay||0)} زيارة`]]],
+        ['النِّسب',[['نسبة الإنجاز',`${format(t.completionRate)}%`,'المكتمل ÷ المواعيد غير الملغاة'],['نسبة الإلغاء',`${format(t.cancelRate)}%`,'الملغي ÷ كل المواعيد']]],
+      ];
+      $('insAverages').innerHTML=groups.map(([title,rows])=>`<tr class="ins-group"><td colspan="3">${esc(title)}</td></tr>${rows.map(([label,value,note])=>`<tr><td>${esc(label)}</td><td>${typeof value==='number'?format(value):esc(value)}</td><td>${esc(note||'')}</td></tr>`).join('')}`).join('');
+      // 4) Monthly table with bars and trophy badge
+      const monthsDesc=[...(r.months||[])].reverse(),mMax=Math.max(1,...monthsDesc.map(x=>x.procedures));
+      $('insMonths').innerHTML=monthsDesc.map(x=>`<tr><td><b>${monthName.format(new Date(`${x.month}-01T00:00:00Z`))}</b></td><td>${cellBar(x.procedures,mMax)}</td><td>${format(x.patients)}</td><td>${format(x.completed)}</td><td>${format(x.cancelled)}</td><td>${x.topProcedure?`<span class="ins-badge">🏆 ${esc(x.topProcedure.name)} · ${format(x.topProcedure.count)} (${format(x.topProcedure.share)}%)</span>`:'—'}</td><td>${x.topType?`<span class="type-pill" style="--c:${typeColors[x.topType.type]||'#69887a'}">${esc(x.topType.label)}</span>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">لا توجد بيانات.</td></tr>';
+      // 5) Top patients with medals and bars
+      const pMax=Math.max(1,...(r.topPatients||[]).map(x=>x.procedures)),medals=['🥇','🥈','🥉'];
+      $('insPatients').innerHTML=(r.topPatients||[]).map((x,i)=>`<tr><td><span class="medal">${medals[i]||format(i+1)}</span></td><td><b>${esc(x.name||'—')}</b></td><td>${esc(x.file||'—')}</td><td>${cellBar(x.procedures,pMax,'#c39a3e')}</td><td>${format(x.visits)}</td><td>${x.lastDate?dayFmt.format(new Date(`${x.lastDate}T00:00:00Z`)):'—'}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا توجد بيانات.</td></tr>';
+      // 6) Weekdays with bars
+      const wMax=Math.max(1,...(r.weekdays||[]).map(x=>x.averageProcedures));
+      $('insWeekdays').innerHTML=(r.weekdays||[]).map(x=>`<tr><td><b>${esc(x.name)}</b></td><td>${format(x.days)}</td><td>${cellBar(x.averageProcedures,wMax)}</td><td>${format(x.averageAppointments)}</td><td>${cellBar(x.cancelRate,100,'#c64555',`${format(x.cancelRate)}%`)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد بيانات.</td></tr>';
+      $('insTopDays').innerHTML=(r.topDays||[]).map((d,i)=>`<div><span>${medals[i]||'•'} ${shortDay.format(new Date(`${d.date}T00:00:00Z`))}</span><b>${format(d.procedures)} إجراء · ${format(d.completed)} مكتمل</b></div>`).join('')||'<div class="empty">لا توجد بيانات.</div>';
+      // 7) Hours chart
       const hours=r.hours||[],hMax=Math.max(1,...hours.map(h=>h.procedures)),peak=r.peakProcedureHour?.hour;
       $('insHours').innerHTML=hours.map(h=>`<div class="ins-hour" title="${hourText(h.hour)}: ${format(h.appointments)} موعد · ${format(h.procedures)} إجراء · ${format(h.cancelled)} إلغاء${h.averageWaitMinutes?` · انتظار ${format(h.averageWaitMinutes)} د`:''}"><b>${format(h.procedures)}</b><i class="${h.hour===peak?'peak':''}" style="height:${Math.max(3,Math.round(h.procedures/hMax*110))}px"></i><em class="${h.cancelRate?'':'zero'}">${format(h.cancelRate)}%</em><small>${hourText(h.hour)}</small></div>`).join('')||'<div class="empty">لا توجد مواعيد.</div>';
-      const types=r.typeList||[],max=Math.max(1,...types.map(x=>x.count));
-      $('allTimeTypes').innerHTML=types.map(x=>`<button type="button" class="at-type${x.type===allTimeType?' active':''}" data-at-type="${x.type}" style="--c:${typeColors[x.type]||'#69887a'}"><span>${esc(x.label)}</span><strong>${format(x.count)}</strong><small>${format(x.share)}% من الإجراءات${x.measured?` · مدة العلاج ${format(x.averageTreatmentMinutes)} د`:''}</small><span class="type-bar"><span style="width:${x.count/max*100}%;background:var(--c)"></span></span></button>`).join('')||'<div class="empty">لا توجد إجراءات مسجلة.</div>';
+      // 8) Types donut + table + filter cards
+      const types=r.typeList||[],typeTotal=types.reduce((sum,x)=>sum+x.count,0),max=Math.max(1,...types.map(x=>x.count));
+      let cursor=0;const stops=types.map(x=>{const start=cursor;cursor+=typeTotal?x.count/typeTotal*100:0;return`${typeColors[x.type]||'#69887a'} ${start}% ${cursor}%`});
+      $('insDonut').style.background=stops.length?`conic-gradient(${stops.join(',')})`:'#e6efea';
+      $('insDonut').innerHTML=`<div><b>${format(typeTotal)}</b><small>إجراء</small></div>`;
+      $('insTypeRows').innerHTML=types.map(x=>`<tr><td><span class="dot" style="--c:${typeColors[x.type]||'#69887a'}"></span><b>${esc(x.label)}</b></td><td>${cellBar(x.count,max,typeColors[x.type])}</td><td>${format(x.share)}%</td><td>${x.measured?`${format(x.averageTreatmentMinutes)} د`:'—'}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">لا توجد بيانات.</td></tr>';
+      $('allTimeTypes').innerHTML=types.map(x=>`<button type="button" class="at-type${x.type===allTimeType?' active':''}" data-at-type="${x.type}" style="--c:${typeColors[x.type]||'#69887a'}"><span>${esc(x.label)}</span><strong>${format(x.count)}</strong><small>${format(x.share)}% من الإجراءات</small><span class="type-bar"><span style="width:${x.count/max*100}%;background:var(--c)"></span></span></button>`).join('')||'<div class="empty">لا توجد إجراءات مسجلة.</div>';
       renderAllTimeRows();
     }
     function renderAllTimeRows(){
@@ -254,7 +285,7 @@ const $=id=>document.getElementById(id);
       const rows=(r.procedures||[]).filter(p=>(!allTimeType||p.type===allTimeType)&&(!q||String(p.name).toLocaleLowerCase('ar').includes(q)||(labels[p.type]||'').includes(q)));
       const shown=rows.reduce((a,p)=>a+p.count,0);
       $('allTimeFilterNote').textContent=allTimeType||q?`${format(rows.length)} إجراء · المجموع ${format(shown)}${allTimeType?' · اضغط النوع مرة أخرى لإلغاء الفلتر':''}`:`${format(rows.length)} إجراء مختلف`;
-      $('allTimeRows').innerHTML=rows.map((p,i)=>`<tr><td>${format(i+1)}</td><td><b>${esc(p.name)}</b></td><td><span class="type-pill" style="--c:${typeColors[p.type]||'#69887a'}">${esc(labels[p.type]||'أخرى')}</span></td><td>${format(p.count)}</td><td>${format(Math.round(p.count/sum*1000)/10)}%</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد نتائج.</td></tr>';
+      $('allTimeRows').innerHTML=rows.map((p,i)=>`<tr><td>${format(i+1)}</td><td><b>${esc(p.name)}</b></td><td><span class="type-pill" style="--c:${typeColors[p.type]||'#69887a'}">${esc(labels[p.type]||'أخرى')}</span></td><td><span class="cell-bar" style="--c:${typeColors[p.type]||'#69887a'}"><b>${format(p.count)}</b><span><i style="width:${Math.max(2,p.count/(rows[0]?.count||1)*100)}%"></i></span></span></td><td>${format(Math.round(p.count/sum*1000)/10)}%</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد نتائج.</td></tr>';
     }
     $('allTimeTypes').addEventListener('click',event=>{const card=event.target.closest('[data-at-type]');if(!card)return;allTimeType=allTimeType===card.dataset.atType?'':card.dataset.atType;document.querySelectorAll('.at-type').forEach(c=>c.classList.toggle('active',c.dataset.atType===allTimeType));renderAllTimeRows()});
     $('allTimeSearch').addEventListener('input',renderAllTimeRows);
