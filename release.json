@@ -1,8 +1,8 @@
 {
-  "version": "2026.10.16-aftercare-whatsapp-message",
-  "publishedAt": "2026-10-16",
+  "version": "2026.11.21-admin-counter",
+  "publishedAt": "2026-11-21",
   "summary": {
-    "ar": "مقدمة واتساب واضحة تُنسخ تلقائيًا مع ملف PDF لتعليمات العصب، وإمكانية تعديل توصية المسكنات مباشرة من شاشة الإدارة مع حفظ نسخة جديدة.",
-    "en": "Copy a clear WhatsApp introduction with the aftercare PDF, and revise the optional analgesic suggestion directly from administration."
+    "ar": "عداد شامل في صفحة الإدارة يعرض عدد المرضى والإجراءات المنفذة وحالات المعمل لجميع العيادات، مع مركز إحصائيات أوضح وتصدير CSV.",
+    "en": "A complete admin counter for patients, procedures done and lab cases across all clinics, plus a clearer statistics center with CSV export."
   }
 }

@@ -116,3 +116,75 @@ test('empty summary remains finite and zeroed', () => {
   assert.equal(output.summary.stayMeasured, 0);
   assert.equal(output.summary.reviewWhatsappShares, 0);
 });
+
+test('procedures are counted from completed payment items and grouped by procedure', () => {
+  const output = stats.summarize({
+    from: '2026-07-30', to: '2026-07-30', clinicFilter: 'all',
+    clinics: [
+      { id: 'clinic-1', name: 'العيادة 1', doctorName: '', roomNumber: '1' },
+      { id: 'clinic-2', name: 'العيادة 2', doctorName: '', roomNumber: '2' },
+    ],
+    records: [
+      { clinicId: 'clinic-1', date: '2026-07-30', patients: [
+        { file: '1', status: 'done', paymentItems: [{ code: 'root-canal', name: 'علاج عصب', quantity: 2 }, { code: 'examination', name: 'كشف', quantity: 1, free: true }] },
+        { file: '2', status: 'done', paymentItems: [] },
+        { file: '3', status: 'cancel', paymentItems: [{ code: 'root-canal', name: 'علاج عصب', quantity: 1 }] },
+      ] },
+      { clinicId: 'clinic-2', date: '2026-07-30', patients: [
+        { file: '1', status: 'done', paymentItems: [{ code: 'root-canal', name: 'علاج عصب', quantity: 1 }, { code: 'other', name: 'إجراء خاص', quantity: 1 }] },
+      ] },
+    ],
+    plans: [], labCases: [],
+  });
+  assert.equal(output.summary.procedureUnits, 5);
+  assert.equal(output.summary.procedureLines, 4);
+  assert.equal(output.summary.procedureFreeUnits, 1);
+  assert.equal(output.summary.visitsWithProcedures, 2);
+  assert.equal(output.summary.completedWithoutProcedure, 1);
+  assert.equal(output.summary.treatedPatients, 2);
+  assert.equal(output.topProcedures[0].name, 'علاج عصب');
+  assert.equal(output.topProcedures[0].count, 3);
+  assert.equal(output.topProcedures[0].visits, 2);
+  assert.equal(output.daily[0].procedures, 5);
+  assert.equal(output.clinics[0].procedures, 3);
+  assert.equal(output.clinics[0].treatedPatients, 2);
+  assert.equal(output.clinics[1].procedures, 2);
+});
+
+test('lab cases sent, received, delivered and overdue follow their own timestamps', () => {
+  const day = (d, h = 9) => Date.UTC(2026, 6, d, h);
+  const output = stats.summarize({
+    from: '2026-07-30', to: '2026-07-30', clinicFilter: 'all', now: day(31),
+    clinics: [{ id: 'clinic-1', name: 'العيادة 1', doctorName: '', roomNumber: '1' }],
+    records: [], plans: [],
+    labCases: [
+      { clinicId: 'clinic-1', status: 'in_production', createdAt: day(29), sentAt: day(30), units: 3, labName: 'معمل النخبة', items: [{ name: 'تركيب تاج', quantity: 3 }], expectedAt: day(30, 20) },
+      { clinicId: 'clinic-1', status: 'delivered_patient', createdAt: day(30), sentAt: day(30), receivedAt: day(30), deliveredAt: day(30), units: 1, labName: 'other', customLabName: 'معمل خارجي', items: [{ name: 'فينير', quantity: 1 }] },
+      { clinicId: 'clinic-1', status: 'pending_send', createdAt: day(30) },
+      { clinicId: 'clinic-1', status: 'sent_coordination', createdAt: day(30) },
+      { clinicId: 'clinic-1', status: 'cancelled', createdAt: day(30), sentAt: day(30) },
+      { clinicId: 'clinic-1', status: 'sent', createdAt: day(28), sentAt: day(28) },
+    ],
+  });
+  assert.equal(output.summary.labSent, 2);
+  assert.equal(output.summary.labSentUnits, 4);
+  assert.equal(output.summary.labReceived, 1);
+  assert.equal(output.summary.labDelivered, 1);
+  assert.equal(output.summary.labOverdue, 1);
+  assert.equal(output.summary.labWaitingToSend, 2);
+  assert.equal(output.summary.labOpenNow, 4);
+  assert.equal(output.labStatusCounts.sent_coordination, 1);
+  assert.equal(output.summary.labCreated, 4);
+  assert.equal(output.topLabWork[0].name, 'تركيب تاج');
+  assert.equal(output.topLabWork[0].count, 3);
+  assert.deepEqual(output.labVendors.map(item => item.name).sort(), ['معمل النخبة', 'معمل خارجي'].sort());
+  assert.equal(output.daily[0].labSent, 2);
+  assert.equal(output.clinics[0].labSent, 2);
+});
+
+test('small windows read day blobs directly instead of listing history', () => {
+  const clinics = [{ id: 'clinic-1' }, { id: 'clinic-3' }];
+  assert.deepEqual(stats.directDayKeys(clinics, '2026-07-30', '2026-07-30', 'all'), ['days/2026-07-30', 'clinics/clinic-1/days/2026-07-30', 'clinics/clinic-3/days/2026-07-30']);
+  assert.deepEqual(stats.directDayKeys(clinics, '2026-07-30', '2026-07-30', 'clinic-3'), ['clinics/clinic-3/days/2026-07-30']);
+  assert.equal(stats.directDayKeys(clinics, '2026-01-01', '2026-07-30', 'all'), null);
+});

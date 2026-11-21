@@ -23,13 +23,23 @@
     .empty{padding:42px 14px;text-align:center;color:var(--muted);font-size:12px}.footer{padding:18px;text-align:center;color:#789084;font-size:9px}.skeleton{position:relative;overflow:hidden;background:#e9f1ed;color:transparent!important;border-radius:7px}.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.68),transparent);transform:translateX(100%);animation:shine 1.25s infinite}
     @keyframes shine{to{transform:translateX(-100%)}}@keyframes pulse{50%{opacity:.35}}@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.hero-meta{justify-content:flex-start}.filters{grid-template-columns:1fr 1fr}.range-buttons{grid-column:1/-1}}@media(max-width:620px){.shell{padding:8px}.topbar{top:5px;padding:11px}.brand img{width:46px;height:46px}.brand h1{font-size:16px}.brand p{display:none}.top-actions .print{display:none}.hero{padding:20px;border-radius:18px}.hero h2{font-size:25px}.filters{grid-template-columns:1fr;padding:11px}.range-buttons{grid-column:auto}.kpis{grid-template-columns:1fr 1fr;gap:8px}.kpi{padding:13px}.kpi strong{font-size:24px}.chart-card{padding:14px}.donut-layout{grid-template-columns:1fr}.donut{margin:auto;width:165px;height:165px}.clinic-table{min-width:600px}.table-wrap{overflow-x:auto}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}@media print{body{background:#fff}.shell{width:100%;padding:0}.topbar,.filters,.notice,.footer{display:none!important}.panel{box-shadow:none}.hero{margin:0;background:#155b42!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr 1fr}.chart-card{break-inside:avoid}.bars{height:190px}}
   </style>
+  <style>
+    .headline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:15px}.headline-card{position:relative;overflow:hidden;display:grid;gap:6px;padding:20px 20px 18px;border-inline-start:6px solid var(--accent,#2f8c67)}.headline-card .headline-label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:900}.headline-card .headline-label span{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--soft,#e8f5ef);font-size:17px}.headline-card strong{font-size:clamp(34px,4vw,48px);line-height:1.05;font-weight:950;color:var(--ink)}.headline-card small{color:var(--muted);font-size:11px;line-height:1.6}.headline-card small b{color:var(--ink)}
+    .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px}.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:#f7fbf9;color:var(--muted);font-size:10px;font-weight:850}.chip b{color:var(--ink);font-size:13px}.chip.warn{border-color:#f1d2a8;background:#fff7ec}.chip.warn b{color:#a8620f}.chip.alert{border-color:#efc5cc;background:#fff4f6}.chip.alert b{color:#b23347}
+    .ranked{display:grid;gap:9px}.ranked-title{margin:14px 0 8px;color:var(--muted);font-size:10px;font-weight:950}.ranked .metric-row{grid-template-columns:minmax(110px,1.1fr) 2fr 54px}.ranked .metric-row small{display:block;color:var(--muted);font-size:8px;font-weight:700}.ranked .metric-fill.gold{background:linear-gradient(90deg,#c39a3e,#e0bd6c)}.ranked .metric-fill.blue{background:linear-gradient(90deg,#356f8a,#5aa0bf)}
+    .bar-group{grid-template-columns:repeat(4,7px)}.bar.procedures{background:#c39a3e}.bar.lab{background:#3f7f98}.bar-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;color:var(--muted);font-size:10px}.bar-legend i{display:inline-block;width:9px;height:9px;margin-inline-end:5px;border-radius:3px;background:var(--color)}
+    .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+    @media(max-width:1000px){.headline,.kpis{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.headline{gap:8px}.headline-card{padding:14px}.headline-card strong{font-size:32px}}
+    @media print{.headline{grid-template-columns:repeat(4,1fr)}.headline-card{break-inside:avoid}}
+    html[data-theme="dark"] .chip{border-color:#2f4a3e;background:#16231d}html[data-theme="dark"] .chip.warn{border-color:#5a4322;background:#2a2014}html[data-theme="dark"] .chip.alert{border-color:#5a2a33;background:#2a161a}html[data-theme="dark"] .headline-card .headline-label span{background:rgba(255,255,255,.07)}
+  </style>
   <link rel="stylesheet" href="./theme.css">
 </head>
 <body>
   <main class="shell">
     <header class="panel topbar">
       <div class="brand"><img src="./best-care-logo.png" width="613" height="900" alt="شعار أفضل عناية"><div><h1>مركز الإحصائيات</h1><p>لوحة مراجعة الأداء والتشغيل</p></div></div>
-      <div class="top-actions"><button class="print" id="printBtn" type="button">طباعة التقرير</button><a class="button primary" href="./?view=admin">العودة للإدارة</a></div>
+      <div class="top-actions"><button id="exportBtn" type="button">تصدير CSV</button><button class="print" id="printBtn" type="button">طباعة التقرير</button><a class="button primary" href="./?view=admin">العودة للإدارة</a></div>
     </header>
 
     <section class="panel hero">
@@ -45,27 +55,44 @@
     </section>
     <div id="statusNotice" class="notice loading" role="status" aria-live="polite"><i></i><span>جارٍ تجهيز المؤشرات…</span></div>
 
+    <section class="headline" aria-label="الأرقام الأساسية للفترة">
+      <article class="panel headline-card" style="--accent:#2f8c67;--soft:#e8f5ef"><div class="headline-label"><span aria-hidden="true">♙</span>عدد المرضى</div><strong data-kpi="uniquePatients">—</strong><small><b data-kpi="treatedPatients">—</b> مريض أكمل علاجه · <b data-kpi="appointments">—</b> موعد</small></article>
+      <article class="panel headline-card" style="--accent:#c39a3e;--soft:#fff3d9"><div class="headline-label"><span aria-hidden="true">🦷</span>الإجراءات المنفذة</div><strong data-kpi="procedureUnits">—</strong><small>في <b data-kpi="visitsWithProcedures">—</b> زيارة · منها <b data-kpi="procedureFreeUnits">—</b> مجانية</small></article>
+      <article class="panel headline-card" style="--accent:#3f7f98;--soft:#e5f0f5"><div class="headline-label"><span aria-hidden="true">⇪</span>أُرسلت للمعمل</div><strong data-kpi="labSent">—</strong><small><b data-kpi="labSentUnits">—</b> وحدة · سُلّم للمريض <b data-kpi="labDelivered">—</b></small></article>
+      <article class="panel headline-card" style="--accent:#51af7f;--soft:#e5f5ec"><div class="headline-label"><span aria-hidden="true">✓</span>المواعيد المكتملة</div><strong data-kpi="completed">—</strong><small>نسبة الإنجاز <b data-kpi="completionRate">—</b> · ملغي <b data-kpi="cancelled">—</b></small></article>
+    </section>
+
     <section class="kpis" aria-label="المؤشرات الرئيسية">
-      <article class="panel kpi" style="--tone:#e8f1f4"><div class="kpi-head"><span class="kpi-label">إجمالي المواعيد</span><span class="kpi-icon">◫</span></div><strong data-kpi="appointments">—</strong><small>كل المواعيد خلال الفترة</small></article>
-      <article class="panel kpi"><div class="kpi-head"><span class="kpi-label">المرضى المسجلون</span><span class="kpi-icon">♙</span></div><strong data-kpi="uniquePatients">—</strong><small>مرضى فريدون حسب الملف أو الجوال</small></article>
-      <article class="panel kpi" style="--tone:#e5f5ec"><div class="kpi-head"><span class="kpi-label">نسبة الإنجاز</span><span class="kpi-icon">✓</span></div><strong data-kpi="completionRate">—</strong><small>من المواعيد غير الملغاة</small></article>
       <article class="panel kpi" style="--tone:#fff1df"><div class="kpi-head"><span class="kpi-label">متوسط التأخير</span><span class="kpi-icon">◷</span></div><strong data-kpi="averageDelayMinutes">—</strong><small>بالدقائق للحالات التي بدأ علاجها</small></article>
       <article class="panel kpi" style="--tone:#e5f0fb"><div class="kpi-head"><span class="kpi-label">متوسط مدة بقاء المريض</span><span class="kpi-icon">⏱</span></div><strong data-kpi="averageStayMinutes">—</strong><small>من وقت الوصول حتى إكمال العلاج</small></article>
       <article class="panel kpi" style="--tone:#fff0f2"><div class="kpi-head"><span class="kpi-label">طلبات الدفع المعلقة</span><span class="kpi-icon">﷼</span></div><strong data-kpi="paymentPending">—</strong><small>تحتاج متابعة الإدارة</small></article>
       <article class="panel kpi" style="--tone:#eef0fb"><div class="kpi-head"><span class="kpi-label">الخطط العلاجية</span><span class="kpi-icon">▤</span></div><strong data-kpi="planTotal">—</strong><small>الخطط المحدثة خلال الفترة</small></article>
-      <article class="panel kpi" style="--tone:#e5f5f7"><div class="kpi-head"><span class="kpi-label">حالات المعمل النشطة</span><span class="kpi-icon">🦷</span></div><strong data-kpi="labActive">—</strong><small>لم تُسلّم للمريض بعد</small></article>
-      <article class="panel kpi" style="--tone:#f7ecee"><div class="kpi-head"><span class="kpi-label">المواعيد الملغاة</span><span class="kpi-icon">×</span></div><strong data-kpi="cancelled">—</strong><small>خلال الفترة المحددة</small></article>
+      <article class="panel kpi" style="--tone:#e5f5f7"><div class="kpi-head"><span class="kpi-label">حالات المعمل المفتوحة</span><span class="kpi-icon">🦷</span></div><strong data-kpi="labOpenNow">—</strong><small>مفتوحة الآن ولم تُسلّم للمريض</small></article>
+      <article class="panel kpi" style="--tone:#fff0f2"><div class="kpi-head"><span class="kpi-label">حالات معمل متأخرة</span><span class="kpi-icon">⚠</span></div><strong data-kpi="labOverdue">—</strong><small>تجاوزت موعد الاستلام المتوقع</small></article>
+      <article class="panel kpi" style="--tone:#fff7e6"><div class="kpi-head"><span class="kpi-label">بانتظار الإرسال للمعمل</span><span class="kpi-icon">⏳</span></div><strong data-kpi="labWaitingToSend">—</strong><small>مسجلة ولم تُرسل بعد</small></article>
       <article class="panel kpi" style="--tone:#fff3c9"><div class="kpi-head"><span class="kpi-label">طلبات التقييم عبر واتساب</span><span class="kpi-icon">★</span></div><strong data-kpi="reviewWhatsappShares">—</strong><small>تُحتسب عند فتح المشاركة من أيقونة التقييم</small></article>
     </section>
 
     <section class="grid">
       <article class="panel chart-card">
-        <div class="card-head"><div><h3>حركة المواعيد اليومية</h3><p>إجمالي المواعيد والمنجز والملغي يومًا بيوم</p></div><span id="appointmentsTotal" class="chart-total">0 موعد</span></div>
-        <div id="dailyBars" class="bars" aria-label="رسم بياني عمودي للمواعيد اليومية"></div>
+        <div class="card-head"><div><h3>الحركة اليومية</h3><p>المواعيد والمنجز والملغي والإجراءات والمرسل للمعمل يومًا بيوم</p></div><span id="appointmentsTotal" class="chart-total">0 موعد</span></div>
+        <div id="dailyBars" class="bars" aria-label="رسم بياني عمودي للحركة اليومية"></div>
+        <div class="bar-legend"><span style="--color:var(--green2)"><i></i>المواعيد</span><span style="--color:#51af7f"><i></i>المكتمل</span><span style="--color:#d56775"><i></i>الملغي</span><span style="--color:#c39a3e"><i></i>الإجراءات</span><span style="--color:#3f7f98"><i></i>أُرسل للمعمل</span></div>
       </article>
       <article class="panel chart-card">
         <div class="card-head"><div><h3>توزيع حالات المرضى</h3><p>الحالة الأخيرة المسجلة لكل موعد</p></div></div>
         <div class="donut-layout"><div id="statusDonut" class="donut"><div class="donut-center"><strong id="statusDonutTotal">0</strong><small>موعد</small></div></div><div id="statusLegend" class="legend"></div></div>
+      </article>
+      <article class="panel chart-card">
+        <div class="card-head"><div><h3>الإجراءات المنفذة</h3><p>من الإجراءات التي حددها الطبيب عند إكمال الزيارة</p></div><span id="proceduresTotal" class="chart-total">0 إجراء</span></div>
+        <div id="procedureChips" class="chips"></div>
+        <div id="procedureMetrics" class="ranked"></div>
+      </article>
+      <article class="panel chart-card">
+        <div class="card-head"><div><h3>المعمل خلال الفترة</h3><p>ما أُرسل واستُلم وسُلّم، وأكثر الأعمال والمعامل</p></div><span id="labSentTotal" class="chart-total">0 مرسلة</span></div>
+        <div id="labChips" class="chips"></div>
+        <div id="labWorkMetrics" class="ranked"></div>
+        <div id="labVendorMetrics" class="ranked"></div>
       </article>
       <article class="panel chart-card">
         <div class="card-head"><div><h3>دورة الخطط العلاجية</h3><p>المسودات والاعتمادات وموافقة المريض</p></div><span id="plansTotal" class="chart-total">0 خطة</span></div>
@@ -76,7 +103,7 @@
         <div class="donut-layout"><div id="paymentDonut" class="donut"><div class="donut-center"><strong id="paymentDonutTotal">0</strong><small>طلب دفع</small></div></div><div id="paymentLegend" class="legend"></div></div>
       </article>
       <article class="panel chart-card">
-        <div class="card-head"><div><h3>حالات معمل الأسنان</h3><p>توزيع الحالات حسب مرحلة التنفيذ</p></div><span id="labsTotal" class="chart-total">0 حالة</span></div>
+        <div class="card-head"><div><h3>مراحل حالات المعمل</h3><p>الحالات المسجلة خلال الفترة حسب مرحلتها الحالية</p></div><span id="labsTotal" class="chart-total">0 حالة</span></div>
         <div id="labMetrics" class="stacked-list"></div>
       </article>
       <article class="panel chart-card">
@@ -84,8 +111,8 @@
         <div id="communicationMetrics" class="stacked-list"></div>
       </article>
       <article class="panel chart-card">
-        <div class="card-head"><div><h3>مقارنة العيادات</h3><p>عدد المواعيد ونسبة الإنجاز والإجراءات المعلقة</p></div></div>
-        <div class="table-wrap"><table class="clinic-table"><thead><tr><th>العيادة والطبيب</th><th>المواعيد</th><th>المنجز</th><th>الملغي</th><th>دفع معلق</th><th>الخطط</th><th>مدة البقاء</th><th>الإنجاز</th></tr></thead><tbody id="clinicRows"></tbody></table></div>
+        <div class="card-head"><div><h3>مقارنة العيادات</h3><p>المرضى والإجراءات والمعمل ونسبة الإنجاز لكل عيادة</p></div></div>
+        <div class="table-wrap"><table class="clinic-table"><thead><tr><th>العيادة والطبيب</th><th>المواعيد</th><th>المرضى المعالجون</th><th>الإجراءات</th><th>أُرسل للمعمل</th><th>المنجز</th><th>الملغي</th><th>دفع معلق</th><th>الخطط</th><th>مدة البقاء</th><th>الإنجاز</th></tr></thead><tbody id="clinicRows"></tbody></table></div>
       </article>
     </section>
     <footer class="footer">جميع المؤشرات للمتابعة التشغيلية الداخلية — تطوير يحيى هادي</footer>

@@ -1,9 +1,10 @@
-const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020';
+const CACHE_NAME='bestcare-dashboard-v1-20261013-appointment-duplicate-delete-safety-root-canal-aftercare-pdf-whatsapp-message-20261017-introduction-prescription-whatsapp-pdf-20261020-20261121-admin-counter';
 const APP_SHELL=[
   './',
   './index.html',
   './dashboard.css',
   './dashboard.js',
+  './admin-counter.js',
   './admin-patient-queue.js',
   './patient-summary.js',
   './patient-summary.css',

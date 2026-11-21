@@ -7,9 +7,15 @@ const store = name => getStore({ name, consistency: 'strong' });
 const clinicPattern = /^clinic-([1-9]|1[0-5])$/;
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_RANGE_DAYS = 366;
+// Reading day blobs directly is far cheaper than listing the whole history when
+// the requested window is small (e.g. today's admin snapshot).
+const DIRECT_KEY_LIMIT = 240;
+const TOP_LIMIT = 12;
+const labSentStatuses = new Set(['sent', 'in_production', 'ready_at_lab', 'received_clinic', 'delivered_coordination', 'delivered_patient', 'needs_adjustment', 'returned_lab']);
+const labClosedStatuses = new Set(['received_clinic', 'delivered_coordination', 'delivered_patient', 'cancelled']);
 const statusKeys = ['waiting', 'arrived', 'early_arrival', 'active', 'done', 'late', 'cancel', 'left', 'asks_delay'];
 const planStatusKeys = ['draft', 'submitted', 'patient_accepted', 'approved', 'approved_signed', 'rejected', 'cancelled'];
-const labStatusKeys = ['pending_send', 'sent', 'in_production', 'ready_at_lab', 'received_clinic', 'delivered_coordination', 'delivered_patient', 'needs_adjustment', 'returned_lab', 'cancelled'];
+const labStatusKeys = ['pending_send', 'sent_coordination', 'sent', 'in_production', 'ready_at_lab', 'received_clinic', 'delivered_coordination', 'delivered_patient', 'needs_adjustment', 'returned_lab', 'cancelled'];
 
 const defaultClinics = () => Array.from({ length: 15 }, (_, index) => ({
   id: `clinic-${index + 1}`,
@@ -107,12 +113,33 @@ const scheduledStart = (date, time) => {
 function buildDateSeries(from, to) {
   const series = [];
   for (let date = from; date <= to; date = addDays(date, 1)) {
-    series.push({ date, appointments: 0, completed: 0, cancelled: 0, paymentRequests: 0, revenueCents: 0, paymentCount: 0 });
+    series.push({ date, appointments: 0, completed: 0, cancelled: 0, paymentRequests: 0, revenueCents: 0, paymentCount: 0, procedures: 0, labSent: 0 });
   }
   return series;
 }
 
-function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, communicationEvents = [] }) {
+const cleanLabel = (value, max = 100) => String(value || '').replace(/\s+/g, ' ').trim().slice(0, max);
+const procedureKey = item => {
+  const code = cleanLabel(item?.code, 60);
+  return code && !['other', 'direct-lab-entry'].includes(code) ? `code:${code}` : `name:${cleanLabel(item?.name).toLocaleLowerCase('ar')}`;
+};
+
+function tally(map, key, name, code, amount, extra = {}) {
+  if (!key || !name) return;
+  const entry = map.get(key) || { key, name, code, count: 0, ...Object.fromEntries(Object.keys(extra).map(field => [field, 0])) };
+  entry.count += amount;
+  Object.entries(extra).forEach(([field, value]) => { entry[field] += value; });
+  map.set(key, entry);
+}
+
+const topEntries = map => [...map.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'ar')).slice(0, TOP_LIMIT);
+const inRange = (at, from, to) => {
+  if (!(at > 0)) return false;
+  const date = riyadhDate(at);
+  return date >= from && date <= to;
+};
+
+function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, communicationEvents = [], now = Date.now() }) {
   const statusCounts = emptyCounts(statusKeys);
   const planStatusCounts = emptyCounts(planStatusKeys);
   const labStatusCounts = emptyCounts(labStatusKeys);
@@ -131,11 +158,18 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
     revenueCents: 0,
     paymentCount: 0,
     plans: 0,
+    procedures: 0,
+    treatedPatients: 0,
+    labSent: 0,
     stayTotalMinutes: 0,
     stayMeasured: 0,
   }]));
   const payments = { requested: 0, acknowledged: 0, completed: 0, pending: 0, collectedCents: 0, transactionCount: 0 };
   const countedReceipts = new Set();
+  const procedureMap = new Map();
+  const treatedIdentities = new Set();
+  const clinicTreated = new Map();
+  const procedureTotals = { units: 0, lines: 0, freeUnits: 0, visitsWithProcedures: 0, completedWithoutProcedure: 0 };
   let appointments = 0;
   let delaysTotalMinutes = 0;
   let delaysMeasured = 0;
@@ -150,6 +184,27 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       identities.add(patientIdentity(patient));
       const status = statusKeys.includes(patient?.status) ? patient.status : 'waiting';
       statusCounts[status] += 1;
+      const items = status === 'cancel' ? [] : (Array.isArray(patient?.paymentItems) ? patient.paymentItems : [])
+        .filter(item => cleanLabel(item?.name));
+      let visitUnits = 0;
+      items.forEach(item => {
+        const quantity = Math.max(1, Math.min(99, Math.round(numeric(item?.quantity) || 1)));
+        visitUnits += quantity;
+        procedureTotals.lines += 1;
+        if (item?.free) procedureTotals.freeUnits += quantity;
+        tally(procedureMap, procedureKey(item), cleanLabel(item.name), cleanLabel(item?.code, 60), quantity, { free: item?.free ? quantity : 0, visits: 1 });
+      });
+      procedureTotals.units += visitUnits;
+      if (visitUnits) procedureTotals.visitsWithProcedures += 1;
+      else if (status === 'done') procedureTotals.completedWithoutProcedure += 1;
+      if (status === 'done' || visitUnits) {
+        const identity = patientIdentity(patient);
+        treatedIdentities.add(identity);
+        if (!clinicTreated.has(record.clinicId)) clinicTreated.set(record.clinicId, new Set());
+        clinicTreated.get(record.clinicId).add(identity);
+      }
+      if (dailyItem) dailyItem.procedures += visitUnits;
+      if (clinicItem) clinicItem.procedures += visitUnits;
       if (dailyItem) {
         dailyItem.appointments += 1;
         if (status === 'done') dailyItem.completed += 1;
@@ -218,12 +273,36 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
     if (clinicItem) clinicItem.plans += 1;
   });
 
+  const labWorkMap = new Map();
+  const labVendorMap = new Map();
+  const labTotals = { sent: 0, sentUnits: 0, received: 0, delivered: 0, overdue: 0, waitingToSend: 0, openNow: 0 };
   labCases.forEach(item => {
     if (clinicFilter !== 'all' && item.clinicId !== clinicFilter) return;
-    const createdDate = riyadhDate(numeric(item.createdAt || item.updatedAt));
-    if (createdDate < from || createdDate > to) return;
     const status = labStatusKeys.includes(item.status) ? item.status : 'pending_send';
-    labStatusCounts[status] += 1;
+    const units = Math.max(1, Math.min(99, Math.round(numeric(item.units) || 1)));
+    // Snapshot of the current workload, independent of the date window.
+    if (status !== 'cancelled' && status !== 'delivered_patient') labTotals.openNow += 1;
+    if (status === 'pending_send' || status === 'sent_coordination') labTotals.waitingToSend += 1;
+    const expectedAt = numeric(item.expectedAt);
+    if (expectedAt > 0 && expectedAt < now && !labClosedStatuses.has(status)) labTotals.overdue += 1;
+
+    if (inRange(numeric(item.createdAt || item.updatedAt), from, to)) labStatusCounts[status] += 1;
+    const sentAt = numeric(item.sentAt);
+    if (sentAt > 0 && status !== 'cancelled' && inRange(sentAt, from, to)) {
+      labTotals.sent += 1;
+      labTotals.sentUnits += units;
+      const sentDay = dailyMap.get(riyadhDate(sentAt));
+      if (sentDay) sentDay.labSent += 1;
+      const clinicItem = clinicMetrics.get(item.clinicId);
+      if (clinicItem) clinicItem.labSent += 1;
+      const works = (Array.isArray(item.items) ? item.items : []).filter(entry => cleanLabel(entry?.name));
+      if (works.length) works.forEach(entry => tally(labWorkMap, procedureKey(entry), cleanLabel(entry.name), cleanLabel(entry?.code, 60), Math.max(1, Math.round(numeric(entry?.quantity) || 1))));
+      else tally(labWorkMap, 'name:unspecified', 'حالة معمل', '', units);
+      const vendor = item.labName === 'other' ? cleanLabel(item.customLabName) || 'معمل آخر' : cleanLabel(item.labName) || 'غير محدد';
+      tally(labVendorMap, `lab:${vendor.toLocaleLowerCase('ar')}`, vendor, '', 1, { units });
+    }
+    if (inRange(numeric(item.receivedAt), from, to)) labTotals.received += 1;
+    if (inRange(numeric(item.deliveredAt), from, to)) labTotals.delivered += 1;
   });
 
   const communicationCounts = { planWhatsapp: 0, reviewWhatsapp: 0 };
@@ -263,7 +342,24 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       planTotal,
       labActive: labTotal - numeric(labStatusCounts.delivered_patient) - numeric(labStatusCounts.cancelled),
       reviewWhatsappShares: communicationCounts.reviewWhatsapp,
+      treatedPatients: treatedIdentities.size,
+      procedureUnits: procedureTotals.units,
+      procedureLines: procedureTotals.lines,
+      procedureFreeUnits: procedureTotals.freeUnits,
+      visitsWithProcedures: procedureTotals.visitsWithProcedures,
+      completedWithoutProcedure: procedureTotals.completedWithoutProcedure,
+      labCreated: labTotal,
+      labSent: labTotals.sent,
+      labSentUnits: labTotals.sentUnits,
+      labReceived: labTotals.received,
+      labDelivered: labTotals.delivered,
+      labOverdue: labTotals.overdue,
+      labWaitingToSend: labTotals.waitingToSend,
+      labOpenNow: labTotals.openNow,
     },
+    topProcedures: topEntries(procedureMap),
+    topLabWork: topEntries(labWorkMap),
+    labVendors: topEntries(labVendorMap),
     statusCounts,
     planStatusCounts,
     paymentCounts: payments,
@@ -274,6 +370,7 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
       const { stayTotalMinutes, stayMeasured, ...clinic } = item;
       return {
         ...clinic,
+        treatedPatients: clinicTreated.get(clinic.clinicId)?.size || 0,
         stayMeasured,
         averageStayMinutes: stayMeasured ? Math.round(stayTotalMinutes / stayMeasured) : 0,
       };
@@ -281,8 +378,24 @@ function summarize({ records, clinics, from, to, clinicFilter, plans, labCases, 
   };
 }
 
+function directDayKeys(clinics, from, to, clinicFilter) {
+  const scoped = clinics.filter(clinic => clinicFilter === 'all' || clinic.id === clinicFilter);
+  const days = daysBetween(from, to);
+  // clinic-1 may hold both its legacy key and a scoped key, so budget two reads for it.
+  if (!scoped.length || days * (scoped.length + 1) > DIRECT_KEY_LIMIT) return null;
+  const keys = [];
+  for (let date = from; date <= to; date = addDays(date, 1)) {
+    scoped.forEach(clinic => {
+      if (clinic.id === 'clinic-1') keys.push(`days/${date}`);
+      keys.push(`clinics/${clinic.id}/days/${date}`);
+    });
+  }
+  return keys;
+}
+
 export const __test = {
   activeClinics,
+  directDayKeys,
   addDays,
   daysBetween,
   parseDayKey,
@@ -318,9 +431,10 @@ export default async request => {
   const clinics = activeClinics(savedClinics);
   const allowedClinics = new Set(clinics.map(clinic => clinic.id));
 
+  const directKeys = directDayKeys(clinics, from, to, clinicFilter);
   const [primaryKeys, scopedKeys, registry, labRecords, communicationRegistry] = await Promise.all([
-    clinicFilter === 'all' || clinicFilter === 'clinic-1' ? listKeys(dayStore, 'days/') : [],
-    clinicFilter === 'all' ? listKeys(dayStore, 'clinics/') : clinicFilter !== 'clinic-1' ? listKeys(dayStore, `clinics/${clinicFilter}/days/`) : [],
+    directKeys ? directKeys : clinicFilter === 'all' || clinicFilter === 'clinic-1' ? listKeys(dayStore, 'days/') : [],
+    directKeys ? [] : clinicFilter === 'all' ? listKeys(dayStore, 'clinics/') : clinicFilter !== 'clinic-1' ? listKeys(dayStore, `clinics/${clinicFilter}/days/`) : [],
     registryStore.get('registry/global', { type: 'json', consistency: 'strong' }),
     Promise.all(
       clinics
@@ -338,6 +452,7 @@ export default async request => {
 
   const records = (await mapLimited(dayKeys, async item => {
     const state = await dayStore.get(item.key, { type: 'json', consistency: 'strong' });
+    if (!state) return null;
     return { clinicId: item.clinicId, date: item.date, patients: Array.isArray(state?.patients) ? state.patients : [] };
   })).filter(Boolean);
 
