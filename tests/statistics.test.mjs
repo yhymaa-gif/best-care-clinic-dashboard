@@ -201,7 +201,8 @@ test('day digests feed monthly and all-time totals with de-duplicated patients',
   assert.equal(a.procedureUnits, 1);
   assert.equal(a.ids.length, 2);
   assert.equal(a.treated.length, 1);
-  assert.ok(!JSON.stringify(a).includes('"1"'), 'identities are stored hashed');
+  assert.ok(a.ids.every(id => /^[0-9a-f]{12}$/.test(id)), 'identities are stored hashed');
+  assert.ok(Object.keys(a.patients).every(id => /^[0-9a-f]{12}$/.test(id)), 'patient keys are hashed');
   const report = stats.aggregateMonths({
     digests: [a, b],
     labCases: [
@@ -290,4 +291,38 @@ test('all-time totals list every procedure and type since the first recorded day
   const onlyTwo = stats.aggregateMonths({ digests: [b, a], labCases: [], clinicFilter: 'clinic-2', currentMonth: '2026-11' });
   assert.equal(onlyTwo.total.firstDate, '2026-11-20');
   assert.equal(onlyTwo.total.procedures.length, 2);
+});
+
+test('comprehensive insights: monthly top procedure, top patient, busiest day and hours, durations and averages', () => {
+  const at = (d, h, m = 0) => Date.UTC(2026, 9, d, h - 3, m);
+  const day1 = stats.dayDigest('clinic-1', '2026-10-05', [
+    { file: '10', name: 'سارة', status: 'done', start: '16:00', arrivedAt: at(5, 15, 50), actualStartedAt: at(5, 16, 10), completedAt: at(5, 16, 40), paymentItems: [{ code: 'root-canal', name: 'علاج عصب', quantity: 2 }] },
+    { file: '11', name: 'خالد', status: 'cancel', start: '18:00' },
+    { file: '12', name: 'منى', status: 'done', start: '16:30', arrivedAt: at(5, 16, 20), actualStartedAt: at(5, 16, 30), completedAt: at(5, 17, 0), paymentItems: [{ code: 'cosmetic-filling', name: 'حشوة تجميلية' }] },
+  ]);
+  const day2 = stats.dayDigest('clinic-1', '2026-11-03', [
+    { file: '10', name: 'سارة', status: 'done', start: '16:00', paymentItems: [{ code: 'ceramic-crown', name: 'تاج', quantity: 1 }, { code: 'cosmetic-filling', name: 'حشوة تجميلية', quantity: 2 }] },
+    { file: '13', name: 'علي', status: 'cancel', start: '18:00' },
+  ]);
+  const report = stats.buildInsights({ digests: [day1, day2], clinicFilter: 'all', from: '', to: '' });
+  assert.equal(report.firstDate, '2026-10-05');
+  assert.equal(report.activeDays, 2);
+  assert.equal(report.totals.procedures, 6);
+  assert.equal(report.months[0].topProcedure.name, 'علاج عصب');
+  assert.equal(report.months[1].topProcedure.name, 'حشوة تجميلية');
+  assert.equal(report.topPatients[0].name, 'سارة');
+  assert.equal(report.topPatients[0].procedures, 5);
+  assert.equal(report.topPatients[0].visits, 2);
+  assert.equal(report.busiestDay.date, '2026-10-05');
+  assert.equal(report.peakProcedureHour.hour, 16);
+  assert.equal(report.hours.find(h => h.hour === 18).cancelRate, 100);
+  assert.equal(report.averages.waitMinutes, 15);
+  assert.equal(report.averages.treatmentMinutes, 30);
+  assert.equal(report.averages.stayMinutes, 45);
+  assert.equal(report.averages.proceduresPerDay, 3);
+  assert.equal(report.typeList.find(t => t.type === 'endo').averageTreatmentMinutes, 30);
+  assert.equal(report.weekdays.length, 2);
+  const october = stats.buildInsights({ digests: [day1, day2], clinicFilter: 'all', from: '2026-10-01', to: '2026-10-31' });
+  assert.equal(october.totals.procedures, 3);
+  assert.equal(october.months.length, 1);
 });

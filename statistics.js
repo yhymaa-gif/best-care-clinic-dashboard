@@ -158,7 +158,7 @@ const $=id=>document.getElementById(id);
         return`<div class="tm-card"><h5>${label}</h5>${dir}<div class="tm-bars">${bars}</div><small>${paceText}</small></div>`;
       }).join('');
     }
-    async function loadMonths(){try{const response=await fetch(`/api/statistics?mode=months&clinic=${encodeURIComponent($('clinicFilter').value)}`,{credentials:'include',cache:'no-store'});if(response.ok){latestMonths=await response.json();renderAllTime();if(latest){renderTrends(latest);renderTypeDetail()}else renderMonthTrends()}}catch{}}
+    async function loadMonths(){try{const response=await fetch(`/api/statistics?mode=months&clinic=${encodeURIComponent($('clinicFilter').value)}`,{credentials:'include',cache:'no-store'});if(response.ok){latestMonths=await response.json();if(latest){renderTrends(latest);renderTypeDetail()}else renderMonthTrends()}}catch{}}
     // ---- Procedures by type ----
     const typeColors={diagnostic:'#3f7f98',fillings:'#2f8c67',endo:'#c64555',perio:'#23807e',surgery:'#8a72ba',implant:'#c39a3e',prosthetic:'#d58a25',cosmetic:'#d56b9a',other:'#69887a'};
     let selectedType='';
@@ -193,37 +193,86 @@ const $=id=>document.getElementById(id);
       }
       box.innerHTML=`<h4><i></i>${esc(type.label)}</h4><p>${format(type.count)} إجراء · ${format(type.patients)} مريض · ${format(type.share)}% من كل الإجراءات${type.free?` · ${format(type.free)} مجاني`:''}</p><div class="type-block"><h5>الإجراءات داخل هذا النوع</h5>${bars(procedures)}</div><div class="type-block"><h5>حسب العيادة</h5>${bars(clinics)}</div><div class="type-block"><h5>آخر 6 أشهر</h5>${monthsHtml}</div>`;
     }
-    // ---- All-time totals since the first recorded procedure ----
-    let allTimeType='';
+    // ---- Comprehensive report (any range, from cached day digests) ----
+    let insights=null,allTimeType='',insRange='all';
     const longDate=new Intl.DateTimeFormat('ar-SA',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'});
+    const shortDay=new Intl.DateTimeFormat('ar-SA',{weekday:'long',day:'numeric',month:'short',year:'numeric',timeZone:'UTC'});
+    const monthName=new Intl.DateTimeFormat('ar-SA',{month:'long',year:'numeric',timeZone:'UTC'});
+    const hourText=h=>{const am=h<12,v=h%12||12;return`${format(v)} ${am?'ص':'م'}`};
+    const longD=d=>d?longDate.format(new Date(`${d}T00:00:00Z`)):'—';
+    function insQuick(kind){
+      const today=isoDate(new Date());insRange=kind;
+      document.querySelectorAll('[data-ins]').forEach(b=>b.classList.toggle('active',b.dataset.ins===kind));
+      if(kind==='all'){$('insFrom').value='';$('insTo').value=''}
+      else if(kind==='year'){$('insFrom').value=`${today.slice(0,4)}-01-01`;$('insTo').value=today}
+      else if(kind==='3m'){$('insFrom').value=monthShift(today,-3);$('insTo').value=today}
+      else if(kind==='month'){$('insFrom').value=`${today.slice(0,8)}01`;$('insTo').value=today}
+      loadInsights();
+    }
+    async function loadInsights(){
+      const from=$('insFrom').value,to=$('insTo').value;
+      if(from&&to&&from>to){$('allTimeSince').textContent='تاريخ البداية بعد تاريخ النهاية.';return}
+      $('allTimeSince').textContent='جارٍ تجهيز التقرير…';
+      try{
+        const response=await fetch(`/api/statistics?mode=insights&clinic=${encodeURIComponent($('clinicFilter').value)}${from?`&from=${from}`:''}${to?`&to=${to}`:''}`,{credentials:'include',cache:'no-store'});
+        const data=await response.json();if(!response.ok)throw new Error(data.error||'تعذر تحميل التقرير');
+        insights=data;renderAllTime();
+      }catch(error){$('allTimeSince').textContent=error.message||'تعذر تحميل التقرير.'}
+    }
     function renderAllTime(){
-      const total=latestMonths?.total;
-      if(!total){$('allTimeSince').textContent='جارٍ تجميع السجل…';return}
-      const types=total.typeList||[],procedures=total.procedures||[],sum=types.reduce((a,t)=>a+t.count,0);
-      $('allTimeSince').textContent=total.firstDate?`من ${longDate.format(new Date(`${total.firstDate}T00:00:00Z`))} حتى اليوم${$('clinicFilter').value==='all'?' · جميع العيادات':` · ${$('clinicFilter').selectedOptions[0]?.textContent||''}`}`:'لا توجد إجراءات مسجلة بعد.';
-      $('allTimeTotal').innerHTML=`${format(sum)}<small>إجراء</small>`;
-      const max=Math.max(1,...types.map(t=>t.count));
-      $('allTimeTypes').innerHTML=types.map(t=>`<button type="button" class="at-type${t.type===allTimeType?' active':''}" data-at-type="${t.type}" style="--c:${typeColors[t.type]||'#69887a'}"><span>${esc(t.label)}</span><strong>${format(t.count)}</strong><small>${format(t.share)}% من كل الإجراءات</small><span class="type-bar"><span style="width:${t.count/max*100}%;background:var(--c)"></span></span></button>`).join('')||'<div class="empty">لا توجد إجراءات مسجلة.</div>';
+      const r=insights;if(!r)return;
+      const clinicText=$('clinicFilter').value==='all'?'جميع العيادات':($('clinicFilter').selectedOptions[0]?.textContent||'');
+      $('allTimeSince').textContent=r.firstDate?`من ${longD(r.from)} إلى ${longD(r.to)} · ${format(r.activeDays)} يوم عمل · ${clinicText}`:'لا توجد بيانات في هذه الفترة.';
+      $('allTimeTotal').innerHTML=`${format(r.totals.procedures)}<small>إجراء</small>`;
+      const a=r.averages,t=r.totals;
+      const hl=[];
+      if(r.busiestDay)hl.push(['اليوم الأكثر إجراءات',format(r.busiestDay.procedures)+' إجراء',shortDay.format(new Date(`${r.busiestDay.date}T00:00:00Z`))]);
+      const bestWeekday=[...(r.weekdays||[])].sort((x,y)=>y.averageProcedures-x.averageProcedures)[0];
+      if(bestWeekday)hl.push(['أنشط يوم في الأسبوع',bestWeekday.name,`بمتوسط ${format(bestWeekday.averageProcedures)} إجراء`]);
+      if(r.peakProcedureHour)hl.push(['الساعة الأكثر إجراءات',hourText(r.peakProcedureHour.hour),`${format(r.peakProcedureHour.procedures)} إجراء`]);
+      if(r.peakCancelHour)hl.push(['الساعة الأكثر إلغاءً',hourText(r.peakCancelHour.hour),`${format(r.peakCancelHour.cancelRate)}% من مواعيدها (${format(r.peakCancelHour.cancelled)} إلغاء)`,'bad']);
+      if(r.topPatients?.[0])hl.push(['المريض الأكثر إجراءات',r.topPatients[0].name||'—',`${format(r.topPatients[0].procedures)} إجراء في ${format(r.topPatients[0].visits)} زيارة`]);
+      const topMonth=[...(r.months||[])].sort((x,y)=>y.procedures-x.procedures)[0];
+      if(topMonth&&topMonth.procedures)hl.push(['الشهر الأعلى',monthName.format(new Date(`${topMonth.month}-01T00:00:00Z`)),`${format(topMonth.procedures)} إجراء`]);
+      $('insHighlights').innerHTML=hl.map(([label,value,sub,tone])=>`<div class="ins-hl ${tone||''}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(sub)}</small></div>`).join('');
+      const avgs=[['إجراءات في اليوم',a.proceduresPerDay],['مواعيد في اليوم',a.appointmentsPerDay],['مرضى مكتملون في اليوم',a.completedPerDay],['إجراءات في الشهر',a.proceduresPerMonth],['مرضى في الشهر',a.patientsPerMonth],['إجراءات لكل زيارة',a.proceduresPerVisit],['إجراءات لكل مريض',a.proceduresPerPatient],['زيارات لكل مريض',a.visitsPerPatient],['نسبة الإنجاز',`${format(t.completionRate)}%`],['نسبة الإلغاء',`${format(t.cancelRate)}%`],['الانتظار من الوصول للبدء',a.measured.wait?`${format(a.waitMinutes)} د`:'—',`من ${format(a.measured.wait)} زيارة`],['مدة العلاج',a.measured.treatment?`${format(a.treatmentMinutes)} د`:'—',`من ${format(a.measured.treatment)} زيارة`],['من الوصول حتى الاكتمال',a.measured.stay?`${format(a.stayMinutes)} د`:'—',`من ${format(a.measured.stay)} زيارة`],['إجمالي المرضى',format(t.patients)],['إجمالي المواعيد',format(t.appointments)]];
+      $('insAverages').innerHTML=avgs.map(([label,value,sub])=>`<div class="ins-avg"><span>${esc(label)}</span><strong>${typeof value==='number'?format(value):esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}</div>`).join('');
+      $('insMonths').innerHTML=[...(r.months||[])].reverse().map(m=>`<tr><td><b>${monthName.format(new Date(`${m.month}-01T00:00:00Z`))}</b></td><td>${format(m.procedures)}</td><td>${format(m.patients)}</td><td>${format(m.completed)}</td><td>${format(m.cancelled)}</td><td>${m.topProcedure?`<span class="ins-badge">🏆 ${esc(m.topProcedure.name)} · ${format(m.topProcedure.count)} (${format(m.topProcedure.share)}%)</span>`:'—'}</td><td>${m.topType?`<span class="type-pill" style="--c:${typeColors[m.topType.type]||'#69887a'}">${esc(m.topType.label)}</span>`:'—'}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">لا توجد بيانات.</td></tr>';
+      $('insPatients').innerHTML=(r.topPatients||[]).map((p,i)=>`<tr><td>${format(i+1)}</td><td><b>${esc(p.name||'—')}</b></td><td>${esc(p.file||'—')}</td><td><b>${format(p.procedures)}</b></td><td>${format(p.visits)}</td><td>${p.lastDate?dayFmt.format(new Date(`${p.lastDate}T00:00:00Z`)):'—'}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا توجد بيانات.</td></tr>';
+      $('insWeekdays').innerHTML=(r.weekdays||[]).map(w=>`<tr><td><b>${esc(w.name)}</b></td><td>${format(w.days)}</td><td>${format(w.averageProcedures)}</td><td>${format(w.averageAppointments)}</td><td>${format(w.cancelRate)}%</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد بيانات.</td></tr>';
+      $('insTopDays').innerHTML=(r.topDays||[]).map(d=>`<div><span>${shortDay.format(new Date(`${d.date}T00:00:00Z`))}</span><b>${format(d.procedures)} إجراء · ${format(d.completed)} مكتمل</b></div>`).join('')||'<div class="empty">لا توجد بيانات.</div>';
+      const hours=r.hours||[],hMax=Math.max(1,...hours.map(h=>h.procedures)),peak=r.peakProcedureHour?.hour;
+      $('insHours').innerHTML=hours.map(h=>`<div class="ins-hour" title="${hourText(h.hour)}: ${format(h.appointments)} موعد · ${format(h.procedures)} إجراء · ${format(h.cancelled)} إلغاء${h.averageWaitMinutes?` · انتظار ${format(h.averageWaitMinutes)} د`:''}"><b>${format(h.procedures)}</b><i class="${h.hour===peak?'peak':''}" style="height:${Math.max(3,Math.round(h.procedures/hMax*110))}px"></i><em class="${h.cancelRate?'':'zero'}">${format(h.cancelRate)}%</em><small>${hourText(h.hour)}</small></div>`).join('')||'<div class="empty">لا توجد مواعيد.</div>';
+      const types=r.typeList||[],max=Math.max(1,...types.map(x=>x.count));
+      $('allTimeTypes').innerHTML=types.map(x=>`<button type="button" class="at-type${x.type===allTimeType?' active':''}" data-at-type="${x.type}" style="--c:${typeColors[x.type]||'#69887a'}"><span>${esc(x.label)}</span><strong>${format(x.count)}</strong><small>${format(x.share)}% من الإجراءات${x.measured?` · مدة العلاج ${format(x.averageTreatmentMinutes)} د`:''}</small><span class="type-bar"><span style="width:${x.count/max*100}%;background:var(--c)"></span></span></button>`).join('')||'<div class="empty">لا توجد إجراءات مسجلة.</div>';
       renderAllTimeRows();
     }
     function renderAllTimeRows(){
-      const total=latestMonths?.total;if(!total)return;
-      const q=$('allTimeSearch').value.trim().toLocaleLowerCase('ar'),sum=(total.typeList||[]).reduce((a,t)=>a+t.count,0)||1;
-      const labels=Object.fromEntries((total.typeList||[]).map(t=>[t.type,t.label]));
-      const rows=(total.procedures||[]).filter(p=>(!allTimeType||p.type===allTimeType)&&(!q||String(p.name).toLocaleLowerCase('ar').includes(q)||(labels[p.type]||'').includes(q)));
+      const r=insights;if(!r)return;
+      const q=$('allTimeSearch').value.trim().toLocaleLowerCase('ar'),sum=(r.typeList||[]).reduce((a,x)=>a+x.count,0)||1;
+      const labels=Object.fromEntries((r.typeList||[]).map(x=>[x.type,x.label]));
+      const rows=(r.procedures||[]).filter(p=>(!allTimeType||p.type===allTimeType)&&(!q||String(p.name).toLocaleLowerCase('ar').includes(q)||(labels[p.type]||'').includes(q)));
       const shown=rows.reduce((a,p)=>a+p.count,0);
       $('allTimeFilterNote').textContent=allTimeType||q?`${format(rows.length)} إجراء · المجموع ${format(shown)}${allTimeType?' · اضغط النوع مرة أخرى لإلغاء الفلتر':''}`:`${format(rows.length)} إجراء مختلف`;
       $('allTimeRows').innerHTML=rows.map((p,i)=>`<tr><td>${format(i+1)}</td><td><b>${esc(p.name)}</b></td><td><span class="type-pill" style="--c:${typeColors[p.type]||'#69887a'}">${esc(labels[p.type]||'أخرى')}</span></td><td>${format(p.count)}</td><td>${format(Math.round(p.count/sum*1000)/10)}%</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد نتائج.</td></tr>';
     }
     $('allTimeTypes').addEventListener('click',event=>{const card=event.target.closest('[data-at-type]');if(!card)return;allTimeType=allTimeType===card.dataset.atType?'':card.dataset.atType;document.querySelectorAll('.at-type').forEach(c=>c.classList.toggle('active',c.dataset.atType===allTimeType));renderAllTimeRows()});
     $('allTimeSearch').addEventListener('input',renderAllTimeRows);
+    document.querySelectorAll('[data-ins]').forEach(button=>button.addEventListener('click',()=>insQuick(button.dataset.ins)));
+    $('insApply').addEventListener('click',()=>{document.querySelectorAll('[data-ins]').forEach(b=>b.classList.remove('active'));loadInsights()});
     $('allTimeExport').addEventListener('click',()=>{
-      const total=latestMonths?.total;if(!total)return;
-      const labels=Object.fromEntries((total.typeList||[]).map(t=>[t.type,t.label]));
-      const rows=[['من تاريخ',total.firstDate||''],['إلى',isoDate(new Date())],['العيادة',$('clinicFilter').selectedOptions[0]?.textContent||''],[],['النوع','العدد','النسبة %'],...(total.typeList||[]).map(t=>[t.label,t.count,t.share]),[],['الإجراء','النوع','العدد'],...(total.procedures||[]).map(p=>[p.name,labels[p.type]||'أخرى',p.count])];
+      const r=insights;if(!r)return;
+      const labels=Object.fromEntries((r.typeList||[]).map(x=>[x.type,x.label])),a=r.averages;
+      const rows=[['من',r.from||''],['إلى',r.to||''],['العيادة',$('clinicFilter').selectedOptions[0]?.textContent||''],['أيام العمل',r.activeDays],['إجمالي الإجراءات',r.totals.procedures],['إجمالي المرضى',r.totals.patients],[],
+        ['المتوسط','القيمة'],['إجراءات/يوم',a.proceduresPerDay],['مواعيد/يوم',a.appointmentsPerDay],['مكتمل/يوم',a.completedPerDay],['إجراءات/شهر',a.proceduresPerMonth],['مرضى/شهر',a.patientsPerMonth],['إجراءات/زيارة',a.proceduresPerVisit],['إجراءات/مريض',a.proceduresPerPatient],['زيارات/مريض',a.visitsPerPatient],['الانتظار (د)',a.waitMinutes],['مدة العلاج (د)',a.treatmentMinutes],['الوصول حتى الاكتمال (د)',a.stayMinutes],[],
+        ['الشهر','الإجراءات','المرضى','المكتمل','الإلغاء','الأكثر تكرارًا','عدده'],...(r.months||[]).map(m=>[m.month,m.procedures,m.patients,m.completed,m.cancelled,m.topProcedure?.name||'',m.topProcedure?.count||0]),[],
+        ['المريض','الملف','الإجراءات','الزيارات','آخر زيارة'],...(r.topPatients||[]).map(p=>[p.name,p.file,p.procedures,p.visits,p.lastDate]),[],
+        ['الساعة','المواعيد','الإجراءات','الإلغاء','نسبة الإلغاء %','متوسط الانتظار (د)'],...(r.hours||[]).map(h=>[h.hour,h.appointments,h.procedures,h.cancelled,h.cancelRate,h.averageWaitMinutes]),[],
+        ['النوع','العدد','النسبة %','متوسط مدة العلاج (د)'],...(r.typeList||[]).map(x=>[x.label,x.count,x.share,x.averageTreatmentMinutes]),[],
+        ['الإجراء','النوع','العدد'],...(r.procedures||[]).map(p=>[p.name,labels[p.type]||'أخرى',p.count])];
       const cell=value=>{const text=String(value??'');const safe=/^[=+\-@]/.test(text)?`'${text}`:text;return /[",\n]/.test(safe)?`"${safe.replace(/"/g,'""')}"`:safe};
-      const blob=new Blob(['\ufeff'+rows.map(r=>r.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-      const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`bestcare-procedures-all-time-${isoDate(new Date())}.csv`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+      const blob=new Blob(['﻿'+rows.map(row=>row.map(cell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+      const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`bestcare-comprehensive-${r.from||'start'}-${r.to||isoDate(new Date())}.csv`;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(link.href),1000);
     });
     $('typesList').addEventListener('click',event=>{const row=event.target.closest('[data-type]');if(!row)return;selectedType=row.dataset.type;document.querySelectorAll('.type-row').forEach(r=>r.classList.toggle('active',r===row));renderTypeDetail()});
     function render(data){latest=data;renderTrends(data);renderTypes(data);renderProcedures(data);renderLabPeriod(data);renderKpis(data.summary);renderDaily(data.daily);renderDonut('statusDonut','statusLegend',data.statusCounts,statusLabels,'statusDonutTotal');renderMetrics('planMetrics',data.planStatusCounts,planLabels);renderDonut('paymentDonut','paymentLegend',{pending:data.paymentCounts.pending,acknowledged:data.paymentCounts.acknowledged,completed:data.paymentCounts.completed},{pending:'بانتظار الإجراء',acknowledged:'تم الاستلام',completed:'تم التنفيذ'},'paymentDonutTotal');renderMetrics('labMetrics',data.labStatusCounts,labLabels);renderClinics(data.clinics);$('appointmentsTotal').textContent=`${format(data.summary.appointments)} موعد`;$('plansTotal').textContent=`${format(data.summary.planTotal)} خطة`;$('paymentsTotal').textContent=`${format(data.paymentCounts.requested)} طلب`;$('labsTotal').textContent=`${format(Object.values(data.labStatusCounts).reduce((a,b)=>a+b,0))} حالة`;$('rangeChip').textContent=`${data.from} — ${data.to}`;const selected=$('clinicFilter').selectedOptions[0];$('clinicChip').textContent=selected?.textContent||'جميع العيادات';$('generatedChip').textContent=`تحديث ${new Date(data.generatedAt).toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'})}`;setStatus('تم تحديث المؤشرات من البيانات المركزية.')}
@@ -245,8 +294,9 @@ const $=id=>document.getElementById(id);
         if(/^\d{4}-\d{2}-\d{2}$/.test(from)&&/^\d{4}-\d{2}-\d{2}$/.test(to)&&from<=to){$('fromDate').value=from;$('toDate').value=to;document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active'));loadStats()}
         else setRange(30);
         loadMonths();
+        loadInsights();
       }catch(error){setStatus('تعذر التحقق من الجلسة. أعد فتح التطبيق.','error')}
     }
     document.querySelectorAll('[data-days]').forEach(button=>button.addEventListener('click',()=>setRange(Number(button.dataset.days))));
-    $('refreshBtn').addEventListener('click',loadStats);$('clinicFilter').addEventListener('change',()=>{loadStats();loadMonths()});$('compareMode').addEventListener('change',loadStats);document.querySelector('[data-month]')?.addEventListener('click',event=>{const today=isoDate(new Date());$('toDate').value=today;$('fromDate').value=`${today.slice(0,8)}01`;document.querySelectorAll('[data-days],[data-month]').forEach(b=>b.classList.toggle('active',b===event.currentTarget));$('compareMode').value='lastMonth';loadStats()});$('fromDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('toDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('printBtn').addEventListener('click',()=>window.print());$('exportBtn').addEventListener('click',exportCsv);
+    $('refreshBtn').addEventListener('click',loadStats);$('clinicFilter').addEventListener('change',()=>{loadStats();loadMonths();loadInsights()});$('compareMode').addEventListener('change',loadStats);document.querySelector('[data-month]')?.addEventListener('click',event=>{const today=isoDate(new Date());$('toDate').value=today;$('fromDate').value=`${today.slice(0,8)}01`;document.querySelectorAll('[data-days],[data-month]').forEach(b=>b.classList.toggle('active',b===event.currentTarget));$('compareMode').value='lastMonth';loadStats()});$('fromDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('toDate').addEventListener('change',()=>document.querySelectorAll('[data-days]').forEach(button=>button.classList.remove('active')));$('printBtn').addEventListener('click',()=>window.print());$('exportBtn').addEventListener('click',exportCsv);
     init();
